@@ -1,0 +1,88 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+const logDir = "logs"
+
+var (
+	fileMu sync.Mutex
+)
+
+// Event represents a payment event
+type Event struct {
+	EventType           string `json:"event_type"`
+	EventTimestamp      string `json:"event_timestamp"`
+	EventID             string `json:"event_id"`
+	MerchantIDHash      string `json:"merchant_id_hash"`
+	PaymentIntentIDHash string `json:"payment_intent_id_hash"`
+	Processor           string `json:"processor"`
+	FailureCategory     string `json:"failure_category"`
+	RetryCount          int    `json:"retry_count"`
+	GeoBucket           string `json:"geo_bucket"`
+	AmountBucket        string `json:"amount_bucket"`
+	SystemSource        string `json:"system_source"`
+	PaymentMethodBucket string `json:"payment_method_bucket"`
+	Channel             string `json:"channel"`
+	RetryResult         string `json:"retry_result"`
+	FailureOrigin       string `json:"failure_origin"`
+}
+
+// handleEvent ingests events and writes them to disk
+func handleEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var ev Event
+	if err := json.NewDecoder(r.Body).Decode(&ev); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if ev.EventID == "" {
+		ev.EventID = uuid.New().String()
+	}
+
+	fileMu.Lock()
+	defer fileMu.Unlock()
+
+	filename := fmt.Sprintf("%s/events-%d.log", logDir, time.Now().UnixNano())
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		http.Error(w, "failed to write", http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	_ = enc.Encode(ev)
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
+// handleMetrics is a stub for now
+func handleMetrics(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("metrics coming soon\n"))
+}
+
+func main() {
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		_ = os.Mkdir(logDir, 0755)
+	}
+
+	http.HandleFunc("/v1/events/payment_exhaust", handleEvent)
+	http.HandleFunc("/metrics", handleMetrics)
+
+	fmt.Println("Ingest node listening on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
