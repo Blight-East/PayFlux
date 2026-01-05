@@ -1,0 +1,14 @@
+# Secrets
+.env
+
+# Logs
+*.log
+logs/
+
+# Backups
+backup/
+*.bak
+*.save
+
+# OS junk
+.DS_Store
