@@ -1,228 +1,165 @@
-PayFlux
+PayFlux — Real-Time Payment Event Gateway
 
-Real-time payment event gateway for modern fintech teams
+PayFlux is a lightweight, high-throughput event ingestion node for payment systems.
 
-PayFlux is a lightweight, high-throughput ingestion node that centralizes payment events into a durable, ordered stream — without the operational overhead of Kafka or heavyweight streaming platforms.
+It ingests payment events over HTTP and converts them into a durable, ordered stream using Redis Streams—allowing downstream consumers (risk, analytics, alerting, billing) to scale independently without blocking the payment path.
 
-It is designed for teams who already feel pain around payment reliability, observability, and downstream coupling, and want a simple, infrastructure-grade solution they can self-host.
-
-⸻
-
-What PayFlux Does
-
-PayFlux sits between your payment producers and everything downstream.
-	•	Services, webhooks, or processors send payment events via HTTP
-	•	PayFlux validates and ingests events at high throughput
-	•	Events are buffered, ordered, and persisted in Redis Streams
-	•	Consumers process events independently, at their own pace
-
-No producer ever blocks on downstream systems.
+HTTP in → ordered stream out. No Kafka required.
 
 ⸻
 
-Who It’s For
+Why PayFlux Exists
 
-PayFlux is built for:
-	•	Payment processors & gateways
-Internal event pipelines, risk tooling, analytics, and ops visibility
-	•	E-commerce platforms & marketplaces
-Centralized tracking of payment success, failures, retries, and provider behavior
-	•	Fintech & SaaS billing teams
-Subscriptions, usage-based billing, wallets, lending, and audit-friendly flows
+Payment systems fail silently.
 
-If you’re already dealing with:
-	•	merchants being flagged or dropped
-	•	inconsistent payment data across systems
-	•	fragile webhook chains
-	•	batch jobs discovering problems too late
+Processors make decisions in real time based on traffic patterns, retries, and failure clustering—while most merchants only see delayed dashboards or logs. By the time an issue is visible, the damage is already done.
 
-PayFlux is for you.
+PayFlux gives teams real-time visibility and control over payment behavior before processors escalate risk actions.
 
 ⸻
 
-Architecture Overview
+Core Architecture
+[Producers]
+   |
+   |  HTTP JSON (stateless)
+   v
+[ PayFlux Node ]
+   |
+   |  Redis Streams (durable, ordered)
+   v
+[ Consumers ]
+  ├─ Risk / Alerting
+  ├─ Analytics
+  ├─ Retry Optimization
+  └─ Exports (Kafka, Webhooks, Warehouses)
 
-PayFlux follows a simple, proven model:
-	•	Producers are stateless HTTP clients
-Any service can emit events with a JSON POST.
-	•	Redis Streams provide durability, ordering, and backpressure
-Traffic spikes are absorbed without dropping events.
+Design Principles
+	•	Producers never block on downstream systems
+	•	Ordering is guaranteed per stream
+	•	Backpressure handled natively by Redis
 	•	Consumers scale independently
-Add new consumers without touching the ingest path.
-	•	No producer ever waits on downstream systems
-This protects your core payment flows from failures elsewhere.
+	•	Failure domains are isolated
 
-Think of PayFlux as the event backbone for payments.
-
-
-## Reliability Proof
-
-**Load + Backlog Test Result**
-
-Redis consumer group successfully processed **36,091 events** under burst load.
-
-- `lag = 0` (no backlog)
-- `pending = 0` (no stuck messages)
-- All events drained after spike without message loss
-
-This confirms PayFlux can buffer traffic spikes, apply backpressure, and reliably drain events without blocking producers.
 ⸻
 
 Key Features
 	•	High-throughput HTTP ingestion
-	•	Redis Streams for durable, ordered events
+	•	Redis Streams for durability and ordering
 	•	Consumer groups for parallel processing
-	•	Built-in health check endpoint
-	•	Prometheus metrics out of the box
-	•	Structured logging
-	•	Dead-letter stream support (failed consumer handling)
-	•	Stateless design — easy to scale horizontally
+	•	Crash-safe processing with pending reclaim
+	•	Dead-letter queue (DLQ) support
+	•	Prometheus-compatible metrics
+	•	Health checks for orchestration systems
 
 ⸻
 
-Operational Endpoints
+API Overview
+
+Ingest Event
+
+POST /v1/events/payment_exhaust
+json
+{
+  "event_type": "payment_failed",
+  "event_timestamp": "2026-01-06T00:00:00Z",
+  "event_id": "uuid-123",
+  "merchant_id_hash": "abc123",
+  "payment_intent_id_hash": "xyz456",
+  "processor": "stripe",
+  "failure_category": "processor_timeout",
+  "retry_count": 0,
+  "geo_bucket": "US",
+  "amount_bucket": "50-200",
+  "system_source": "checkout_api",
+  "payment_method_bucket": "credit_card",
+  "channel": "web",
+  "retry_result": "failed",
+  "failure_origin": "processor"
+}
+
+Response
+202 Accepted
+
+Observability & Integrations
+
+Available Today
+	•	/metrics — Prometheus format (Grafana, Datadog compatible)
+	•	/health — readiness / liveness checks
+	•	Structured JSON logs
+	•	Redis Streams as the event backbone
+
+Export Model
+
+PayFlux does not force a dashboard.
+
+Instead:
+	•	All events land in Redis Streams
+	•	Consumers attach to the stream
+	•	Each consumer implements a single responsibility
+
+This makes PayFlux compatible with:
+	•	Datadog
+	•	Grafana
+	•	Kafka / Redpanda
+	•	Webhooks
+	•	Data warehouses (Snowflake, BigQuery)
+
+Planned Exporters
+	•	Kafka / Redpanda exporter
+	•	Webhook exporter
+	•	Warehouse batch exporter
+
+Exporters are implemented as consumers—no changes to ingestion required.
+
+⸻
+
+Performance (Local Proof)
+	•	Sustained 40k+ events/sec on a laptop
+	•	Zero pending messages under load
+	•	Consumer lag drains to zero after spikes
+	•	No producer backpressure
+
+Raw Redis output and load test commands are included in:PROOF-load-test.md
+
+Deployment
+
+Requirements
+	•	Go 1.21+
+	•	Redis 6.2+
+Run
+bash
+ go run main.go
+
+Endpoints
 	•	POST /v1/events/payment_exhaust
-Ingest payment events
 	•	GET /health
-Liveness check
 	•	GET /metrics
-Prometheus-compatible metrics
-
-⸻
-
-Deployment Model
-
-PayFlux is self-hosted by default.
-
-Typical deployments:
-	•	Single node for early production
-	•	Multiple stateless nodes behind a load balancer
-	•	Shared Redis instance or cluster
-
-PayFlux does not require Kafka, Zookeeper, or managed streaming services.
-
-⸻
-
-Reliability Guarantees
-	•	At-least-once event delivery
-	•	Ordered events per stream
-	•	Consumer acknowledgment semantics
-	•	Safe restarts without event loss
 
 ⸻
 
 Licensing
 
-PayFlux is distributed under a commercial license.
-	•	Annual self-hosted license
-	•	Pricing based on deployment size and expected event volume
-	•	Generous included limits
+PayFlux is offered under a commercial early-access license.
+	•	Self-hosted
+	•	Annual license
+	•	Pricing based on deployment size and event volume
 	•	Custom enterprise agreements available
 
-See LICENSE.md for full terms.
+See LICENSE.md for details.
 
 ⸻
 
-Early Access
-
-PayFlux is currently available under an early access program.
-
-To request access or discuss licensing:
-	•	Visit https://payflux.dev
-	•	Submit the early access form
-
-⸻
-
-Philosophy
-
-PayFlux is intentionally:
-	•	Small
-	•	Focused
-	•	Infrastructure-grade
-
-It does one thing extremely well:
-move payment events safely and predictably through your system.
-
-⸻
-
-Status
-
-PayFlux is production-ready and actively evolving.
+Roadmap (Non-Binding)
+	•	Multi-consumer examples
+	•	Kafka exporter
+	•	Managed hosted offering
+	•	Per-merchant stream partitioning
+	•	SLA tooling for processors and PSPs
 
 ⸻
 
 Contact
 
-For licensing, deployment guidance, or custom agreements:
-hello@payflux.dev
- 
+📧 hello@payflux.dev
+🌐 https://payflux.dev
 
-
-Pricing & Licensing
-
-PayFlux is offered as a self-hosted, licensed infrastructure component designed for high-throughput payment environments.
-
-Pricing is annual, with generous included limits and clear upgrade paths.
-
-Starter — $2,500 / year
-
-For early teams and internal tooling.
-	•	Up to 10 million events / year
-	•	Single deployment (1 environment)
-	•	Redis Streams–based ingestion & buffering
-	•	Health check and Prometheus metrics endpoints
-	•	Community support (GitHub Issues)
-	•	License valid for one organization
-
-Best for: startups, internal payment observability, proof-of-production deployments.
-
-⸻
-
-Growth — $7,500 / year
-
-For production fintech systems with real volume.
-	•	Up to 100 million events / year
-	•	Multiple environments (prod + staging)
-	•	Consumer group support for parallel processing
-	•	Dead-letter stream support
-	•	Priority email support
-	•	Upgrade-safe releases during license term
-
-Best for: SaaS billing platforms, marketplaces, growing payment stacks.
-
-⸻
-
-Enterprise — Custom
-
-For processors and high-scale platforms.
-	•	Unlimited or negotiated event volume
-	•	Multi-region deployments
-	•	Custom SLAs and support agreements
-	•	Architecture review & onboarding support
-	•	Optional roadmap influence
-	•	Commercial redistribution rights (if applicable)
-
-Best for: payment processors, gateways, large fintech companies.
-
-⸻
-
-Licensing Model
-
-The self-hosted license is priced annually and designed for high-throughput environments.
-Pricing is based on deployment size and expected event volume, with generous included limits.
-For teams exceeding those limits, custom enterprise agreements are available.
-
-You host PayFlux.
-You own your data.
-You stay in control of your infrastructure.
-
-⸻
-
-Early Access
-
-Early access customers receive:
-	•	Discounted first-year pricing
-	•	Direct access to the maintainer
-	•	Priority on feature requests and feedback
-
-To request early access, visit https://payflux.dev or contact hello@payflux.dev.
