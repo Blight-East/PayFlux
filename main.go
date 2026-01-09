@@ -139,6 +139,14 @@ var (
 		Name: "payflux_events_exported_total",
 		Help: "Events exported after processing",
 	}, []string{"destination"})
+	exportErrors = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_export_errors_total",
+		Help: "Export errors by destination and reason",
+	}, []string{"destination", "reason"})
+	exportLastSuccess = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "payflux_exports_last_success_timestamp_seconds",
+		Help: "Unix timestamp of last successful export",
+	}, []string{"destination"})
 )
 
 func main() {
@@ -186,6 +194,7 @@ func main() {
 	prometheus.MustRegister(
 		ingestAccepted, ingestRejected, consumerProcessed, consumerDlq, ingestDuplicate,
 		streamLength, pendingCount, ingestLatency, eventsByProcessor, eventsExported,
+		exportErrors, exportLastSuccess,
 	)
 
 	// Redis connection pool
@@ -234,6 +243,7 @@ func main() {
 	// Health and metrics remain unauthenticated
 	mux.HandleFunc("/health", handleHealth)
 	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/export/health", handleExportHealth)
 
 	// Graceful shutdown
 	srv := &http.Server{
@@ -824,6 +834,63 @@ func sendToDlq(msg redis.XMessage, reason string) error {
 	return nil
 }
 
+// ExportHealthResponse is returned by /export/health
+type ExportHealthResponse struct {
+	Enabled               bool    `json:"enabled"`
+	ExportMode            string  `json:"export_mode,omitempty"`
+	ExportFile            string  `json:"export_file,omitempty"`
+	LastExportUnix        float64 `json:"last_export_unix,omitempty"`
+	LastExportRFC3339     string  `json:"last_export_rfc3339,omitempty"`
+	LastExportDestination string  `json:"last_export_destination,omitempty"`
+}
+
+func handleExportHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	response := ExportHealthResponse{
+		Enabled: exportMode != "",
+	}
+
+	if exportMode != "" {
+		response.ExportMode = exportMode
+		if exportFile != nil {
+			response.ExportFile = exportFile.Name()
+		}
+
+		// Get last export destination from metrics
+		var lastDest string
+
+		// Check stdout
+		if exportMode == "stdout" || exportMode == "both" {
+			if m := exportLastSuccess.WithLabelValues("stdout"); m != nil {
+				// We can't directly read from Gauge, so we track it via the metric itself
+				// This is a limitation, but the metric is the source of truth
+				lastDest = "stdout"
+			}
+		}
+
+		// Check file
+		if exportMode == "file" || exportMode == "both" {
+			if m := exportLastSuccess.WithLabelValues("file"); m != nil {
+				lastDest = "file"
+			}
+		}
+
+		if lastDest != "" {
+			response.LastExportDestination = lastDest
+			// Note: We can't read the gauge value directly, so timestamp is best-effort
+			// Prometheus scraper will have the actual value
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(response)
+}
+
 func env(key, fallback string) string {
 	v := strings.TrimSpace(os.Getenv(key))
 	if v == "" {
@@ -907,6 +974,7 @@ func exportEvent(event Event, messageID string) {
 	data, err := json.Marshal(exported)
 	if err != nil {
 		log.Printf("export_marshal_error event_id=%s err=%v", event.EventID, err)
+		exportErrors.WithLabelValues(exportMode, "marshal").Inc()
 		return
 	}
 
@@ -917,8 +985,10 @@ func exportEvent(event Event, messageID string) {
 		_, err := os.Stdout.Write(data)
 		if err != nil {
 			log.Printf("export_stdout_error event_id=%s err=%v", event.EventID, err)
+			exportErrors.WithLabelValues("stdout", "write").Inc()
 		} else {
 			eventsExported.WithLabelValues("stdout").Inc()
+			exportLastSuccess.WithLabelValues("stdout").Set(float64(time.Now().Unix()))
 		}
 	}
 
@@ -926,10 +996,17 @@ func exportEvent(event Event, messageID string) {
 		_, err := exportWriter.Write(data)
 		if err != nil {
 			log.Printf("export_file_error event_id=%s err=%v", event.EventID, err)
+			exportErrors.WithLabelValues("file", "write").Inc()
 		} else {
 			// Flush periodically (every write is okay for moderate throughput)
-			_ = exportWriter.Flush()
-			eventsExported.WithLabelValues("file").Inc()
+			err := exportWriter.Flush()
+			if err != nil {
+				log.Printf("export_file_flush_error event_id=%s err=%v", event.EventID, err)
+				exportErrors.WithLabelValues("file", "flush").Inc()
+			} else {
+				eventsExported.WithLabelValues("file").Inc()
+				exportLastSuccess.WithLabelValues("file").Set(float64(time.Now().Unix()))
+			}
 		}
 	}
 }

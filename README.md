@@ -237,6 +237,41 @@ Export is best-effort after ACK; if export fails, events are still acknowledged.
 {"event_id":"550e8400-e29b-41d4-a716-446655440000","event_type":"payment_failed","event_timestamp":"2026-01-09T12:00:00Z","processor":"stripe","stream_message_id":"1767957855596-0","consumer_name":"host-1234-abc","processed_at":"2026-01-09T17:00:00Z"}
 ```
 
+**Integrations:**
+
+Stdout (default) works with log aggregators:
+```bash
+# Datadog Agent (via journald or file)
+./payflux | tee -a /var/log/payflux/events.jsonl
+
+# Vector
+./payflux | vector --config vector.toml
+
+# Fluent Bit
+./payflux 2>&1 | fluent-bit -c fluent-bit.conf
+
+# CloudWatch Logs (via awslogs driver or agent)
+docker run --log-driver=awslogs ... payflux
+```
+
+File mode for persistent local export:
+```bash
+PAYFLUX_EXPORT_MODE=file PAYFLUX_EXPORT_FILE=/var/log/payflux/exports.jsonl ./payflux
+```
+
+Monitor export health:
+```bash
+curl http://localhost:8080/export/health
+# Returns JSON: {"enabled":true,"export_mode":"stdout",...}
+```
+
+Prometheus metrics for export observability:
+```
+payflux_events_exported_total{destination="stdout|file"}
+payflux_export_errors_total{destination="stdout|file",reason="write|marshal|flush"}
+payflux_exports_last_success_timestamp_seconds{destination="stdout|file"}
+```
+
 **What this is NOT:**
 - Not a replacement for analytics databases (use downstream exporters)
 - Not a compliance archive (export to S3, warehouse, etc.)
