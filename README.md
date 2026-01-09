@@ -8,6 +8,23 @@ HTTP in → ordered stream out. No Kafka required.
 
 ⸻
 
+Quickstart
+
+```bash
+redis-server &
+PAYFLUX_API_KEY=test-key STRIPE_API_KEY=sk_test_placeholder go run main.go
+curl -H "Authorization: Bearer test-key" -H "Content-Type: application/json" -d '{"event_type":"payment_failed","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440000","processor":"stripe","merchant_id_hash":"test","payment_intent_id_hash":"test","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"failed","failure_origin":"processor"}' http://localhost:8080/v1/events/payment_exhaust
+curl http://localhost:8080/health && curl -s http://localhost:8080/metrics | grep payflux_ingest_accepted
+```
+
+⸻
+
+Proof it runs
+
+![PayFlux validation screenshot showing startup logs, health check, metrics, and successful event processing during v0.1.1 local validation](proof-running.png)
+
+⸻
+
 Why PayFlux Exists
 
 Payment systems fail silently.
