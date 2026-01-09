@@ -254,6 +254,68 @@ Endpoints
 
 ⸻
 
+Operational Defaults
+
+**Redis Durability**
+
+PayFlux relies on Redis for event buffering and stream durability. Redis persistence is the operator's responsibility.
+
+Recommended Redis configuration for production:
+- Enable AOF (Append Only File): `appendonly yes`
+- Use `appendfsync everysec` for a good balance of durability and performance
+- Consider RDB snapshots as a secondary backup
+
+PayFlux assumes Redis is configured for production-safe durability. Without proper persistence, events may be lost on Redis restart.
+
+**Stream Retention**
+
+PayFlux intentionally bounds stream size using `XTRIM MAXLEN ~` (approximate trimming).
+
+- Default retention: `PAYFLUX_STREAM_MAXLEN=200000` messages
+- Set to `0` to disable trimming (not recommended for production)
+
+This is a deliberate design decision:
+- PayFlux is an **observability and alerting buffer**, not a long-term data store
+- Events are retained long enough for real-time monitoring, alerting, and short-term replay
+- For compliance archiving or long-term analytics, export events downstream (data warehouse, Kafka, S3)
+
+**Replay and Reprocessing**
+
+Consumers can replay events within the retention window:
+- Use `XREAD` or `XREADGROUP` with specific message IDs to replay
+- Old events are trimmed by design after reaching `PAYFLUX_STREAM_MAXLEN`
+
+For long-term replay requirements:
+- Attach a downstream exporter (Kafka, warehouse, log sink)
+- Exporters are implemented as consumers—no changes to PayFlux required
+
+⸻
+
+Production Readiness Notes
+
+PayFlux v0.1.0 is safe for early access and pilot deployments.
+
+**Assumptions:**
+- Redis is configured with AOF persistence (`appendfsync everysec` or stricter)
+- PayFlux runs under a process supervisor (systemd, Docker, Kubernetes) for automatic restarts
+- External monitoring is in place (Prometheus scraping `/metrics`, alerting on `payflux_pending_messages`)
+- TLS termination is handled by a load balancer or reverse proxy
+
+**What PayFlux handles:**
+- Authentication and rate limiting
+- Idempotency and deduplication
+- Graceful shutdown with in-flight request completion
+- Dead-letter queue for failed messages
+- Panic recovery (configurable)
+
+**What PayFlux does NOT handle:**
+- Redis persistence configuration (operator responsibility)
+- TLS termination (use a reverse proxy)
+- Long-term event archival (use downstream exporters)
+- Horizontal scaling coordination (each instance is independent)
+
+⸻
+
 Licensing
 
 PayFlux is offered under a commercial early-access license.
