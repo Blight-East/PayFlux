@@ -272,6 +272,42 @@ payflux_export_errors_total{destination="stdout|file",reason="write|marshal|flus
 payflux_exports_last_success_timestamp_seconds{destination="stdout|file"}
 ```
 
+**File Rotation:**
+
+PayFlux export is designed for **external rotation** via standard system tools:
+
+```bash
+# logrotate (/etc/logrotate.d/payflux)
+/var/log/payflux/exports.jsonl {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        killall -SIGHUP payflux 2>/dev/null || true
+    endscript
+}
+
+# systemd with journald (stdout capture)
+systemctl cat payflux.service
+[Service]
+StandardOutput=journal
+# Access via: journalctl -u payflux -f
+
+# Docker logging with rotation
+docker run -d \
+  --log-driver json-file \
+  --log-opt max-size=50m \
+  --log-opt max-file=10 \
+  payflux
+
+# Log shippers (Vector, Fluent Bit, Filebeat) handle rotation automatically
+```
+
+PayFlux intentionally does **not** implement in-app rotation. External tooling is more reliable, configurable, and battle-tested.
+
 **What this is NOT:**
 - Not a replacement for analytics databases (use downstream exporters)
 - Not a compliance archive (export to S3, warehouse, etc.)
