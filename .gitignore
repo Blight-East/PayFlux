@@ -13,3 +13,7 @@ backup/
 # OS junk
 .DS_Store
 *.bak
+
+# Local dev artifacts
+payflux
+payment-node
