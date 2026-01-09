@@ -179,6 +179,20 @@ These are starting points, not production blueprints. Review and adapt for your 
 
 ⸻
 
+## Operational Maturity
+
+**Runbook** ([`RUNBOOK.md`](RUNBOOK.md))
+- SOPs for stuck messages, Redis outages, and export failures.
+- Tuning guide for rate limits and memory pressure.
+
+**Performance & Smoke Tests** ([`scripts/smoke_load.sh`](scripts/smoke_load.sh))
+- Reproducible load test (10k events) to verify capacity.
+- `main_bench_test.go` for in-process latency tracking.
+
+---
+
+*PayFlux: Payment traffic observability buffer. Made for operators.*
+
 Production Checklist (10 mins)
 
 Run these commands to verify your deployment:
