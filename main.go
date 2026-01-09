@@ -2,21 +2,33 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"runtime/debug"
+	"strconv"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/checkout/session"
+	"golang.org/x/time/rate"
 )
 
-// Event represents a payment event
 type Event struct {
 	EventType           string `json:"event_type"`
 	EventTimestamp      string `json:"event_timestamp"`
@@ -35,136 +47,776 @@ type Event struct {
 	FailureOrigin       string `json:"failure_origin"`
 }
 
+type CheckoutRequest struct {
+	Email string `json:"email"`
+}
+
+// Constants
+const (
+	dedupTTL    = 24 * time.Hour
+	maxRetries  = 5
+	maxBodySize = 1 * 1024 * 1024 // 1MB
+)
+
 var (
-	ctx       = context.Background()
+	ctx = context.Background()
+
 	rdb       *redis.Client
 	streamKey = "events_stream"
 	groupName = "payment_consumers"
+	dlqKey    = "events_stream_dlq"
+
+	// XAUTOCLAIM: reclaim stuck messages after this idle time
+	minIdleToClaim = 30 * time.Second
+
+	// Stream retention config (set in main)
+	streamMaxLen int64
+
+	// Rate limit config (set in main)
+	rateLimitRPS   float64
+	rateLimitBurst int
+
+	// Panic mode config (set in main)
+	panicMode string // "crash" or "recover"
+
+	// Valid API keys (set in main)
+	validAPIKeys []string
+)
+
+// Rate limiter map
+var (
+	rateLimiters = make(map[string]*rate.Limiter)
+	rlMu         sync.RWMutex
+)
+
+// Prometheus metrics
+var (
+	ingestAccepted = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_ingest_accepted_total",
+		Help: "Total number of events accepted by the ingest endpoint.",
+	})
+	ingestRejected = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_ingest_rejected_total",
+		Help: "Total number of events rejected by the ingest endpoint.",
+	})
+	consumerProcessed = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_consumer_processed_total",
+		Help: "Total number of events processed by the consumer.",
+	})
+	consumerDlq = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_consumer_dlq_total",
+		Help: "Total number of events sent to the DLQ.",
+	})
+	ingestDuplicate = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_ingest_duplicate_total",
+		Help: "Events rejected as duplicates via event_id",
+	})
+	streamLength = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "payflux_stream_length",
+		Help: "Current number of messages in the stream",
+	})
+	pendingCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "payflux_pending_messages",
+		Help: "Messages pending acknowledgement in consumer group",
+	})
+	ingestLatency = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "payflux_ingest_duration_seconds",
+		Help:    "Latency of HTTP ingest endpoint",
+		Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1},
+	})
+	eventsByProcessor = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_events_by_processor_total",
+		Help: "Events ingested, labeled by processor",
+	}, []string{"processor"})
 )
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found — make sure STRIPE_API_KEY is set")
+	// Load env (optional)
+	_ = godotenv.Load()
+
+	redisAddr := env("REDIS_ADDR", "localhost:6379")
+	httpAddr := env("HTTP_ADDR", ":8080")
+
+	// Load API keys (multi-key support)
+	validAPIKeys = loadAPIKeys()
+	if len(validAPIKeys) == 0 {
+		log.Fatal("PAYFLUX_API_KEY or PAYFLUX_API_KEYS must be set")
+	}
+	log.Printf("api_keys_loaded count=%d", len(validAPIKeys))
+
+	// Load rate limit config
+	rateLimitRPS = float64(envInt("PAYFLUX_RATELIMIT_RPS", 100))
+	rateLimitBurst = envInt("PAYFLUX_RATELIMIT_BURST", 500)
+	log.Printf("rate_limit_configured rps=%.0f burst=%d", rateLimitRPS, rateLimitBurst)
+
+	// Load stream retention config
+	streamMaxLen = int64(envInt("PAYFLUX_STREAM_MAXLEN", 200000))
+	if streamMaxLen > 0 {
+		log.Printf("stream_retention_enabled maxlen=%d", streamMaxLen)
+	} else {
+		log.Println("stream_retention_disabled")
 	}
 
-	stripe.Key = os.Getenv("STRIPE_API_KEY")
-	if stripe.Key == "" {
-		log.Fatal("STRIPE_API_KEY is not set")
+	// Load panic mode config
+	panicMode = env("PAYFLUX_PANIC_MODE", "crash")
+	if panicMode != "crash" && panicMode != "recover" {
+		log.Fatalf("PAYFLUX_PANIC_MODE must be 'crash' or 'recover', got: %s", panicMode)
 	}
+	log.Printf("panic_mode=%s", panicMode)
 
-	// Connect to Redis
+	// Stripe key validation
+	stripeKey := os.Getenv("STRIPE_API_KEY")
+	if stripeKey == "" || !strings.HasPrefix(stripeKey, "sk_") {
+		log.Fatal("STRIPE_API_KEY missing or invalid format (must start with sk_)")
+	}
+	stripe.Key = stripeKey
+	log.Println("stripe_configured")
+
+	prometheus.MustRegister(
+		ingestAccepted, ingestRejected, consumerProcessed, consumerDlq, ingestDuplicate,
+		streamLength, pendingCount, ingestLatency, eventsByProcessor,
+	)
+
+	// Redis connection pool
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr:         redisAddr,
+		PoolSize:     100,
+		MinIdleConns: 10,
+		MaxRetries:   3,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolTimeout:  4 * time.Second,
 	})
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+		log.Fatalf("redis_connect_failed addr=%s err=%v", redisAddr, err)
 	}
-	log.Println("Connected to Redis")
+	log.Printf("redis_connected addr=%s", redisAddr)
 
 	// Create consumer group safely
-	_, err := rdb.XGroupCreateMkStream(ctx, streamKey, groupName, "0").Result()
-	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
-		log.Fatalf("Failed to create consumer group: %v", err)
+	if err := ensureConsumerGroup(streamKey, groupName); err != nil {
+		log.Fatalf("consumer_group_failed stream=%s group=%s err=%v", streamKey, groupName, err)
 	}
-	log.Println("Consumer group ready")
+	log.Printf("consumer_group_ready stream=%s group=%s", streamKey, groupName)
 
-	// Start consumer in a separate goroutine
+	// Start consumer
 	go consumeEvents()
 
-	// HTTP endpoints
-	http.HandleFunc("/v1/events/payment_exhaust", handleEvent)
-	http.HandleFunc("/v1/checkout", handleCheckoutSession)
-	http.Handle("/metrics", promhttp.Handler())
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
-	})
+	// Start metrics updater
+	go updateStreamMetrics()
 
-	log.Println("Server listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Routes
+	mux := http.NewServeMux()
+
+	// Apply auth and rate limit middleware
+	mux.HandleFunc("/v1/events/payment_exhaust",
+		authMiddleware(rateLimitMiddleware(handleEvent)))
+	mux.HandleFunc("/checkout",
+		authMiddleware(rateLimitMiddleware(handleCheckout)))
+
+	// Health and metrics remain unauthenticated
+	mux.HandleFunc("/health", handleHealth)
+	mux.Handle("/metrics", promhttp.Handler())
+
+	// Graceful shutdown
+	srv := &http.Server{
+		Addr:         httpAddr,
+		Handler:      mux,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	go func() {
+		log.Printf("server_listening addr=%s", httpAddr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server_failed err=%v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutdown_initiated")
+
+	// Graceful shutdown with 30s timeout
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown_forced err=%v", err)
+	}
+
+	log.Println("shutdown_complete")
 }
 
-// handleEvent ingests payment events into Redis
+// loadAPIKeys loads API keys from env vars (multi-key support)
+func loadAPIKeys() []string {
+	var keys []string
+
+	// Try PAYFLUX_API_KEYS first (comma-separated)
+	if keysStr := os.Getenv("PAYFLUX_API_KEYS"); keysStr != "" {
+		for _, k := range strings.Split(keysStr, ",") {
+			k = strings.TrimSpace(k)
+			if k != "" {
+				keys = append(keys, k)
+			}
+		}
+	}
+
+	// Fall back to single PAYFLUX_API_KEY
+	if len(keys) == 0 {
+		if k := strings.TrimSpace(os.Getenv("PAYFLUX_API_KEY")); k != "" {
+			keys = append(keys, k)
+		}
+	}
+
+	return keys
+}
+
+// generateConsumerName creates a unique consumer name
+func generateConsumerName() string {
+	// Check for explicit name first
+	if name := env("PAYFLUX_CONSUMER_NAME", ""); name != "" {
+		return name
+	}
+
+	// Generate: hostname-pid-random
+	hostname, _ := os.Hostname()
+	if hostname == "" {
+		hostname = "unknown"
+	}
+
+	randBytes := make([]byte, 4)
+	_, _ = rand.Read(randBytes)
+	randSuffix := hex.EncodeToString(randBytes)
+
+	return fmt.Sprintf("%s-%d-%s", hostname, os.Getpid(), randSuffix)
+}
+
+// Authentication middleware (multi-key support with constant-time compare)
+func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if !strings.HasPrefix(auth, "Bearer ") {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		token := strings.TrimPrefix(auth, "Bearer ")
+
+		// Check against all valid keys using constant-time comparison
+		valid := false
+		for _, key := range validAPIKeys {
+			if subtle.ConstantTimeCompare([]byte(token), []byte(key)) == 1 {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+// Rate limiting with configurable limits
+func getRateLimiter(key string) *rate.Limiter {
+	rlMu.RLock()
+	limiter, exists := rateLimiters[key]
+	rlMu.RUnlock()
+
+	if exists {
+		return limiter
+	}
+
+	rlMu.Lock()
+	defer rlMu.Unlock()
+
+	// Double-check after acquiring write lock
+	if limiter, exists := rateLimiters[key]; exists {
+		return limiter
+	}
+
+	limiter = rate.NewLimiter(rate.Limit(rateLimitRPS), rateLimitBurst)
+	rateLimiters[key] = limiter
+	return limiter
+}
+
+func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		apiKey := strings.TrimPrefix(auth, "Bearer ")
+
+		limiter := getRateLimiter(apiKey)
+		if !limiter.Allow() {
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+// Input validation
+func validateEvent(e *Event) error {
+	// UUID validation
+	if _, err := uuid.Parse(e.EventID); err != nil {
+		return fmt.Errorf("event_id must be valid UUID: %w", err)
+	}
+
+	// Timestamp validation (RFC3339 format)
+	if _, err := time.Parse(time.RFC3339, e.EventTimestamp); err != nil {
+		return fmt.Errorf("event_timestamp must be RFC3339 format: %w", err)
+	}
+
+	// Event type validation
+	if strings.TrimSpace(e.EventType) == "" {
+		return fmt.Errorf("event_type is required")
+	}
+
+	// Processor enum validation
+	validProcessors := map[string]bool{
+		"stripe": true, "adyen": true, "checkout": true, "internal": true,
+	}
+	if !validProcessors[e.Processor] {
+		return fmt.Errorf("invalid processor: %s (must be stripe, adyen, checkout, or internal)", e.Processor)
+	}
+
+	// String length limits (prevent DoS via huge strings)
+	if len(e.MerchantIDHash) > 100 {
+		return fmt.Errorf("merchant_id_hash exceeds 100 characters")
+	}
+	if len(e.PaymentIntentIDHash) > 100 {
+		return fmt.Errorf("payment_intent_id_hash exceeds 100 characters")
+	}
+	if len(e.FailureCategory) > 100 {
+		return fmt.Errorf("failure_category exceeds 100 characters")
+	}
+	if len(e.GeoBucket) > 20 {
+		return fmt.Errorf("geo_bucket exceeds 20 characters")
+	}
+
+	// Retry count sanity check
+	if e.RetryCount < 0 || e.RetryCount > 100 {
+		return fmt.Errorf("retry_count must be between 0 and 100")
+	}
+
+	return nil
+}
+
+// Email sanitization
+func sanitizeEmail(email string) string {
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return "invalid"
+	}
+	return parts[0][:min(3, len(parts[0]))] + "***@" + parts[1]
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Background metrics updater
+func updateStreamMetrics() {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		// Stream length
+		length, err := rdb.XLen(ctx, streamKey).Result()
+		if err == nil {
+			streamLength.Set(float64(length))
+		} else {
+			log.Printf("metrics_stream_length_error err=%v", err)
+		}
+
+		// Pending count
+		pending, err := rdb.XPending(ctx, streamKey, groupName).Result()
+		if err == nil {
+			pendingCount.Set(float64(pending.Count))
+		} else {
+			log.Printf("metrics_pending_count_error err=%v", err)
+		}
+	}
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	// Quick Redis ping so health actually means something
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		http.Error(w, "redis not ok", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("ok"))
+}
+
 func handleEvent(w http.ResponseWriter, r *http.Request) {
+	// Track latency
+	start := time.Now()
+	defer func() {
+		ingestLatency.Observe(time.Since(start).Seconds())
+	}()
+
+	if r.Method != http.MethodPost {
+		ingestRejected.Inc()
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Body size limit
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer r.Body.Close()
+
 	var e Event
 	if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		ingestRejected.Inc()
+		if strings.Contains(err.Error(), "http: request body too large") {
+			http.Error(w, "payload too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	data, _ := json.Marshal(e)
+
+	// Comprehensive validation
+	if err := validateEvent(&e); err != nil {
+		ingestRejected.Inc()
+		http.Error(w, fmt.Sprintf("validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Idempotency check
+	dedupKey := fmt.Sprintf("dedup:%s", e.EventID)
+	wasSet, err := rdb.SetNX(ctx, dedupKey, "1", dedupTTL).Result()
+	if err != nil {
+		log.Printf("dedup_check_error event_id=%s err=%v", e.EventID, err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	if !wasSet {
+		// Already processed - return success (idempotent)
+		ingestDuplicate.Inc()
+		w.WriteHeader(http.StatusAccepted)
+		return
+	}
+
+	data, err := json.Marshal(e)
+	if err != nil {
+		ingestRejected.Inc()
+		http.Error(w, "failed to serialize event", http.StatusInternalServerError)
+		return
+	}
+
+	// Track by processor
+	eventsByProcessor.WithLabelValues(e.Processor).Inc()
+
+	// XADD to stream
 	if err := rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: streamKey,
-		Values: map[string]interface{}{"data": string(data)},
+		Values: map[string]any{"data": string(data)},
 	}).Err(); err != nil {
-		http.Error(w, "Failed to enqueue event", http.StatusInternalServerError)
+		ingestRejected.Inc()
+		http.Error(w, "failed to enqueue", http.StatusInternalServerError)
 		return
 	}
+
+	// Stream retention: trim if configured
+	if streamMaxLen > 0 {
+		// Use approximate trimming (~) for performance
+		if err := rdb.XTrimMaxLenApprox(ctx, streamKey, streamMaxLen, 0).Err(); err != nil {
+			log.Printf("stream_trim_error err=%v", err)
+		}
+	}
+
+	ingestAccepted.Inc()
 	w.WriteHeader(http.StatusAccepted)
 }
 
-// consumeEvents reads from Redis Streams
+func handleCheckout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if stripe.Key == "" {
+		http.Error(w, "stripe not configured", http.StatusInternalServerError)
+		return
+	}
+
+	// Body size limit
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer r.Body.Close()
+
+	var req CheckoutRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && !errors.Is(err, http.ErrBodyNotAllowed) {
+		if strings.Contains(err.Error(), "http: request body too large") {
+			http.Error(w, "payload too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
+	// Price in cents (default $99.00)
+	priceCents := int64(9900)
+	if v := os.Getenv("PRICE_CENTS"); v != "" {
+		if parsed, err := strconv.ParseInt(v, 10, 64); err == nil && parsed > 0 {
+			priceCents = parsed
+		}
+	}
+
+	productName := env("PRODUCT_NAME", "PayFlux Early Access")
+
+	siteURL := env("SITE_URL", "https://payflux.dev")
+	successURL := siteURL + "/success.html"
+	cancelURL := siteURL + "/"
+
+	params := &stripe.CheckoutSessionParams{
+		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
+		SuccessURL: stripe.String(successURL),
+		CancelURL:  stripe.String(cancelURL),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				Quantity: stripe.Int64(1),
+				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+					Currency:   stripe.String(string(stripe.CurrencyUSD)),
+					UnitAmount: stripe.Int64(priceCents),
+					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+						Name: stripe.String(productName),
+					},
+				},
+			},
+		},
+	}
+
+	if strings.TrimSpace(req.Email) != "" {
+		params.CustomerEmail = stripe.String(strings.TrimSpace(req.Email))
+	}
+
+	s, err := session.New(params)
+	if err != nil {
+		// Log with sanitized context only
+		log.Printf("stripe_session_failed email=%s err_type=%T",
+			sanitizeEmail(req.Email), err)
+		http.Error(w, "payment session failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]string{"url": s.URL})
+}
+
+func ensureConsumerGroup(stream, group string) error {
+	_, err := rdb.XGroupCreateMkStream(ctx, stream, group, "0").Result()
+	if err == nil {
+		return nil
+	}
+	// BUSYGROUP means it already exists
+	if strings.Contains(err.Error(), "BUSYGROUP") {
+		return nil
+	}
+	// WRONGTYPE means key exists but isn't a stream
+	if strings.Contains(err.Error(), "WRONGTYPE") {
+		return fmt.Errorf("stream key %q exists but is not a Redis Stream (wrong type)", stream)
+	}
+	return err
+}
+
+// Panic handling with configurable mode
 func consumeEvents() {
-	consumerName := "consumer-1"
+	consumerName := generateConsumerName()
+	log.Printf("consumer_started group=%s stream=%s consumer=%s", groupName, streamKey, consumerName)
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("consumer_panic panic=%v stack=%s", r, string(debug.Stack()))
+
+			if panicMode == "recover" {
+				// Restart consumer after brief delay
+				time.Sleep(5 * time.Second)
+				log.Println("consumer_restarting")
+				go consumeEvents()
+			} else {
+				// Default: crash - let supervisor restart the process
+				log.Fatal("consumer_panic_exit")
+			}
+		}
+	}()
+
+	claimStart := "0-0"
+
 	for {
+		// 1) Crash recovery: reclaim stuck/pending messages
+		for {
+			msgs, next, err := rdb.XAutoClaim(ctx, &redis.XAutoClaimArgs{
+				Stream:   streamKey,
+				Group:    groupName,
+				Consumer: consumerName,
+				MinIdle:  minIdleToClaim,
+				Start:    claimStart,
+				Count:    50,
+			}).Result()
+
+			if err != nil {
+				log.Printf("xautoclaim_error err=%v", err)
+				break
+			}
+
+			claimStart = next
+			if len(msgs) == 0 {
+				break
+			}
+
+			for _, msg := range msgs {
+				handleMessageWithDlq(msg)
+			}
+		}
+
+		// 2) Normal consumption of new messages
 		streams, err := rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
 			Group:    groupName,
 			Consumer: consumerName,
 			Streams:  []string{streamKey, ">"},
-			Block:    0,
-			Count:    10,
+			Count:    50,
+			Block:    2 * time.Second,
 		}).Result()
+
 		if err != nil {
-			log.Printf("Error reading from stream: %v", err)
+			if errors.Is(err, redis.Nil) {
+				continue
+			}
+			log.Printf("xreadgroup_error err=%v", err)
 			continue
 		}
 
 		for _, s := range streams {
 			for _, msg := range s.Messages {
-				log.Printf("Processing event: %v", msg.Values["data"])
-				rdb.XAck(ctx, streamKey, groupName, msg.ID)
+				handleMessageWithDlq(msg)
 			}
 		}
 	}
 }
 
-// handleCheckoutSession creates a Stripe Checkout session
-func handleCheckoutSession(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email string `json:"email"`
+// DLQ retry budget
+func handleMessageWithDlq(msg redis.XMessage) {
+	// Check retry count via XPENDING
+	pending, err := rdb.XPendingExt(ctx, &redis.XPendingExtArgs{
+		Stream: streamKey,
+		Group:  groupName,
+		Start:  msg.ID,
+		End:    msg.ID,
+		Count:  1,
+	}).Result()
+
+	retryCount := int64(1)
+	if err == nil && len(pending) == 1 {
+		retryCount = pending[0].RetryCount
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+
+	// Enforce retry budget
+	if retryCount > maxRetries {
+		log.Printf("dlq_max_retries id=%s retries=%d", msg.ID, retryCount)
+		_ = sendToDlq(msg, "max_retries_exceeded")
 		return
 	}
 
-	params := &stripe.CheckoutSessionParams{
-		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
-		Mode:              stripe.String(string(stripe.CheckoutSessionModePayment)),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{
-			{
-				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-					Currency: stripe.String("usd"),
-					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-						Name: stripe.String("PayFlux Early Access"),
-					},
-					UnitAmount: stripe.Int64(1999), // $19.99
-				},
-				Quantity: stripe.Int64(1),
-			},
+	// Extract data
+	dataAny, ok := msg.Values["data"]
+	if !ok {
+		log.Printf("message_missing_data id=%s", msg.ID)
+		_ = sendToDlq(msg, "missing_data_field")
+		return
+	}
+
+	dataStr, ok := dataAny.(string)
+	if !ok {
+		log.Printf("message_data_not_string id=%s", msg.ID)
+		_ = sendToDlq(msg, "invalid_data_type")
+		return
+	}
+
+	// Validate JSON structure
+	var event Event
+	if err := json.Unmarshal([]byte(dataStr), &event); err != nil {
+		log.Printf("event_unmarshal_error id=%s err=%v", msg.ID, err)
+		_ = sendToDlq(msg, "unmarshal_failed")
+		return
+	}
+
+	// Process successfully
+	log.Printf("event_processed id=%s type=%s processor=%s",
+		msg.ID, event.EventType, event.Processor)
+	consumerProcessed.Inc()
+
+	// ACK only on success
+	if err := rdb.XAck(ctx, streamKey, groupName, msg.ID).Err(); err != nil {
+		log.Printf("xack_error id=%s err=%v", msg.ID, err)
+	}
+}
+
+// Updated sendToDlq with reason and timestamp
+func sendToDlq(msg redis.XMessage, reason string) error {
+	consumerDlq.Inc()
+
+	raw := ""
+	if v, ok := msg.Values["data"]; ok {
+		if s, ok2 := v.(string); ok2 {
+			raw = s
+		}
+	}
+
+	err := rdb.XAdd(ctx, &redis.XAddArgs{
+		Stream: dlqKey,
+		Values: map[string]any{
+			"data":        raw,
+			"original_id": msg.ID,
+			"reason":      reason,
+			"timestamp":   time.Now().Unix(),
 		},
-		SuccessURL:    stripe.String("https://payflux.dev/success"),
-		CancelURL:     stripe.String("https://payflux.dev/cancel"),
-		CustomerEmail: stripe.String(req.Email),
-	}
+	}).Err()
 
-	s, err := session.New(params)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Stripe session error: %v", err), http.StatusInternalServerError)
-		return
+		log.Printf("dlq_add_error id=%s err=%v", msg.ID, err)
+		return err
 	}
 
-	resp := map[string]string{"url": s.URL}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	// Must ACK to remove from pending
+	if err := rdb.XAck(ctx, streamKey, groupName, msg.ID).Err(); err != nil {
+		log.Printf("dlq_xack_error id=%s err=%v", msg.ID, err)
+		return err
+	}
+
+	log.Printf("dlq_sent id=%s reason=%s", msg.ID, reason)
+	return nil
+}
+
+func env(key, fallback string) string {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return fallback
+	}
+	return v
+}
+
+func envInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	i, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return i
 }

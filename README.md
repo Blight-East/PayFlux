@@ -80,6 +80,123 @@ json
 Response
 202 Accepted
 
+⸻
+
+Configuration
+
+All configuration is via environment variables.
+
+**Required:**
+
+| Variable | Description |
+|----------|-------------|
+| `PAYFLUX_API_KEY` | Single API key for auth (used if `PAYFLUX_API_KEYS` not set) |
+| `PAYFLUX_API_KEYS` | Comma-separated list of valid API keys (preferred for rotation) |
+| `STRIPE_API_KEY` | Stripe secret key (must start with `sk_`) |
+
+**Optional:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REDIS_ADDR` | `localhost:6379` | Redis server address |
+| `HTTP_ADDR` | `:8080` | HTTP listen address |
+| `PAYFLUX_CONSUMER_NAME` | auto-generated | Consumer name (hostname-pid-random if unset) |
+| `PAYFLUX_RATELIMIT_RPS` | `100` | Rate limit: requests per second per key |
+| `PAYFLUX_RATELIMIT_BURST` | `500` | Rate limit: burst allowance |
+| `PAYFLUX_STREAM_MAXLEN` | `200000` | Max stream length (0 = no trimming) |
+| `PAYFLUX_PANIC_MODE` | `crash` | Panic handling: `crash` (exit) or `recover` (restart loop) |
+| `PRICE_CENTS` | `9900` | Checkout price in cents |
+| `PRODUCT_NAME` | `PayFlux Early Access` | Checkout product name |
+| `SITE_URL` | `https://payflux.dev` | Site URL for checkout redirects |
+
+**API Key Rotation:**
+
+To rotate keys without downtime:
+1. Add the new key to `PAYFLUX_API_KEYS` alongside the old key: `old-key,new-key`
+2. Deploy and verify clients can use the new key
+3. Update clients to use the new key
+4. Remove the old key from the list and redeploy
+
+⸻
+
+Production Checklist (10 mins)
+
+Run these commands to verify your deployment:
+
+**1. Start Redis and PayFlux**
+```bash
+redis-server &
+export PAYFLUX_API_KEY="test-key-12345"
+export STRIPE_API_KEY="sk_test_placeholder"
+go run main.go
+```
+
+**2. Health Check**
+```bash
+curl http://localhost:8080/health
+# Expected: ok (200)
+```
+
+**3. Metrics**
+```bash
+curl -s http://localhost:8080/metrics | grep payflux_
+# Expected: Prometheus metrics with payflux_ prefix
+```
+
+**4. Auth - No Token (should fail)**
+```bash
+curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust
+# Expected: 401
+```
+
+**5. Auth - Valid Token**
+```bash
+curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust \
+  -H "Authorization: Bearer test-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440000","processor":"stripe","merchant_id_hash":"abc","payment_intent_id_hash":"xyz","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"test","failure_origin":"test"}'
+# Expected: 202
+```
+
+**6. Idempotency (send same event_id twice)**
+```bash
+# First request
+curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust \
+  -H "Authorization: Bearer test-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440001","processor":"stripe","merchant_id_hash":"abc","payment_intent_id_hash":"xyz","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"test","failure_origin":"test"}'
+# Expected: 202
+
+# Second request (same event_id)
+curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust \
+  -H "Authorization: Bearer test-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440001","processor":"stripe","merchant_id_hash":"abc","payment_intent_id_hash":"xyz","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"test","failure_origin":"test"}'
+# Expected: 202 (idempotent, no duplicate created)
+
+# Check duplicate metric
+curl -s http://localhost:8080/metrics | grep payflux_ingest_duplicate_total
+# Expected: payflux_ingest_duplicate_total 1 (or higher)
+```
+
+**7. Validation (bad UUID)**
+```bash
+curl -s -X POST http://localhost:8080/v1/events/payment_exhaust \
+  -H "Authorization: Bearer test-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"not-a-uuid","processor":"stripe"}'
+# Expected: 400 with "event_id must be valid UUID"
+```
+
+**8. Graceful Shutdown**
+```bash
+# In another terminal, send SIGTERM
+pkill -TERM -f "go run main.go"
+# Expected in logs: shutdown_initiated, shutdown_complete
+```
+
+⸻
+
 Observability & Integrations
 
 Available Today
