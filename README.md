@@ -1,10 +1,24 @@
-PayFlux — Real-Time Payment Event Gateway
+PayFlux — Payment Traffic Observability Buffer
 
-PayFlux is a lightweight, high-throughput event ingestion node for payment systems.
+**What PayFlux is:**
 
-It ingests payment events over HTTP and converts them into a durable, ordered stream using Redis Streams—allowing downstream consumers (risk, analytics, alerting, billing) to scale independently without blocking the payment path.
+PayFlux ingests, orders, and normalizes payment events in real time, providing early visibility into risky patterns—retry storms, processor degradation, geographic anomalies, failure clustering—before they escalate into rate limits, account flags, or lost revenue.
 
-HTTP in → ordered stream out. No Kafka required.
+It buffers payment events via Redis Streams and exports them (stdout or file) for downstream analysis, alerting, and archival by external systems (Vector, Fluent Bit, data warehouses).
+
+**What PayFlux is NOT:**
+
+- Not a payment processor (does not handle money or PCI-regulated data)
+- Not a compliance audit log (export is best-effort after ACK by design)
+- Not a replacement for durable storage (external log shippers with retries handle durability)
+
+**Target users:**
+
+Teams operating real payment systems who need observability buffers for traffic analysis, early warning signals, and anomaly detection. You should be comfortable running Redis, configuring log shippers, and operating infrastructure.
+
+**Key design tradeoff:**
+
+Events are acknowledged (ACK) in Redis **before** export. Export is best-effort and non-blocking. For durable storage, use `PAYFLUX_EXPORT_MODE=stdout` piped to a log shipper with disk buffering. This architecture favors throughput and operational simplicity over in-app durability guarantees.
 
 ⸻
 
