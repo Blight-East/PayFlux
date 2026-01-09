@@ -1,0 +1,29 @@
+# Vector configuration for PayFlux export
+# This is a minimal example that writes to a local file
+# In production, replace the file sink with your destination (S3, Elasticsearch, etc)
+
+[sources.payflux_logs]
+type = "docker_logs"
+include_containers = ["payflux"]
+
+[transforms.parse_json]
+type = "remap"
+inputs = ["payflux_logs"]
+source = '''
+. = parse_json!(.message)
+'''
+
+[sinks.local_file]
+type = "file"
+inputs = ["parse_json"]
+path = "/var/lib/vector/payflux-events-%Y-%m-%d.jsonl"
+encoding.codec = "json"
+
+# Example: Send to S3 instead
+# [sinks.s3]
+# type = "aws_s3"
+# inputs = ["parse_json"]
+# bucket = "your-bucket"
+# key_prefix = "payflux/events/"
+# encoding.codec = "json"
+# compression = "gzip"

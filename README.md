@@ -156,6 +156,29 @@ To rotate keys without downtime:
 
 ⸻
 
+## Deployment Examples
+
+Reference deployments for common environments. Adapt these to your infrastructure:
+
+**Docker Compose** ([`deploy/docker-compose.yml`](deploy/docker-compose.yml))
+- PayFlux + Redis + Vector log shipper
+- Copy-paste runnable with `docker compose up`
+- Includes Vector config for durable export
+
+**systemd** ([`deploy/systemd/payflux.service`](deploy/systemd/payflux.service))
+- Production unit file with security hardening
+- EnvironmentFile support for config
+- Restart policy and resource limits
+
+**Kubernetes** ([`deploy/k8s/payflux.yaml`](deploy/k8s/payflux.yaml))
+- Single-file manifest (ConfigMap + Secret + Deployment + Service)
+- Single replica by default (scale horizontally as needed)
+- Assumes external Redis
+
+These are starting points, not production blueprints. Review and adapt for your environment.
+
+⸻
+
 Production Checklist (10 mins)
 
 Run these commands to verify your deployment:

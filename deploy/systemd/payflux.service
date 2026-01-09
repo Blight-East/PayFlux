@@ -1,0 +1,40 @@
+[Unit]
+Description=PayFlux Payment Traffic Observability Buffer
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=payflux
+Group=payflux
+
+# Path to PayFlux binary
+ExecStart=/usr/local/bin/payflux
+
+# Load environment variables from file
+EnvironmentFile=/etc/payflux/payflux.env
+
+# Working directory
+WorkingDirectory=/var/lib/payflux
+
+# Restart policy
+Restart=always
+RestartSec=5s
+
+# Resource limits
+LimitNOFILE=65536
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/payflux /var/log/payflux
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=payflux
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  # Redis with AOF persistence
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # PayFlux service
+  payflux:
+    image: payflux:latest  # Build locally: docker build -t payflux:latest .
+    ports:
+      - "8080:8080"
+    environment:
+      # Required
+      PAYFLUX_API_KEY: "your-api-key-here"
+      STRIPE_API_KEY: "sk_test_your_stripe_key_here"
+      
+      # Redis connection
+      REDIS_ADDR: "redis:6379"
+      
+      # Export configuration
+      PAYFLUX_EXPORT_MODE: "stdout"  # stdout | file | both
+      
+      # Optional tuning
+      PAYFLUX_RATELIMIT_RPS: "100"
+      PAYFLUX_RATELIMIT_BURST: "500"
+      PAYFLUX_STREAM_MAXLEN: "200000"
+      PAYFLUX_PANIC_MODE: "crash"  # crash | recover
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Vector log shipper (optional but recommended for durable export)
+  # Reads PayFlux stdout and writes to local file
+  # In production, configure Vector to ship to S3/Elasticsearch/etc
+  vector:
+    image: timberio/vector:0.34.0-alpine
+    volumes:
+      - ./vector.toml:/etc/vector/vector.toml:ro
+      - vector-data:/var/lib/vector
+    depends_on:
+      - payflux
+    command: ["--config", "/etc/vector/vector.toml"]
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  vector-data:
