@@ -146,6 +146,36 @@ All configuration is via environment variables.
 | `PRODUCT_NAME` | `PayFlux Early Access` | Checkout product name |
 | `SITE_URL` | `https://payflux.dev` | Site URL for checkout redirects |
 
+⸻
+
+## Processor Risk Score (beta)
+
+PayFlux enrichment provides a deterministic, O(1) in-memory risk signal computed per-event during export. This helps infrastructure teams distinguish between nominal processor jitter and catastrophic failure patterns.
+
+**Note:** This is a behavioral risk proximity signal, not a compliance or audit guarantee.
+
+### Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PAYFLUX_RISK_SCORE_ENABLED` | `true` | Enable/disable risk enrichment |
+| `PAYFLUX_RISK_SCORE_WINDOW_SEC` | `300` | Sliding window for metrics (default 5m) |
+| `PAYFLUX_RISK_SCORE_THRESHOLDS` | `0.3,0.6,0.8` | Cutoffs for elevated, high, and critical bands |
+
+### Export Example
+
+```json
+{
+  "event_id": "550e8400-e29b-41d4-a716-446655440000",
+  "processor": "stripe",
+  "processor_risk_score": 0.65,
+  "processor_risk_band": "high",
+  "processor_risk_drivers": ["high_failure_rate", "retry_pressure_spike"]
+}
+```
+
+⸻
+
 **API Key Rotation:**
 
 To rotate keys without downtime:

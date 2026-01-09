@@ -97,6 +97,12 @@ var (
 	exportLastErrorStdout   int64    // atomic
 	exportLastErrorFile     int64    // atomic
 	exportLastErrorReason   sync.Map // destination -> reason string
+
+	// Risk Scorer (v0.2.1+)
+	riskScorer       *RiskScorer
+	riskScoreEnabled bool
+	riskScoreWindow  int
+	riskThresholds   [3]float64
 )
 
 // Rate limiter map
@@ -156,6 +162,16 @@ var (
 		Name: "payflux_exports_last_success_timestamp_seconds",
 		Help: "Unix timestamp of last successful export",
 	}, []string{"destination"})
+
+	// Risk metrics (v0.2.1+)
+	riskEventsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_processor_risk_events_total",
+		Help: "Events grouped by processor and risk band",
+	}, []string{"processor", "band"})
+	riskScoreLast = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "payflux_processor_risk_score_last",
+		Help: "Last computed risk score per processor",
+	}, []string{"processor"})
 )
 
 func main() {
@@ -197,6 +213,24 @@ func main() {
 	}
 	slog.Info("panic_mode", "mode", panicMode)
 
+	// Load Risk Score config (v0.2.1+)
+	riskScoreEnabled = env("PAYFLUX_RISK_SCORE_ENABLED", "true") == "true"
+	riskScoreWindow = envInt("PAYFLUX_RISK_SCORE_WINDOW_SEC", 300)
+	thresholdsStr := env("PAYFLUX_RISK_SCORE_THRESHOLDS", "0.3,0.6,0.8")
+	parts := strings.Split(thresholdsStr, ",")
+	riskThresholds = [3]float64{0.3, 0.6, 0.8}
+	if len(parts) == 3 {
+		for i, p := range parts {
+			if f, err := strconv.ParseFloat(p, 64); err == nil {
+				riskThresholds[i] = f
+			}
+		}
+	}
+	if riskScoreEnabled {
+		riskScorer = NewRiskScorer(riskScoreWindow, riskThresholds)
+		slog.Info("risk_scorer_initialized", "window_sec", riskScoreWindow, "thresholds", thresholdsStr)
+	}
+
 	// Stripe key validation
 	stripeKey := os.Getenv("STRIPE_API_KEY")
 	if stripeKey == "" || !strings.HasPrefix(stripeKey, "sk_") {
@@ -208,7 +242,7 @@ func main() {
 	prometheus.MustRegister(
 		ingestAccepted, ingestRejected, consumerProcessed, consumerDlq, ingestDuplicate,
 		streamLength, pendingCount, ingestLatency, eventsByProcessor, eventsExported,
-		exportErrors, exportLastSuccess,
+		exportErrors, exportLastSuccess, riskEventsTotal, riskScoreLast,
 	)
 
 	// Redis connection pool
@@ -1004,6 +1038,11 @@ type ExportedEvent struct {
 	StreamMessageID string `json:"stream_message_id"`
 	ConsumerName    string `json:"consumer_name"`
 	ProcessedAt     string `json:"processed_at"`
+
+	// Risk signals (v0.2.1+)
+	ProcessorRiskScore   float64  `json:"processor_risk_score,omitempty"`
+	ProcessorRiskBand    string   `json:"processor_risk_band,omitempty"`
+	ProcessorRiskDrivers []string `json:"processor_risk_drivers,omitempty"`
 }
 
 // exportEvent writes the processed event to configured destinations
@@ -1016,6 +1055,18 @@ func exportEvent(event Event, messageID string) {
 		StreamMessageID: messageID,
 		ConsumerName:    consumerNameGlobal,
 		ProcessedAt:     time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// Enrich with risk score if enabled (v0.2.1+)
+	if riskScoreEnabled && riskScorer != nil {
+		res := riskScorer.RecordEvent(event)
+		exported.ProcessorRiskScore = res.Score
+		exported.ProcessorRiskBand = res.Band
+		exported.ProcessorRiskDrivers = res.Drivers
+
+		// Update metrics
+		riskEventsTotal.WithLabelValues(event.Processor, res.Band).Inc()
+		riskScoreLast.WithLabelValues(event.Processor).Set(res.Score)
 	}
 
 	data, err := json.Marshal(exported)
