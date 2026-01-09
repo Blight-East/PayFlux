@@ -230,6 +230,8 @@ After successful processing, PayFlux exports events as line-delimited JSON to st
 - `file`: Append to `PAYFLUX_EXPORT_FILE`
 - `both`: Write to both stdout and file
 
+Export is best-effort after ACK; if export fails, events are still acknowledged.
+
 **Example exported event:**
 ```json
 {"event_id":"550e8400-e29b-41d4-a716-446655440000","event_type":"payment_failed","event_timestamp":"2026-01-09T12:00:00Z","processor":"stripe","stream_message_id":"1767957855596-0","consumer_name":"host-1234-abc","processed_at":"2026-01-09T17:00:00Z"}

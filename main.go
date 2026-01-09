@@ -777,13 +777,15 @@ func handleMessageWithDlq(msg redis.XMessage) {
 		msg.ID, event.EventType, event.Processor)
 	consumerProcessed.Inc()
 
-	// Export event (non-blocking, errors logged but not fatal)
-	exportEvent(event, msg.ID)
-
-	// ACK only on success
+	// ACK first - must succeed before export
 	if err := rdb.XAck(ctx, streamKey, groupName, msg.ID).Err(); err != nil {
 		log.Printf("xack_error id=%s err=%v", msg.ID, err)
+		return
 	}
+
+	// Export event (best-effort after ACK)
+	exportEvent(event, msg.ID)
+
 }
 
 // Updated sendToDlq with reason and timestamp
