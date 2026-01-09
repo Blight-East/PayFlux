@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -88,6 +89,13 @@ var (
 	exportFile         *os.File // file handle if file export enabled
 	exportWriter       *bufio.Writer
 	consumerNameGlobal string // for export metadata
+
+	// Export health tracking (atomic int64 Unix timestamps)
+	exportLastSuccessStdout int64    // atomic
+	exportLastSuccessFile   int64    // atomic
+	exportLastErrorStdout   int64    // atomic
+	exportLastErrorFile     int64    // atomic
+	exportLastErrorReason   sync.Map // destination -> reason string
 )
 
 // Rate limiter map
@@ -860,29 +868,40 @@ func handleExportHealth(w http.ResponseWriter, r *http.Request) {
 			response.ExportFile = exportFile.Name()
 		}
 
-		// Get last export destination from metrics
-		var lastDest string
-
-		// Check stdout
+		// Read from atomic internal state (not Prometheus)
 		if exportMode == "stdout" || exportMode == "both" {
-			if m := exportLastSuccess.WithLabelValues("stdout"); m != nil {
-				// We can't directly read from Gauge, so we track it via the metric itself
-				// This is a limitation, but the metric is the source of truth
-				lastDest = "stdout"
+			successTs := atomic.LoadInt64(&exportLastSuccessStdout)
+			errorTs := atomic.LoadInt64(&exportLastErrorStdout)
+			if successTs > 0 {
+				response.LastExportUnix = float64(successTs)
+				response.LastExportRFC3339 = time.Unix(successTs, 0).UTC().Format(time.RFC3339)
+				response.LastExportDestination = "stdout"
+			}
+			if errorTs > 0 {
+				// Could expand to include error details per-destination
+				if reason, ok := exportLastErrorReason.Load("stdout"); ok {
+					_ = reason // Store for future use if needed
+				}
 			}
 		}
 
-		// Check file
 		if exportMode == "file" || exportMode == "both" {
-			if m := exportLastSuccess.WithLabelValues("file"); m != nil {
-				lastDest = "file"
+			successTs := atomic.LoadInt64(&exportLastSuccessFile)
+			errorTs := atomic.LoadInt64(&exportLastErrorFile)
+			if successTs > 0 {
+				// If both destinations, file timestamp might override stdout
+				// For "both" mode, report the most recent
+				if successTs > int64(response.LastExportUnix) {
+					response.LastExportUnix = float64(successTs)
+					response.LastExportRFC3339 = time.Unix(successTs, 0).UTC().Format(time.RFC3339)
+					response.LastExportDestination = "file"
+				}
 			}
-		}
-
-		if lastDest != "" {
-			response.LastExportDestination = lastDest
-			// Note: We can't read the gauge value directly, so timestamp is best-effort
-			// Prometheus scraper will have the actual value
+			if errorTs > 0 {
+				if reason, ok := exportLastErrorReason.Load("file"); ok {
+					_ = reason // Store for future use
+				}
+			}
 		}
 	}
 
@@ -986,9 +1005,15 @@ func exportEvent(event Event, messageID string) {
 		if err != nil {
 			log.Printf("export_stdout_error event_id=%s err=%v", event.EventID, err)
 			exportErrors.WithLabelValues("stdout", "write").Inc()
+			// Record error timestamp
+			atomic.StoreInt64(&exportLastErrorStdout, time.Now().Unix())
+			exportLastErrorReason.Store("stdout", "write")
 		} else {
 			eventsExported.WithLabelValues("stdout").Inc()
-			exportLastSuccess.WithLabelValues("stdout").Set(float64(time.Now().Unix()))
+			// Record success timestamp (atomic + Prometheus)
+			now := time.Now().Unix()
+			atomic.StoreInt64(&exportLastSuccessStdout, now)
+			exportLastSuccess.WithLabelValues("stdout").Set(float64(now))
 		}
 	}
 
@@ -997,15 +1022,24 @@ func exportEvent(event Event, messageID string) {
 		if err != nil {
 			log.Printf("export_file_error event_id=%s err=%v", event.EventID, err)
 			exportErrors.WithLabelValues("file", "write").Inc()
+			// Record error timestamp
+			atomic.StoreInt64(&exportLastErrorFile, time.Now().Unix())
+			exportLastErrorReason.Store("file", "write")
 		} else {
 			// Flush periodically (every write is okay for moderate throughput)
 			err := exportWriter.Flush()
 			if err != nil {
 				log.Printf("export_file_flush_error event_id=%s err=%v", event.EventID, err)
 				exportErrors.WithLabelValues("file", "flush").Inc()
+				// Record error timestamp
+				atomic.StoreInt64(&exportLastErrorFile, time.Now().Unix())
+				exportLastErrorReason.Store("file", "flush")
 			} else {
 				eventsExported.WithLabelValues("file").Inc()
-				exportLastSuccess.WithLabelValues("file").Set(float64(time.Now().Unix()))
+				// Record success timestamp (atomic + Prometheus)
+				now := time.Now().Unix()
+				atomic.StoreInt64(&exportLastSuccessFile, now)
+				exportLastSuccess.WithLabelValues("file").Set(float64(now))
 			}
 		}
 	}
