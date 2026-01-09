@@ -12,3 +12,4 @@ backup/
 
 # OS junk
 .DS_Store
+*.bak
