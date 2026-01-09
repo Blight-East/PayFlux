@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -81,6 +82,12 @@ var (
 
 	// Valid API keys (set in main)
 	validAPIKeys []string
+
+	// Export config (set in main)
+	exportMode         string   // "stdout", "file", "both"
+	exportFile         *os.File // file handle if file export enabled
+	exportWriter       *bufio.Writer
+	consumerNameGlobal string // for export metadata
 )
 
 // Rate limiter map
@@ -128,6 +135,10 @@ var (
 		Name: "payflux_events_by_processor_total",
 		Help: "Events ingested, labeled by processor",
 	}, []string{"processor"})
+	eventsExported = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_events_exported_total",
+		Help: "Events exported after processing",
+	}, []string{"destination"})
 )
 
 func main() {
@@ -174,7 +185,7 @@ func main() {
 
 	prometheus.MustRegister(
 		ingestAccepted, ingestRejected, consumerProcessed, consumerDlq, ingestDuplicate,
-		streamLength, pendingCount, ingestLatency, eventsByProcessor,
+		streamLength, pendingCount, ingestLatency, eventsByProcessor, eventsExported,
 	)
 
 	// Redis connection pool
@@ -198,6 +209,12 @@ func main() {
 		log.Fatalf("consumer_group_failed stream=%s group=%s err=%v", streamKey, groupName, err)
 	}
 	log.Printf("consumer_group_ready stream=%s group=%s", streamKey, groupName)
+
+	// Setup export
+	if err := setupExport(); err != nil {
+		log.Fatalf("export_setup_failed err=%v", err)
+	}
+	defer cleanupExport()
 
 	// Start consumer
 	go consumeEvents()
@@ -294,6 +311,82 @@ func generateConsumerName() string {
 	randSuffix := hex.EncodeToString(randBytes)
 
 	return fmt.Sprintf("%s-%d-%s", hostname, os.Getpid(), randSuffix)
+}
+
+// Panic handling with configurable mode
+func consumeEvents() {
+	consumerName := generateConsumerName()
+	consumerNameGlobal = consumerName // Store for export metadata
+	log.Printf("consumer_started group=%s stream=%s consumer=%s", groupName, streamKey, consumerName)
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("consumer_panic panic=%v stack=%s", r, string(debug.Stack()))
+
+			if panicMode == "recover" {
+				// Restart consumer after brief delay
+				time.Sleep(5 * time.Second)
+				log.Println("consumer_restarting")
+				go consumeEvents()
+			} else {
+				// Default: crash - let supervisor restart the process
+				log.Fatal("consumer_panic_exit")
+			}
+		}
+	}()
+
+	claimStart := "0-0"
+
+	for {
+		// 1) Crash recovery: reclaim stuck/pending messages
+		for {
+			msgs, next, err := rdb.XAutoClaim(ctx, &redis.XAutoClaimArgs{
+				Stream:   streamKey,
+				Group:    groupName,
+				Consumer: consumerName,
+				MinIdle:  minIdleToClaim,
+				Start:    claimStart,
+				Count:    50,
+			}).Result()
+
+			if err != nil {
+				log.Printf("xautoclaim_error err=%v", err)
+				break
+			}
+
+			claimStart = next
+			if len(msgs) == 0 {
+				break
+			}
+
+			for _, msg := range msgs {
+				handleMessageWithDlq(msg)
+			}
+		}
+
+		// 2) Normal consumption of new messages
+		streams, err := rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
+			Group:    groupName,
+			Consumer: consumerName,
+			Streams:  []string{streamKey, ">"},
+			Count:    50,
+			Block:    2 * time.Second,
+		}).Result()
+
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				continue
+			}
+			log.Printf("xreadgroup_error err=%v", err)
+			continue
+		}
+
+		for _, s := range streams {
+			for _, msg := range s.Messages {
+				handleMessageWithDlq(msg)
+			}
+		}
+	}
 }
 
 // Authentication middleware (multi-key support with constant-time compare)
@@ -633,81 +726,6 @@ func ensureConsumerGroup(stream, group string) error {
 	return err
 }
 
-// Panic handling with configurable mode
-func consumeEvents() {
-	consumerName := generateConsumerName()
-	log.Printf("consumer_started group=%s stream=%s consumer=%s", groupName, streamKey, consumerName)
-
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("consumer_panic panic=%v stack=%s", r, string(debug.Stack()))
-
-			if panicMode == "recover" {
-				// Restart consumer after brief delay
-				time.Sleep(5 * time.Second)
-				log.Println("consumer_restarting")
-				go consumeEvents()
-			} else {
-				// Default: crash - let supervisor restart the process
-				log.Fatal("consumer_panic_exit")
-			}
-		}
-	}()
-
-	claimStart := "0-0"
-
-	for {
-		// 1) Crash recovery: reclaim stuck/pending messages
-		for {
-			msgs, next, err := rdb.XAutoClaim(ctx, &redis.XAutoClaimArgs{
-				Stream:   streamKey,
-				Group:    groupName,
-				Consumer: consumerName,
-				MinIdle:  minIdleToClaim,
-				Start:    claimStart,
-				Count:    50,
-			}).Result()
-
-			if err != nil {
-				log.Printf("xautoclaim_error err=%v", err)
-				break
-			}
-
-			claimStart = next
-			if len(msgs) == 0 {
-				break
-			}
-
-			for _, msg := range msgs {
-				handleMessageWithDlq(msg)
-			}
-		}
-
-		// 2) Normal consumption of new messages
-		streams, err := rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group:    groupName,
-			Consumer: consumerName,
-			Streams:  []string{streamKey, ">"},
-			Count:    50,
-			Block:    2 * time.Second,
-		}).Result()
-
-		if err != nil {
-			if errors.Is(err, redis.Nil) {
-				continue
-			}
-			log.Printf("xreadgroup_error err=%v", err)
-			continue
-		}
-
-		for _, s := range streams {
-			for _, msg := range s.Messages {
-				handleMessageWithDlq(msg)
-			}
-		}
-	}
-}
-
 // DLQ retry budget
 func handleMessageWithDlq(msg redis.XMessage) {
 	// Check retry count via XPENDING
@@ -758,6 +776,9 @@ func handleMessageWithDlq(msg redis.XMessage) {
 	log.Printf("event_processed id=%s type=%s processor=%s",
 		msg.ID, event.EventType, event.Processor)
 	consumerProcessed.Inc()
+
+	// Export event (non-blocking, errors logged but not fatal)
+	exportEvent(event, msg.ID)
 
 	// ACK only on success
 	if err := rdb.XAck(ctx, streamKey, groupName, msg.ID).Err(); err != nil {
@@ -819,4 +840,94 @@ func envInt(key string, fallback int) int {
 		return fallback
 	}
 	return i
+}
+
+// setupExport initializes export writers based on configuration
+func setupExport() error {
+	exportMode = env("PAYFLUX_EXPORT_MODE", "stdout")
+	if exportMode != "stdout" && exportMode != "file" && exportMode != "both" {
+		return fmt.Errorf("invalid PAYFLUX_EXPORT_MODE: %s (must be stdout, file, or both)", exportMode)
+	}
+
+	if exportMode == "file" || exportMode == "both" {
+		filePath := os.Getenv("PAYFLUX_EXPORT_FILE")
+		if filePath == "" {
+			return fmt.Errorf("PAYFLUX_EXPORT_FILE must be set when using file or both mode")
+		}
+
+		f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to open export file: %w", err)
+		}
+		exportFile = f
+		exportWriter = bufio.NewWriter(f)
+		log.Printf("export_configured mode=%s file=%s", exportMode, filePath)
+	} else {
+		log.Printf("export_configured mode=%s", exportMode)
+	}
+
+	return nil
+}
+
+// cleanupExport flushes and closes export resources
+func cleanupExport() {
+	if exportWriter != nil {
+		_ = exportWriter.Flush()
+	}
+	if exportFile != nil {
+		_ = exportFile.Close()
+	}
+}
+
+// ExportedEvent is the JSON structure written to export destinations
+type ExportedEvent struct {
+	EventID         string `json:"event_id"`
+	EventType       string `json:"event_type"`
+	EventTimestamp  string `json:"event_timestamp"`
+	Processor       string `json:"processor"`
+	StreamMessageID string `json:"stream_message_id"`
+	ConsumerName    string `json:"consumer_name"`
+	ProcessedAt     string `json:"processed_at"`
+}
+
+// exportEvent writes the processed event to configured destinations
+func exportEvent(event Event, messageID string) {
+	exported := ExportedEvent{
+		EventID:         event.EventID,
+		EventType:       event.EventType,
+		EventTimestamp:  event.EventTimestamp,
+		Processor:       event.Processor,
+		StreamMessageID: messageID,
+		ConsumerName:    consumerNameGlobal,
+		ProcessedAt:     time.Now().UTC().Format(time.RFC3339),
+	}
+
+	data, err := json.Marshal(exported)
+	if err != nil {
+		log.Printf("export_marshal_error event_id=%s err=%v", event.EventID, err)
+		return
+	}
+
+	// Add newline for line-delimited JSON
+	data = append(data, '\n')
+
+	if exportMode == "stdout" || exportMode == "both" {
+		_, err := os.Stdout.Write(data)
+		if err != nil {
+			log.Printf("export_stdout_error event_id=%s err=%v", event.EventID, err)
+		} else {
+			eventsExported.WithLabelValues("stdout").Inc()
+		}
+	}
+
+	if (exportMode == "file" || exportMode == "both") && exportWriter != nil {
+		_, err := exportWriter.Write(data)
+		if err != nil {
+			log.Printf("export_file_error event_id=%s err=%v", event.EventID, err)
+		} else {
+			// Flush periodically (every write is okay for moderate throughput)
+			_ = exportWriter.Flush()
+			eventsExported.WithLabelValues("file").Inc()
+		}
+	}
 }

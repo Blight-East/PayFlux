@@ -122,6 +122,8 @@ All configuration is via environment variables.
 | `PAYFLUX_RATELIMIT_BURST` | `500` | Rate limit: burst allowance |
 | `PAYFLUX_STREAM_MAXLEN` | `200000` | Max stream length (0 = no trimming) |
 | `PAYFLUX_PANIC_MODE` | `crash` | Panic handling: `crash` (exit) or `recover` (restart loop) |
+| `PAYFLUX_EXPORT_MODE` | `stdout` | Event export: `stdout`, `file`, or `both` |
+| `PAYFLUX_EXPORT_FILE` | (none) | Export file path (required for `file` or `both` mode) |
 | `PRICE_CENTS` | `9900` | Checkout price in cents |
 | `PRODUCT_NAME` | `PayFlux Early Access` | Checkout product name |
 | `SITE_URL` | `https://payflux.dev` | Site URL for checkout redirects |
@@ -211,6 +213,32 @@ curl -s -X POST http://localhost:8080/v1/events/payment_exhaust \
 pkill -TERM -f "go run main.go"
 # Expected in logs: shutdown_initiated, shutdown_complete
 ```
+
+⸻
+
+Event Export
+
+After successful processing, PayFlux exports events as line-delimited JSON to stdout and/or file.
+
+**Why JSON export?**
+- Standards-compliant: Works with Datadog, Fluent Bit, Vector, Filebeat, CloudWatch, etc.
+- Simple piping: `./payflux > events.jsonl` or systemd journal capture
+- No vendor lock-in: Pure JSON, no proprietary formats
+
+**Export modes:**
+- `stdout` (default): Write to stdout for log collection
+- `file`: Append to `PAYFLUX_EXPORT_FILE`
+- `both`: Write to both stdout and file
+
+**Example exported event:**
+```json
+{"event_id":"550e8400-e29b-41d4-a716-446655440000","event_type":"payment_failed","event_timestamp":"2026-01-09T12:00:00Z","processor":"stripe","stream_message_id":"1767957855596-0","consumer_name":"host-1234-abc","processed_at":"2026-01-09T17:00:00Z"}
+```
+
+**What this is NOT:**
+- Not a replacement for analytics databases (use downstream exporters)
+- Not a compliance archive (export to S3, warehouse, etc.)
+- This is a starter interface for observability, not the final data layer
 
 ⸻
 
