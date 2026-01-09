@@ -354,6 +354,7 @@ func consumeEvents() {
 	}()
 
 	claimStart := "0-0"
+	errorBackoff := 0 // For exponential backoff on errors
 
 	for {
 		// 1) Crash recovery: reclaim stuck/pending messages
@@ -369,8 +370,14 @@ func consumeEvents() {
 
 			if err != nil {
 				log.Printf("xautoclaim_error err=%v", err)
+				// Apply backoff
+				errorBackoff++
+				time.Sleep(calculateBackoff(errorBackoff))
 				break
 			}
+
+			// Reset backoff on success
+			errorBackoff = 0
 
 			claimStart = next
 			if len(msgs) == 0 {
@@ -396,8 +403,14 @@ func consumeEvents() {
 				continue
 			}
 			log.Printf("xreadgroup_error err=%v", err)
+			// Apply backoff on error
+			errorBackoff++
+			time.Sleep(calculateBackoff(errorBackoff))
 			continue
 		}
+
+		// Reset backoff on success
+		errorBackoff = 0
 
 		for _, s := range streams {
 			for _, msg := range s.Messages {
@@ -1043,4 +1056,17 @@ func exportEvent(event Event, messageID string) {
 			}
 		}
 	}
+}
+
+// calculateBackoff returns exponential backoff duration (100ms doubling, capped at 2s)
+func calculateBackoff(attempt int) time.Duration {
+	if attempt == 0 {
+		return 0
+	}
+	// 100ms * 2^attempt, capped at 2s
+	backoff := time.Duration(100) * time.Millisecond * time.Duration(1<<uint(min(attempt, 4)))
+	if backoff > 2*time.Second {
+		backoff = 2 * time.Second
+	}
+	return backoff
 }
