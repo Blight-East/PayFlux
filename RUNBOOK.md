@@ -38,5 +38,13 @@ If Redis memory is high:
 1. Decrease `PAYFLUX_STREAM_MAXLEN` (default 200,000).
 2. Use `redis-cli XTRIM events_stream MAXLEN 100000` for emergency cleanup.
 
+## Processor Risk Score (High/Critical)
+
+If `processor_risk_band` hits `high` or `critical`:
+
+1. **Check Drivers**: Look at the `processor_risk_drivers` array in the logs to see what's triggering the signal (e.g., `timeout_clustering`).
+2. **Compare Baselines**: Check `/metrics` for `payflux_processor_risk_score_last` across all processors. If only one is high, it's likely an upstream provider issue.
+3. **Action**: Notify the processor or shift traffic if using a router.
+
 ---
-*PayFlux: Early warning for payment traffic. Not an audit log.*
+*Runbook v0.2.2*

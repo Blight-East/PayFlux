@@ -36,14 +36,13 @@ curl -s -X POST "$ADDR/v1/events/payment_exhaust" \
   -d '{"event_type":"warmup","event_id":"warmup-001","processor":"stripe"}' > /dev/null
 
 # 2. Run load with 'hey'
-# Note: Using random event IDs to avoid idempotency hits where possible, 
-# though for smoke tests we just want to see the pipe move.
 echo "Firing 10k events..."
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 hey -n 10000 -c 50 -m POST \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"event_type":"smoke_test","processor":"stripe","event_id":"random"}' \
-  "$ADDR/v1/events/payment_exhaust" > /dev/null
+  -d "{\"event_type\":\"smoke_test\",\"processor\":\"stripe\",\"event_id\":\"550e8400-e29b-41d4-a716-446655440027\",\"event_timestamp\":\"$NOW\"}" \
+  "$ADDR/v1/events/payment_exhaust"
 
 echo "Load complete. Waiting for drain..."
 sleep 2

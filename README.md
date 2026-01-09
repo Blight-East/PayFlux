@@ -150,9 +150,30 @@ All configuration is via environment variables.
 
 ## Processor Risk Score (beta)
 
-PayFlux enrichment provides a deterministic, O(1) in-memory risk signal computed per-event during export. This helps infrastructure teams distinguish between nominal processor jitter and catastrophic failure patterns.
+PayFlux enrichment provides a **deterministic, explainable, and processor-aligned** risk signal computed O(1) in-memory during export. It uses behavioral proximity—not ML—to help infrastructure teams distinguish between nominal jitter and catastrophic failure patterns.
 
-**Note:** This is a behavioral risk proximity signal, not a compliance or audit guarantee.
+> [!IMPORTANT]
+> This is a behavioral early-warning signal, NOT a compliance, fraud-prevention, or audit guarantee.
+
+### Recommended Prometheus Alerts
+
+```yaml
+# Alert on sustained high risk
+- alert: ProcessorRiskHigh
+  expr: payflux_processor_risk_score_last > 0.6
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Processor {{ $labels.processor }} risk is elevated"
+
+# Alert on critical spikes
+- alert: ProcessorRiskCritical
+  expr: payflux_processor_risk_score_last >= 0.8
+  for: 1m
+  labels:
+    severity: critical
+```
 
 ### Configuration
 

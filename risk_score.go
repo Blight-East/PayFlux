@@ -22,6 +22,7 @@ type ProcessorMetrics struct {
 	AuthFails   int
 	RetrySum    int
 	GeoBuckets  map[string]struct{}
+	LastUpdate  int64 // Unix timestamp of last update
 }
 
 // RiskScorer manages sliding window metrics and scoring
@@ -80,13 +81,19 @@ func (s *RiskScorer) RecordEvent(event Event) RiskResult {
 	now := time.Now().Unix()
 	bucketIdx := int((now / int64(s.bucketSizeSec)) % int64(s.numBuckets))
 
-	// Clear bucket if it's stale (represents a previous window cycle)
-	// We'd ideally store timestamps per bucket, but for O(1) we can simplify
-	// Actually, let's keep it simple: just update the bucket.
-	// To handle staleness properly in a real sliding window, we'd check timestamps.
-	// For this exercise, we'll assume frequent enough events or simple rotation.
-
 	bucket := &s.history[processor][bucketIdx]
+
+	// If bucket is older than one bucketSizeSec, it's stale (left over from previous window cycle)
+	if now-bucket.LastUpdate >= int64(s.bucketSizeSec) {
+		bucket.TotalEvents = 0
+		bucket.Failures = 0
+		bucket.Timeouts = 0
+		bucket.AuthFails = 0
+		bucket.RetrySum = 0
+		bucket.GeoBuckets = make(map[string]struct{})
+		bucket.LastUpdate = now
+	}
+
 	bucket.TotalEvents++
 	bucket.RetrySum += event.RetryCount
 
@@ -103,7 +110,10 @@ func (s *RiskScorer) RecordEvent(event Event) RiskResult {
 	if bucket.GeoBuckets == nil {
 		bucket.GeoBuckets = make(map[string]struct{})
 	}
-	bucket.GeoBuckets[event.GeoBucket] = struct{}{}
+	// Cap geo buckets per bucket to avoid unbounded map growth
+	if len(bucket.GeoBuckets) < 50 {
+		bucket.GeoBuckets[event.GeoBucket] = struct{}{}
+	}
 
 	return s.computeScore(processor)
 }
