@@ -103,6 +103,10 @@ Configuration
 
 All configuration is via environment variables.
 
+**Logging:**
+- Startup logs use structured JSON format (slog) for easy parsing
+- All other logs remain as log.Printf for now
+
 **Required:**
 
 | Variable | Description |
@@ -262,7 +266,8 @@ PAYFLUX_EXPORT_MODE=file PAYFLUX_EXPORT_FILE=/var/log/payflux/exports.jsonl ./pa
 Monitor export health:
 ```bash
 curl http://localhost:8080/export/health
-# Returns JSON: {"enabled":true,"export_mode":"stdout",...}
+# Returns per-destination status with timestamps:
+# {"enabled":true,"export_mode":"stdout","destinations":{"stdout":{"enabled":true,...}}}
 ```
 
 Prometheus metrics for export observability:

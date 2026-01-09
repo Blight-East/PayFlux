@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -161,6 +162,11 @@ func main() {
 	// Load env (optional)
 	_ = godotenv.Load()
 
+	// Initialize structured logging (JSON handler)
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})))
+
 	redisAddr := env("REDIS_ADDR", "localhost:6379")
 	httpAddr := env("HTTP_ADDR", ":8080")
 
@@ -169,19 +175,19 @@ func main() {
 	if len(validAPIKeys) == 0 {
 		log.Fatal("PAYFLUX_API_KEY or PAYFLUX_API_KEYS must be set")
 	}
-	log.Printf("api_keys_loaded count=%d", len(validAPIKeys))
+	slog.Info("api_keys_loaded", "count", len(validAPIKeys))
 
 	// Load rate limit config
 	rateLimitRPS = float64(envInt("PAYFLUX_RATELIMIT_RPS", 100))
 	rateLimitBurst = envInt("PAYFLUX_RATELIMIT_BURST", 500)
-	log.Printf("rate_limit_configured rps=%.0f burst=%d", rateLimitRPS, rateLimitBurst)
+	slog.Info("rate_limit_configured", "rps", rateLimitRPS, "burst", rateLimitBurst)
 
 	// Load stream retention config
 	streamMaxLen = int64(envInt("PAYFLUX_STREAM_MAXLEN", 200000))
 	if streamMaxLen > 0 {
-		log.Printf("stream_retention_enabled maxlen=%d", streamMaxLen)
+		slog.Info("stream_retention_enabled", "maxlen", streamMaxLen)
 	} else {
-		log.Println("stream_retention_disabled")
+		slog.Info("stream_retention_disabled")
 	}
 
 	// Load panic mode config
@@ -189,7 +195,7 @@ func main() {
 	if panicMode != "crash" && panicMode != "recover" {
 		log.Fatalf("PAYFLUX_PANIC_MODE must be 'crash' or 'recover', got: %s", panicMode)
 	}
-	log.Printf("panic_mode=%s", panicMode)
+	slog.Info("panic_mode", "mode", panicMode)
 
 	// Stripe key validation
 	stripeKey := os.Getenv("STRIPE_API_KEY")
@@ -197,7 +203,7 @@ func main() {
 		log.Fatal("STRIPE_API_KEY missing or invalid format (must start with sk_)")
 	}
 	stripe.Key = stripeKey
-	log.Println("stripe_configured")
+	slog.Info("stripe_configured")
 
 	prometheus.MustRegister(
 		ingestAccepted, ingestRejected, consumerProcessed, consumerDlq, ingestDuplicate,
@@ -219,13 +225,13 @@ func main() {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Fatalf("redis_connect_failed addr=%s err=%v", redisAddr, err)
 	}
-	log.Printf("redis_connected addr=%s", redisAddr)
+	slog.Info("redis_connected", "addr", redisAddr)
 
 	// Create consumer group safely
 	if err := ensureConsumerGroup(streamKey, groupName); err != nil {
 		log.Fatalf("consumer_group_failed stream=%s group=%s err=%v", streamKey, groupName, err)
 	}
-	log.Printf("consumer_group_ready stream=%s group=%s", streamKey, groupName)
+	slog.Info("consumer_group_ready", "stream", streamKey, "group", groupName)
 
 	// Setup export
 	if err := setupExport(); err != nil {
@@ -263,7 +269,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("server_listening addr=%s", httpAddr)
+		slog.Info("server_listening", "addr", httpAddr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server_failed err=%v", err)
 		}
@@ -335,7 +341,7 @@ func generateConsumerName() string {
 func consumeEvents() {
 	consumerName := generateConsumerName()
 	consumerNameGlobal = consumerName // Store for export metadata
-	log.Printf("consumer_started group=%s stream=%s consumer=%s", groupName, streamKey, consumerName)
+	slog.Info("consumer_started", "group", groupName, "stream", streamKey, "consumer", consumerName)
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -855,14 +861,22 @@ func sendToDlq(msg redis.XMessage, reason string) error {
 	return nil
 }
 
+// ExportDestinationStatus holds per-destination export state
+type ExportDestinationStatus struct {
+	Enabled            bool    `json:"enabled"`
+	LastSuccessUnix    float64 `json:"last_success_ts,omitempty"`
+	LastSuccessRFC3339 string  `json:"last_success_rfc3339,omitempty"`
+	LastErrorUnix      float64 `json:"last_error_ts,omitempty"`
+	LastErrorRFC3339   string  `json:"last_error_rfc3339,omitempty"`
+	LastErrorReason    string  `json:"last_error_reason,omitempty"`
+}
+
 // ExportHealthResponse is returned by /export/health
 type ExportHealthResponse struct {
-	Enabled               bool    `json:"enabled"`
-	ExportMode            string  `json:"export_mode,omitempty"`
-	ExportFile            string  `json:"export_file,omitempty"`
-	LastExportUnix        float64 `json:"last_export_unix,omitempty"`
-	LastExportRFC3339     string  `json:"last_export_rfc3339,omitempty"`
-	LastExportDestination string  `json:"last_export_destination,omitempty"`
+	Enabled      bool                               `json:"enabled"`
+	ExportMode   string                             `json:"export_mode,omitempty"`
+	FilePath     string                             `json:"file_path,omitempty"`
+	Destinations map[string]ExportDestinationStatus `json:"destinations,omitempty"`
 }
 
 func handleExportHealth(w http.ResponseWriter, r *http.Request) {
@@ -878,43 +892,44 @@ func handleExportHealth(w http.ResponseWriter, r *http.Request) {
 	if exportMode != "" {
 		response.ExportMode = exportMode
 		if exportFile != nil {
-			response.ExportFile = exportFile.Name()
+			response.FilePath = exportFile.Name()
 		}
 
-		// Read from atomic internal state (not Prometheus)
+		// Build per-destination status from internal atomic state
+		response.Destinations = make(map[string]ExportDestinationStatus)
+
+		// Stdout status
 		if exportMode == "stdout" || exportMode == "both" {
-			successTs := atomic.LoadInt64(&exportLastSuccessStdout)
-			errorTs := atomic.LoadInt64(&exportLastErrorStdout)
-			if successTs > 0 {
-				response.LastExportUnix = float64(successTs)
-				response.LastExportRFC3339 = time.Unix(successTs, 0).UTC().Format(time.RFC3339)
-				response.LastExportDestination = "stdout"
+			status := ExportDestinationStatus{Enabled: true}
+			if successTs := atomic.LoadInt64(&exportLastSuccessStdout); successTs > 0 {
+				status.LastSuccessUnix = float64(successTs)
+				status.LastSuccessRFC3339 = time.Unix(successTs, 0).UTC().Format(time.RFC3339)
 			}
-			if errorTs > 0 {
-				// Could expand to include error details per-destination
+			if errorTs := atomic.LoadInt64(&exportLastErrorStdout); errorTs > 0 {
+				status.LastErrorUnix = float64(errorTs)
+				status.LastErrorRFC3339 = time.Unix(errorTs, 0).UTC().Format(time.RFC3339)
 				if reason, ok := exportLastErrorReason.Load("stdout"); ok {
-					_ = reason // Store for future use if needed
+					status.LastErrorReason = reason.(string)
 				}
 			}
+			response.Destinations["stdout"] = status
 		}
 
+		// File status
 		if exportMode == "file" || exportMode == "both" {
-			successTs := atomic.LoadInt64(&exportLastSuccessFile)
-			errorTs := atomic.LoadInt64(&exportLastErrorFile)
-			if successTs > 0 {
-				// If both destinations, file timestamp might override stdout
-				// For "both" mode, report the most recent
-				if successTs > int64(response.LastExportUnix) {
-					response.LastExportUnix = float64(successTs)
-					response.LastExportRFC3339 = time.Unix(successTs, 0).UTC().Format(time.RFC3339)
-					response.LastExportDestination = "file"
-				}
+			status := ExportDestinationStatus{Enabled: true}
+			if successTs := atomic.LoadInt64(&exportLastSuccessFile); successTs > 0 {
+				status.LastSuccessUnix = float64(successTs)
+				status.LastSuccessRFC3339 = time.Unix(successTs, 0).UTC().Format(time.RFC3339)
 			}
-			if errorTs > 0 {
+			if errorTs := atomic.LoadInt64(&exportLastErrorFile); errorTs > 0 {
+				status.LastErrorUnix = float64(errorTs)
+				status.LastErrorRFC3339 = time.Unix(errorTs, 0).UTC().Format(time.RFC3339)
 				if reason, ok := exportLastErrorReason.Load("file"); ok {
-					_ = reason // Store for future use
+					status.LastErrorReason = reason.(string)
 				}
 			}
+			response.Destinations["file"] = status
 		}
 	}
 
