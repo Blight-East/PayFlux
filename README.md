@@ -29,6 +29,8 @@ Events are acknowledged (ACK) in Redis **before** export. Export is best-effort 
 >
 > If you want a hosted version, [request early access](https://payflux.dev) instead.
 
+**License:** PayFlux is offered under a commercial early-access license. See [LICENSE.md](LICENSE.md) for details.
+
 ⸻
 
 ## Deploy PayFlux in 10 Minutes (Checklist)
@@ -133,7 +135,9 @@ curl -X POST http://localhost:8080/v1/events/payment_exhaust \
   }'
 ```
 
-**Expected:** HTTP 202 (no response body). The Docker logs show `event_processed`.
+**Expected:** HTTP 202 (empty response body).
+
+**Verification:** Run `curl -s localhost:8080/metrics | grep payflux_ingest_accepted` and confirm the counter incremented. Processing logs (`event_processed`) may appear in the Docker terminal shortly after.
 
 **Common failure:** `401 unauthorized` → Your `Authorization` header doesn't match `PAYFLUX_API_KEY` in docker-compose.yml.
 
@@ -208,23 +212,25 @@ Core Architecture
   ├─ Retry Optimization
   └─ Exports (Kafka, Webhooks, Warehouses)
 
-Design Principles
-	•	Producers never block on downstream systems
-	•	Ordering is guaranteed per stream
-	•	Backpressure handled natively by Redis
-	•	Consumers scale independently
-	•	Failure domains are isolated
+## Design Principles
+
+- Producers never block on downstream systems
+- Ordering is guaranteed per stream
+- Backpressure handled natively by Redis
+- Consumers scale independently
+- Failure domains are isolated
 
 ⸻
 
-Key Features
-	•	High-throughput HTTP ingestion
-	•	Redis Streams for durability and ordering
-	•	Consumer groups for parallel processing
-	•	Crash-safe processing with pending reclaim
-	•	Dead-letter queue (DLQ) support
-	•	Prometheus-compatible metrics
-	•	Health checks for orchestration systems
+## Key Features
+
+- High-throughput HTTP ingestion
+- Redis Streams for durability and ordering
+- Consumer groups for parallel processing
+- Crash-safe processing with pending reclaim
+- Dead-letter queue (DLQ) support
+- Prometheus-compatible metrics
+- Health checks for orchestration systems
 
 ⸻
 
@@ -233,11 +239,11 @@ API Overview
 Ingest Event
 
 POST /v1/events/payment_exhaust
-json
+```json
 {
   "event_type": "payment_failed",
   "event_timestamp": "2026-01-06T00:00:00Z",
-  "event_id": "uuid-123",
+  "event_id": "550e8400-e29b-41d4-a716-446655440000",
   "merchant_id_hash": "abc123",
   "payment_intent_id_hash": "xyz456",
   "processor": "stripe",
@@ -251,9 +257,9 @@ json
   "retry_result": "failed",
   "failure_origin": "processor"
 }
+```
 
-Response
-202 Accepted
+**Response:** `202 Accepted`
 
 ⸻
 
@@ -463,60 +469,49 @@ PayFlux intentionally does **not** implement in-app rotation. External tooling i
 
 ⸻
 
-Observability & Integrations
+## Observability & Integrations
 
-Available Today
-	•	/metrics — Prometheus format (Grafana, Datadog compatible)
-	•	/health — readiness / liveness checks
-	•	Structured JSON logs
-	•	Redis Streams as the event backbone
+### Available Today
 
-Export Model
+- `/metrics` — Prometheus format (Grafana, Datadog compatible)
+- `/health` — readiness / liveness checks
+- Structured JSON logs
+- Redis Streams as the event backbone
 
-PayFlux does not force a dashboard.
+### Export Model
 
-Instead:
-	•	All events land in Redis Streams
-	•	Consumers attach to the stream
-	•	Each consumer implements a single responsibility
+PayFlux does not force a dashboard. Instead:
+
+- All events land in Redis Streams
+- Consumers attach to the stream
+- Each consumer implements a single responsibility
 
 This makes PayFlux compatible with:
-	•	Datadog
-	•	Grafana
-	•	Kafka / Redpanda
-	•	Webhooks
-	•	Data warehouses (Snowflake, BigQuery)
 
-Planned Exporters
-	•	Kafka / Redpanda exporter
-	•	Webhook exporter
-	•	Warehouse batch exporter
+- Datadog
+- Grafana
+- Kafka / Redpanda
+- Webhooks
+- Data warehouses (Snowflake, BigQuery)
+
+### Planned Exporters
+
+- Kafka / Redpanda exporter
+- Webhook exporter
+- Warehouse batch exporter
 
 Exporters are implemented as consumers—no changes to ingestion required.
 
 ⸻
 
-Performance (Local Proof)
-	•	Sustained 40k+ events/sec on a laptop
-	•	Zero pending messages under load
-	•	Consumer lag drains to zero after spikes
-	•	No producer backpressure
+## Performance (Local Proof)
 
-Raw Redis output and load test commands are included in:PROOF-load-test.md
+- Sustained 40k+ events/sec on a laptop
+- Zero pending messages under load
+- Consumer lag drains to zero after spikes
+- No producer backpressure
 
-Deployment
-
-Requirements
-	•	Go 1.21+
-	•	Redis 6.2+
-Run
-bash
- go run main.go
-
-Endpoints
-	•	POST /v1/events/payment_exhaust
-	•	GET /health
-	•	GET /metrics
+Raw Redis output and load test commands are included in [PROOF-load-test.md](PROOF-load-test.md).
 
 ⸻
 
@@ -557,9 +552,9 @@ For long-term replay requirements:
 
 ⸻
 
-Production Readiness Notes
+## Production Readiness Notes
 
-PayFlux v0.1.0 is safe for early access and pilot deployments.
+PayFlux v0.2.x is safe for early access and pilot deployments.
 
 **Assumptions:**
 - Redis is configured with AOF persistence (`appendfsync everysec` or stricter)
@@ -582,24 +577,26 @@ PayFlux v0.1.0 is safe for early access and pilot deployments.
 
 ⸻
 
-Licensing
+## Licensing
 
 PayFlux is offered under a commercial early-access license.
-	•	Self-hosted
-	•	Annual license
-	•	Pricing based on deployment size and event volume
-	•	Custom enterprise agreements available
 
-See LICENSE.md for details.
+- Self-hosted
+- Annual license
+- Pricing based on deployment size and event volume
+- Custom enterprise agreements available
+
+See [LICENSE.md](LICENSE.md) for details.
 
 ⸻
 
-Roadmap (Non-Binding)
-	•	Multi-consumer examples
-	•	Kafka exporter
-	•	Managed hosted offering
-	•	Per-merchant stream partitioning
-	•	SLA tooling for processors and PSPs
+## Roadmap (Non-Binding)
+
+- Multi-consumer examples
+- Kafka exporter
+- Managed hosted offering
+- Per-merchant stream partitioning
+- SLA tooling for processors and PSPs
 
 ⸻
 
