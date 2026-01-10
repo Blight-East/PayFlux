@@ -156,13 +156,13 @@ If you completed all steps, you should see:
 | Metrics | `curl -s localhost:8080/metrics \| grep accepted` | `payflux_ingest_accepted_total 1` |
 | Export | payflux container logs (stdout mode) | JSON export line with `event_id` |
 
-**Congratulations!** PayFlux is running. Events are being buffered in Redis and exported to stdout (which Vector can ship to your logging stack).
+**Congratulations!** PayFlux is running. Events are being buffered in Redis and exported to stdout.
 
 ---
 
 ## What's Next?
 
-- **Ship logs to your stack:** Configure Vector in `deploy/vector.toml` to send events to S3, Elasticsearch, Datadog, etc.
+- **Add Vector (optional):** Run `docker compose --profile full up --build` to include Vector for durable log shipping. Configure `deploy/vector.toml` to send events to S3, Elasticsearch, Datadog, etc.
 - **Monitor with Prometheus:** Scrape `http://localhost:8080/metrics` for alerting.
 - **Read the Runbook:** See [RUNBOOK.md](RUNBOOK.md) for operational guidance.
 
