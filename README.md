@@ -68,6 +68,9 @@ cp .env.example .env
 # Edit .env with your real keys
 ```
 
+> [!NOTE]
+> **Windows users:** PowerShell supports `cp` (alias for `Copy-Item`). In Command Prompt, use `copy .env.example .env` instead.
+
 **Option B:** Edit `deploy/docker-compose.yml` directly and replace the placeholder values.
 
 Your keys:
@@ -144,6 +147,12 @@ curl -X POST http://localhost:8080/v1/events/payment_exhaust \
   }'
 ```
 
+> [!NOTE]
+> **Windows users:** The multiline syntax above is bash-only. Use this single-line command instead:
+> ```powershell
+> curl.exe -X POST http://localhost:8080/v1/events/payment_exhaust -H "Authorization: Bearer your-secret-api-key" -H "Content-Type: application/json" -d "{\"event_type\":\"payment_failed\",\"event_timestamp\":\"2026-01-09T12:00:00Z\",\"event_id\":\"550e8400-e29b-41d4-a716-446655440000\",\"processor\":\"stripe\",\"merchant_id_hash\":\"abc123\",\"payment_intent_id_hash\":\"pi_abc\",\"failure_category\":\"card_declined\",\"retry_count\":0,\"geo_bucket\":\"US\"}"
+> ```
+
 **Expected:** HTTP 202 (empty response body).
 
 **Verification:** Run `curl -s localhost:8080/metrics | grep payflux_ingest_accepted` and confirm the counter incremented. If using `PAYFLUX_EXPORT_MODE=stdout`, you should also see a JSON export line in the payflux container logs.
@@ -159,6 +168,12 @@ curl -s http://localhost:8080/metrics | grep payflux_ingest_accepted
 ```
 
 **Expected:** `payflux_ingest_accepted_total 1`
+
+> [!NOTE]
+> **Windows users:** `grep` is not available by default. Use `findstr` instead:
+> ```powershell
+> curl.exe -s http://localhost:8080/metrics | findstr payflux_ingest_accepted
+> ```
 
 **Common failure:** Metric is 0 → Your test event was rejected. Check the logs for validation errors.
 
