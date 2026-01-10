@@ -44,10 +44,12 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # Vector log shipper (optional but recommended for durable export)
+  # Vector log shipper (OPTIONAL - for durable export)
+  # Enable with: docker compose --profile full up
   # Reads PayFlux stdout and writes to local file
   # In production, configure Vector to ship to S3/Elasticsearch/etc
   vector:
+    profiles: ["full"]
     image: timberio/vector:0.34.0-alpine
     volumes:
       - ./vector.toml:/etc/vector/vector.toml:ro
