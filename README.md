@@ -23,28 +23,163 @@ Events are acknowledged (ACK) in Redis **before** export. Export is best-effort 
 ⸻
 
 > [!WARNING]
-> **Operational Notice**
+> **This is NOT a managed service.**
 >
-> PayFlux is not a managed service. Running it in production requires operational familiarity with Redis Streams, Prometheus, and log shipping pipelines. This repository is a reference implementation intended for teams comfortable operating infrastructure.
+> PayFlux requires you to operate Redis, collect logs, and monitor metrics yourself. There is no hosted dashboard, no support SLA, and no magic.
 >
-> If you are looking for a hosted or managed version, [request early access](https://payflux.dev) instead.
+> If you want a hosted version, [request early access](https://payflux.dev) instead.
 
 ⸻
 
-Quickstart
+## Deploy PayFlux in 10 Minutes (Checklist)
+
+**Prerequisites** (install these first):
+- **Docker** — runs PayFlux and Redis in containers ([install](https://docs.docker.com/get-docker/))
+- **curl** — sends test requests (pre-installed on macOS/Linux)
+- **Git** — clones this repo
+
+> [!NOTE]
+> **What is Redis?** Redis is a fast in-memory database. PayFlux uses it to queue and order payment events. You don't need to configure it—Docker handles everything.
+
+---
+
+### ✅ Step 1: Clone the Repository
 
 ```bash
-redis-server &
-PAYFLUX_API_KEY=test-key STRIPE_API_KEY=sk_test_placeholder go run main.go
-curl -H "Authorization: Bearer test-key" -H "Content-Type: application/json" -d '{"event_type":"payment_failed","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440000","processor":"stripe","merchant_id_hash":"test","payment_intent_id_hash":"test","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"failed","failure_origin":"processor"}' http://localhost:8080/v1/events/payment_exhaust
-curl http://localhost:8080/health && curl -s http://localhost:8080/metrics | grep payflux_ingest_accepted
+git clone https://github.com/Blight-East/PayFlux.git
+cd PayFlux
 ```
 
-⸻
+**Expected:** You see a `deploy/` folder and `main.go` file.
 
-Proof it runs
+**Common failure:** `git: command not found` → Install Git: `brew install git` (macOS) or `apt install git` (Linux).
 
-![PayFlux validation screenshot showing startup logs, health check, metrics, and successful event processing during v0.1.1 local validation](proof-running.png)
+---
+
+### ✅ Step 2: Build PayFlux
+
+```bash
+docker build -t payflux:latest .
+```
+
+**Expected:** Final line says `Successfully tagged payflux:latest`.
+
+**Common failure:** `Cannot connect to Docker daemon` → Start Docker Desktop or run `sudo systemctl start docker`.
+
+---
+
+### ✅ Step 3: Configure Your API Keys
+
+Edit `deploy/docker-compose.yml` and replace these placeholder values:
+
+```yaml
+PAYFLUX_API_KEY: "your-secret-api-key"      # Any string you choose
+STRIPE_API_KEY: "sk_test_your_stripe_key"   # From Stripe dashboard (test mode OK)
+```
+
+**Expected:** File saved with your real keys.
+
+**Common failure:** Forgot to save → PayFlux will reject requests with `unauthorized`.
+
+---
+
+### ✅ Step 4: Start Everything
+
+```bash
+cd deploy
+docker compose up
+```
+
+**Expected:** You see logs like:
+```
+payflux-1  | {"level":"INFO","msg":"server_listening","addr":":8080"}
+redis-1    | Ready to accept connections
+```
+
+**Common failure:** `port 8080 already in use` → Stop whatever is using port 8080, or change the port in `docker-compose.yml`.
+
+---
+
+### ✅ Step 5: Verify Health
+
+Open a **new terminal** and run:
+
+```bash
+curl http://localhost:8080/health
+```
+
+**Expected:** `{"status":"ok"}`
+
+**Common failure:** `Connection refused` → PayFlux isn't running. Check the Docker logs.
+
+---
+
+### ✅ Step 6: Send a Test Event
+
+```bash
+curl -X POST http://localhost:8080/v1/events/payment_exhaust \
+  -H "Authorization: Bearer your-secret-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "payment_failed",
+    "event_timestamp": "2026-01-09T12:00:00Z",
+    "event_id": "550e8400-e29b-41d4-a716-446655440000",
+    "processor": "stripe",
+    "merchant_id_hash": "abc123",
+    "payment_intent_id_hash": "pi_abc",
+    "failure_category": "card_declined",
+    "retry_count": 0,
+    "geo_bucket": "US"
+  }'
+```
+
+**Expected:** HTTP 202 (no response body). The Docker logs show `event_processed`.
+
+**Common failure:** `401 unauthorized` → Your `Authorization` header doesn't match `PAYFLUX_API_KEY` in docker-compose.yml.
+
+---
+
+### ✅ Step 7: Check Metrics
+
+```bash
+curl -s http://localhost:8080/metrics | grep payflux_ingest_accepted
+```
+
+**Expected:** `payflux_ingest_accepted_total 1`
+
+**Common failure:** Metric is 0 → Your test event was rejected. Check the logs for validation errors.
+
+---
+
+## Did It Work?
+
+If you completed all steps, you should see:
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| Health | `curl localhost:8080/health` | `{"status":"ok"}` |
+| Metrics | `curl -s localhost:8080/metrics \| grep accepted` | `payflux_ingest_accepted_total 1` |
+| Logs | Docker terminal | `event_processed id=... type=payment_failed` |
+
+**Congratulations!** PayFlux is running. Events are being buffered in Redis and exported to stdout (which Vector can ship to your logging stack).
+
+---
+
+## What's Next?
+
+- **Ship logs to your stack:** Configure Vector in `deploy/vector.toml` to send events to S3, Elasticsearch, Datadog, etc.
+- **Monitor with Prometheus:** Scrape `http://localhost:8080/metrics` for alerting.
+- **Read the Runbook:** See [RUNBOOK.md](RUNBOOK.md) for operational guidance.
+
+---
+
+## Advanced Deployment (Optional)
+
+For production environments, see the reference configs below. These require more infrastructure knowledge.
+
+**systemd** ([`deploy/systemd/payflux.service`](deploy/systemd/payflux.service)) — For bare-metal Linux servers.
+
+**Kubernetes** ([`deploy/k8s/payflux.yaml`](deploy/k8s/payflux.yaml)) — Single-file manifest for K8s clusters.
 
 ⸻
 
@@ -216,29 +351,6 @@ To rotate keys without downtime:
 
 ⸻
 
-## Deployment Examples
-
-Reference deployments for common environments. Adapt these to your infrastructure:
-
-**Docker Compose** ([`deploy/docker-compose.yml`](deploy/docker-compose.yml))
-- PayFlux + Redis + Vector log shipper
-- Copy-paste runnable with `docker compose up`
-- Includes Vector config for durable export
-
-**systemd** ([`deploy/systemd/payflux.service`](deploy/systemd/payflux.service))
-- Production unit file with security hardening
-- EnvironmentFile support for config
-- Restart policy and resource limits
-
-**Kubernetes** ([`deploy/k8s/payflux.yaml`](deploy/k8s/payflux.yaml))
-- Single-file manifest (ConfigMap + Secret + Deployment + Service)
-- Single replica by default (scale horizontally as needed)
-- Assumes external Redis
-
-These are starting points, not production blueprints. Review and adapt for your environment.
-
-⸻
-
 ## Operational Maturity
 
 **Runbook** ([`RUNBOOK.md`](RUNBOOK.md))
@@ -248,86 +360,6 @@ These are starting points, not production blueprints. Review and adapt for your 
 **Performance & Smoke Tests** ([`scripts/smoke_load.sh`](scripts/smoke_load.sh))
 - Reproducible load test (10k events) to verify capacity.
 - `main_bench_test.go` for in-process latency tracking.
-
----
-
-*PayFlux: Payment traffic observability buffer. Made for operators.*
-
-Production Checklist (10 mins)
-
-Run these commands to verify your deployment:
-
-**1. Start Redis and PayFlux**
-```bash
-redis-server &
-export PAYFLUX_API_KEY="test-key-12345"
-export STRIPE_API_KEY="sk_test_placeholder"
-go run main.go
-```
-
-**2. Health Check**
-```bash
-curl http://localhost:8080/health
-# Expected: ok (200)
-```
-
-**3. Metrics**
-```bash
-curl -s http://localhost:8080/metrics | grep payflux_
-# Expected: Prometheus metrics with payflux_ prefix
-```
-
-**4. Auth - No Token (should fail)**
-```bash
-curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust
-# Expected: 401
-```
-
-**5. Auth - Valid Token**
-```bash
-curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust \
-  -H "Authorization: Bearer test-key-12345" \
-  -H "Content-Type: application/json" \
-  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440000","processor":"stripe","merchant_id_hash":"abc","payment_intent_id_hash":"xyz","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"test","failure_origin":"test"}'
-# Expected: 202
-```
-
-**6. Idempotency (send same event_id twice)**
-```bash
-# First request
-curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust \
-  -H "Authorization: Bearer test-key-12345" \
-  -H "Content-Type: application/json" \
-  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440001","processor":"stripe","merchant_id_hash":"abc","payment_intent_id_hash":"xyz","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"test","failure_origin":"test"}'
-# Expected: 202
-
-# Second request (same event_id)
-curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/events/payment_exhaust \
-  -H "Authorization: Bearer test-key-12345" \
-  -H "Content-Type: application/json" \
-  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"550e8400-e29b-41d4-a716-446655440001","processor":"stripe","merchant_id_hash":"abc","payment_intent_id_hash":"xyz","failure_category":"test","retry_count":0,"geo_bucket":"US","amount_bucket":"test","system_source":"test","payment_method_bucket":"test","channel":"web","retry_result":"test","failure_origin":"test"}'
-# Expected: 202 (idempotent, no duplicate created)
-
-# Check duplicate metric
-curl -s http://localhost:8080/metrics | grep payflux_ingest_duplicate_total
-# Expected: payflux_ingest_duplicate_total 1 (or higher)
-```
-
-**7. Validation (bad UUID)**
-```bash
-curl -s -X POST http://localhost:8080/v1/events/payment_exhaust \
-  -H "Authorization: Bearer test-key-12345" \
-  -H "Content-Type: application/json" \
-  -d '{"event_type":"test","event_timestamp":"2026-01-09T12:00:00Z","event_id":"not-a-uuid","processor":"stripe"}'
-# Expected: 400 with "event_id must be valid UUID"
-```
-
-**8. Graceful Shutdown**
-```bash
-# In another terminal, send SIGTERM
-pkill -TERM -f "go run main.go"
-# Expected in logs: shutdown_initiated, shutdown_complete
-```
 
 ⸻
 
