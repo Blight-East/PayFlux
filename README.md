@@ -137,7 +137,7 @@ curl -X POST http://localhost:8080/v1/events/payment_exhaust \
 
 **Expected:** HTTP 202 (empty response body).
 
-**Verification:** Run `curl -s localhost:8080/metrics | grep payflux_ingest_accepted` and confirm the counter incremented. Processing logs (`event_processed`) may appear in the Docker terminal shortly after.
+**Verification:** Run `curl -s localhost:8080/metrics | grep payflux_ingest_accepted` and confirm the counter incremented. If using `PAYFLUX_EXPORT_MODE=stdout`, you should also see a JSON export line in the payflux container logs.
 
 **Common failure:** `401 unauthorized` → Your `Authorization` header doesn't match `PAYFLUX_API_KEY` in docker-compose.yml.
 
@@ -163,7 +163,7 @@ If you completed all steps, you should see:
 |-------|---------|----------|
 | Health | `curl localhost:8080/health` | `{"status":"ok"}` |
 | Metrics | `curl -s localhost:8080/metrics \| grep accepted` | `payflux_ingest_accepted_total 1` |
-| Logs | Docker terminal | `event_processed id=... type=payment_failed` |
+| Export | payflux container logs (stdout mode) | JSON export line with `event_id` |
 
 **Congratulations!** PayFlux is running. Events are being buffered in Redis and exported to stdout (which Vector can ship to your logging stack).
 
@@ -185,9 +185,9 @@ For production environments, see the reference configs below. These require more
 
 **Kubernetes** ([`deploy/k8s/payflux.yaml`](deploy/k8s/payflux.yaml)) — Single-file manifest for K8s clusters.
 
-⸻
+---
 
-Why PayFlux Exists
+## Why PayFlux Exists
 
 Payment systems fail silently.
 
@@ -195,9 +195,11 @@ Processors make decisions in real time based on traffic patterns, retries, and f
 
 PayFlux gives teams real-time visibility and control over payment behavior before processors escalate risk actions.
 
-⸻
+---
 
-Core Architecture
+## Core Architecture
+
+```
 [Producers]
    |
    |  HTTP JSON (stateless)
@@ -211,6 +213,7 @@ Core Architecture
   ├─ Analytics
   ├─ Retry Optimization
   └─ Exports (Kafka, Webhooks, Warehouses)
+```
 
 ## Design Principles
 
@@ -220,7 +223,7 @@ Core Architecture
 - Consumers scale independently
 - Failure domains are isolated
 
-⸻
+---
 
 ## Key Features
 
@@ -232,7 +235,7 @@ Core Architecture
 - Prometheus-compatible metrics
 - Health checks for orchestration systems
 
-⸻
+---
 
 API Overview
 
@@ -261,7 +264,7 @@ POST /v1/events/payment_exhaust
 
 **Response:** `202 Accepted`
 
-⸻
+---
 
 Configuration
 
@@ -292,11 +295,16 @@ All configuration is via environment variables.
 | `PAYFLUX_PANIC_MODE` | `crash` | Panic handling: `crash` (exit) or `recover` (restart loop) |
 | `PAYFLUX_EXPORT_MODE` | `stdout` | Event export: `stdout`, `file`, or `both` |
 | `PAYFLUX_EXPORT_FILE` | (none) | Export file path (required for `file` or `both` mode) |
+
+**Checkout (Optional / Experimental):**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
 | `PRICE_CENTS` | `9900` | Checkout price in cents |
 | `PRODUCT_NAME` | `PayFlux Early Access` | Checkout product name |
 | `SITE_URL` | `https://payflux.dev` | Site URL for checkout redirects |
 
-⸻
+---
 
 ## Processor Risk Score (beta)
 
@@ -345,7 +353,7 @@ PayFlux enrichment provides a **deterministic, explainable, and processor-aligne
 }
 ```
 
-⸻
+---
 
 **API Key Rotation:**
 
@@ -355,7 +363,7 @@ To rotate keys without downtime:
 3. Update clients to use the new key
 4. Remove the old key from the list and redeploy
 
-⸻
+---
 
 ## Operational Maturity
 
@@ -367,7 +375,7 @@ To rotate keys without downtime:
 - Reproducible load test (10k events) to verify capacity.
 - `main_bench_test.go` for in-process latency tracking.
 
-⸻
+---
 
 Event Export
 
@@ -467,7 +475,7 @@ PayFlux intentionally does **not** implement in-app rotation. External tooling i
 - Not a compliance archive (export to S3, warehouse, etc.)
 - This is a starter interface for observability, not the final data layer
 
-⸻
+---
 
 ## Observability & Integrations
 
@@ -475,7 +483,7 @@ PayFlux intentionally does **not** implement in-app rotation. External tooling i
 
 - `/metrics` — Prometheus format (Grafana, Datadog compatible)
 - `/health` — readiness / liveness checks
-- Structured JSON logs
+- Structured JSON startup logs (slog) + plain runtime logs
 - Redis Streams as the event backbone
 
 ### Export Model
@@ -502,7 +510,7 @@ This makes PayFlux compatible with:
 
 Exporters are implemented as consumers—no changes to ingestion required.
 
-⸻
+---
 
 ## Performance (Local Proof)
 
@@ -513,7 +521,7 @@ Exporters are implemented as consumers—no changes to ingestion required.
 
 Raw Redis output and load test commands are included in [PROOF-load-test.md](PROOF-load-test.md).
 
-⸻
+---
 
 Operational Defaults
 
@@ -550,7 +558,7 @@ For long-term replay requirements:
 - Attach a downstream exporter (Kafka, warehouse, log sink)
 - Exporters are implemented as consumers—no changes to PayFlux required
 
-⸻
+---
 
 ## Production Readiness Notes
 
@@ -575,7 +583,7 @@ PayFlux v0.2.x is safe for early access and pilot deployments.
 - Long-term event archival (use downstream exporters)
 - Horizontal scaling coordination (each instance is independent)
 
-⸻
+---
 
 ## Licensing
 
@@ -588,7 +596,7 @@ PayFlux is offered under a commercial early-access license.
 
 See [LICENSE.md](LICENSE.md) for details.
 
-⸻
+---
 
 ## Roadmap (Non-Binding)
 
