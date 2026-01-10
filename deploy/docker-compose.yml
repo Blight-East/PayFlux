@@ -23,10 +23,12 @@ services:
     image: payflux:latest
     ports:
       - "8080:8080"
+    env_file:
+      - .env  # Optional: copy .env.example to .env and configure
     environment:
-      # Required
-      PAYFLUX_API_KEY: "your-api-key-here"
-      STRIPE_API_KEY: "sk_test_your_stripe_key_here"
+      # These can be overridden by .env file
+      PAYFLUX_API_KEY: "${PAYFLUX_API_KEY:-your-api-key-here}"
+      STRIPE_API_KEY: "${STRIPE_API_KEY:-sk_test_your_stripe_key_here}"
       
       # Redis connection
       REDIS_ADDR: "redis:6379"

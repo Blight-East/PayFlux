@@ -60,16 +60,23 @@ cd PayFlux
 
 ### ✅ Step 2: Configure Your API Keys
 
-Edit `deploy/docker-compose.yml` and replace these placeholder values:
+**Option A (Recommended):** Copy the example environment file:
 
-```yaml
-PAYFLUX_API_KEY: "your-secret-api-key"      # Any string you choose
-STRIPE_API_KEY: "sk_test_your_stripe_key"   # From Stripe dashboard (test mode OK)
+```bash
+cd deploy
+cp .env.example .env
+# Edit .env with your real keys
 ```
+
+**Option B:** Edit `deploy/docker-compose.yml` directly and replace the placeholder values.
+
+Your keys:
+- `PAYFLUX_API_KEY` — Any secret string you choose
+- `STRIPE_API_KEY` — From Stripe dashboard (test mode `sk_test_...` is fine)
 
 **Expected:** File saved with your real keys.
 
-**Common failure:** Forgot to save → PayFlux will reject requests with `unauthorized`.
+**Common failure:** Forgot to save → PayFlux will reject requests with `401 unauthorized`.
 
 ---
 
@@ -105,9 +112,20 @@ curl http://localhost:8080/health
 
 **Common failure:** `Connection refused` → PayFlux isn't running. Check the Docker logs.
 
+> [!NOTE]
+> **Windows users:** PowerShell's `curl` is an alias for `Invoke-WebRequest`. Use one of these instead:
+> ```powershell
+> Invoke-WebRequest http://localhost:8080/health
+> # Or install GNU curl and use:
+> curl.exe http://localhost:8080/health
+> ```
+
 ---
 
 ### ✅ Step 5: Send a Test Event
+
+> [!IMPORTANT]
+> The payload below is the **minimal valid example**. Missing or modified fields may result in a `400 validation error`. Use this exact payload for your first test.
 
 ```bash
 curl -X POST http://localhost:8080/v1/events/payment_exhaust \
