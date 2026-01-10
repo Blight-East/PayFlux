@@ -58,19 +58,7 @@ cd PayFlux
 
 ---
 
-### ✅ Step 2: Build PayFlux
-
-```bash
-docker build -t payflux:latest .
-```
-
-**Expected:** Final line says `Successfully tagged payflux:latest`.
-
-**Common failure:** `Cannot connect to Docker daemon` → Start Docker Desktop or run `sudo systemctl start docker`.
-
----
-
-### ✅ Step 3: Configure Your API Keys
+### ✅ Step 2: Configure Your API Keys
 
 Edit `deploy/docker-compose.yml` and replace these placeholder values:
 
@@ -85,12 +73,15 @@ STRIPE_API_KEY: "sk_test_your_stripe_key"   # From Stripe dashboard (test mode O
 
 ---
 
-### ✅ Step 4: Start Everything
+### ✅ Step 3: Start Everything
 
 ```bash
 cd deploy
-docker compose up
+docker compose up --build
 ```
+
+> [!NOTE]
+> The first run builds PayFlux from source (~30 seconds). Subsequent runs start instantly.
 
 **Expected:** You see logs like:
 ```
@@ -102,7 +93,7 @@ redis-1    | Ready to accept connections
 
 ---
 
-### ✅ Step 5: Verify Health
+### ✅ Step 4: Verify Health
 
 Open a **new terminal** and run:
 
@@ -116,7 +107,7 @@ curl http://localhost:8080/health
 
 ---
 
-### ✅ Step 6: Send a Test Event
+### ✅ Step 5: Send a Test Event
 
 ```bash
 curl -X POST http://localhost:8080/v1/events/payment_exhaust \
@@ -143,7 +134,7 @@ curl -X POST http://localhost:8080/v1/events/payment_exhaust \
 
 ---
 
-### ✅ Step 7: Check Metrics
+### ✅ Step 6: Check Metrics
 
 ```bash
 curl -s http://localhost:8080/metrics | grep payflux_ingest_accepted
