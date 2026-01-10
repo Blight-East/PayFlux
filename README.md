@@ -22,6 +22,15 @@ Events are acknowledged (ACK) in Redis **before** export. Export is best-effort 
 
 ⸻
 
+> [!WARNING]
+> **Operational Notice**
+>
+> PayFlux is not a managed service. Running it in production requires operational familiarity with Redis Streams, Prometheus, and log shipping pipelines. This repository is a reference implementation intended for teams comfortable operating infrastructure.
+>
+> If you are looking for a hosted or managed version, [request early access](https://payflux.dev) instead.
+
+⸻
+
 Quickstart
 
 ```bash
