@@ -7,13 +7,22 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
-    ports:
-      - "6380:6379"  # External 6380 to avoid local Redis conflict
+    # Host port only exposed in debug profile: docker compose --profile debug up
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
+
+  # Redis host access (debug only)
+  # Enable with: docker compose --profile debug up
+  redis-debug:
+    profiles: ["debug"]
+    image: redis:7-alpine
+    network_mode: "service:redis"
+    command: ["sh", "-c", "echo 'Redis accessible at localhost:6379'"]
+    depends_on:
+      - redis
 
   # PayFlux service
   payflux:

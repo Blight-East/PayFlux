@@ -375,6 +375,13 @@ PayFlux enrichment provides a **deterministic, explainable, and processor-aligne
 > [!NOTE]
 > **Source of truth:** Tier is currently set via `PAYFLUX_TIER` environment variable. License-derived tiering is a planned future feature (not yet implemented).
 
+### Tier Intent (Important)
+
+| Tier | Audience | Purpose |
+|------|----------|---------|
+| **Tier 1** | Risk & fraud teams | Detection + proof of value. See what's happening. |
+| **Tier 2** | Payments & revenue owners | Interpretation + momentum. Understand why it matters and how fast. |
+
 See [docs/TIER_GATING.md](docs/TIER_GATING.md) for full tier rules and language constraints.
 
 ### Export Example (Tier 1)

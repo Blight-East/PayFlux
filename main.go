@@ -1068,6 +1068,9 @@ type ExportedEvent struct {
 	ProcessorRiskBand    string   `json:"processor_risk_band,omitempty"`
 	ProcessorRiskDrivers []string `json:"processor_risk_drivers,omitempty"`
 
+	// Tier 1 only: Upgrade hint (v0.2.3+)
+	UpgradeHint string `json:"upgrade_hint,omitempty"`
+
 	// Tier 2 only: Authority-gated fields (v0.2.2+)
 	ProcessorPlaybookContext string `json:"processor_playbook_context,omitempty"`
 	RiskTrajectory           string `json:"risk_trajectory,omitempty"`
@@ -1091,6 +1094,11 @@ func exportEvent(event Event, messageID string) {
 		exported.ProcessorRiskScore = res.Score
 		exported.ProcessorRiskBand = res.Band
 		exported.ProcessorRiskDrivers = res.Drivers
+
+		// Tier 1 only: Add upgrade hint (v0.2.3+)
+		if exportTier == "tier1" && res.Band != "low" {
+			exported.UpgradeHint = "Tier 2 adds processor playbook context and risk trajectory."
+		}
 
 		// Tier 2 only: Add authority-gated context (v0.2.2+)
 		if exportTier == "tier2" {
@@ -1194,24 +1202,24 @@ func generatePlaybookContext(band string, drivers []string) string {
 
 	switch band {
 	case "elevated":
-		context = "Processors commonly interpret this pattern as early-stage deviation from nominal behavior."
+		context = "Pattern indicates early-stage deviation from nominal processor behavior."
 	case "high":
-		context = "This pattern typically correlates with processor-side monitoring escalation. Rate limiting or velocity checks are commonly triggered at this threshold."
+		context = "Correlates with processor monitoring escalation; rate limiting or velocity checks often triggered."
 	case "critical":
-		context = "Patterns at this level are commonly associated with processor risk policy activation. Account-level flags or circuit breaker behavior is typically observed."
+		context = "Associated with processor risk policy activation; account-level flags or circuit breakers typically engaged."
 	}
 
 	// Add driver-specific context
 	for _, driver := range drivers {
 		switch driver {
 		case "high_failure_rate":
-			context += " Elevated failure rates are commonly interpreted as degraded transaction quality."
+			context += " Elevated failure rates signal degraded transaction quality."
 		case "retry_pressure_spike":
-			context += " Retry clustering typically signals infrastructure stress or integration issues to processor risk systems."
+			context += " Retry clustering indicates infrastructure stress to processor risk systems."
 		case "timeout_clustering":
-			context += " Timeout patterns are often associated with processor-side latency attribution."
+			context += " Timeout patterns correlate with processor-side latency attribution."
 		case "traffic_volatility":
-			context += " Traffic spikes are commonly monitored for velocity anomalies."
+			context += " Traffic spikes monitored for velocity anomalies."
 		}
 	}
 
