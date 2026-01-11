@@ -159,7 +159,7 @@ PayFlux includes a full-flow verification script at `scripts/verify_pilot.sh`. R
 | **C: Metrics Stability** | Metric names and label keys unchanged across container restart |
 | **D: Pilot Containment** | `/pilot/*` routes return 404 when `PAYFLUX_PILOT_MODE=false` |
 | **E: Log Redaction** | No secrets, API keys, or raw payloads in logs |
-| **F: Language Audit** | No banned claims ("real-time", "guarantee", "will prevent") in docs |
+| **F: Language Audit** | No overclaiming terminology in docs |
 | **G: False Positive** | Normal traffic (successful payments) does NOT generate warnings |
 
 ### Verification Report
