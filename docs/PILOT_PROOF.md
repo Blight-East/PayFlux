@@ -6,7 +6,7 @@ PayFlux includes a minimal pilot proof system for capturing "warning → outcome
 
 When enabled, pilot mode provides:
 - **Warning records** for elevated+ risk events
-- **Outcome annotation endpoint** for real-time capture
+- **Outcome annotation endpoint** for event-driven capture
 - **Minimal dashboard** for pilot champions
 - **Prometheus metrics** for outcome tracking
 - **Stdout proof capture** for log pipeline persistence
@@ -141,6 +141,24 @@ This is intentional for pilot simplicity. Proof capture via stdout ensures no da
 3. Access `/pilot/dashboard` with your API key
 4. When processor outcomes occur, annotate them immediately
 5. After 90 days, analyze `pilot_outcome_annotation` events for proof
+
+## Verification Suite
+
+PayFlux includes a hardened verification script at `scripts/verify_pilot.sh` that tests:
+
+| Category | What it checks |
+|----------|----------------|
+| False-Negative | Bad patterns emit warnings (not silent) |
+| Tier 1 Schema | Gated keys never appear in Tier 1 |
+| Metrics Stability | Metric names unchanged across restart |
+| Pilot Containment | Routes return 404 when pilot mode OFF |
+| Log Redaction | No secrets or raw payloads in logs |
+| Language Audit | No banned claims in docs |
+
+Run from repository root:
+```bash
+./scripts/verify_pilot.sh
+```
 
 ## Future Enhancements (Not Implemented)
 

@@ -217,7 +217,7 @@ Payment systems fail silently.
 
 Processors make decisions in real time based on traffic patterns, retries, and failure clustering—while most merchants only see delayed dashboards or logs. By the time an issue is visible, the damage is already done.
 
-PayFlux gives teams real-time visibility and control over payment behavior before processors escalate risk actions.
+PayFlux gives teams timely visibility and control over payment behavior before processors escalate risk actions.
 
 ---
 
@@ -437,6 +437,20 @@ See [docs/PILOT_PROOF.md](docs/PILOT_PROOF.md) for full pilot mode documentation
 
 ---
 
+### Stripe Integration (Optional)
+
+PayFlux can optionally ingest Stripe webhook events to detect when Stripe takes enforcement actions such as throttles, reviews, or rate limits. This allows PayFlux to correlate its warnings with observed Stripe actions and measure the time between warning and enforcement during pilots.
+
+**Key Benefits for Pilots:**
+- **Outcome Correlation:** Measure the effectiveness of PayFlux warnings by correlating them with actual processor outcomes.
+- **Zero Integration Effort:** No changes to your checkout or payment flow are required.
+- **PCI Safe:** Metadata only; no PAN or cardholder data is touched.
+- **Quick Setup:** Typically ~15 minutes using our reference implementation.
+
+See the [Stripe Webhook Forwarder Example](examples/stripe-webhook-forwarder/) for a reference implementation for pilot use.
+
+---
+
 **API Key Rotation:**
 
 To rotate keys without downtime:
@@ -627,7 +641,7 @@ PayFlux intentionally bounds stream size using `XTRIM MAXLEN ~` (approximate tri
 
 This is a deliberate design decision:
 - PayFlux is an **observability and alerting buffer**, not a long-term data store
-- Events are retained long enough for real-time monitoring, alerting, and short-term replay
+- Events are retained long enough for monitoring, alerting, and short-term replay
 - For compliance archiving or long-term analytics, export events downstream (data warehouse, Kafka, S3)
 
 **Replay and Reprocessing**
