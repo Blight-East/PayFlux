@@ -175,6 +175,16 @@ var (
 		Name: "payflux_processor_risk_score_last",
 		Help: "Last computed risk score per processor",
 	}, []string{"processor"})
+
+	// Tier 2 metrics (v0.2.2+)
+	tier2ContextEmitted = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_tier2_context_emitted_total",
+		Help: "Count of events with processor_playbook_context emitted (Tier 2 only)",
+	})
+	tier2TrajectoryEmitted = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_tier2_trajectory_emitted_total",
+		Help: "Count of events with risk_trajectory emitted (Tier 2 only)",
+	})
 )
 
 func main() {
@@ -240,6 +250,9 @@ func main() {
 		log.Fatalf("PAYFLUX_TIER must be 'tier1' or 'tier2', got: %s", exportTier)
 	}
 	slog.Info("tier_config", "tier", exportTier)
+	if exportTier == "tier1" {
+		slog.Info("tier_hint", "msg", "Set PAYFLUX_TIER=tier2 to include playbook context and risk trajectory in exports")
+	}
 
 	// Stripe key validation
 	stripeKey := os.Getenv("STRIPE_API_KEY")
@@ -253,6 +266,7 @@ func main() {
 		ingestAccepted, ingestRejected, consumerProcessed, consumerDlq, ingestDuplicate,
 		streamLength, pendingCount, ingestLatency, eventsByProcessor, eventsExported,
 		exportErrors, exportLastSuccess, riskEventsTotal, riskScoreLast,
+		tier2ContextEmitted, tier2TrajectoryEmitted,
 	)
 
 	// Redis connection pool
@@ -1081,10 +1095,18 @@ func exportEvent(event Event, messageID string) {
 		// Tier 2 only: Add authority-gated context (v0.2.2+)
 		if exportTier == "tier2" {
 			// Processor Playbook Context (probabilistic, non-prescriptive)
-			exported.ProcessorPlaybookContext = generatePlaybookContext(res.Band, res.Drivers)
+			context := generatePlaybookContext(res.Band, res.Drivers)
+			if context != "" {
+				exported.ProcessorPlaybookContext = context
+				tier2ContextEmitted.Inc()
+			}
 
 			// Risk Trajectory (momentum framing)
-			exported.RiskTrajectory = generateRiskTrajectory(res)
+			trajectory := generateRiskTrajectory(res)
+			if trajectory != "" {
+				exported.RiskTrajectory = trajectory
+				tier2TrajectoryEmitted.Inc()
+			}
 		}
 
 		// Update metrics

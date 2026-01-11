@@ -372,6 +372,9 @@ PayFlux enrichment provides a **deterministic, explainable, and processor-aligne
 
 **Tier 2:** Adds `processor_playbook_context` (how processors typically interpret this) and `risk_trajectory` (acceleration vs baseline).
 
+> [!NOTE]
+> **Source of truth:** Tier is currently set via `PAYFLUX_TIER` environment variable. License-derived tiering is a planned future feature (not yet implemented).
+
 See [docs/TIER_GATING.md](docs/TIER_GATING.md) for full tier rules and language constraints.
 
 ### Export Example (Tier 1)
