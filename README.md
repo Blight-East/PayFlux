@@ -364,16 +364,39 @@ PayFlux enrichment provides a **deterministic, explainable, and processor-aligne
 | `PAYFLUX_RISK_SCORE_ENABLED` | `true` | Enable/disable risk enrichment |
 | `PAYFLUX_RISK_SCORE_WINDOW_SEC` | `300` | Sliding window for metrics (default 5m) |
 | `PAYFLUX_RISK_SCORE_THRESHOLDS` | `0.3,0.6,0.8` | Cutoffs for elevated, high, and critical bands |
+| `PAYFLUX_TIER` | `tier1` | Export tier: `tier1` (detection only) or `tier2` (adds interpretation) |
 
-### Export Example
+### Tier Behavior
+
+**Tier 1 (default):** Detection only—score, band, drivers. No interpretation.
+
+**Tier 2:** Adds `processor_playbook_context` (how processors typically interpret this) and `risk_trajectory` (acceleration vs baseline).
+
+See [docs/TIER_GATING.md](docs/TIER_GATING.md) for full tier rules and language constraints.
+
+### Export Example (Tier 1)
 
 ```json
 {
   "event_id": "550e8400-e29b-41d4-a716-446655440000",
   "processor": "stripe",
-  "processor_risk_score": 0.65,
+  "processor_risk_score": 0.72,
   "processor_risk_band": "high",
   "processor_risk_drivers": ["high_failure_rate", "retry_pressure_spike"]
+}
+```
+
+### Export Example (Tier 2)
+
+```json
+{
+  "event_id": "550e8400-e29b-41d4-a716-446655440000",
+  "processor": "stripe",
+  "processor_risk_score": 0.72,
+  "processor_risk_band": "high",
+  "processor_risk_drivers": ["high_failure_rate", "retry_pressure_spike"],
+  "processor_playbook_context": "This pattern typically correlates with processor-side monitoring escalation.",
+  "risk_trajectory": "Pattern accelerating: ~3.2× above baseline over the last 5 minutes."
 }
 ```
 

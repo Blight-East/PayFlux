@@ -12,6 +12,13 @@ type RiskResult struct {
 	Score   float64  `json:"processor_risk_score"`
 	Band    string   `json:"processor_risk_band"`
 	Drivers []string `json:"processor_risk_drivers"`
+
+	// Trajectory data (computed from sliding window, used for Tier 2 exports)
+	TrajectoryMultiplier float64 `json:"-"` // e.g., 3.0 means "3× above baseline"
+	TrajectoryDirection  string  `json:"-"` // "accelerating" / "stable" / "decelerating"
+	TrajectoryWindowSec  int     `json:"-"` // window size in seconds
+	CurrentFailureRate   float64 `json:"-"` // current bucket failure rate
+	BaselineFailureRate  float64 `json:"-"` // baseline (other buckets) failure rate
 }
 
 // ProcessorMetrics tracks counters for a specific time bucket
@@ -222,10 +229,55 @@ func (s *RiskScorer) computeScore(processor string) RiskResult {
 		drivers = append(drivers, "nominal_behavior")
 	}
 
+	// Compute trajectory data for Tier 2 exports
+	// Compare current bucket failure rate to baseline (other buckets)
+	currentBucket := hist[currentIdx]
+	currentFailRate := 0.0
+	if currentBucket.TotalEvents > 0 {
+		currentFailRate = float64(currentBucket.Failures) / float64(currentBucket.TotalEvents)
+	}
+
+	// Baseline = average failure rate of other buckets
+	otherFailures := 0
+	otherEvents := 0
+	for i, b := range hist {
+		if i != currentIdx {
+			otherFailures += b.Failures
+			otherEvents += b.TotalEvents
+		}
+	}
+	baselineFailRate := 0.0
+	if otherEvents > 0 {
+		baselineFailRate = float64(otherFailures) / float64(otherEvents)
+	}
+
+	// Multiplier: how many times above baseline
+	multiplier := 1.0
+	if baselineFailRate > 0.01 { // Only compute if baseline is meaningful
+		multiplier = currentFailRate / baselineFailRate
+	} else if currentFailRate > 0.1 {
+		// No baseline but current is high = spike from zero
+		multiplier = 10.0 // Cap at 10×
+	}
+	multiplier = math.Round(multiplier*10) / 10 // Round to 1 decimal
+
+	// Direction: based on multiplier
+	direction := "stable"
+	if multiplier >= 2.0 {
+		direction = "accelerating"
+	} else if multiplier <= 0.5 && baselineFailRate > 0.05 {
+		direction = "decelerating"
+	}
+
 	return RiskResult{
-		Score:   math.Round(score*100) / 100,
-		Band:    band,
-		Drivers: drivers,
+		Score:                math.Round(score*100) / 100,
+		Band:                 band,
+		Drivers:              drivers,
+		TrajectoryMultiplier: multiplier,
+		TrajectoryDirection:  direction,
+		TrajectoryWindowSec:  s.windowSec,
+		CurrentFailureRate:   math.Round(currentFailRate*1000) / 1000,
+		BaselineFailureRate:  math.Round(baselineFailRate*1000) / 1000,
 	}
 }
 

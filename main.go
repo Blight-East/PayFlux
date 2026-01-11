@@ -103,6 +103,9 @@ var (
 	riskScoreEnabled bool
 	riskScoreWindow  int
 	riskThresholds   [3]float64
+
+	// Tier gating (v0.2.2+)
+	exportTier string // "tier1" or "tier2" (default tier1)
 )
 
 // Rate limiter map
@@ -230,6 +233,13 @@ func main() {
 		riskScorer = NewRiskScorer(riskScoreWindow, riskThresholds)
 		slog.Info("risk_scorer_initialized", "window_sec", riskScoreWindow, "thresholds", thresholdsStr)
 	}
+
+	// Load Tier config (v0.2.2+)
+	exportTier = env("PAYFLUX_TIER", "tier1")
+	if exportTier != "tier1" && exportTier != "tier2" {
+		log.Fatalf("PAYFLUX_TIER must be 'tier1' or 'tier2', got: %s", exportTier)
+	}
+	slog.Info("tier_config", "tier", exportTier)
 
 	// Stripe key validation
 	stripeKey := os.Getenv("STRIPE_API_KEY")
@@ -1043,6 +1053,10 @@ type ExportedEvent struct {
 	ProcessorRiskScore   float64  `json:"processor_risk_score,omitempty"`
 	ProcessorRiskBand    string   `json:"processor_risk_band,omitempty"`
 	ProcessorRiskDrivers []string `json:"processor_risk_drivers,omitempty"`
+
+	// Tier 2 only: Authority-gated fields (v0.2.2+)
+	ProcessorPlaybookContext string `json:"processor_playbook_context,omitempty"`
+	RiskTrajectory           string `json:"risk_trajectory,omitempty"`
 }
 
 // exportEvent writes the processed event to configured destinations
@@ -1063,6 +1077,15 @@ func exportEvent(event Event, messageID string) {
 		exported.ProcessorRiskScore = res.Score
 		exported.ProcessorRiskBand = res.Band
 		exported.ProcessorRiskDrivers = res.Drivers
+
+		// Tier 2 only: Add authority-gated context (v0.2.2+)
+		if exportTier == "tier2" {
+			// Processor Playbook Context (probabilistic, non-prescriptive)
+			exported.ProcessorPlaybookContext = generatePlaybookContext(res.Band, res.Drivers)
+
+			// Risk Trajectory (momentum framing)
+			exported.RiskTrajectory = generateRiskTrajectory(res)
+		}
 
 		// Update metrics
 		riskEventsTotal.WithLabelValues(event.Processor, res.Band).Inc()
@@ -1135,4 +1158,69 @@ func calculateBackoff(attempt int) time.Duration {
 		backoff = 2 * time.Second
 	}
 	return backoff
+}
+
+// generatePlaybookContext returns Tier 2 processor interpretation context
+// Rules: probabilistic language only, no recommendations, no insider claims
+func generatePlaybookContext(band string, drivers []string) string {
+	if band == "low" {
+		return "" // No context needed for low risk
+	}
+
+	// Build context based on band and drivers
+	var context string
+
+	switch band {
+	case "elevated":
+		context = "Processors commonly interpret this pattern as early-stage deviation from nominal behavior."
+	case "high":
+		context = "This pattern typically correlates with processor-side monitoring escalation. Rate limiting or velocity checks are commonly triggered at this threshold."
+	case "critical":
+		context = "Patterns at this level are commonly associated with processor risk policy activation. Account-level flags or circuit breaker behavior is typically observed."
+	}
+
+	// Add driver-specific context
+	for _, driver := range drivers {
+		switch driver {
+		case "high_failure_rate":
+			context += " Elevated failure rates are commonly interpreted as degraded transaction quality."
+		case "retry_pressure_spike":
+			context += " Retry clustering typically signals infrastructure stress or integration issues to processor risk systems."
+		case "timeout_clustering":
+			context += " Timeout patterns are often associated with processor-side latency attribution."
+		case "traffic_volatility":
+			context += " Traffic spikes are commonly monitored for velocity anomalies."
+		}
+	}
+
+	return context
+}
+
+// generateRiskTrajectory returns Tier 2 momentum/trend framing
+// Rules: observed pattern + momentum, no predictions, no guarantees
+func generateRiskTrajectory(res RiskResult) string {
+	if res.TrajectoryDirection == "stable" && res.TrajectoryMultiplier < 1.5 {
+		return "" // No trajectory context for stable low patterns
+	}
+
+	// Build trajectory description
+	windowMinutes := res.TrajectoryWindowSec / 60
+
+	var trajectory string
+	switch res.TrajectoryDirection {
+	case "accelerating":
+		if res.TrajectoryMultiplier >= 5.0 {
+			trajectory = fmt.Sprintf("Rapid acceleration observed: ~%.0f× above baseline over the last %d minutes.", res.TrajectoryMultiplier, windowMinutes)
+		} else {
+			trajectory = fmt.Sprintf("Pattern accelerating: ~%.1f× above baseline over the last %d minutes.", res.TrajectoryMultiplier, windowMinutes)
+		}
+	case "decelerating":
+		trajectory = fmt.Sprintf("Pattern decelerating: failure rate trending down vs baseline over the last %d minutes.", windowMinutes)
+	case "stable":
+		if res.TrajectoryMultiplier > 1.5 {
+			trajectory = fmt.Sprintf("Sustained elevation: ~%.1f× above baseline, stable over the last %d minutes.", res.TrajectoryMultiplier, windowMinutes)
+		}
+	}
+
+	return trajectory
 }
