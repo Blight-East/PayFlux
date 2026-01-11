@@ -17,3 +17,4 @@ backup/
 # Local dev artifacts
 payflux
 payment-node
+verification-reports/

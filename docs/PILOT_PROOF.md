@@ -144,21 +144,43 @@ This is intentional for pilot simplicity. Proof capture via stdout ensures no da
 
 ## Verification Suite
 
-PayFlux includes a hardened verification script at `scripts/verify_pilot.sh` that tests:
+PayFlux includes a full-flow verification script at `scripts/verify_pilot.sh`. Run it from the repository root:
 
-| Category | What it checks |
-|----------|----------------|
-| False-Negative | Bad patterns emit warnings (not silent) |
-| Tier 1 Schema | Gated keys never appear in Tier 1 |
-| Metrics Stability | Metric names unchanged across restart |
-| Pilot Containment | Routes return 404 when pilot mode OFF |
-| Log Redaction | No secrets or raw payloads in logs |
-| Language Audit | No banned claims in docs |
-
-Run from repository root:
 ```bash
 ./scripts/verify_pilot.sh
 ```
+
+### Checkpoints
+
+| Checkpoint | What it validates |
+|------------|-------------------|
+| **A: False-Negative** | Bad patterns (retry storms, failure spikes) emit warnings |
+| **B: Tier 1 Schema** | Gated keys (`processor_playbook_context`, `risk_trajectory`) never appear in Tier 1 |
+| **C: Metrics Stability** | Metric names and label keys unchanged across container restart |
+| **D: Pilot Containment** | `/pilot/*` routes return 404 when `PAYFLUX_PILOT_MODE=false` |
+| **E: Log Redaction** | No secrets, API keys, or raw payloads in logs |
+| **F: Language Audit** | No banned claims ("real-time", "guarantee", "will prevent") in docs |
+| **G: False Positive** | Normal traffic (successful payments) does NOT generate warnings |
+
+### Verification Report
+
+On success, a machine-readable report is generated:
+- Location: `verification-reports/verification-report-<timestamp>.json`
+- Contents: timestamp, git commit hash, pass/fail per checkpoint
+
+### What a Passing Run Guarantees
+
+A passing verification run confirms:
+- Risk scoring correctly distinguishes bad patterns from normal traffic
+- Tier 1 exports do not leak Tier 2 fields
+- Pilot routes respect the `PAYFLUX_PILOT_MODE` setting
+- Logs are safe for observability pipelines (no secrets)
+- Documentation does not make unsupported claims
+
+It does **not** guarantee:
+- Correctness of risk thresholds for specific use cases
+- Behavior under production load
+- External system integration correctness
 
 ## Future Enhancements (Not Implemented)
 
