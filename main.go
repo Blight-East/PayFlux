@@ -106,6 +106,10 @@ var (
 
 	// Tier gating (v0.2.2+)
 	exportTier string // "tier1" or "tier2" (default tier1)
+
+	// Pilot mode (v0.2.3+)
+	pilotModeEnabled bool
+	warningStore     *WarningStore
 )
 
 // Rate limiter map
@@ -185,6 +189,17 @@ var (
 		Name: "payflux_tier2_trajectory_emitted_total",
 		Help: "Count of events with risk_trajectory emitted (Tier 2 only)",
 	})
+
+	// Pilot metrics (v0.2.3+)
+	warningOutcomeSetTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_warning_outcome_set_total",
+		Help: "Count of warning outcomes set by type and source",
+	}, []string{"outcome_type", "source"})
+	warningOutcomeLeadTime = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "payflux_warning_outcome_lead_time_seconds",
+		Help:    "Time between warning emission and outcome annotation",
+		Buckets: []float64{60, 300, 900, 1800, 3600, 7200, 14400, 28800, 86400}, // 1m to 24h
+	})
 )
 
 func main() {
@@ -254,6 +269,13 @@ func main() {
 		slog.Info("tier_hint", "msg", "Set PAYFLUX_TIER=tier2 to include playbook context and risk trajectory in exports")
 	}
 
+	// Load Pilot mode config (v0.2.3+)
+	pilotModeEnabled = env("PAYFLUX_PILOT_MODE", "false") == "true"
+	if pilotModeEnabled {
+		warningStore = NewWarningStore(1000)
+		slog.Info("pilot_mode_enabled", "warning_store_capacity", 1000)
+	}
+
 	// Stripe key validation
 	stripeKey := os.Getenv("STRIPE_API_KEY")
 	if stripeKey == "" || !strings.HasPrefix(stripeKey, "sk_") {
@@ -267,6 +289,7 @@ func main() {
 		streamLength, pendingCount, ingestLatency, eventsByProcessor, eventsExported,
 		exportErrors, exportLastSuccess, riskEventsTotal, riskScoreLast,
 		tier2ContextEmitted, tier2TrajectoryEmitted,
+		warningOutcomeSetTotal, warningOutcomeLeadTime,
 	)
 
 	// Redis connection pool
@@ -316,6 +339,29 @@ func main() {
 	mux.HandleFunc("/health", handleHealth)
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/export/health", handleExportHealth)
+
+	// Pilot routes (only when PAYFLUX_PILOT_MODE=true)
+	if pilotModeEnabled && warningStore != nil {
+		// Dashboard (auth required)
+		mux.HandleFunc("/pilot/dashboard", authMiddleware(pilotDashboardHandler(warningStore)))
+		// Warnings list (auth required)
+		mux.HandleFunc("/pilot/warnings", authMiddleware(pilotWarningsListHandler(warningStore)))
+		// Outcome endpoint and single warning (auth required)
+		mux.HandleFunc("/pilot/warnings/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasSuffix(r.URL.Path, "/outcome") {
+				pilotOutcomeHandler(warningStore,
+					func(outcomeType, source string) {
+						warningOutcomeSetTotal.WithLabelValues(outcomeType, source).Inc()
+					},
+					func(seconds float64) {
+						warningOutcomeLeadTime.Observe(seconds)
+					})(w, r)
+			} else {
+				pilotWarningGetHandler(warningStore)(w, r)
+			}
+		}))
+		slog.Info("pilot_routes_registered", "endpoints", []string{"/pilot/dashboard", "/pilot/warnings", "/pilot/warnings/{id}/outcome"})
+	}
 
 	// Graceful shutdown
 	srv := &http.Server{
@@ -1120,6 +1166,23 @@ func exportEvent(event Event, messageID string) {
 		// Update metrics
 		riskEventsTotal.WithLabelValues(event.Processor, res.Band).Inc()
 		riskScoreLast.WithLabelValues(event.Processor).Set(res.Score)
+
+		// Pilot mode: Create warning record for elevated+ risk bands (v0.2.3+)
+		if pilotModeEnabled && warningStore != nil && res.Band != "low" {
+			warning := &Warning{
+				WarningID:       messageID, // Use stream message ID as stable unique ID
+				EventID:         event.EventID,
+				Processor:       event.Processor,
+				MerchantIDHash:  event.MerchantIDHash,
+				ProcessedAt:     time.Now().UTC(),
+				RiskScore:       res.Score,
+				RiskBand:        res.Band,
+				RiskDrivers:     res.Drivers,
+				PlaybookContext: exported.ProcessorPlaybookContext,
+				RiskTrajectory:  exported.RiskTrajectory,
+			}
+			warningStore.Add(warning)
+		}
 	}
 
 	data, err := json.Marshal(exported)

@@ -412,6 +412,31 @@ See [docs/TIER_GATING.md](docs/TIER_GATING.md) for full tier rules and language 
 
 ---
 
+### Pilot Mode (v0.2.3+)
+
+Enable pilot mode to capture "warning → outcome" proof during a 90-day pilot:
+
+```bash
+PAYFLUX_PILOT_MODE=true
+```
+
+When enabled:
+- Warnings are created for elevated+ risk events
+- `/pilot/dashboard` provides a minimal outcome annotation UI
+- Outcomes are emitted to stdout for log pipeline persistence
+
+**Annotate an outcome:**
+```bash
+curl -X POST http://localhost:8080/pilot/warnings/{warning_id}/outcome \
+  -H "Authorization: Bearer your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{"outcome_type": "throttle", "observed_at": "2026-01-11T08:30:00Z"}'
+```
+
+See [docs/PILOT_PROOF.md](docs/PILOT_PROOF.md) for full pilot mode documentation.
+
+---
+
 **API Key Rotation:**
 
 To rotate keys without downtime:
