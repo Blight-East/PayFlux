@@ -48,6 +48,9 @@ services:
       # Tier configuration (tier1 = detection only, tier2 = adds interpretation)
       PAYFLUX_TIER: "${PAYFLUX_TIER:-tier1}"
       
+      # Pilot mode (enables /pilot/* routes for outcome annotation)
+      PAYFLUX_PILOT_MODE: "${PAYFLUX_PILOT_MODE:-false}"
+      
       # Optional tuning
       PAYFLUX_RATELIMIT_RPS: "100"
       PAYFLUX_RATELIMIT_BURST: "500"
