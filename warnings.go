@@ -22,6 +22,7 @@ const (
 	OutcomeSourceManual        = "manual"
 	OutcomeSourceStripeWebhook = "stripe_webhook"
 	OutcomeSourceAdyenWebhook  = "adyen_webhook"
+	OutcomeSourceOtherWebhook  = "other_webhook"
 	OutcomeSourceOther         = "other"
 )
 
@@ -179,7 +180,7 @@ func ValidOutcomeType(t string) bool {
 // ValidOutcomeSource checks if the outcome source is valid
 func ValidOutcomeSource(s string) bool {
 	switch s {
-	case OutcomeSourceManual, OutcomeSourceStripeWebhook, OutcomeSourceAdyenWebhook, OutcomeSourceOther:
+	case OutcomeSourceManual, OutcomeSourceStripeWebhook, OutcomeSourceAdyenWebhook, OutcomeSourceOtherWebhook, OutcomeSourceOther:
 		return true
 	}
 	return false

@@ -47,6 +47,7 @@ Content-Type: application/json
 {
   "outcome_type": "throttle",
   "observed_at": "2026-01-11T08:00:00Z",
+  "source": "manual",
   "notes": "Processor reduced approval rate by 15%"
 }
 ```
@@ -67,8 +68,17 @@ Content-Type: application/json
 curl -X POST http://localhost:8080/pilot/warnings/1768097434029-0/outcome \
   -H "Authorization: Bearer your-api-key" \
   -H "Content-Type: application/json" \
-  -d '{"outcome_type": "throttle", "observed_at": "2026-01-11T08:30:00Z", "notes": "15% approval rate drop"}'
+  -d '{"outcome_type": "throttle", "observed_at": "2026-01-11T08:30:00Z", "source": "manual", "notes": "15% approval rate drop"}'
 ```
+
+### Outcome Sources
+| Source | Description |
+|--------|-------------|
+| `manual` | Manual annotation via dashboard or API (default) |
+| `stripe_webhook` | Outcome detected via Stripe webhook |
+| `adyen_webhook` | Outcome detected via Adyen webhook |
+| `other_webhook` | Outcome detected via other webhook integration |
+| `other` | Other source |
 
 ## Proof Capture
 
@@ -118,6 +128,12 @@ This is intentional for pilot simplicity. Proof capture via stdout ensures no da
 > - No recommendations — champions decide their own actions
 > - Language remains probabilistic for Tier 2 context
 
+## Security
+
+> [!NOTE]
+> All `/pilot/*` routes require API key authentication via `Authorization: Bearer <API_KEY>` header.
+> Unauthenticated requests return 401.
+
 ## Pilot Workflow
 
 1. Enable pilot mode: `PAYFLUX_PILOT_MODE=true`
@@ -128,6 +144,6 @@ This is intentional for pilot simplicity. Proof capture via stdout ensures no da
 
 ## Future Enhancements (Not Implemented)
 
-- `stripe_webhook` and `adyen_webhook` outcome sources
 - Redis-backed persistent warning storage
 - Lead time dashboards and trend analysis
+- Automated webhook outcome detection

@@ -32,6 +32,7 @@ type PilotOutcomeAnnotation struct {
 type OutcomeRequest struct {
 	OutcomeType string `json:"outcome_type"`
 	ObservedAt  string `json:"observed_at"`
+	Source      string `json:"source,omitempty"` // manual|stripe_webhook|adyen_webhook|other_webhook (default: manual)
 	Notes       string `json:"notes,omitempty"`
 }
 
@@ -114,8 +115,17 @@ func pilotOutcomeHandler(store *WarningStore, outcomeSetCounter func(outcomeType
 			observedAt = time.Now().UTC().Format(time.RFC3339)
 		}
 
-		// Set outcome (source = manual for this endpoint)
-		warning, found := store.SetOutcome(warningID, req.OutcomeType, observedAt, OutcomeSourceManual, req.Notes)
+		// Default source to manual if not provided, validate if provided
+		source := req.Source
+		if source == "" {
+			source = OutcomeSourceManual
+		} else if !ValidOutcomeSource(source) {
+			http.Error(w, `{"error":"invalid source"}`, http.StatusBadRequest)
+			return
+		}
+
+		// Set outcome
+		warning, found := store.SetOutcome(warningID, req.OutcomeType, observedAt, source, req.Notes)
 		if !found {
 			http.Error(w, `{"error":"warning not found"}`, http.StatusNotFound)
 			return
@@ -123,7 +133,7 @@ func pilotOutcomeHandler(store *WarningStore, outcomeSetCounter func(outcomeType
 
 		// Increment Prometheus counter
 		if outcomeSetCounter != nil {
-			outcomeSetCounter(req.OutcomeType, OutcomeSourceManual)
+			outcomeSetCounter(req.OutcomeType, source)
 		}
 
 		// Calculate and observe lead time
