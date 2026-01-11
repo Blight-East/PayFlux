@@ -36,6 +36,9 @@ services:
       # Export configuration
       PAYFLUX_EXPORT_MODE: "stdout"  # stdout | file | both
       
+      # Tier configuration (tier1 = detection only, tier2 = adds interpretation)
+      PAYFLUX_TIER: "${PAYFLUX_TIER:-tier1}"
+      
       # Optional tuning
       PAYFLUX_RATELIMIT_RPS: "100"
       PAYFLUX_RATELIMIT_BURST: "500"
