@@ -157,6 +157,9 @@ PayFlux includes a full-flow verification script at `scripts/verify_pilot.sh`. R
 | **A: False-Negative** | Bad patterns (retry storms, failure spikes) emit warnings |
 | **B: Tier 1 Schema** | Gated keys (`processor_playbook_context`, `risk_trajectory`) never appear in Tier 1 |
 | **C: Metrics Stability** | Metric names and label keys unchanged across container restart |
+
+> Metrics stability refers to metric names and label sets, not counter values. Counter values are expected to reset across restarts.
+
 | **D: Pilot Containment** | `/pilot/*` routes return 404 when `PAYFLUX_PILOT_MODE=false` |
 | **E: Log Redaction** | No secrets, API keys, or raw payloads in logs |
 | **F: Language Audit** | No overclaiming terminology in docs |
