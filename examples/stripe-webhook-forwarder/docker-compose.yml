@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  stripe-forwarder:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET}"
+      PAYFLUX_API_KEY: "${PAYFLUX_API_KEY:-your-api-key-here}"
+      PAYFLUX_INGEST_URL: "http://payflux:8080/v1/events/payment_exhaust"
+      PORT: "8081"
+    depends_on:
+      - payflux
+
+  payflux:
+    image: payflux:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PAYFLUX_API_KEY: "${PAYFLUX_API_KEY:-your-api-key-here}"
+      STRIPE_API_KEY: "${STRIPE_API_KEY:-sk_test_...}"
+      REDIS_ADDR: "redis:6379"
+      PAYFLUX_PILOT_MODE: "true"
+      PAYFLUX_TIER: "tier2"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+
+networks:
+  default:
+    name: payflux-network
