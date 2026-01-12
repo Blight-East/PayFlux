@@ -249,6 +249,12 @@ PayFlux gives teams timely visibility and control over payment behavior before p
 
 ---
 
+## Failure Behavior
+
+PayFlux operates passively and out of band. If PayFlux is unavailable, payment processing continues normally. Failure results in reduced visibility only—never blocked transactions, retries, or processor interaction.
+
+---
+
 ## Key Features
 
 - High-throughput HTTP ingestion
@@ -678,6 +684,16 @@ PayFlux v0.2.x is safe for early access and pilot deployments.
 - TLS termination (use a reverse proxy)
 - Long-term event archival (use downstream exporters)
 - Horizontal scaling coordination (each instance is independent)
+
+---
+
+## Trust & Safety
+
+For details on PayFlux's security posture and data handling:
+
+- [Data Flow Overview](docs/DATA_FLOW.md) — What PayFlux processes and what it does not
+- [Security Posture](docs/SECURITY_POSTURE.md) — Pilot-level security controls
+- [Incident Response](docs/INCIDENT_RESPONSE.md) — Security contact and incident handling
 
 ---
 
