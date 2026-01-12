@@ -681,6 +681,18 @@ PayFlux v0.2.x is safe for early access and pilot deployments.
 
 ---
 
+## Data Handling
+
+PayFlux processes pseudonymous operational event data provided by customers for the sole purpose of detecting and reporting payment risk patterns. PayFlux does not process or store cardholder data (PAN), CVV, or personal customer information. All identifiers are hashed or tokenized prior to ingestion.
+
+---
+
+## Data Protection Roles
+
+PayFlux acts as a data processor. Customers remain the data controller and determine what data is sent to PayFlux and how it is used.
+
+---
+
 ## Licensing
 
 PayFlux is offered under a commercial early-access license.
