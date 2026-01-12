@@ -134,7 +134,7 @@ start_payflux() {
     while [ $attempt -lt $max_wait ]; do
         # Single curl call, capture just the HTTP code
         local status
-        status=$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8080/healthz" 2>/dev/null)
+        status=$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8080/health" 2>/dev/null)
         
         if [ "$status" = "200" ]; then
             echo "  ✓ PayFlux healthy after ${attempt}s"
@@ -366,7 +366,7 @@ test_checkpoint_c() {
         return
     fi
     
-    echo "$metrics_before" | grep -E "^payflux_" | sed 's/{.*}/{}/' | cut -d'{' -f1 | sort -u > /tmp/metrics_before.txt
+    echo "$metrics_before" | grep -E "^payflux_" | awk '{print $1}' | sed 's/{.*//' | sort -u > /tmp/metrics_before.txt
     local before_count
     before_count=$(wc -l < /tmp/metrics_before.txt | tr -d ' ')
     
@@ -396,7 +396,7 @@ test_checkpoint_c() {
         return
     fi
     
-    echo "$metrics_after" | grep -E "^payflux_" | sed 's/{.*}/{}/' | cut -d'{' -f1 | sort -u > /tmp/metrics_after.txt
+    echo "$metrics_after" | grep -E "^payflux_" | awk '{print $1}' | sed 's/{.*//' | sort -u > /tmp/metrics_after.txt
     
     if diff -q /tmp/metrics_before.txt /tmp/metrics_after.txt > /dev/null; then
         pass "Checkpoint C: $before_count metric names unchanged after restart"
