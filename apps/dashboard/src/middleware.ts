@@ -8,7 +8,11 @@ export function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
+  // Allow webhooks and login API without auth
   if (isApiRoute && request.nextUrl.pathname.startsWith('/api/webhooks')) {
+    return NextResponse.next();
+  }
+  if (isApiRoute && request.nextUrl.pathname === '/api/login') {
     return NextResponse.next();
   }
 
