@@ -38,7 +38,7 @@ services:
       - PAYFLUX_API_KEY=${PAYFLUX_API_KEY:-pilot-key-1234567890abcdef}
       - STRIPE_API_KEY=${STRIPE_API_KEY:-sk_test_placeholder}
       - PAYFLUX_PILOT_MODE=true
-      - PAYFLUX_TIER=tier1
+      - PAYFLUX_TIER=tier2
     depends_on:
       redis:
         condition: service_healthy

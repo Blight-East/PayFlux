@@ -4,6 +4,12 @@ An optional sidecar service that routes PayFlux pilot warnings to Slack or gener
 
 > **Note**: This is a pilot-optional adapter. It does not modify PayFlux behavior, does not process payment data, and operates only on metadata. Best-effort notifications only.
 
+> [!IMPORTANT]
+> **Tier 2 Requirement:** Alert Router requires `PAYFLUX_TIER=tier2` and `PAYFLUX_PILOT_MODE=true`. It reads warnings from the `/pilot/warnings` endpoint, which is only available in pilot mode. **Not supported on Tier 1.**
+
+> [!TIP]
+> **Off Switch:** Set `PAYFLUX_ALERT_ROUTER_ENABLED=false` (the default) to disable all outbound alert sends. PayFlux core remains unchanged regardless of router state.
+
 ## Overview
 
 The Alert Router polls the PayFlux pilot API for warnings and delivers event-driven alerts to your notification channels. It's designed to be:
@@ -25,9 +31,11 @@ The Alert Router polls the PayFlux pilot API for warnings and delivers event-dri
 
 ## Requirements
 
-- PayFlux running with `PAYFLUX_PILOT_MODE=true`
+- PayFlux running with `PAYFLUX_TIER=tier2` and `PAYFLUX_PILOT_MODE=true`
 - A valid PayFlux API key with access to `/pilot/*` endpoints
 - Slack Incoming Webhook URL or a generic webhook endpoint
+
+> Tier 1 does not support alerting. To use Alert Router, set `PAYFLUX_TIER=tier2`.
 
 ## Quick Start
 

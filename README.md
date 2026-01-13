@@ -386,7 +386,10 @@ PayFlux enrichment provides a **deterministic, explainable, and processor-aligne
 | Tier | Audience | Purpose |
 |------|----------|---------|
 | **Tier 1** | Risk & fraud teams | Detection + proof of value. See what's happening. |
-| **Tier 2** | Payments & revenue owners | Interpretation + momentum. Understand why it matters and how fast. |
+| **Tier 2** | Payments & revenue owners | Interpretation + momentum + optional alerts. Understand why it matters and how fast. |
+
+> [!NOTE]
+> **Alerting (Tier 2 only):** The optional [Alert Router sidecar](examples/alert-router/) delivers warnings to Slack or webhooks when enabled. It requires `PAYFLUX_TIER=tier2` and `PAYFLUX_PILOT_MODE=true` because it reads from the `/pilot/warnings` endpoint. Alert Router is disabled by default and does not modify PayFlux core behavior.
 
 See [docs/TIER_GATING.md](docs/TIER_GATING.md) for full tier rules and language constraints.
 
