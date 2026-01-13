@@ -8,7 +8,11 @@ export function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
-  // Allow webhooks and login API without auth
+  // GUARDRAIL: Only these routes bypass authentication:
+  // 1. /api/webhooks/* - External webhook handlers (Stripe, etc.) that use their own signature verification
+  // 2. /api/login - Must remain unauthenticated so the user can establish a session.
+  //    This route does not proxy PayFlux or expose data.
+  // ALL OTHER /api/* ROUTES REQUIRE AUTH.
   if (isApiRoute && request.nextUrl.pathname.startsWith('/api/webhooks')) {
     return NextResponse.next();
   }

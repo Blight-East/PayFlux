@@ -38,7 +38,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-white tracking-tight">Warnings Dashboard</h2>
-                    <p className="text-zinc-500 text-sm mt-1">Real-time risk signals from PayFlux core.</p>
+                    <p className="text-zinc-500 text-sm mt-1">Risk signals from PayFlux core.</p>
                 </div>
                 <div className="flex space-x-2">
                     <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-white text-xs font-bold rounded hover:bg-zinc-800 transition-colors">
@@ -86,8 +86,8 @@ export default function DashboardPage() {
                                     <td className="px-6 py-4 font-medium text-white uppercase tracking-wider text-[10px]">{w.processor}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${w.risk_band === 'critical' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
-                                                w.risk_band === 'high' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' :
-                                                    'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                            w.risk_band === 'high' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' :
+                                                'bg-zinc-800 text-zinc-400 border border-zinc-700'
                                             }`}>
                                             {w.risk_band}
                                         </span>
