@@ -315,6 +315,9 @@ See full documentation at https://payflux.dev/docs
                                 <code className="text-xs bg-black px-1.5 py-0.5 rounded text-zinc-400">docker compose down</code>
                             </li>
                         </ul>
+                        <p className="mt-4 text-[10px] text-zinc-600 italic">
+                            PayFlux surfaces signals and operational context; it does not block payments.
+                        </p>
                     </div>
 
                     {/* Download All */}
@@ -333,7 +336,8 @@ See full documentation at https://payflux.dev/docs
                         </button>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* Security Notice */}
             <div className="mt-8 bg-zinc-900/50 border border-zinc-800 rounded p-4">
@@ -344,6 +348,6 @@ See full documentation at https://payflux.dev/docs
                     <li>• Change PAYFLUX_API_KEY to a strong, unique value before deploying</li>
                 </ul>
             </div>
-        </div>
+        </div >
     );
 }
