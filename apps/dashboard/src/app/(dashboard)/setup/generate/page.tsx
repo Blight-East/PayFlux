@@ -13,6 +13,7 @@ interface SetupConfig {
 export default function GenerateSetupPage() {
     const [config, setConfig] = useState<SetupConfig | null>(null);
     const [generated, setGenerated] = useState(false);
+    const [copied, setCopied] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -138,6 +139,12 @@ See full documentation at https://payflux.dev/docs
         setTimeout(() => downloadFile(generateReadme(), 'README.md'), 200);
     };
 
+    const handleCopyCommand = () => {
+        navigator.clipboard.writeText('docker compose up -d');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     const handleFinish = () => {
         // Clear session storage
         sessionStorage.removeItem('setup_webhook_secret');
@@ -243,15 +250,48 @@ See full documentation at https://payflux.dev/docs
                                 docker compose up -d
                             </code>
                             <button
-                                onClick={() => navigator.clipboard.writeText('docker compose up -d')}
-                                className="px-3 py-3 bg-zinc-900 text-zinc-400 text-xs rounded hover:text-white"
+                                onClick={handleCopyCommand}
+                                className={`px-4 py-3 text-xs font-medium rounded transition-all ${copied
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                                    }`}
                             >
-                                Copy
+                                {copied ? 'Copied!' : 'Copy'}
                             </button>
                         </div>
                         <p className="mt-3 text-xs text-zinc-500">
                             Run this command in the directory where you saved the files above.
                         </p>
+                    </div>
+
+                    {/* What to Expect Next */}
+                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-6">
+                        <h4 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">What to expect next</h4>
+                        <ul className="space-y-3 text-sm">
+                            <li className="flex items-start space-x-3">
+                                <span className="text-blue-400 mt-0.5">•</span>
+                                <div>
+                                    <span className="text-zinc-300">Health check:</span>
+                                    <code className="ml-2 text-xs bg-black px-2 py-0.5 rounded text-zinc-400">http://localhost:8080/health</code>
+                                </div>
+                            </li>
+                            <li className="flex items-start space-x-3">
+                                <span className="text-blue-400 mt-0.5">•</span>
+                                <div>
+                                    <span className="text-zinc-300">Pilot warnings (Tier 2 + Pilot only):</span>
+                                    <span className="ml-2 text-zinc-500">Dashboard → Warnings</span>
+                                </div>
+                            </li>
+                            <li className="flex items-start space-x-3">
+                                <span className="text-blue-400 mt-0.5">•</span>
+                                <div className="text-zinc-300">
+                                    <span>If you hit issues:</span>
+                                    <code className="ml-2 text-xs bg-black px-2 py-0.5 rounded text-zinc-400">docker compose ps</code>
+                                    <span className="mx-1.5 text-zinc-600">and</span>
+                                    <code className="text-xs bg-black px-2 py-0.5 rounded text-zinc-400">docker compose logs --tail=100 payflux</code>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
 
                     {/* Download All */}
