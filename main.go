@@ -110,12 +110,25 @@ var (
 	// Pilot mode (v0.2.3+)
 	pilotModeEnabled bool
 	warningStore     *WarningStore
+
+	// Operational Guardrails (v0.2.4+)
+	payfluxEnv            string // "dev" or "prod" (default dev)
+	ingestEnabled         bool   // PAYFLUX_INGEST_ENABLED (default true)
+	warningsEnabled       bool   // PAYFLUX_WARNINGS_ENABLED (default true)
+	tier2Enabled          bool   // PAYFLUX_TIER2_ENABLED (default true)
+	ingestRPS             float64
+	ingestBurst           int
+	outcomeRPS            float64
+	outcomeBurst          int
+	backpressureThreshold int64 // Stream depth threshold for warning logs
 )
 
-// Rate limiter map
+// Rate limiter maps (per API key)
 var (
-	rateLimiters = make(map[string]*rate.Limiter)
-	rlMu         sync.RWMutex
+	rateLimiters    = make(map[string]*rate.Limiter)
+	outcomeLimiters = make(map[string]*rate.Limiter) // Separate for outcome endpoint
+	rlMu            sync.RWMutex
+	outcomeRlMu     sync.RWMutex
 )
 
 // Prometheus metrics
@@ -200,6 +213,20 @@ var (
 		Help:    "Time between warning emission and outcome annotation",
 		Buckets: []float64{60, 300, 900, 1800, 3600, 7200, 14400, 28800, 86400}, // 1m to 24h
 	})
+
+	// Guardrail metrics (v0.2.4+)
+	ingestRateLimited = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_ingest_rate_limited_total",
+		Help: "Requests rejected due to rate limiting",
+	}, []string{"endpoint"})
+	warningsSuppressed = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_warnings_suppressed_total",
+		Help: "Warnings not created due to PAYFLUX_WARNINGS_ENABLED=false",
+	})
+	consumerLagMessages = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "payflux_consumer_lag_messages",
+		Help: "Estimated consumer lag (pending messages in group)",
+	})
 )
 
 func main() {
@@ -221,7 +248,9 @@ func main() {
 	}
 	slog.Info("api_keys_loaded", "count", len(validAPIKeys))
 
-	// Load rate limit config
+	// Note: prod mode validation happens after guardrails config is loaded (below)
+
+	// Load rate limit config (legacy vars, still supported)
 	rateLimitRPS = float64(envInt("PAYFLUX_RATELIMIT_RPS", 100))
 	rateLimitBurst = envInt("PAYFLUX_RATELIMIT_BURST", 500)
 	slog.Info("rate_limit_configured", "rps", rateLimitRPS, "burst", rateLimitBurst)
@@ -276,6 +305,55 @@ func main() {
 		slog.Info("pilot_mode_enabled", "warning_store_capacity", 1000)
 	}
 
+	// Load Operational Guardrails config (v0.2.4+)
+	payfluxEnv = env("PAYFLUX_ENV", "dev")
+	if payfluxEnv != "dev" && payfluxEnv != "prod" {
+		log.Fatalf("PAYFLUX_ENV must be 'dev' or 'prod', got: %s", payfluxEnv)
+	}
+
+	// Kill switches (default enabled)
+	ingestEnabled = env("PAYFLUX_INGEST_ENABLED", "true") == "true"
+	warningsEnabled = env("PAYFLUX_WARNINGS_ENABLED", "true") == "true"
+	tier2Enabled = env("PAYFLUX_TIER2_ENABLED", "true") == "true"
+
+	// Rate limit config (separate for ingest and outcome)
+	ingestRPS = float64(envInt("PAYFLUX_INGEST_RPS", 100))
+	ingestBurst = envInt("PAYFLUX_INGEST_BURST", 500)
+	outcomeRPS = float64(envInt("PAYFLUX_OUTCOME_RPS", 10))
+	outcomeBurst = envInt("PAYFLUX_OUTCOME_BURST", 20)
+	backpressureThreshold = int64(envInt("PAYFLUX_BACKPRESSURE_THRESHOLD", 10000))
+
+	// Loud startup logs for guardrail state
+	slog.Info("guardrails_config",
+		"env", payfluxEnv,
+		"ingest_enabled", ingestEnabled,
+		"warnings_enabled", warningsEnabled,
+		"tier2_enabled", tier2Enabled,
+		"ingest_rps", ingestRPS,
+		"ingest_burst", ingestBurst,
+		"outcome_rps", outcomeRPS,
+		"outcome_burst", outcomeBurst,
+		"backpressure_threshold", backpressureThreshold,
+	)
+
+	if !ingestEnabled {
+		slog.Warn("INGEST_DISABLED", "msg", "Event ingestion is disabled via PAYFLUX_INGEST_ENABLED=false")
+	}
+	if !warningsEnabled {
+		slog.Warn("WARNINGS_DISABLED", "msg", "Warning creation is disabled via PAYFLUX_WARNINGS_ENABLED=false")
+	}
+	if !tier2Enabled {
+		slog.Warn("TIER2_DISABLED", "msg", "Tier 2 enrichment is disabled via PAYFLUX_TIER2_ENABLED=false")
+	}
+
+	// Prod mode API key validation (after guardrails config loaded)
+	if payfluxEnv == "prod" {
+		if err := validateAPIKeysForProd(validAPIKeys); err != nil {
+			log.Fatalf("API key validation failed in prod mode: %v", err)
+		}
+		slog.Info("api_keys_validated_for_prod")
+	}
+
 	// Stripe key validation
 	stripeKey := os.Getenv("STRIPE_API_KEY")
 	if stripeKey == "" || !strings.HasPrefix(stripeKey, "sk_") {
@@ -290,6 +368,7 @@ func main() {
 		exportErrors, exportLastSuccess, riskEventsTotal, riskScoreLast,
 		tier2ContextEmitted, tier2TrajectoryEmitted,
 		warningOutcomeSetTotal, warningOutcomeLeadTime,
+		ingestRateLimited, warningsSuppressed, consumerLagMessages,
 	)
 
 	// Redis connection pool
@@ -346,16 +425,19 @@ func main() {
 		mux.HandleFunc("/pilot/dashboard", authMiddleware(pilotDashboardHandler(warningStore)))
 		// Warnings list (auth required)
 		mux.HandleFunc("/pilot/warnings", authMiddleware(pilotWarningsListHandler(warningStore)))
-		// Outcome endpoint and single warning (auth required)
+		// Outcome endpoint and single warning (auth required, outcome uses stricter rate limit)
 		mux.HandleFunc("/pilot/warnings/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasSuffix(r.URL.Path, "/outcome") {
-				pilotOutcomeHandler(warningStore,
-					func(outcomeType, source string) {
-						warningOutcomeSetTotal.WithLabelValues(outcomeType, source).Inc()
-					},
-					func(seconds float64) {
-						warningOutcomeLeadTime.Observe(seconds)
-					})(w, r)
+				// Apply stricter outcome rate limiter
+				outcomeRateLimitMiddleware(func(w http.ResponseWriter, r *http.Request) {
+					pilotOutcomeHandler(warningStore,
+						func(outcomeType, source string) {
+							warningOutcomeSetTotal.WithLabelValues(outcomeType, source).Inc()
+						},
+						func(seconds float64) {
+							warningOutcomeLeadTime.Observe(seconds)
+						})(w, r)
+				})(w, r)
 			} else {
 				pilotWarningGetHandler(warningStore)(w, r)
 			}
@@ -419,6 +501,35 @@ func loadAPIKeys() []string {
 	}
 
 	return keys
+}
+
+// validateAPIKeysForProd checks API keys meet production requirements
+func validateAPIKeysForProd(keys []string) error {
+	placeholders := map[string]bool{
+		"":                  true,
+		"changeme":          true,
+		"test":              true,
+		"your-api-key-here": true,
+		"dev-secret-key":    true,
+	}
+
+	for _, key := range keys {
+		if placeholders[key] {
+			return fmt.Errorf("placeholder API key detected: use a real key in production")
+		}
+		if len(key) < 16 {
+			return fmt.Errorf("API key too short: minimum 16 characters in production")
+		}
+	}
+	return nil
+}
+
+// safeAPIKeyID returns a safe identifier for logging (first 8 chars + ...)
+func safeAPIKeyID(key string) string {
+	if len(key) <= 8 {
+		return "***"
+	}
+	return key[:8] + "..."
 }
 
 // generateConsumerName creates a unique consumer name
@@ -559,7 +670,7 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Rate limiting with configurable limits
+// Rate limiting with configurable limits (ingest endpoint)
 func getRateLimiter(key string) *rate.Limiter {
 	rlMu.RLock()
 	limiter, exists := rateLimiters[key]
@@ -577,8 +688,30 @@ func getRateLimiter(key string) *rate.Limiter {
 		return limiter
 	}
 
-	limiter = rate.NewLimiter(rate.Limit(rateLimitRPS), rateLimitBurst)
+	limiter = rate.NewLimiter(rate.Limit(ingestRPS), ingestBurst)
 	rateLimiters[key] = limiter
+	return limiter
+}
+
+// getOutcomeLimiter returns rate limiter for outcome endpoint (stricter)
+func getOutcomeLimiter(key string) *rate.Limiter {
+	outcomeRlMu.RLock()
+	limiter, exists := outcomeLimiters[key]
+	outcomeRlMu.RUnlock()
+
+	if exists {
+		return limiter
+	}
+
+	outcomeRlMu.Lock()
+	defer outcomeRlMu.Unlock()
+
+	if limiter, exists := outcomeLimiters[key]; exists {
+		return limiter
+	}
+
+	limiter = rate.NewLimiter(rate.Limit(outcomeRPS), outcomeBurst)
+	outcomeLimiters[key] = limiter
 	return limiter
 }
 
@@ -589,6 +722,37 @@ func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		limiter := getRateLimiter(apiKey)
 		if !limiter.Allow() {
+			ingestRateLimited.WithLabelValues(r.URL.Path).Inc()
+			slog.Warn("rate_limit_exceeded",
+				"endpoint", r.URL.Path,
+				"api_key_id", safeAPIKeyID(apiKey),
+				"limit_rps", ingestRPS,
+				"burst", ingestBurst,
+			)
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+// outcomeRateLimitMiddleware is a stricter limiter for pilot outcome endpoint
+func outcomeRateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		apiKey := strings.TrimPrefix(auth, "Bearer ")
+
+		limiter := getOutcomeLimiter(apiKey)
+		if !limiter.Allow() {
+			ingestRateLimited.WithLabelValues(r.URL.Path).Inc()
+			slog.Warn("rate_limit_exceeded",
+				"endpoint", r.URL.Path,
+				"api_key_id", safeAPIKeyID(apiKey),
+				"limit_rps", outcomeRPS,
+				"burst", outcomeBurst,
+			)
 			w.Header().Set("Retry-After", "1")
 			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 			return
@@ -675,12 +839,24 @@ func updateStreamMetrics() {
 			log.Printf("metrics_stream_length_error err=%v", err)
 		}
 
-		// Pending count
+		// Pending count (consumer lag)
 		pending, err := rdb.XPending(ctx, streamKey, groupName).Result()
+		var pendingCountVal int64
 		if err == nil {
-			pendingCount.Set(float64(pending.Count))
+			pendingCountVal = pending.Count
+			pendingCount.Set(float64(pendingCountVal))
+			consumerLagMessages.Set(float64(pendingCountVal))
 		} else {
 			log.Printf("metrics_pending_count_error err=%v", err)
+		}
+
+		// Backpressure warning log (if above threshold)
+		if length > backpressureThreshold {
+			slog.Warn("stream_backpressure",
+				"stream_depth", length,
+				"pending_messages", pendingCountVal,
+				"threshold", backpressureThreshold,
+			)
 		}
 	}
 }
@@ -696,6 +872,12 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleEvent(w http.ResponseWriter, r *http.Request) {
+	// Ingest kill switch check
+	if !ingestEnabled {
+		http.Error(w, "event ingestion temporarily disabled", http.StatusServiceUnavailable)
+		return
+	}
+
 	// Track latency
 	start := time.Now()
 	defer func() {
@@ -1147,7 +1329,8 @@ func exportEvent(event Event, messageID string) {
 		}
 
 		// Tier 2 only: Add authority-gated context (v0.2.2+)
-		if exportTier == "tier2" {
+		// Also respects tier2Enabled kill switch
+		if exportTier == "tier2" && tier2Enabled {
 			// Processor Playbook Context (probabilistic, non-prescriptive)
 			context := generatePlaybookContext(res.Band, res.Drivers)
 			if context != "" {
@@ -1168,20 +1351,26 @@ func exportEvent(event Event, messageID string) {
 		riskScoreLast.WithLabelValues(event.Processor).Set(res.Score)
 
 		// Pilot mode: Create warning record for elevated+ risk bands (v0.2.3+)
+		// Respects warningsEnabled kill switch
 		if pilotModeEnabled && warningStore != nil && res.Band != "low" {
-			warning := &Warning{
-				WarningID:       messageID, // Use stream message ID as stable unique ID
-				EventID:         event.EventID,
-				Processor:       event.Processor,
-				MerchantIDHash:  event.MerchantIDHash,
-				ProcessedAt:     time.Now().UTC(),
-				RiskScore:       res.Score,
-				RiskBand:        res.Band,
-				RiskDrivers:     res.Drivers,
-				PlaybookContext: exported.ProcessorPlaybookContext,
-				RiskTrajectory:  exported.RiskTrajectory,
+			if warningsEnabled {
+				warning := &Warning{
+					WarningID:       messageID, // Use stream message ID as stable unique ID
+					EventID:         event.EventID,
+					Processor:       event.Processor,
+					MerchantIDHash:  event.MerchantIDHash,
+					ProcessedAt:     time.Now().UTC(),
+					RiskScore:       res.Score,
+					RiskBand:        res.Band,
+					RiskDrivers:     res.Drivers,
+					PlaybookContext: exported.ProcessorPlaybookContext,
+					RiskTrajectory:  exported.RiskTrajectory,
+				}
+				warningStore.Add(warning)
+			} else {
+				// Warnings disabled, increment suppression counter
+				warningsSuppressed.Inc()
 			}
-			warningStore.Add(warning)
 		}
 	}
 
