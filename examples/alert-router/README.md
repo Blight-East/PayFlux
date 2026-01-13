@@ -12,6 +12,7 @@ The Alert Router polls the PayFlux pilot API for warnings and delivers event-dri
 - **Non-blocking** — Never impacts PayFlux operations
 - **Best-effort** — Alerts are delivered with retry, but not guaranteed
 - **Safe** — No PII/PAN processed; only warning metadata
+- **Read-only** — Router only reads `/pilot/warnings`; it does not ingest events
 
 ## Features
 
@@ -34,8 +35,7 @@ The Alert Router polls the PayFlux pilot API for warnings and delivers event-dri
 
 ```bash
 cat > .env << EOF
-PAYFLUX_API_KEY=your-payflux-api-key
-STRIPE_API_KEY=sk_test_xxx
+PAYFLUX_API_KEY=pilot-key-1234567890abcdef
 
 # Enable the router
 PAYFLUX_ALERT_ROUTER_ENABLED=true
@@ -124,7 +124,7 @@ PayFlux will function identically with or without the router.
 
 - In-memory state (dedupe cache resets on restart)
 - No persistent alert history
-- No Stripe/Adyen direct integration (relies on PayFlux API)
+- No direct Stripe/Adyen integration (reads from PayFlux pilot API only)
 - Best-effort delivery only
 
 ## Troubleshooting

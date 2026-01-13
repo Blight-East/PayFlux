@@ -8,10 +8,11 @@
 #   docker compose up --build
 #
 # Required environment variables (set in .env or export):
-#   PAYFLUX_API_KEY - API key for PayFlux
-#   STRIPE_API_KEY - Stripe API key (sk_test_xxx)
+#   PAYFLUX_API_KEY - API key for PayFlux (min 16 chars)
 #   SLACK_WEBHOOK_URL - (if using Slack sink)
 #   ALERT_WEBHOOK_URL - (if using webhook sink)
+#
+# Note: STRIPE_API_KEY is required by PayFlux core but NOT by the router.
 
 version: "3.8"
 
@@ -34,8 +35,8 @@ services:
       - "8080:8080"
     environment:
       - REDIS_ADDR=redis:6379
-      - PAYFLUX_API_KEY=${PAYFLUX_API_KEY:-dev-secret-key}
-      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - PAYFLUX_API_KEY=${PAYFLUX_API_KEY:-pilot-key-1234567890abcdef}
+      - STRIPE_API_KEY=${STRIPE_API_KEY:-sk_test_placeholder}
       - PAYFLUX_PILOT_MODE=true
       - PAYFLUX_TIER=tier1
     depends_on:
@@ -57,7 +58,7 @@ services:
       
       # PayFlux connection
       - PAYFLUX_BASE_URL=http://payflux:8080
-      - PAYFLUX_PILOT_AUTH=${PAYFLUX_API_KEY:-dev-secret-key}
+      - PAYFLUX_PILOT_AUTH=${PAYFLUX_API_KEY:-pilot-key-1234567890abcdef}
       
       # Alert sink configuration
       - ALERT_SINK=${ALERT_SINK:-slack}
