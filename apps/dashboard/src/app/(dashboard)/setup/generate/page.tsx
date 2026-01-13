@@ -242,6 +242,42 @@ See full documentation at https://payflux.dev/docs
                         </pre>
                     </div>
 
+                    {/* Before You Start */}
+                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-lg p-6">
+                        <h4 className="text-sm font-medium text-zinc-300 mb-3">Before you start</h4>
+                        <p className="text-sm text-zinc-500 mb-4">
+                            PayFlux runs as a secure container on your infrastructure.<br />
+                            You'll need Docker Desktop installed.
+                        </p>
+                        <ul className="text-sm text-zinc-500 space-y-1.5">
+                            <li>
+                                • Mac / Windows:{' '}
+                                <a
+                                    href="https://www.docker.com/get-started"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-zinc-400 hover:text-white underline underline-offset-2"
+                                >
+                                    Install Docker Desktop
+                                </a>
+                            </li>
+                            <li>
+                                • Linux:{' '}
+                                <a
+                                    href="https://docs.docker.com/engine/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-zinc-400 hover:text-white underline underline-offset-2"
+                                >
+                                    Install Docker Engine
+                                </a>
+                            </li>
+                        </ul>
+                        <p className="text-sm text-zinc-600 mt-4">
+                            Once Docker is installed, onboarding is a single command.
+                        </p>
+                    </div>
+
                     {/* Run Command */}
                     <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-6">
                         <h4 className="text-sm font-bold text-green-500 uppercase tracking-widest mb-3">Run Command</h4>
@@ -252,8 +288,8 @@ See full documentation at https://payflux.dev/docs
                             <button
                                 onClick={handleCopyCommand}
                                 className={`px-4 py-3 text-xs font-medium rounded transition-all ${copied
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-zinc-900 text-zinc-400 hover:text-white'
                                     }`}
                             >
                                 {copied ? 'Copied!' : 'Copy'}
@@ -265,31 +301,18 @@ See full documentation at https://payflux.dev/docs
                     </div>
 
                     {/* What to Expect Next */}
-                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-6">
-                        <h4 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">What to expect next</h4>
-                        <ul className="space-y-3 text-sm">
-                            <li className="flex items-start space-x-3">
-                                <span className="text-blue-400 mt-0.5">•</span>
-                                <div>
-                                    <span className="text-zinc-300">Health check:</span>
-                                    <code className="ml-2 text-xs bg-black px-2 py-0.5 rounded text-zinc-400">http://localhost:8080/health</code>
-                                </div>
+                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-lg p-6">
+                        <h4 className="text-sm font-medium text-zinc-300 mb-4">What to expect next</h4>
+                        <ul className="space-y-2.5 text-sm text-zinc-500">
+                            <li>
+                                • Health check available at{' '}
+                                <code className="text-xs bg-black px-1.5 py-0.5 rounded text-zinc-400">http://localhost:8080/health</code>
                             </li>
-                            <li className="flex items-start space-x-3">
-                                <span className="text-blue-400 mt-0.5">•</span>
-                                <div>
-                                    <span className="text-zinc-300">Pilot warnings (Tier 2 + Pilot only):</span>
-                                    <span className="ml-2 text-zinc-500">Dashboard → Warnings</span>
-                                </div>
-                            </li>
-                            <li className="flex items-start space-x-3">
-                                <span className="text-blue-400 mt-0.5">•</span>
-                                <div className="text-zinc-300">
-                                    <span>If you hit issues:</span>
-                                    <code className="ml-2 text-xs bg-black px-2 py-0.5 rounded text-zinc-400">docker compose ps</code>
-                                    <span className="mx-1.5 text-zinc-600">and</span>
-                                    <code className="text-xs bg-black px-2 py-0.5 rounded text-zinc-400">docker compose logs --tail=100 payflux</code>
-                                </div>
+                            <li>• Warnings appear in the PayFlux dashboard (Tier 2 / Pilot only)</li>
+                            <li>• No traffic is blocked — PayFlux observes and reports only</li>
+                            <li>
+                                • You can shut it down anytime with{' '}
+                                <code className="text-xs bg-black px-1.5 py-0.5 rounded text-zinc-400">docker compose down</code>
                             </li>
                         </ul>
                     </div>
