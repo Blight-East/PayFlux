@@ -121,40 +121,48 @@ if [ "$GRAF_HEALTHY" = false ]; then
 fi
 
 # ============================================================================
-# CHECK: PayFlux scrape target
+# CHECK: PayFlux scrape target via Prometheus targets API
 # ============================================================================
 echo ""
 echo "Checking PayFlux scrape target..."
-sleep 5  # Give Prometheus time to scrape
 
-# Query Prometheus for up{job="payflux"}
-QUERY_RESULT=$(curl -s "http://127.0.0.1:19090/api/v1/query?query=up{job=\"payflux\"}" 2>/dev/null)
-
-# Extract the value (1 or 0)
-VALUE=$(echo "$QUERY_RESULT" | grep -oP '"value":\[\d+\.?\d*,"\K[01]' 2>/dev/null || echo "")
-
-if [ "$VALUE" = "1" ]; then
-    pass "PayFlux metrics reachable (up=1)"
-    PAYFLUX_STATUS="PASS"
-elif [ "$VALUE" = "0" ]; then
-    warn "PayFlux not reachable (ops stack healthy, PayFlux target down)"
-    PAYFLUX_STATUS="WARN"
-    echo ""
-    echo -e "  ${CYAN}This is expected if PayFlux is still starting or has configuration issues.${NC}"
-    echo ""
-    echo "  PayFlux container status:"
-    docker compose ps payflux 2>&1 | sed 's/^/    /'
-    echo ""
-    echo "  PayFlux last 30 log lines:"
-    docker compose logs --tail=30 payflux 2>&1 | sed 's/^/    /'
-else
-    # No data yet - target may not have been scraped
-    warn "PayFlux target status unknown (no scrape data yet)"
-    PAYFLUX_STATUS="WARN"
-    echo ""
-    echo "  Prometheus targets:"
-    curl -s "http://127.0.0.1:19090/api/v1/targets" 2>/dev/null | head -50 | sed 's/^/    /'
-fi
+PAYFLUX_STATUS="UNKNOWN"
+for attempt in {1..15}; do
+    # Query Prometheus targets API
+    TARGETS_RESPONSE=$(curl -s "http://127.0.0.1:19090/api/v1/targets" 2>/dev/null)
+    
+    # Check if payflux job exists and its health status
+    # Look for: "job":"payflux" ... "health":"up" or "health":"down"
+    if echo "$TARGETS_RESPONSE" | grep -q '"job":"payflux"'; then
+        # Job exists, check health
+        if echo "$TARGETS_RESPONSE" | grep -q '"job":"payflux".*"health":"up"'; then
+            pass "PayFlux target UP"
+            PAYFLUX_STATUS="PASS"
+            break
+        elif echo "$TARGETS_RESPONSE" | grep -q '"job":"payflux".*"health":"down"'; then
+            # Wait and retry - target might be transitioning
+            if [ $attempt -eq 15 ]; then
+                fail "PayFlux target DOWN"
+                PAYFLUX_STATUS="FAIL"
+                echo ""
+                echo "  PayFlux container status:"
+                docker compose ps payflux 2>&1 | sed 's/^/    /'
+                echo ""
+                echo "  PayFlux last 30 log lines:"
+                docker compose logs --tail=30 payflux 2>&1 | sed 's/^/    /'
+            fi
+        fi
+    else
+        # Job not found yet
+        if [ $attempt -eq 15 ]; then
+            fail "PayFlux target MISSING"
+            PAYFLUX_STATUS="FAIL"
+            echo "  No 'payflux' job found in Prometheus targets"
+        fi
+    fi
+    
+    sleep 1
+done
 
 # ============================================================================
 # RESULT SUMMARY
@@ -163,14 +171,18 @@ echo ""
 echo "═════════════════════════════════════════════════════════"
 if [ "$PAYFLUX_STATUS" = "PASS" ]; then
     pass "Smoke test: PASS"
+    echo "═════════════════════════════════════════════════════════"
+    echo ""
+    echo "  Grafana:    http://127.0.0.1:3000"
+    echo "  Prometheus: http://127.0.0.1:19090"
+    echo ""
+    exit 0
 else
-    warn "Smoke test: WARN (ops stack healthy, PayFlux target may be down)"
+    fail "Smoke test: FAIL"
+    echo "═════════════════════════════════════════════════════════"
+    echo ""
+    echo "  Grafana:    http://127.0.0.1:3000"
+    echo "  Prometheus: http://127.0.0.1:19090"
+    echo ""
+    exit 1
 fi
-echo "═════════════════════════════════════════════════════════"
-echo ""
-echo "  Grafana:    http://127.0.0.1:3000"
-echo "  Prometheus: http://127.0.0.1:19090"
-echo ""
-
-# Exit 0 for both PASS and WARN - ops stack itself is healthy
-exit 0
