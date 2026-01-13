@@ -1,0 +1,53 @@
+groups:
+  - name: payflux_ops
+    rules:
+      # PayFlux process is down
+      - alert: PayFluxDown
+        expr: up{job="payflux"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PayFlux is down"
+          description: "PayFlux process has been unreachable for more than 1 minute."
+
+      # Consumer lag is high (events piling up in Redis stream)
+      # Threshold is configurable - default 1000 messages
+      - alert: ConsumerLagHigh
+        expr: payflux_consumer_lag_messages > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PayFlux consumer lag is high"
+          description: "Consumer lag has exceeded 1000 messages for 2 minutes. Current: {{ $value }} messages."
+
+      # Rate limiting is being triggered frequently
+      - alert: RateLimitingSpike
+        expr: sum(rate(payflux_ingest_rate_limited_total[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PayFlux rate limiting spike"
+          description: "Rate limiting is triggering more than 5 times per second for 5 minutes."
+
+      # Ingest rejections are spiking (bad payloads or auth issues)
+      - alert: IngestRejectSpike
+        expr: rate(payflux_ingest_rejected_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PayFlux ingest rejections spiking"
+          description: "More than 1 ingest rejection per second over 5m window."
+
+      # Warnings are being suppressed (dedup or rate limit on warning storage)
+      - alert: WarningsSuppressed
+        expr: increase(payflux_warnings_suppressed_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "PayFlux warnings being suppressed"
+          description: "Some warnings were suppressed in the last 5 minutes. Count: {{ $value }}."
