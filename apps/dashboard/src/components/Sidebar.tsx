@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const menuItems = [
-    { name: 'Onboarding', href: '/onboarding' },
+    { name: 'Quick Setup', href: '/setup/connect' },
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'API Keys', href: '/api-keys' },
     { name: 'Connectors', href: '/connectors' },
@@ -27,8 +27,8 @@ export default function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={`block px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                                    ? 'bg-zinc-800 text-white'
-                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                                ? 'bg-zinc-800 text-white'
+                                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                                 }`}
                         >
                             {item.name}
