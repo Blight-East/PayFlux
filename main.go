@@ -73,7 +73,8 @@ var (
 	minIdleToClaim = 30 * time.Second
 
 	// Stream retention config (set in main)
-	streamMaxLen int64
+	streamMaxLen    int64
+	rawEventTTLDays int // PAYFLUX_RAW_EVENT_TTL_DAYS (default 7)
 
 	// Rate limit config (set in main)
 	rateLimitRPS   float64
@@ -263,6 +264,14 @@ func main() {
 		slog.Info("stream_retention_disabled")
 	}
 
+	// Load raw event TTL config (time-based retention)
+	rawEventTTLDays = envInt("PAYFLUX_RAW_EVENT_TTL_DAYS", 7)
+	if rawEventTTLDays > 0 {
+		slog.Info("raw_event_ttl_enabled", "ttl_days", rawEventTTLDays)
+	} else {
+		slog.Info("raw_event_ttl_disabled")
+	}
+
 	// Load panic mode config
 	panicMode = env("PAYFLUX_PANIC_MODE", "crash")
 	if panicMode != "crash" && panicMode != "recover" {
@@ -404,6 +413,11 @@ func main() {
 
 	// Start metrics updater
 	go updateStreamMetrics()
+
+	// Start raw event retention purge (time-based)
+	if rawEventTTLDays > 0 {
+		go runStreamRetention()
+	}
 
 	// Routes
 	mux := http.NewServeMux()
@@ -550,6 +564,63 @@ func generateConsumerName() string {
 	randSuffix := hex.EncodeToString(randBytes)
 
 	return fmt.Sprintf("%s-%d-%s", hostname, os.Getpid(), randSuffix)
+}
+
+// runStreamRetention periodically purges raw events older than rawEventTTLDays.
+// Uses Redis XTRIM with MINID to delete entries older than the cutoff.
+func runStreamRetention() {
+	// Run immediately on startup
+	purgeOldStreamEntries()
+
+	// Then run hourly
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		purgeOldStreamEntries()
+	}
+}
+
+// purgeOldStreamEntries trims the events_stream to remove entries older than rawEventTTLDays.
+// Redis stream IDs are millisecond timestamps, so we compute a cutoff ID.
+func purgeOldStreamEntries() {
+	if rawEventTTLDays <= 0 {
+		return
+	}
+
+	// Compute cutoff: now - TTL days in milliseconds
+	cutoffTime := time.Now().Add(-time.Duration(rawEventTTLDays) * 24 * time.Hour)
+	cutoffMs := cutoffTime.UnixMilli()
+	cutoffID := fmt.Sprintf("%d-0", cutoffMs)
+
+	// Get stream length before trim
+	lenBefore, err := rdb.XLen(ctx, streamKey).Result()
+	if err != nil {
+		slog.Error("stream_retention_len_error", "error", err)
+		return
+	}
+
+	// XTRIM with MINID to delete entries older than cutoff
+	trimmed, err := rdb.XTrimMinID(ctx, streamKey, cutoffID).Result()
+	if err != nil {
+		slog.Error("stream_retention_trim_error", "error", err)
+		return
+	}
+
+	// Get stream length after trim
+	lenAfter, err := rdb.XLen(ctx, streamKey).Result()
+	if err != nil {
+		slog.Error("stream_retention_len_after_error", "error", err)
+		return
+	}
+
+	slog.Info("stream_retention_purge_completed",
+		"cutoff_id", cutoffID,
+		"cutoff_time", cutoffTime.Format(time.RFC3339),
+		"len_before", lenBefore,
+		"len_after", lenAfter,
+		"trimmed", trimmed,
+	)
 }
 
 // Panic handling with configurable mode

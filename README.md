@@ -663,6 +663,14 @@ For long-term replay requirements:
 - Attach a downstream exporter (Kafka, warehouse, log sink)
 - Exporters are implemented as consumers—no changes to PayFlux required
 
+**Data Retention**
+
+Data retention: PayFlux retains raw processor event data only as long as necessary for short-term operational debugging, and automatically deletes it on a rolling basis (default: 7 days). PayFlux primarily stores derived operational signals such as warnings and aggregated metrics.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PAYFLUX_RAW_EVENT_TTL_DAYS` | `7` | Days to retain raw events before auto-delete (0 to disable) |
+
 ---
 
 ## Production Readiness Notes
