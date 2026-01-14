@@ -663,9 +663,15 @@ For long-term replay requirements:
 - Attach a downstream exporter (Kafka, warehouse, log sink)
 - Exporters are implemented as consumers—no changes to PayFlux required
 
-**Data Retention**
+## Data Retention & Minimization
 
-Data retention: PayFlux retains raw processor event data only as long as necessary for short-term operational debugging, and automatically deletes it on a rolling basis (default: 7 days). PayFlux primarily stores derived operational signals such as warnings and aggregated metrics.
+PayFlux is designed with built-in data minimization by default.
+
+Raw processor event payloads are retained for a maximum of 7 days and are automatically purged on a rolling basis. After this window, PayFlux persists only normalized warnings and aggregated metrics, which do not contain raw transaction payloads or sensitive processor data.
+
+This approach reduces long-term data exposure while preserving operational visibility, detection accuracy, and historical performance insights.
+
+PayFlux does not block payments or interfere with processor decisioning. It surfaces signals and operational context only.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
