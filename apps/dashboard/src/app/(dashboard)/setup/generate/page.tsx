@@ -8,6 +8,7 @@ interface SetupConfig {
     apiKey: string;
     tier: string;
     pilotMode: boolean;
+    processor: string;
 }
 
 export default function GenerateSetupPage() {
@@ -21,13 +22,14 @@ export default function GenerateSetupPage() {
         const apiKey = sessionStorage.getItem('setup_api_key') || '';
         const tier = sessionStorage.getItem('setup_tier') || 'tier1';
         const pilotMode = sessionStorage.getItem('setup_pilot_mode') === 'true';
+        const processor = sessionStorage.getItem('payflux_setup_processor') || 'stripe';
 
         if (!webhookSecret) {
             router.push('/setup/connect');
             return;
         }
 
-        setConfig({ webhookSecret, apiKey, tier, pilotMode });
+        setConfig({ webhookSecret, apiKey, tier, pilotMode, processor });
     }, [router]);
 
     const generateEnvFile = () => {
@@ -178,7 +180,7 @@ See full documentation at https://payflux.dev/docs
                 <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                         <span className="text-zinc-500">Processor:</span>
-                        <span className="ml-2 text-white">Stripe</span>
+                        <span className="ml-2 text-white">{config.processor === 'generic_webhook' ? 'Generic Webhook' : 'Stripe'}</span>
                     </div>
                     <div>
                         <span className="text-zinc-500">Tier:</span>
