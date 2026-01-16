@@ -15,9 +15,13 @@ export default function GenerateSetupPage() {
     const [config, setConfig] = useState<SetupConfig | null>(null);
     const [generated, setGenerated] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [hydrated, setHydrated] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
+        // Set hydrated first to indicate client render
+        setHydrated(true);
+
         const webhookSecret = sessionStorage.getItem('setup_webhook_secret');
         const apiKey = sessionStorage.getItem('setup_api_key') || '';
         const tier = sessionStorage.getItem('setup_tier') || 'tier1';
@@ -156,7 +160,25 @@ See full documentation at https://payflux.dev/docs
         router.push('/dashboard');
     };
 
-    if (!config) return null;
+    if (!hydrated || !config) {
+        return (
+            <div className="p-8 max-w-3xl mx-auto">
+                <div className="mb-8">
+                    <div className="flex items-center space-x-2 text-[10px] text-zinc-500 uppercase tracking-widest mb-4">
+                        <span className="text-zinc-600">Step 1</span>
+                        <span>→</span>
+                        <span className="text-zinc-600">Step 2</span>
+                        <span>→</span>
+                        <span className="text-blue-400">Step 3</span>
+                        <span>→</span>
+                        <span>Generate Setup</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">Generate Your Setup</h2>
+                    <p className="text-zinc-500 text-sm mt-1">Loading configuration...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 max-w-3xl mx-auto">
@@ -318,7 +340,7 @@ See full documentation at https://payflux.dev/docs
                             </li>
                         </ul>
                         <p className="mt-4 text-[10px] text-zinc-600 italic">
-                            PayFlux surfaces signals and operational context; it does not block payments.
+                            PayFlux surfaces operational context; it does not block payments.
                         </p>
                     </div>
 
