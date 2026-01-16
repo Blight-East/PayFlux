@@ -8,15 +8,22 @@ export function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
+  // Public policy URLs for payment provider verification (Paddle, etc.)
+  const isPublicPolicy = request.nextUrl.pathname === '/terms' || request.nextUrl.pathname === '/privacy';
+
   // GUARDRAIL: Only these routes bypass authentication:
   // 1. /api/webhooks/* - External webhook handlers (Stripe, etc.) that use their own signature verification
   // 2. /api/login - Must remain unauthenticated so the user can establish a session.
   //    This route does not proxy PayFlux or expose data.
+  // 3. /terms, /privacy - Public policy pages required by payment providers
   // ALL OTHER /api/* ROUTES REQUIRE AUTH.
   if (isApiRoute && request.nextUrl.pathname.startsWith('/api/webhooks')) {
     return NextResponse.next();
   }
   if (isApiRoute && request.nextUrl.pathname === '/api/login') {
+    return NextResponse.next();
+  }
+  if (isPublicPolicy) {
     return NextResponse.next();
   }
 
