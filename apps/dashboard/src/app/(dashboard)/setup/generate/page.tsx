@@ -26,9 +26,16 @@ export default function GenerateSetupPage() {
         try {
             const webhookSecret = sessionStorage.getItem('setup_webhook_secret');
             const apiKey = sessionStorage.getItem('setup_api_key') || '';
-            const tier = sessionStorage.getItem('setup_tier') || 'tier1';
-            const pilotMode = sessionStorage.getItem('setup_pilot_mode') === 'true';
-            const processor = sessionStorage.getItem('payflux_setup_processor') || 'stripe';
+
+            // Non-sensitive state: try sessionStorage first, fallback to localStorage
+            const tier = sessionStorage.getItem('setup_tier') ||
+                localStorage.getItem('setup_tier') ||
+                'tier1';
+            const pilotMode = (sessionStorage.getItem('setup_pilot_mode') ||
+                localStorage.getItem('setup_pilot_mode')) === 'true';
+            const processor = sessionStorage.getItem('payflux_setup_processor') ||
+                localStorage.getItem('payflux_setup_processor') ||
+                'stripe';
 
             if (!webhookSecret) {
                 router.push('/setup/connect');
@@ -37,7 +44,7 @@ export default function GenerateSetupPage() {
 
             setConfig({ webhookSecret, apiKey, tier, pilotMode, processor });
         } catch (error) {
-            // SessionStorage blocked or unavailable (Safari private mode, etc.)
+            // SessionStorage/localStorage blocked or unavailable (Safari private mode, etc.)
             router.push('/setup/connect');
         }
     }, [router]);
