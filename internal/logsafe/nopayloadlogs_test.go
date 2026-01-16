@@ -17,38 +17,64 @@ func TestNoPayloadLogging(t *testing.T) {
 
 	// Dangerous patterns that indicate potential payload logging
 	dangerousPatterns := []*regexp.Regexp{
+		// HTTP dump utilities (leak full request/response with headers + body)
+		regexp.MustCompile(`httputil\.DumpRequest`),
+		regexp.MustCompile(`httputil\.DumpRequestOut`),
+		regexp.MustCompile(`httputil\.DumpResponse`),
+
+		// Spew debug dumps (leak entire data structures)
+		regexp.MustCompile(`spew\.Dump\s*\(`),
+		regexp.MustCompile(`spew\.Sdump\s*\(`),
+		regexp.MustCompile(`spew\.Printf`),
+		regexp.MustCompile(`spew\.Sprintf`),
+
 		// Headers that should never be logged
-		regexp.MustCompile(`(?i)Stripe-Signature`),
-		regexp.MustCompile(`(?i)Authorization:`),
+		regexp.MustCompile(`log.*Stripe-Signature`),
+		regexp.MustCompile(`Printf.*Stripe-Signature`),
+		regexp.MustCompile(`log.*Authorization\s*:`),
+		regexp.MustCompile(`Printf.*Authorization\s*:`),
 
-		// Common payload dump patterns
-		regexp.MustCompile(`Printf\s*\([^)]*%\+v[^)]*payload`),
-		regexp.MustCompile(`Printf\s*\([^)]*payload[^)]*%\+v`),
-		regexp.MustCompile(`Printf\s*\([^)]*%s[^)]*\bbody\b`),
-		regexp.MustCompile(`Printf\s*\([^)]*\bbody\b[^)]*%s`),
-		regexp.MustCompile(`Println\s*\([^)]*\bbody\b`),
-		regexp.MustCompile(`Println\s*\([^)]*payload`),
-		regexp.MustCompile(`spew\.Dump`),
-		regexp.MustCompile(`fmt\.Printf\s*\([^)]*string\s*\(\s*body\s*\)`),
+		// Body/payload printing with format verbs that dump content
+		// Match: Printf("%s", body), Printf("%+v", payload), etc.
+		regexp.MustCompile(`Printf\s*\([^)]*%[+#]?[vsq][^)]*\b(body|payload|request|response)\b`),
+		regexp.MustCompile(`Printf\s*\([^)]*\b(body|payload|request|response)\b[^)]*%[+#]?[vsq]`),
+		regexp.MustCompile(`Sprintf\s*\([^)]*%[+#]?[vsq][^)]*\b(body|payload|request|response)\b`),
+		regexp.MustCompile(`Sprintf\s*\([^)]*\b(body|payload|request|response)\b[^)]*%[+#]?[vsq]`),
 
-		// Explicit payload logging comments/strings
+		// Println with body/payload (dumps entire content)
+		regexp.MustCompile(`Println\s*\([^)]*\b(body|payload|rawBody|requestBody|responseBody)\b`),
+		regexp.MustCompile(`Print\s*\(\s*(body|payload|rawBody|requestBody|responseBody)\s*\)`),
+
+		// String conversion of body/payload (converts bytes to string for logging)
+		regexp.MustCompile(`string\s*\(\s*(body|payload|rawBody|requestBody|responseBody)\s*\)`),
+
+		// Header dumps
+		regexp.MustCompile(`Printf.*%[+#]?v.*[Hh]eader`),
+		regexp.MustCompile(`Printf.*[Hh]eader.*%[+#]?v`),
+		regexp.MustCompile(`Println.*[Hh]eader`),
+
+		// Explicit dangerous logging phrases
 		regexp.MustCompile(`(?i)log.*raw.*payload`),
+		regexp.MustCompile(`(?i)log.*raw.*body`),
 		regexp.MustCompile(`(?i)payload.*dump`),
+		regexp.MustCompile(`(?i)body.*dump`),
 	}
 
-	// Files/directories to exclude from scanning
+	// Directories to exclude from scanning (non-runtime code)
 	excludeDirs := map[string]bool{
 		".git":         true,
 		".next":        true,
 		"node_modules": true,
 		"vendor":       true,
-		"examples":     true, // Examples may have different logging for demo purposes
-		"logsafe":      true, // This package defines sensitive patterns, exclude from scan
+		"examples":     true, // Example code for demos
+		"scripts":      true, // Shell scripts, not runtime Go
+		"docs":         true, // Documentation
+		"logsafe":      true, // This package itself (defines test patterns)
 	}
 
-	excludeFiles := map[string]bool{
-		"go.sum": true,
-		"go.mod": true,
+	// File patterns to exclude
+	excludeFilePatterns := []string{
+		"_test.go", // Exclude all test files (they may have test fixtures)
 	}
 
 	var violations []string
@@ -66,19 +92,16 @@ func TestNoPayloadLogging(t *testing.T) {
 			return nil
 		}
 
-		// Only scan Go files
+		// Only scan Go source files (not .md, .json, etc.)
 		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
 
-		// Skip excluded files
-		if excludeFiles[filepath.Base(path)] {
-			return nil
-		}
-
-		// Skip this test file itself
-		if strings.HasSuffix(path, "nopayloadlogs_test.go") {
-			return nil
+		// Skip test files (they contain test fixtures)
+		for _, pattern := range excludeFilePatterns {
+			if strings.HasSuffix(path, pattern) {
+				return nil
+			}
 		}
 
 		// Read file content
