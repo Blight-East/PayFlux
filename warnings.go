@@ -33,6 +33,7 @@ type Warning struct {
 	Processor      string    `json:"processor"`
 	MerchantIDHash string    `json:"merchant_id_hash,omitempty"`
 	ProcessedAt    time.Time `json:"processed_at"`
+	EventTimestamp time.Time `json:"event_timestamp"` // Upstream event time for latency measurement
 
 	// Risk data
 	RiskScore   float64  `json:"processor_risk_score"`

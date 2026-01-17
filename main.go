@@ -233,6 +233,11 @@ var (
 		Name: "payflux_auth_denied_total",
 		Help: "Authentication denials by reason",
 	}, []string{"reason"})
+	warningLatency = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "payflux_warning_latency_seconds",
+		Help:    "Time from upstream event to warning creation",
+		Buckets: []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60, 120, 300},
+	})
 )
 
 func main() {
@@ -389,7 +394,7 @@ func main() {
 		tier2ContextEmitted, tier2TrajectoryEmitted,
 		warningOutcomeSetTotal, warningOutcomeLeadTime,
 		ingestRateLimited, warningsSuppressed, consumerLagMessages,
-		authDenied,
+		authDenied, warningLatency,
 	)
 
 	// Redis connection pool
@@ -1464,18 +1469,37 @@ func exportEvent(event Event, messageID string) {
 		// Respects warningsEnabled kill switch
 		if pilotModeEnabled && warningStore != nil && res.Band != "low" {
 			if warningsEnabled {
+				// Parse event timestamp for latency measurement
+				var eventTimestamp time.Time
+				if event.EventTimestamp != "" {
+					if parsedTime, err := time.Parse(time.RFC3339, event.EventTimestamp); err == nil {
+						eventTimestamp = parsedTime
+					}
+				}
+
+				processedAt := time.Now().UTC()
 				warning := &Warning{
 					WarningID:       messageID, // Use stream message ID as stable unique ID
 					EventID:         event.EventID,
 					Processor:       event.Processor,
 					MerchantIDHash:  event.MerchantIDHash,
-					ProcessedAt:     time.Now().UTC(),
+					ProcessedAt:     processedAt,
+					EventTimestamp:  eventTimestamp,
 					RiskScore:       res.Score,
 					RiskBand:        res.Band,
 					RiskDrivers:     res.Drivers,
 					PlaybookContext: exported.ProcessorPlaybookContext,
 					RiskTrajectory:  exported.RiskTrajectory,
 				}
+
+				// Observe warning latency if we have a valid event timestamp
+				if !eventTimestamp.IsZero() {
+					latency := processedAt.Sub(eventTimestamp).Seconds()
+					if latency >= 0 { // Sanity check for clock skew
+						warningLatency.Observe(latency)
+					}
+				}
+
 				warningStore.Add(warning)
 			} else {
 				// Warnings disabled, increment suppression counter
