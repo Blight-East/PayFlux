@@ -229,6 +229,10 @@ var (
 		Name: "payflux_consumer_lag_messages",
 		Help: "Estimated consumer lag (pending messages in group)",
 	})
+	authDenied = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_auth_denied_total",
+		Help: "Authentication denials by reason",
+	}, []string{"reason"})
 )
 
 func main() {
@@ -385,6 +389,7 @@ func main() {
 		tier2ContextEmitted, tier2TrajectoryEmitted,
 		warningOutcomeSetTotal, warningOutcomeLeadTime,
 		ingestRateLimited, warningsSuppressed, consumerLagMessages,
+		authDenied,
 	)
 
 	// Redis connection pool
@@ -740,6 +745,7 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if !strings.HasPrefix(auth, "Bearer ") {
+			authDenied.WithLabelValues("missing_key").Inc()
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -749,6 +755,7 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		// Check revocation list first (takes precedence over allowlist)
 		for _, key := range revokedAPIKeys {
 			if subtle.ConstantTimeCompare([]byte(token), []byte(key)) == 1 {
+				authDenied.WithLabelValues("revoked_key").Inc()
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
@@ -764,6 +771,7 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if !valid {
+			authDenied.WithLabelValues("invalid_key").Inc()
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
