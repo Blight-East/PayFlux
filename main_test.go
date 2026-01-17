@@ -46,9 +46,9 @@ func setupTestRedis(t *testing.T) {
 	// Initialize rate limiters map to avoid nil panic
 	rateLimiters = make(map[string]*rate.Limiter)
 
-	// Set high rate limits for tests
-	rateLimitRPS = 1000
-	rateLimitBurst = 5000
+	// Set high rate limits for tests (use correct variable names)
+	ingestRPS = 1000
+	ingestBurst = 5000
 
 	// Create consumer group
 	_ = testRdb.XGroupCreateMkStream(testCtx, streamKey, groupName, "0").Err()
@@ -68,6 +68,7 @@ func TestAuth(t *testing.T) {
 	// Set valid API keys
 	validAPIKeys = []string{"test-key-valid"}
 	revokedAPIKeys = []string{} // Ensure no revoked keys
+	ingestEnabled = true        // Enable ingestion for tests
 
 	testEvent := Event{
 		EventType:           "test",
@@ -184,6 +185,7 @@ func TestIdempotency(t *testing.T) {
 	defer teardownTestRedis(t)
 
 	validAPIKeys = []string{"test-key"}
+	ingestEnabled = true
 
 	eventID := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 	testEvent := Event{
