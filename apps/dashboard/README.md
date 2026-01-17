@@ -64,3 +64,32 @@ node scripts/test-webhook.js
 # Run smoke tests (requires dashboard running)
 ./scripts/smoke.sh
 ```
+
+## Prometheus Integration
+
+The dashboard can display auth denial metrics when Prometheus is configured.
+
+```bash
+# Add to .env.local
+PROMETHEUS_URL=http://localhost:19090
+```
+
+### Verifying Auth Metrics Endpoint
+
+The `/api/metrics/auth-denials` endpoint requires authentication:
+
+```bash
+# 1. Login and save cookies
+curl -X POST http://localhost:3000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"token":"payflux-admin-token"}' \
+  -c cookies.txt
+
+# 2. Test auth denial metrics endpoint
+curl -b cookies.txt http://localhost:3000/api/metrics/auth-denials
+
+# Expected responses:
+# - Unauthenticated: {"error":"Unauthorized"}
+# - Authenticated + Prometheus up: {"available":true,"denials":{...},"window":"15m"}
+# - Authenticated + Prometheus down: {"available":false}
+```
