@@ -12,9 +12,17 @@ interface Warning {
     outcome_type: string;
 }
 
+interface AuthDenials {
+    missing_key: number;
+    revoked_key: number;
+    invalid_key: number;
+}
+
 export default function DashboardPage() {
     const [warnings, setWarnings] = useState<Warning[]>([]);
     const [loading, setLoading] = useState(true);
+    const [authDenials, setAuthDenials] = useState<AuthDenials | null>(null);
+    const [prometheusAvailable, setPrometheusAvailable] = useState(true);
 
     useEffect(() => {
         async function fetchWarnings() {
@@ -33,6 +41,29 @@ export default function DashboardPage() {
         fetchWarnings();
     }, []);
 
+    useEffect(() => {
+        async function fetchAuthDenials() {
+            try {
+                const res = await fetch('/api/metrics/auth-denials');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.available) {
+                        setAuthDenials(data.denials);
+                    } else {
+                        setPrometheusAvailable(false);
+                    }
+                } else {
+                    setPrometheusAvailable(false);
+                }
+            } catch {
+                setPrometheusAvailable(false);
+            }
+        }
+        fetchAuthDenials();
+        const interval = setInterval(fetchAuthDenials, 30000); // Refresh every 30s
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className="p-8">
             <div className="flex justify-between items-center mb-8">
@@ -45,6 +76,33 @@ export default function DashboardPage() {
                         Export JSON
                     </button>
                 </div>
+            </div>
+
+            {/* Auth Denials Card */}
+            <div className="mb-6 bg-zinc-900/50 border border-zinc-800 rounded-lg p-6">
+                <h3 className="text-sm font-bold text-white mb-4">Auth Denials (last 15m)</h3>
+                {!prometheusAvailable ? (
+                    <div className="text-xs text-zinc-500 italic">
+                        Prometheus not configured. Set PROMETHEUS_URL to view breakdown.
+                    </div>
+                ) : authDenials ? (
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Missing Key</div>
+                            <div className="text-2xl font-bold text-white font-mono">{authDenials.missing_key}</div>
+                        </div>
+                        <div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Revoked Key</div>
+                            <div className="text-2xl font-bold text-red-500 font-mono">{authDenials.revoked_key}</div>
+                        </div>
+                        <div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Invalid Key</div>
+                            <div className="text-2xl font-bold text-orange-500 font-mono">{authDenials.invalid_key}</div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-xs text-zinc-500 italic">Loading...</div>
+                )}
             </div>
 
             <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden">
