@@ -74,3 +74,26 @@ groups:
             - invalid_key: Wrong key deployed or rotation mismatch
             
             See docs/AUTH_DENIAL_METRICS.md for detailed response procedures.
+
+      # Revoked key still being used (potential security incident)
+      - alert: RevokedKeyInUse
+        expr: increase(payflux_auth_denied_total{reason="revoked_key"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Revoked API key still in use"
+          description: |
+            A revoked API key has been attempted {{ $value }} times in the last 5 minutes.
+            
+            This indicates either:
+            1. Slow client migration after planned key rotation (expected for 24-48h)
+            2. Compromised key still being used by attacker (SECURITY INCIDENT)
+            
+            Immediate actions:
+            1. Check when key was added to PAYFLUX_REVOKED_KEYS
+            2. If recent rotation (<48h ago): Monitor, expected to decline
+            3. If unexpected: Review security logs, identify source, escalate
+            4. Cross-reference with invalid_key attempts for brute-force patterns
+            
+            See docs/AUTH_DENIAL_METRICS.md for full incident response procedures.
