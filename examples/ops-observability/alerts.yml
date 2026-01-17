@@ -51,3 +51,26 @@ groups:
         annotations:
           summary: "PayFlux warnings being suppressed"
           description: "Some warnings were suppressed in the last 5 minutes. Count: {{ $value }}."
+
+      # Auth denials are spiking (possible attack, config issue, or key rotation)
+      - alert: PayFluxAuthDeniedSpike
+        expr: sum(increase(payflux_auth_denied_total[5m])) > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PayFlux auth denials spiking"
+          description: |
+            More than 50 auth denials in 5 minutes.
+            
+            Breakdown by reason:
+            {{ range query "sum by (reason) (increase(payflux_auth_denied_total[5m]))" }}
+              - {{ .Labels.reason }}: {{ .Value }}
+            {{ end }}
+            
+            Response guidance:
+            - missing_key: Clients missing Bearer token or integration regression
+            - revoked_key: Leaked key still in use after rotation
+            - invalid_key: Wrong key deployed or rotation mismatch
+            
+            See docs/AUTH_DENIAL_METRICS.md for detailed response procedures.
