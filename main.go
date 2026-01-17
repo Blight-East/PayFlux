@@ -84,7 +84,8 @@ var (
 	panicMode string // "crash" or "recover"
 
 	// Valid API keys (set in main)
-	validAPIKeys []string
+	validAPIKeys   []string
+	revokedAPIKeys []string // Keys denied even if in validAPIKeys
 
 	// Export config (set in main)
 	exportMode         string   // "stdout", "file", "both"
@@ -248,6 +249,12 @@ func main() {
 		log.Fatal("PAYFLUX_API_KEY or PAYFLUX_API_KEYS must be set")
 	}
 	slog.Info("api_keys_loaded", "count", len(validAPIKeys))
+
+	// Load revoked keys (denylist)
+	revokedAPIKeys = loadRevokedAPIKeys()
+	if len(revokedAPIKeys) > 0 {
+		slog.Warn("revoked_keys_loaded", "count", len(revokedAPIKeys))
+	}
 
 	// Note: prod mode validation happens after guardrails config is loaded (below)
 
@@ -517,6 +524,22 @@ func loadAPIKeys() []string {
 	return keys
 }
 
+// loadRevokedAPIKeys loads revoked API keys from env var (denylist)
+func loadRevokedAPIKeys() []string {
+	var keys []string
+
+	if keysStr := os.Getenv("PAYFLUX_REVOKED_KEYS"); keysStr != "" {
+		for _, k := range strings.Split(keysStr, ",") {
+			k = strings.TrimSpace(k)
+			if k != "" {
+				keys = append(keys, k)
+			}
+		}
+	}
+
+	return keys
+}
+
 // validateAPIKeysForProd checks API keys meet production requirements
 func validateAPIKeysForProd(keys []string) error {
 	placeholders := map[string]bool{
@@ -721,7 +744,15 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		token := strings.TrimPrefix(auth, "Bearer ")
+		token := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+
+		// Check revocation list first (takes precedence over allowlist)
+		for _, key := range revokedAPIKeys {
+			if subtle.ConstantTimeCompare([]byte(token), []byte(key)) == 1 {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+		}
 
 		// Check against all valid keys using constant-time comparison
 		valid := false

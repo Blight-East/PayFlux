@@ -67,6 +67,7 @@ func TestAuth(t *testing.T) {
 
 	// Set valid API keys
 	validAPIKeys = []string{"test-key-valid"}
+	revokedAPIKeys = []string{} // Ensure no revoked keys
 
 	testEvent := Event{
 		EventType:           "test",
@@ -105,6 +106,68 @@ func TestAuth(t *testing.T) {
 			if tt.authHeader != "" {
 				req.Header.Set("Authorization", tt.authHeader)
 			}
+
+			w := httptest.NewRecorder()
+			authMiddleware(rateLimitMiddleware(handleEvent))(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestAPIKeyRevocation(t *testing.T) {
+	setupTestRedis(t)
+	defer teardownTestRedis(t)
+
+	// Setup: valid key and revoked key
+	validKey := "test-key-valid"
+	revokedKey := "test-key-revoked"
+
+	validAPIKeys = []string{validKey, revokedKey}
+	revokedAPIKeys = []string{revokedKey}
+
+	// Set high rate limits for tests
+	ingestRPS = 1000
+	ingestBurst = 5000
+	ingestEnabled = true
+
+	testEvent := Event{
+		EventType:           "test",
+		EventTimestamp:      time.Now().UTC().Format(time.RFC3339),
+		EventID:             "550e8400-e29b-41d4-a716-446655440000",
+		Processor:           "stripe",
+		MerchantIDHash:      "test",
+		PaymentIntentIDHash: "test",
+		FailureCategory:     "test",
+		RetryCount:          0,
+		GeoBucket:           "US",
+		AmountBucket:        "test",
+		SystemSource:        "test",
+		PaymentMethodBucket: "test",
+		Channel:             "web",
+		RetryResult:         "test",
+		FailureOrigin:       "test",
+	}
+
+	eventJSON, _ := json.Marshal(testEvent)
+
+	tests := []struct {
+		name           string
+		authHeader     string
+		expectedStatus int
+	}{
+		{"Valid key not revoked", "Bearer " + validKey, 202},
+		{"Revoked key denied", "Bearer " + revokedKey, 401},
+		{"Revoked key denied with spaces", "Bearer  " + revokedKey + " ", 401},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest("POST", "/v1/events/payment_exhaust", bytes.NewReader(eventJSON))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", tt.authHeader)
 
 			w := httptest.NewRecorder()
 			authMiddleware(rateLimitMiddleware(handleEvent))(w, req)
