@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import JSZip from 'jszip';
 
 interface SetupConfig {
     webhookSecret: string;
@@ -17,6 +18,7 @@ export default function GenerateSetupPage() {
     const [copied, setCopied] = useState(false);
     const [hydrated, setHydrated] = useState(false);
     const [showFallback, setShowFallback] = useState(false);
+    const [downloadingZip, setDownloadingZip] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -173,6 +175,30 @@ See full documentation at https://payflux.dev/docs
         downloadFile(generateEnvFile(), '.env');
         setTimeout(() => downloadFile(generateDockerCompose(), 'docker-compose.yml'), 100);
         setTimeout(() => downloadFile(generateReadme(), 'README.md'), 200);
+    };
+
+    const handleDownloadZip = async () => {
+        if (downloadingZip) return;
+        setDownloadingZip(true);
+
+        try {
+            const zip = new JSZip();
+            zip.file('.env', generateEnvFile());
+            zip.file('docker-compose.yml', generateDockerCompose());
+            zip.file('README.md', generateReadme());
+
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'payflux-setup.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } finally {
+            setDownloadingZip(false);
+        }
     };
 
     const handleCopyCommand = () => {
@@ -390,6 +416,20 @@ See full documentation at https://payflux.dev/docs
                         </ul>
                         <p className="mt-4 text-[10px] text-zinc-600 italic">
                             PayFlux surfaces operational context; it does not block payments.
+                        </p>
+                    </div>
+
+                    {/* Download ZIP - Primary Option */}
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6 mb-4">
+                        <button
+                            onClick={handleDownloadZip}
+                            disabled={!config || downloadingZip}
+                            className="w-full px-6 py-3 bg-white text-black font-bold rounded text-sm hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {downloadingZip ? 'Generating...' : 'Download ZIP'}
+                        </button>
+                        <p className="mt-2 text-xs text-zinc-500 text-center">
+                            Use this if you want one file to download, unzip, and run.
                         </p>
                     </div>
 
