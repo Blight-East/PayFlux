@@ -16,6 +16,7 @@ export default function GenerateSetupPage() {
     const [config, setConfig] = useState<SetupConfig | null>(null);
     const [generated, setGenerated] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [copiedInstall, setCopiedInstall] = useState(false);
     const [hydrated, setHydrated] = useState(false);
     const [showFallback, setShowFallback] = useState(false);
     const [downloadingZip, setDownloadingZip] = useState(false);
@@ -205,6 +206,52 @@ See full documentation at https://payflux.dev/docs
         navigator.clipboard.writeText('docker compose up -d');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleCopyInstallCommands = () => {
+        const commands = 'unzip payflux-setup.zip -d payflux-setup && cd payflux-setup && docker compose up -d';
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(commands).then(
+                () => {
+                    setCopiedInstall(true);
+                    setTimeout(() => setCopiedInstall(false), 2000);
+                },
+                () => {
+                    // Fallback for clipboard write failure
+                    const textarea = document.createElement('textarea');
+                    textarea.value = commands;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        setCopiedInstall(true);
+                        setTimeout(() => setCopiedInstall(false), 2000);
+                    } catch (err) {
+                        // Silent failure
+                    }
+                    document.body.removeChild(textarea);
+                }
+            );
+        } else {
+            // Fallback for browsers without clipboard API
+            const textarea = document.createElement('textarea');
+            textarea.value = commands;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                setCopiedInstall(true);
+                setTimeout(() => setCopiedInstall(false), 2000);
+            } catch (err) {
+                // Silent failure
+            }
+            document.body.removeChild(textarea);
+        }
     };
 
     const handleFinish = () => {
@@ -430,6 +477,17 @@ See full documentation at https://payflux.dev/docs
                         </button>
                         <p className="mt-2 text-xs text-zinc-500 text-center">
                             Use this if you want one file to download, unzip, and run.
+                        </p>
+
+                        <button
+                            onClick={handleCopyInstallCommands}
+                            disabled={!config}
+                            className="mt-3 w-full px-6 py-2.5 bg-zinc-900 text-white font-bold rounded text-sm hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {copiedInstall ? 'Copied!' : 'Copy install commands'}
+                        </button>
+                        <p className="mt-2 text-xs text-zinc-500 text-center">
+                            Copies the commands to unzip, cd, and start PayFlux with Docker.
                         </p>
                     </div>
 
