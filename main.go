@@ -476,6 +476,16 @@ func main() {
 		slog.Info("pilot_routes_registered", "endpoints", []string{"/pilot/dashboard", "/pilot/warnings", "/pilot/warnings/{id}/outcome"})
 	}
 
+	// Evidence Console endpoint (auth required, CORS enabled)
+	mux.HandleFunc("/api/evidence", corsMiddleware(authMiddleware(handleEvidence)))
+	mux.HandleFunc("/api/evidence/health", corsMiddleware(authMiddleware(handleEvidenceHealth)))
+
+	// Dev-only: Serve fixtures for UI testing
+	if payfluxEnv == "dev" {
+		mux.HandleFunc("/api/evidence/fixtures/", corsMiddleware(authMiddleware(handleEvidenceFixture)))
+		slog.Info("dev_route_registered", "path", "/api/evidence/fixtures/")
+	}
+
 	// Graceful shutdown
 	srv := &http.Server{
 		Addr:         httpAddr,
@@ -778,6 +788,22 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		if !valid {
 			authDenied.WithLabelValues("invalid_key").Inc()
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+// corsMiddleware handles preflight and allows dashboard access
+func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 
@@ -1639,4 +1665,23 @@ func generateRiskTrajectory(res RiskResult) string {
 	}
 
 	return trajectory
+}
+
+// MerchantContext holds behavioral state for evidence categorization
+type MerchantContext struct {
+	ID               string
+	AnomalyType      string
+	RecurrenceCount  int
+	BaselineApproval float64
+}
+
+func getMerchantContext(id string) *MerchantContext {
+	// Minimal stub returning realistic data for the evidence handler
+	// In a full implementation, this would look up data from Redis/PG
+	return &MerchantContext{
+		ID:               id,
+		AnomalyType:      "", // healthy by default
+		RecurrenceCount:  12,
+		BaselineApproval: 0.9421,
+	}
 }
