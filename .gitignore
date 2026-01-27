@@ -1,9 +1,22 @@
 # Secrets
 .env
+.env.*
 
 # Logs
 *.log
 logs/
+*.pid
+test-outputs/
+test-outputs-rerun/
+certification_receipt.json
+full_evidence.json
+*.jsonl
+*_fixture.json
+smoke_*.txt
+headers.txt
+final_analysis_summary.txt
+/payflux
+/payment-node
 
 # Backups
 backup/
