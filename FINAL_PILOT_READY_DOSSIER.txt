@@ -1,0 +1,38 @@
+====================================================
+    PAYFLUX PILOT READINESS CERTIFICATION         
+====================================================
+Generated: Thu Jan 22 02:06:49 EST 2026
+
+--- GATE A: Acceptance & Capacity ---
+Harness Metric: 1899702/1940346 accepted (97%) [PASS]
+Log Metric: 1643771 events confirmed in processing stream
+
+--- GATE B: Tier 2 Engagement ---
+Tier 2 Enrichment: 288447 events contains interpretative narratives
+
+--- GATE C: Narrative Consistency (Archetypes) ---
+Stable Merchant excerpt:
+
+Growth Merchant excerpt:
+Scale-linked deviations observed; consistency with growth-phase transaction behavior. Recurrent pattern; observed multiple times within the current day (Recurrence: 4693). Typically associated with early-stage shifts in transaction quality and risk profile. Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.
+
+Messy Merchant excerpt:
+Multi-vector risk signals observed in already volatile transaction stream. Recurrent pattern; observed multiple times within the current day (Recurrence: 5168). Typically associated with early-stage shifts in transaction quality and risk profile. Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.
+
+--- GATE E: Historical Memory (Day 9 vs Day 3) ---
+Day 3 Baseline (Growth Merchant):
+Scale-linked deviations observed; consistency with growth-phase transaction behavior. Recurrent pattern; observed multiple times within the current day (Recurrence: 882). Typically associated with early-stage shifts in transaction quality and risk profile. Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.
+Day 9 Recurrence Record (Growth Merchant):
+Scale-linked deviations observed; consistency with growth-phase transaction behavior. Recurrent pattern; observed multiple times within the current day (Recurrence: 12611). Typically associated with early-stage shifts in transaction quality and risk profile. Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.
+
+--- GATE D: Safety Scan ---
+Safety Violations: 0
+
+--- HARDENING: Idempotency & Sequence ID ---
+Final Export Sequence ID: 308879
+
+====================================================
+    PILOT READINESS DECISION                        
+====================================================
+RESULT: GO (PASS)
+====================================================

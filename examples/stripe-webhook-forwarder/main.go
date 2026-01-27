@@ -29,6 +29,8 @@ type PayFluxEvent struct {
 	RetryCount          int    `json:"retry_count"`
 	GeoBucket           string `json:"geo_bucket"`
 	AmountBucket        string `json:"amount_bucket"`
+	AmountCents         int64  `json:"amount_cents,omitempty"`
+	Currency            string `json:"currency,omitempty"`
 	SystemSource        string `json:"system_source"`
 	PaymentMethodBucket string `json:"payment_method_bucket"`
 	Channel             string `json:"channel"`
@@ -193,6 +195,8 @@ func normalizeStripeEvent(event stripe.Event) PayFluxEvent {
 		RetryCount:          0, // Stripe webhooks don't explicitly provide retry count in standard payload
 		GeoBucket:           getGeoBucket(country),
 		AmountBucket:        getAmountBucket(amount, currency),
+		AmountCents:         amount,
+		Currency:            currency,
 		SystemSource:        "stripe_webhook_forwarder",
 		PaymentMethodBucket: pmType,
 		Channel:             "web",

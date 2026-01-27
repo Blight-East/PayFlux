@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const menuItems = [
     { name: 'Quick Setup', href: '/setup/connect' },
     { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Evidence', href: '/evidence' },
     { name: 'API Keys', href: '/api-keys' },
     { name: 'Connectors', href: '/connectors' },
     { name: 'Settings', href: '/settings' },

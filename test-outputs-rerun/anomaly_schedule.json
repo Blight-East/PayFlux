@@ -1,0 +1,113 @@
+[
+  {
+    "Name": "retry_spike_day3",
+    "Description": "40% retry intensity increase across all archetypes",
+    "StartHour": 72,
+    "DurationHr": 4,
+    "AppliesTo": [
+      "merchant_stable_001",
+      "merchant_growth_003",
+      "merchant_messy_001"
+    ],
+    "RetryMultiplier": 1.4,
+    "SoftDeclineIncrease": 0,
+    "TimeoutFailureRate": 0,
+    "VolumeMultiplier": 0,
+    "MCCDriftEnabled": false,
+    "AuthFailureIncrease": 0
+  },
+  {
+    "Name": "soft_decline_surge_day5",
+    "Description": "25% soft decline increase during growth period",
+    "StartHour": 128,
+    "DurationHr": 6,
+    "AppliesTo": [
+      "merchant_growth_002",
+      "merchant_growth_004"
+    ],
+    "RetryMultiplier": 0,
+    "SoftDeclineIncrease": 0.25,
+    "TimeoutFailureRate": 0,
+    "VolumeMultiplier": 0,
+    "MCCDriftEnabled": false,
+    "AuthFailureIncrease": 0
+  },
+  {
+    "Name": "auth_latency_day7",
+    "Description": "P95 latency \u003e3000ms simulated via timeout clustering",
+    "StartHour": 186,
+    "DurationHr": 4,
+    "AppliesTo": [
+      "merchant_stable_002",
+      "merchant_messy_002"
+    ],
+    "RetryMultiplier": 0,
+    "SoftDeclineIncrease": 0,
+    "TimeoutFailureRate": 0.3,
+    "VolumeMultiplier": 0,
+    "MCCDriftEnabled": false,
+    "AuthFailureIncrease": 0
+  },
+  {
+    "Name": "mcc_drift_day9",
+    "Description": "Gradual MCC drift to secondary category",
+    "StartHour": 216,
+    "DurationHr": 48,
+    "AppliesTo": [
+      "merchant_messy_001",
+      "merchant_messy_003"
+    ],
+    "RetryMultiplier": 0,
+    "SoftDeclineIncrease": 0,
+    "TimeoutFailureRate": 0,
+    "VolumeMultiplier": 0,
+    "MCCDriftEnabled": true,
+    "AuthFailureIncrease": 0
+  },
+  {
+    "Name": "velocity_spike_day12",
+    "Description": "3× volume spike followed by normalization",
+    "StartHour": 298,
+    "DurationHr": 4,
+    "AppliesTo": [
+      "merchant_growth_001",
+      "merchant_growth_003"
+    ],
+    "RetryMultiplier": 0,
+    "SoftDeclineIncrease": 0,
+    "TimeoutFailureRate": 0,
+    "VolumeMultiplier": 3,
+    "MCCDriftEnabled": false,
+    "AuthFailureIncrease": 0
+  },
+  {
+    "Name": "soft_decline_day9_memory_test",
+    "Description": "Soft decline surge on merchant with Day 3 retry spike (memory test)",
+    "StartHour": 216,
+    "DurationHr": 6,
+    "AppliesTo": [
+      "merchant_growth_003"
+    ],
+    "RetryMultiplier": 0,
+    "SoftDeclineIncrease": 0.2,
+    "TimeoutFailureRate": 0,
+    "VolumeMultiplier": 0,
+    "MCCDriftEnabled": false,
+    "AuthFailureIncrease": 0
+  },
+  {
+    "Name": "auth_failure_cluster_day11",
+    "Description": "Auth failure clustering on high-risk merchant",
+    "StartHour": 264,
+    "DurationHr": 8,
+    "AppliesTo": [
+      "merchant_messy_001"
+    ],
+    "RetryMultiplier": 0,
+    "SoftDeclineIncrease": 0,
+    "TimeoutFailureRate": 0,
+    "VolumeMultiplier": 0,
+    "MCCDriftEnabled": false,
+    "AuthFailureIncrease": 0.15
+  }
+]

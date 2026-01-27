@@ -1,0 +1,278 @@
+{
+  "TotalEvents": 1265040,
+  "Tier1Events": 890136,
+  "Tier2Events": 374904,
+  "RiskBandDistribution": {
+    "": 501633,
+    "elevated": 504797,
+    "low": 258610
+  },
+  "MerchantStats": {
+    "": {
+      "MerchantID": "",
+      "TotalEvents": 501633,
+      "RiskDistribution": {
+        "": 501633
+      },
+      "AvgRiskScore": 0,
+      "Tier2Count": 0
+    },
+    "merchant_growth_001": {
+      "MerchantID": "merchant_growth_001",
+      "TotalEvents": 59888,
+      "RiskDistribution": {
+        "elevated": 43662,
+        "low": 16226
+      },
+      "AvgRiskScore": 0.3296763959392918,
+      "Tier2Count": 21721
+    },
+    "merchant_growth_002": {
+      "MerchantID": "merchant_growth_002",
+      "TotalEvents": 58206,
+      "RiskDistribution": {
+        "elevated": 41648,
+        "low": 16558
+      },
+      "AvgRiskScore": 0.328485379514335,
+      "Tier2Count": 22143
+    },
+    "merchant_growth_003": {
+      "MerchantID": "merchant_growth_003",
+      "TotalEvents": 66168,
+      "RiskDistribution": {
+        "elevated": 45461,
+        "low": 20707
+      },
+      "AvgRiskScore": 0.3251227179303061,
+      "Tier2Count": 26786
+    },
+    "merchant_growth_004": {
+      "MerchantID": "merchant_growth_004",
+      "TotalEvents": 45781,
+      "RiskDistribution": {
+        "elevated": 29512,
+        "low": 16269
+      },
+      "AvgRiskScore": 0.3200613791748745,
+      "Tier2Count": 19417
+    },
+    "merchant_growth_005": {
+      "MerchantID": "merchant_growth_005",
+      "TotalEvents": 45544,
+      "RiskDistribution": {
+        "elevated": 28936,
+        "low": 16608
+      },
+      "AvgRiskScore": 0.31923129281585094,
+      "Tier2Count": 19849
+    },
+    "merchant_growth_006": {
+      "MerchantID": "merchant_growth_006",
+      "TotalEvents": 60045,
+      "RiskDistribution": {
+        "elevated": 37630,
+        "low": 22415
+      },
+      "AvgRiskScore": 0.3188323757183051,
+      "Tier2Count": 26776
+    },
+    "merchant_growth_007": {
+      "MerchantID": "merchant_growth_007",
+      "TotalEvents": 59171,
+      "RiskDistribution": {
+        "elevated": 37344,
+        "low": 21827
+      },
+      "AvgRiskScore": 0.3194145780873394,
+      "Tier2Count": 27431
+    },
+    "merchant_messy_001": {
+      "MerchantID": "merchant_messy_001",
+      "TotalEvents": 25863,
+      "RiskDistribution": {
+        "elevated": 16848,
+        "low": 9015
+      },
+      "AvgRiskScore": 0.3231249275026054,
+      "Tier2Count": 15686
+    },
+    "merchant_messy_002": {
+      "MerchantID": "merchant_messy_002",
+      "TotalEvents": 31066,
+      "RiskDistribution": {
+        "elevated": 19957,
+        "low": 11109
+      },
+      "AvgRiskScore": 0.3206463658018418,
+      "Tier2Count": 18299
+    },
+    "merchant_messy_003": {
+      "MerchantID": "merchant_messy_003",
+      "TotalEvents": 29514,
+      "RiskDistribution": {
+        "elevated": 19020,
+        "low": 10494
+      },
+      "AvgRiskScore": 0.3200562444941376,
+      "Tier2Count": 17592
+    },
+    "merchant_messy_004": {
+      "MerchantID": "merchant_messy_004",
+      "TotalEvents": 25020,
+      "RiskDistribution": {
+        "elevated": 15282,
+        "low": 9738
+      },
+      "AvgRiskScore": 0.3172298161470451,
+      "Tier2Count": 14328
+    },
+    "merchant_messy_005": {
+      "MerchantID": "merchant_messy_005",
+      "TotalEvents": 42521,
+      "RiskDistribution": {
+        "elevated": 25875,
+        "low": 16646
+      },
+      "AvgRiskScore": 0.3179581853672098,
+      "Tier2Count": 24096
+    },
+    "merchant_stable_001": {
+      "MerchantID": "merchant_stable_001",
+      "TotalEvents": 30030,
+      "RiskDistribution": {
+        "elevated": 19910,
+        "low": 10120
+      },
+      "AvgRiskScore": 0.3222407592408147,
+      "Tier2Count": 15290
+    },
+    "merchant_stable_002": {
+      "MerchantID": "merchant_stable_002",
+      "TotalEvents": 20020,
+      "RiskDistribution": {
+        "elevated": 13329,
+        "low": 6691
+      },
+      "AvgRiskScore": 0.322204295704245,
+      "Tier2Count": 10249
+    },
+    "merchant_stable_003": {
+      "MerchantID": "merchant_stable_003",
+      "TotalEvents": 35854,
+      "RiskDistribution": {
+        "elevated": 23966,
+        "low": 11888
+      },
+      "AvgRiskScore": 0.32196435544158303,
+      "Tier2Count": 18450
+    },
+    "merchant_stable_004": {
+      "MerchantID": "merchant_stable_004",
+      "TotalEvents": 21476,
+      "RiskDistribution": {
+        "elevated": 14396,
+        "low": 7080
+      },
+      "AvgRiskScore": 0.32241013224059334,
+      "Tier2Count": 11092
+    },
+    "merchant_stable_005": {
+      "MerchantID": "merchant_stable_005",
+      "TotalEvents": 34762,
+      "RiskDistribution": {
+        "elevated": 23420,
+        "low": 11342
+      },
+      "AvgRiskScore": 0.32306110120253523,
+      "Tier2Count": 18072
+    },
+    "merchant_stable_006": {
+      "MerchantID": "merchant_stable_006",
+      "TotalEvents": 33525,
+      "RiskDistribution": {
+        "elevated": 22471,
+        "low": 11054
+      },
+      "AvgRiskScore": 0.323047278150702,
+      "Tier2Count": 17590
+    },
+    "merchant_stable_007": {
+      "MerchantID": "merchant_stable_007",
+      "TotalEvents": 20781,
+      "RiskDistribution": {
+        "elevated": 13887,
+        "low": 6894
+      },
+      "AvgRiskScore": 0.32302776574751363,
+      "Tier2Count": 10970
+    },
+    "merchant_stable_008": {
+      "MerchantID": "merchant_stable_008",
+      "TotalEvents": 18172,
+      "RiskDistribution": {
+        "elevated": 12243,
+        "low": 5929
+      },
+      "AvgRiskScore": 0.32336176535323796,
+      "Tier2Count": 9779
+    }
+  },
+  "InterpretationTests": [
+    {
+      "Anomaly": "retry_spike_day3",
+      "Merchants": [
+        "merchant_stable_001",
+        "merchant_growth_003",
+        "merchant_messy_001"
+      ],
+      "Interpretations": {
+        "merchant_growth_003": "Signals consistent with established volatility profile and compounding risk factors. typically associated with early-stage shifts in transaction quality. First observed occurrence of this pattern in the current monitoring window (30d). Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.",
+        "merchant_messy_001": "Observed signals often correlate with legitimate expansion into new geos or buckets. typically associated with early-stage shifts in transaction quality. First observed occurrence of this pattern in the current monitoring window (30d). Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.",
+        "merchant_stable_001": "Multi-vector risk signals observed in already volatile transaction stream. typically associated with early-stage shifts in transaction quality. First observed occurrence of this pattern in the current monitoring window (30d). Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution."
+      },
+      "Differentiated": true,
+      "FailureReason": ""
+    }
+  ],
+  "ArtifactQualityIssues": [],
+  "HistoricalMemoryTests": [
+    {
+      "MerchantID": "merchant_growth_003",
+      "Day3Event": {
+        "event_id": "937543cd-9919-4482-b580-70209e8989ff",
+        "event_type": "payment_failed",
+        "event_timestamp": "2026-01-08T02:07:38-05:00",
+        "processor": "stripe",
+        "merchant_id_hash": "merchant_growth_003",
+        "processor_risk_score": 0.36,
+        "processor_risk_band": "elevated",
+        "processor_risk_drivers": [
+          "traffic_volatility",
+          "geo_entropy_increase"
+        ],
+        "processor_playbook_context": "Signals consistent with established volatility profile and compounding risk factors. typically associated with early-stage shifts in transaction quality. First observed occurrence of this pattern in the current monitoring window (30d). Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.",
+        "risk_trajectory": "Rapid acceleration observed: ~10× above baseline over the last 5 minutes.",
+        "processed_at": "2026-01-22T06:07:37Z"
+      },
+      "Day9Event": {
+        "event_id": "86ccf920-b963-41fc-8835-3b95dcb64538",
+        "event_type": "payment_succeeded",
+        "event_timestamp": "2026-01-13T02:07:42-05:00",
+        "processor": "stripe",
+        "merchant_id_hash": "merchant_growth_003",
+        "processor_risk_score": 0.34,
+        "processor_risk_band": "elevated",
+        "processor_risk_drivers": [
+          "traffic_volatility",
+          "geo_entropy_increase"
+        ],
+        "processor_playbook_context": "Multi-vector risk signals observed in already volatile transaction stream. typically associated with early-stage shifts in transaction quality. Recurrent pattern; previously observed ~0 day(s) ago (Recurrence: 21815). Velocity spikes represent deviation from hourly expectation. Geographic entropy indicates shift in traffic distribution.",
+        "processed_at": "2026-01-22T06:10:36Z"
+      },
+      "MemoryDetected": true,
+      "FailureReason": ""
+    }
+  ],
+  "Summary": "PayFlux Internal System Test - Analysis Summary\n================================================\n\nTotal Events Analyzed: 1265040\nTier 1 Events: 890136 (70.4%)\nTier 2 Events: 374904 (29.6%)\n\nRisk Band Distribution:\n  elevated: 504797\n  low: 258610\n  : 501633\n\nInterpretation Consistency: 1/1 tests passed\nArtifact Quality: PASS (no issues found)\nHistorical Memory: 1/1 tests passed\n"
+}

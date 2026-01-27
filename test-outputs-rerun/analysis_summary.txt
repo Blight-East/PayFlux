@@ -1,0 +1,15 @@
+PayFlux Internal System Test - Analysis Summary
+================================================
+
+Total Events Analyzed: 1265040
+Tier 1 Events: 890136 (70.4%)
+Tier 2 Events: 374904 (29.6%)
+
+Risk Band Distribution:
+  elevated: 504797
+  low: 258610
+  : 501633
+
+Interpretation Consistency: 1/1 tests passed
+Artifact Quality: PASS (no issues found)
+Historical Memory: 1/1 tests passed

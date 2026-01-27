@@ -1,0 +1,11 @@
+{
+  "events_accepted": 0,
+  "events_rate_limited": 0,
+  "events_received": 0,
+  "ingest_buffer_full": 0,
+  "last_sequence_id": 0,
+  "tier2_attempted": 0,
+  "tier2_enriched": 0,
+  "tier2_first_invoked": 0,
+  "timestamp": "2026-01-25T20:43:06Z"
+}

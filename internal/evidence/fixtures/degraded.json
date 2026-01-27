@@ -1,0 +1,23 @@
+{
+    "schemaVersion": "1.0",
+    "generatedAt": "2026-01-25T14:10:00Z",
+    "meta": {
+        "sourceStatus": "DEGRADED",
+        "lastGoodAt": "2026-01-25T14:00:00Z",
+        "diagnostics": [
+            "dropped artifact a_bad: invalid timestamp invalid-ts"
+        ]
+    },
+    "payload": {
+        "merchants": [],
+        "artifacts": [],
+        "narratives": [],
+        "system": {
+            "ingest_rate": "0 req/s",
+            "active_models": 1,
+            "uptime": "12h40m",
+            "cluster": "payflux-01",
+            "node_count": 4
+        }
+    }
+}

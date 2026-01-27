@@ -1,0 +1,36 @@
+{
+    "schemaVersion": "1.0",
+    "generatedAt": "2026-01-25T14:20:00Z",
+    "meta": {
+        "sourceStatus": "OK"
+    },
+    "payload": {
+        "merchants": [],
+        "artifacts": [
+            {
+                "id": "a-poison",
+                "timestamp": "2026-01-25T14:20:00Z",
+                "entity": "e1",
+                "severity": "info",
+                "data": {
+                    "__proto__": {
+                        "polluted": true
+                    },
+                    "safe": "data",
+                    "nested": {
+                        "constructor": "evil",
+                        "ok": 1
+                    }
+                }
+            }
+        ],
+        "narratives": [],
+        "system": {
+            "ingest_rate": "850 req/s",
+            "active_models": 3,
+            "uptime": "1h",
+            "cluster": "payflux-01",
+            "node_count": 4
+        }
+    }
+}

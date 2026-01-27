@@ -87,64 +87,86 @@ export default function ConnectProcessorPage() {
             )}
 
             <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6 space-y-6">
-                {processor === 'stripe' && (
-                    <div className="flex items-center space-x-4 pb-4 border-b border-zinc-800">
-                        <div className="w-12 h-12 bg-white rounded flex items-center justify-center font-bold text-black italic text-xl">S</div>
-                        <div>
-                            <h3 className="text-lg font-bold text-white">Stripe</h3>
-                            <p className="text-xs text-zinc-500">Webhook-based event ingestion</p>
+                {processor === 'stripe' ? (
+                    <div className="space-y-6">
+                        <div className="flex items-center space-x-4 pb-4 border-b border-zinc-800">
+                            <div className="w-12 h-12 bg-white rounded flex items-center justify-center font-bold text-black italic text-xl">S</div>
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Stripe</h3>
+                                <p className="text-xs text-zinc-500">Secure automated connection via Stripe Connect</p>
+                            </div>
+                        </div>
+
+                        <div className="py-4">
+                            <button
+                                onClick={() => window.location.href = '/api/stripe/connect'}
+                                className="w-full bg-[#635BFF] hover:bg-[#5851E5] text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors shadow-lg"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M13.911 10.112v-2.022l2.253.303v1.719l-2.253-.3zm-2.253-.303v2.022l-2.253-.303v-1.719l2.253.3zm2.253 4.044v2.022l-2.253-.303v-1.719l2.253.3zm-2.253 0v-2.022l2.253.303v1.719l-2.253-.3z" opacity=".2" />
+                                    <path d="M13.911 14.156v1.719l-2.253-.3v-2.022l2.253.303v2l-2.253-.3zm0-4.044v1.719l-2.253-.3v-2.022l2.253.303v2l-2.253-.3zm-4.506.606v1.719l2.253-.3v-2.022l-2.253.303v2l2.253-.3zm4.506 3.438v1.719l2.253-.3v-2.022l-2.253.303v2l2.253-.3zm2.253-1.415V13.36l2.253.3v1.719l-2.253-.303v-1l2.253.3zm2.253-1l-2.253-.303v-2.022l2.253.303v1l2.253-.303v1.719l-2.253-.3zm-11.265.909l2.253-.303v-2.022l-2.253.303v1l-2.253-.303v1.719l2.253-.3v-1zm4.506-4.953l2.253-.303v-2.022l-2.253.303v1l-2.253-.303v1.719l2.253-.3v-1z" fill="currentColor" />
+                                </svg>
+                                <span>Connect with Stripe</span>
+                            </button>
+                            <p className="mt-4 text-[10px] text-zinc-500 text-center leading-relaxed">
+                                You will be redirected to Stripe to authorize PayFlux. <br />
+                                No credentials are ever shared or stored on our servers.
+                            </p>
                         </div>
                     </div>
+                ) : (
+                    <>
+                        <div className="flex items-center space-x-4 pb-4 border-b border-zinc-800">
+                            <div className="w-12 h-12 bg-zinc-800 rounded flex items-center justify-center font-bold text-white text-xl">W</div>
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Manual Webhook</h3>
+                                <p className="text-xs text-zinc-500">Traditional signature-based verification</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                                Webhook Signing Secret <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="password"
+                                className={`w-full bg-black border rounded px-3 py-2 text-white text-sm focus:outline-none transition-colors ${errors.webhook ? 'border-red-500' : 'border-zinc-800 focus:border-blue-500'
+                                    }`}
+                                placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                                value={webhookSecret}
+                                onChange={(e) => {
+                                    setWebhookSecret(e.target.value);
+                                    setErrors({ ...errors, webhook: undefined });
+                                }}
+                            />
+                            {errors.webhook && <p className="mt-1 text-xs text-red-500">{errors.webhook}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                                API Key <span className="text-zinc-600">(optional)</span>
+                            </label>
+                            <input
+                                type="password"
+                                className={`w-full bg-black border rounded px-3 py-2 text-white text-sm focus:outline-none transition-colors ${errors.api ? 'border-red-500' : 'border-zinc-800 focus:border-blue-500'
+                                    }`}
+                                placeholder="sk_test_..."
+                                value={apiKey}
+                                onChange={(e) => {
+                                    setApiKey(e.target.value);
+                                    setErrors({ ...errors, api: undefined });
+                                }}
+                            />
+                        </div>
+                    </>
                 )}
-
-                <div>
-                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
-                        Webhook Signing Secret <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="password"
-                        className={`w-full bg-black border rounded px-3 py-2 text-white text-sm focus:outline-none transition-colors ${errors.webhook ? 'border-red-500' : 'border-zinc-800 focus:border-blue-500'
-                            }`}
-                        placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        value={webhookSecret}
-                        onChange={(e) => {
-                            setWebhookSecret(e.target.value);
-                            setErrors({ ...errors, webhook: undefined });
-                        }}
-                    />
-                    {errors.webhook && <p className="mt-1 text-xs text-red-500">{errors.webhook}</p>}
-                    <p className="mt-1.5 text-[10px] text-zinc-600">
-                        Find this in Stripe Dashboard → Developers → Webhooks → Your endpoint → Signing secret
-                    </p>
-                </div>
-
-                <div>
-                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
-                        Stripe API Key <span className="text-zinc-600">(optional)</span>
-                    </label>
-                    <input
-                        type="password"
-                        className={`w-full bg-black border rounded px-3 py-2 text-white text-sm focus:outline-none transition-colors ${errors.api ? 'border-red-500' : 'border-zinc-800 focus:border-blue-500'
-                            }`}
-                        placeholder="sk_test_xxxxxxxxxxxxxxxxxxxxxxxx"
-                        value={apiKey}
-                        onChange={(e) => {
-                            setApiKey(e.target.value);
-                            setErrors({ ...errors, api: undefined });
-                        }}
-                    />
-                    {errors.api && <p className="mt-1 text-xs text-red-500">{errors.api}</p>}
-                    <p className="mt-1.5 text-[10px] text-zinc-600">
-                        Only needed if you want PayFlux to verify your Stripe connection. Not stored.
-                    </p>
-                </div>
 
                 <div className="bg-zinc-900/50 border border-zinc-800 rounded p-4 mt-4">
                     <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Security Notice</h4>
                     <ul className="text-[10px] text-zinc-500 space-y-1">
-                        <li>• Credentials are stored in your browser session only</li>
-                        <li>• Never transmitted to our servers</li>
-                        <li>• Used only to generate your local configuration files</li>
+                        <li>• Connections are established using industry-standard OAuth 2.0</li>
+                        <li>• Tokens are stored securely and never exposed in the UI</li>
+                        <li>• PayFlux only requests read_write permissions for event management</li>
                     </ul>
                 </div>
             </div>

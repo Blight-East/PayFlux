@@ -42,6 +42,9 @@ services:
       # Redis connection
       REDIS_ADDR: "redis:6379"
       
+      # Postgres connection (optional - for TPV settlement snapshots)
+      DATABASE_URL: "${DATABASE_URL:-}"
+      
       # Export configuration
       PAYFLUX_EXPORT_MODE: "stdout"  # stdout | file | both
       
@@ -78,4 +81,22 @@ services:
 
 volumes:
   redis-data:
+  postgres-data:
   vector-data:
+
+  # Postgres (optional - for TPV settlement/audit snapshots)
+  # Uncomment to enable persistent storage of daily TPV snapshots
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: payflux
+  #     POSTGRES_USER: payflux
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #     - ../migrations:/docker-entrypoint-initdb.d:ro
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U payflux"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5

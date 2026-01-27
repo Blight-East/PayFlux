@@ -18,6 +18,8 @@ interface AuthDenials {
     invalid_key: number;
 }
 
+import { UserButton } from '@clerk/nextjs';
+
 export default function DashboardPage() {
     const [warnings, setWarnings] = useState<Warning[]>([]);
     const [loading, setLoading] = useState(true);
@@ -71,10 +73,17 @@ export default function DashboardPage() {
                     <h2 className="text-2xl font-bold text-white tracking-tight">Warnings Dashboard</h2>
                     <p className="text-zinc-500 text-sm mt-1">Risk signals from PayFlux core.</p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex items-center space-x-4">
                     <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-white text-xs font-bold rounded hover:bg-zinc-800 transition-colors">
                         Export JSON
                     </button>
+                    <UserButton
+                        appearance={{
+                            elements: {
+                                userButtonAvatarBox: "w-8 h-8"
+                            }
+                        }}
+                    />
                 </div>
             </div>
 

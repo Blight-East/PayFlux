@@ -1,0 +1,60 @@
+{
+    "schemaVersion": "1.0",
+    "generatedAt": "2026-01-25T14:00:00Z",
+    "meta": {
+        "sourceStatus": "OK"
+    },
+    "payload": {
+        "merchants": [
+            {
+                "id": "m1",
+                "name": "Growth Corp",
+                "vol": "1200",
+                "status": "healthy",
+                "severity": "neutral",
+                "region": "US",
+                "baseline": "0.9500",
+                "segment": "Enterprise"
+            }
+        ],
+        "artifacts": [
+            {
+                "id": "a2",
+                "timestamp": "2026-01-25T14:05:00Z",
+                "entity": "e2",
+                "data": {
+                    "msg": "spike detected"
+                },
+                "severity": "critical"
+            },
+            {
+                "id": "a1",
+                "timestamp": "2026-01-25T14:00:00Z",
+                "entity": "e1",
+                "data": {
+                    "msg": "baseline trace",
+                    "nested": {
+                        "value": 1
+                    }
+                },
+                "severity": "info"
+            }
+        ],
+        "narratives": [
+            {
+                "id": "n1",
+                "timestamp": "2026-01-25T14:05:00Z",
+                "type": "critical",
+                "desc": "Anomalous spike detected",
+                "entityId": "e2"
+            }
+        ],
+        "system": {
+            "ingest_rate": "850 req/s",
+            "active_models": 3,
+            "uptime": "12h30m",
+            "cluster": "payflux-01",
+            "node_count": 4
+        }
+    }
+}
