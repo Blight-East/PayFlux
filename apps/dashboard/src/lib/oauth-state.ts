@@ -12,21 +12,25 @@ interface OAuthState {
 const stateStore = new Map<string, OAuthState>();
 
 // Secret for HMAC signing
-const SECRET = process.env.OAUTH_STATE_SECRET;
+function getStateSecret(): string {
+    const s = process.env.OAUTH_STATE_SECRET;
+    if (!s) {
+        throw new Error('OAUTH_STATE_SECRET is not defined. State signing cannot proceed.');
+    }
+    return s;
+}
 
 /**
  * Generates a signed state token and stores it in the in-memory store.
  */
 export function generateStateToken(orgId: string, userId: string): string {
-    if (!SECRET) {
-        throw new Error('OAUTH_STATE_SECRET is not defined. State signing cannot proceed.');
-    }
+    const secret = getStateSecret();
     const nonce = crypto.randomBytes(16).toString('hex');
     const ts = Date.now();
     const expiresAt = ts + 10 * 60 * 1000; // 10 minutes expiry
 
     const payload = `${orgId}:${userId}:${nonce}:${ts}`;
-    const signature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
+    const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
     // The token includes the payload and signature so we can verify the signature first
     const token = Buffer.from(`${payload}.${signature}`).toString('base64url');
@@ -46,11 +50,12 @@ export function generateStateToken(orgId: string, userId: string): string {
 export function validateAndConsumeState(token: string, userId: string): OAuthState | null {
     const decoded = Buffer.from(token, 'base64url').toString();
     const [payload, signature] = decoded.split('.');
+    const secret = getStateSecret();
 
-    if (!payload || !signature || !SECRET) return null;
+    if (!payload || !signature) return null;
 
     // 1. Verify Signature
-    const expectedSignature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
     if (signature !== expectedSignature) {
         console.error('OAuth state signature mismatch');
         return null;
