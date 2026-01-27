@@ -1,0 +1,2 @@
+[build]
+base = "payment-node/apps/dashboard"
