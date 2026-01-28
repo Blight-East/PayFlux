@@ -725,6 +725,14 @@ For details on PayFlux's security posture and data handling:
 
 ---
 
+## Dispute Infrastructure Documentation
+
+- [How Dispute Evidence Works](docs/risk/how-dispute-evidence-works.md) — Operational overview of evidence categories and submission mechanics.
+- [How Card Networks Handle Disputes](docs/risk/how-card-networks-handle-disputes.md) — Procedural analysis of the dispute lifecycle and liability frameworks.
+- [Why Dispute Win Rates Vary](docs/risk/why-dispute-win-rates-vary.md) — Structural analysis of outcome variance and success drivers.
+
+---
+
 ## Operational Risk Documentation
 
 - [Why Payment Processors Freeze Funds](docs/risk/why-payment-processors-freeze-funds.md) — Understanding risk control mechanisms and fund freezes.
