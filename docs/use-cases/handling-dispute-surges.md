@@ -1,34 +1,40 @@
 # Handling Dispute Surges
 
-## Overview
-A dispute surge is a rapid increase in incoming chargebacks that threatens to breach processor monitoring programs (typically >0.9% or >1% dispute rate). Surges require immediate operational attention to identify the root cause—whether it be fraud, a fulfillment error, or a billing confusion.
+## Definition
+A Dispute Surge is a rapid acceleration in incoming chargebacks. It is a "Force Majeure" event for a merchant, threatening immediate account suspension if not contained.
 
-## Common dispute surge patterns
-Surges often manifest as:
-- **Fraud Attacks**: A card testing attack resulting in a wave of unauthorized disputes.
-- **Shipping Failures**: A logistics breakdown leading to "Item Not Received" claims.
-- **Billing Errors**: Double charges or unrecognized descriptor text causing consumer confusion.
-- **Subscription Renewals**: Annual renewal cycles triggering "don't recognize" claims.
+## Why it matters
+Time. You have a 30-day "Dispute Lag." The surge identifying today is from sales made 30 days ago. The surge *caused* by sales today won't hit for 30 days. Managing a surge requires managing this time delay.
 
-## How surge detection works
-Detection relies on velocity and ratio monitoring:
+## Signals to monitor
+- **Daily Dispute Velocity**: Count of new disputes arriving today.
+- **Vintage Performance**: The dispute rate of the *current* sales cohort (leading indicator).
+- **Reason Code Mix**: Is the surge due to "Fraud" (Criminal) or "Goods Not Received" (Logistics)?
 
-1.  **Absolute Velocity**: Count of disputes per day/week.
-2.  **Relative Ratio**: Disputes divided by sales transaction count (monitoring the crucial 0.9% threshold).
-3.  **Cohort Analysis**: Tracking disputes back to the original transaction date to see which "sales vintage" is toxic.
+## Breakdown modes
+- **Fraud Attack**: A card testing event from last month maturing into chargebacks.
+- **Logistics Failure**: A warehouse disaster causing thousands of undelivered orders.
+- **Billing Confusion**: Changing the statement descriptor to something unrecognizable.
 
-## Operational response requirements
-Teams facing a surge need to:
-- **Pause traffic**: Stop new transactions if the source is an active fraud attack.
-- **Refund aggressively**: Pre-emptively refunding risky transactions before they turn into disputes to lower the ratio.
-- **Update descriptors**: If the issue is recognition, clarify the statement descriptor clarity.
-- **Submit evidence**: Managing the influx of representments efficiently.
+## Where observability fits
+- **Vintage Projection**: "Based on current early alerts (TC40s), our ratio will hit 1.5% next month."
+- **Root Cause Isolation**: Pinpointing the specific product or affiliate driving the surge.
+- **Refund Gap**: Identifying transactions that should be refunded *now* to prevent disputes *later*.
 
-## What infrastructure supports surge management
-Effective infrastructure provides:
-- **Real-time Alerting**: Notifying teams the moment the ratio trends upward.
-- **Root Cause Analysis**: Grouping disputes by BIN, country, product, or affiliate to find the common vector.
-- **Threshold Projection**: Forecasting where the dispute rate will be at month-end based on current trends.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where PayFlux fits
-PayFlux acts as an early warning system for dispute surges. It aggregates dispute data across processors and projects future ratios, giving teams time to react before hard network thresholds are breached. PayFlux provides the analytical view needed to isolate the surge source, though it does not manage the evidence submission process itself.
+## FAQ
+
+### Should I stop selling?
+If the surge is bad enough, yes. You need to lower the *numerator* (disputes) or raise the *denominator* (sales). Stopping bad sales is step 1.
+
+### Can I reverse a chargeback?
+You can "Represent" (fight) it. If you win, it falls off the *financial* ledger, but usually stays on the *count* ledger for the ratio.
+
+### What is a TC40?
+An early fraud warning from Visa. It predicts a dispute ~2 weeks before it happens.
+
+## See also
+- [Monitoring Dispute Ratios](./monitoring-dispute-ratios.md)
+- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+- [Dispute Aging Curves](../risk/how-dispute-aging-curves-work.md)

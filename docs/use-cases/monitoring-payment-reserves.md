@@ -1,31 +1,41 @@
 # Monitoring Payment Reserves
 
-## Overview
-Payment reserves are funds held back by a processor to cover potential future liabilities (refunds, chargebacks). Reserves are a standard risk control mechanism but can create significant cash flow unpredictability if not monitored.
+## Definition
+A Reserve is a portion of funds withheld by the processor to collateralize risk. It acts as a security deposit. Common types include **Rolling Reserves** (10% held for 180 days) and **Fixed Reserves** ($50k flat hold).
 
-## Common reserve structures
-Reserves typically follow one of three models:
-- **Rolling Reserve**: A percentage (e.g., 10%) of every transaction is held and released after a fixed period (e.g., 180 days).
-- **Fixed Reserve**: A static amount (e.g., $50,000) is held permanently in a separate balance.
-- **Minimum Balance**: The account must maintain a minimum available balance before payouts are released.
+## Why it matters
+Reserves are "Dead Capital." They reduce working capital efficiency. Sudden increases in reserve requirements (e.g., from 0% to 25%) can cause a liquidity crisis for the merchant.
 
-## How reserve changes occur
-Reserves are dynamic controls:
-- **Imposition**: A processor activates a reserve based on a risk review.
-- **Adjustment**: The percentage or duration increases if risk signals (disputes) worsen.
-- **Release**: Funds are released back to the available balance as they mature or if the reserve is lifted.
+## Signals to monitor
+- **Reserve Rate**: The % currently being withheld (e.g., 10%).
+- **Release Schedule**: The volume of funds maturing and becoming available today.
+- **Total Held**: The absolute dollar amount trapped in the reserve.
+- **Trigger Events**: Correlation between a dispute spike and a reserve hike.
 
-## Operational response requirements
-When a reserve changes, finance and ops teams need to:
-- **Forecast Cash Flow**: Update models to account for the reduced immediate liquidity.
-- **Audit Triggers**: Understand *why* the reserve was imposed (e.g., did dispute rates spike?).
-- **Verify Release**: Ensure that funds are actually becoming available on the promised schedule.
+## Breakdown modes
+- **Cash Crunch**: Inability to pay suppliers because 50% of revenue is held.
+- **Indefinite Hold**: Processor holding funds for 180+ days after account closure.
+- **Reserve Creep**: Gradual increases in the reserve rate without notification.
 
-## What infrastructure supports reserve visibility
-Effective infrastructure provides:
-- **Balance Segmentation**: Clearly distinguishing between "available" and "reserved" funds.
-- **Change Alerting**: Notifying stakeholders when reserve terms are modified.
-- **Release Tracking**: Monitoring the "unlocking" of rolling reserve buckets over time.
+## Where observability fits
+- **Liquidity Forecasting**: "We have $100k in sales, but only $90k will settle. Plan accordingly."
+- **Release Auditing**: Verifying that the processor actually released the funds on day 181.
+- **Rate Negotiation**: Using data to prove metric stability and petition for a lower reserve.
 
-## Where PayFlux fits
-PayFlux provides structural visibility into processor reserve accounts. It tracks the balance state and logs term changes, ensuring finance teams have an accurate view of liquidity. PayFlux operationalizes reserve data, independent of the processor's dashboard, to support better financial planning.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Why do they hold my money?
+To cover potential chargebacks. If you go out of business, the processor uses the reserve to refund customers.
+
+### When do I get it back?
+Usually after the "exposure window" closes (typically 180 days from the transaction date).
+
+### Is it negotiable?
+Yes, but only with data. You must prove your risk metrics (disputes/refunds) are low and stable.
+
+## See also
+- [Payment Risk Events](../pillars/payment-risk-events.md)
+- [Payout Delays](../risk/how-payout-delays-work.md)
+- [Monitoring Payout Delays](./monitoring-payout-delays.md)

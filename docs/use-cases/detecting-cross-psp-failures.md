@@ -1,31 +1,37 @@
-# Detecting Cross-PSP Payment Failures
+# Cross-PSP Failures
 
-## Overview
-Large merchants often use multiple Payment Service Providers (PSPs) for redundancy or regional optimization. A "Cross-PSP Failure" is a systemic issue that affects authorizations across *all* connected processors simultaneously, indicating a problem upstream (card networks) or downstream (application logic).
+## Definition
+Cross-PSP Detection identifies systemic payment failures that affect *multiple* processors simultaneously. It differentiates "My Processor is down" from "The Card Network is down."
 
-## What cross-PSP failures indicate
-When Stripe, Adyen, and PayPal all start failing at the same time, the issue is not the processor. It signals:
-- **Network Outage**: Visa or Mastercard is experiencing regional downtime.
-- **Bad Deployment**: A code change in the merchant's checkout app is malforming requests sent to *all* gateways.
-- **Issuer Outage**: A major issuing bank (e.g., Chase, Citi) is down, affecting all traffic regardless of the route.
+## Why it matters
+Routing logic. If Stripe is down, you route to Adyen. If *Visa* is down, routing to Adyen is useless (and costs fees). Identifying the root scope prevents wasted retries and allows for accurate status page communication.
 
-## Common correlated failure causes
-- **Bin Attacks**: A fraud attack targeting a specific BIN range will cause declines on all PSPs processing that card type.
-- **3DS Failures**: If the 3D Secure provider goes down, all transactions requiring authentication will drop.
-- **Currency Volatility**: Sudden FX shifts can trigger risk blocks across multiple global processors.
+## Signals to monitor
+- **Global Error Sync**: Are `500` errors spiking on Stripe AND PayPal at the exact same second?
+- **Issuer Correlation**: Are all processors declining `Chase` cards specifically?
+- **Region Correlation**: Are all processors failing for `UK` IP addresses?
 
-## Why processors cannot detect this alone
-Stripe only sees Stripe traffic. Adyen only sees Adyen traffic. Neither can tell you that the *other* is also failing. They will each report "Normal" or "Slight Degradation," missing the global correlation.
+## Breakdown modes
+- **3DS Outage**: The 3D Secure directory server goes down; all processors fail auths requiring challenge.
+- **AWS East Outage**: Underlying cloud infra impacting multiple providers.
+- **Bin Attack**: A global fraud attack hitting all your gateways at once.
 
-## Operational response needs
-- **Isolate the Variable**: Is it one card brand? One country? One BIN?
-- **Route Shifting**: If one PSP is healthy and others are not, shift traffic dynamically.
-- **Stop Deployment**: If the error correlates with a software release, rollback immediately.
+## Where observability fits
+- **Triangulation**: "Adyen is healthy. Stripe is failing. conclusion: Stripe Incident."
+- **Status Page Independence**: Knowing about an outage 15 minutes before the provider updates their status page.
+- **Smart Routing**: Auomatically disabling a specific path based on error rate.
 
-## What observability infrastructure provides
-- **Unified Control Plane**: Aggregating success rates from all PSPs into a single time-series graph.
-- **Correlation Analysis**: Automatically flagging when error codes sync up across disparate providers.
-- **Vendor Independence**: A source of truth that does not rely on the PSP's own status page.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where PayFlux fits
-PayFlux sits above the multi-PSP stack. It ingests data from all connections and detects correlated failure patterns in real-time. PayFlux alerts operations teams to systemic outages that single-processor dashboards miss, enabling faster root cause analysis.
+## FAQ
+
+### How common are Network outages?
+Rare for the core network (Visa/MC). More common for edge services (3DS, Risk APIs).
+
+### Should I retry on a different PSP?
+Only if the error is "Gateway Error" or "Timeout." Never retry "Insufficient Funds" or "Do Not Honor" across PSPs (it looks like velocity fraud).
+
+## See also
+- [Payment Risk Events](../pillars/payment-risk-events.md)
+- [Payment Service Providers](../verticals/payment-risk-observability-for-psps.md)
+- [Retry Storms](../how-it-works/how-retry-storms-form.md)

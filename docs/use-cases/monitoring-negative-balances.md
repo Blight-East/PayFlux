@@ -1,32 +1,41 @@
 # Monitoring Negative Balances
 
-## Overview
-A negative balance occurs when a merchant owes funds to the processor. This typically happens when refunds, chargebacks, or fees exceed the available settlement balance. Negative balances represent unsecured credit risk for the processor and a liquidity call for the merchant.
+## Definition
+A Negative Balance occurs when a merchant owes money to the processor. This happens when the volume of Refunds + Chargebacks + Fees > Sales Volume. The processor must cover this gap, creating a credit risk.
 
-## How negative balances occur
-Common triggers include:
-- **Post-Payout Refunds**: Processing a large volume of refunds immediately after a daily payout has cleared the account.
-- **Dispute Reversals**: A wave of chargebacks debiting the account when the balance is low.
-- **Fee Collections**: Monthly or annual platform fees deducted from an empty balance.
-- **Reserve Depletion**: If a reserve is exhausted by liabilities, the main balance is debited.
+## Why it matters
+It's a "Stop Work" event. Processors will pause all payouts and potentially freeze processing until the balance is topped up. For platforms, a negative balance on a connected account can block operations for that user.
 
-## Risk implications
-- **Capital Exposure**: The processor effectively loans money to the merchant until the balance is covered.
-- **Recovery Uncertainty**: If the merchant becomes insolvent or abandons the account, the negative balance becomes a bad debt write-off.
-- **Operational Friction**: Inability to process refunds or chargebacks can lead to further consumer disputes.
+## Signals to monitor
+- **Balance State**: Is `available_balance` < 0?
+- **Duration**: How many days has the balance been negative? (Aging).
+- **Recovery Attempts**: Has the processor attempted to debit the bank account? (ACH Pull).
+- **Liability Trend**: Is the negative balance growing (active refunds)?
 
-## Operational response requirements
-When a negative balance is detected, teams must:
-- **Alert Finance**: Notify treasury teams of the exposure.
-- **Debit Bank Account**: Attempt to pull funds via ACH/Direct Debit to cover the shortfall.
-- **Pause Payouts**: Ensure no future funds leave the account until the deficit is cleared.
-- **Freeze Processing**: In severe cases, stop new charges to prevent further liability accumulation.
+## Breakdown modes
+- **ACH Failures**: The processor tries to pull funds from the bank, but the debit fails (NSF), leading to account termination.
+- **Payout blocking**: New sales are used to fill the hole, starving the merchant of cash flow.
+- **Debt Collection**: The processor sending the account to collections.
 
-## What infrastructure supports balance visibility
-Robust infrastructure ensures:
-- **Real-time Monitoring**: Tracking balance states continuously, not just at daily settlement.
-- **Aging Reports**: Classifying negative balances by duration (e.g., <24h, >7 days).
-- **Recovery Tracking**: Logging attempts to recoup funds and their success/failure status.
+## Where observability fits
+- **Liquidity Tracking**: Visualizing the "Hole" that needs to be filled.
+- **Alerting**: Notifying Finance immediately when a balance turns red.
+- **Recovery Auditing**: Tracking the success of automated top-ups.
 
-## Where PayFlux fits
-PayFlux monitors balance states across connected processors. It triggers alerts when an account transitions to a negative state and tracks the duration and depth of the shortfall. PayFlux preserves the history of balance transitions, helping finance and risk teams assess the frequency and recovery rate of negative balance events.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Can I process while negative?
+Usually yes, but 100% of your sales will go towards paying back the debt. You won't see a payout.
+
+### How do I fix it?
+Wire funds to the processor or allow them to debit your bank account.
+
+### Why did I go negative?
+Commonly: processing a large batch of refunds right after a payout was sent (emptying the account).
+
+## See also
+- [Payment Settlements](../how-it-works/how-payment-settlements-work.md)
+- [Payment Reserves](../risk/what-is-a-payment-reserve.md)
+- [Refunds and Reversals](../risk/how-refunds-and-reversals-propagate.md)

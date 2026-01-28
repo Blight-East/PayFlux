@@ -1,32 +1,41 @@
-# Detecting Card Testing Attacks
+# Detecting Card Testing
 
-## Overview
-Card testing is a programmatic attack where fraudsters use a merchant's checkout page to validate stolen credit card numbers. These attacks generate thousands of small transactions, often resulting in high decline rates and authorization fees. Detection relies on identifying non-human velocity patterns and clustering anomalies.
+## Definition
+Card Testing (or "Carding") is an automated attack where fraudsters use a merchant's checkout to validate stolen credit card numbers. The goal is to identify which cards work ("live cards") to resell them on the dark web or use for larger purchases elsewhere.
 
-## Common card testing patterns
-Attacks are characterized by:
-- **Velocity Spikes**: A sudden increase in transaction attempts within a short window.
-- **Low Values**: Thousands of transactions for $1.00 or similar small amounts.
-- **BIN Clustering**: High concentration of cards from the same issuing bank (BIN) or country.
-- **Decline Rate Anomalies**: A decline rate shifting from a standard 5-10% to 80-90%.
+## Why it matters
+Card testing destroys merchant reputation. It generates thousands of authorization fees (costing money) and spikes the decline rate (damaging network standing). If unchecked, it can lead to immediate account closure by the processor.
 
-## How detection works
-Detection infrastructure monitors the "shape" of traffic:
-1.  **Metric Aggregation**: Counting attempts per IP, session, or device fingerprint.
-2.  **Ratio Monitoring**: Comparing successful authorizations vs. declines in real-time.
-3.  **Pattern Recognition**: Identifying sequential card numbers or repetitive billing fields.
+## Signals to monitor
+- **Velocity**: A sudden spike in `attempts_per_minute` (e.g., from 10 to 1,000).
+- **Amount Clustering**: thousands of transactions for exactly $1.00 or random small amounts.
+- **BIN Concentration**: High volume of cards from a single foreign bank (e.g., a Brazilian BIN on a US storefront).
+- **Decline Rate**: A shift from ~5% declines to >90% declines.
 
-## Operational response requirements
-When an attack is detected, operations teams need to:
-- **Enable CAPTCHA**: Adding friction to the checkout flow to stop bots.
-- **Refund Successes**: Immediately refunding the few "successful" test charges to avoid disputes.
-- **Block Vectors**: Blacklisting the attacking IPs or BIN ranges.
+## Breakdown modes
+- **Gateway Throttling**: The gateway blocking the merchant account due to "Excessive Traffic."
+- **Auth Fee Exposure**: Incurring $0.30/txn on 10,000 failed transactions = $3,000 loss in minutes.
+- **False Positives**: Blocking legitimate customers because the fraud rules were tightened too aggressively in panic.
 
-## What infrastructure supports attack visibility
-Robust infrastructure ensures:
-- **Real-time Alerting**: Notifying teams within seconds of a velocity spike.
-- **Cost Estimation**: tracking the authorization fees incurred during the attack.
-- **Source Identification**: Grouping the attack by common attributes (IP, User Agent, etc.).
+## Where observability fits
+- **Shape Detection**: recognizing the "Square Wave" pattern of a bot attack starting and stopping.
+- **Cost Accumulation**: Real-time ticker of "Wasted Fees."
+- **Attribute Clustering**: Identifying common User Agents or IP subnets to block.
 
-## Where PayFlux fits
-PayFlux operates as an observatory for authorization traffic. It visualizes velocity and decline rates in real-time, allowing teams to spot the "signature" of a card testing attack instantly. PayFlux preserves the timeline of the attack for post-mortem analysis but does not block transactions directly.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Why do they use small amounts?
+To stay under the radar of cardholder alerts ("Did you spend $1.00?").
+
+### Should I refund the successful ones?
+Yes, immediately. If the card was tested successfully, the real owner will eventually file a chargeback. Refund it before that happens.
+
+### How do I stop it?
+CAPTCHA is the most effective tool against bots. 3D Secure is the most effective tool against stolen credentials.
+
+## See also
+- [Diff Card Testing vs Velocity Fraud](./differentiating-card-testing-from-velocity-fraud.md)
+- [Issuer Decline Spikes](./monitoring-issuer-decline-spikes.md)
+- [Transaction Monitoring](../risk/how-transaction-monitoring-works.md)

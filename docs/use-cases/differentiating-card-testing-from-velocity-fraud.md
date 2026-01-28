@@ -1,37 +1,42 @@
-# Differentiating Card Testing from Velocity Fraud
+# Card Testing vs. Velocity Fraud
 
-## Overview
-Card Testing and Velocity Fraud both involve rapid-fire transactions, but their goals and patterns differ. Distinguishing them is critical because the response strategy for one (blocking the card) solves nothing for the other (blocking the bot).
+## Definition
+Distinguishing between two common high-velocity attack patterns. **Card Testing** is validating stolen data (low value, high failure). **Velocity Fraud** is stealing goods (high value, high success).
 
-## What card testing looks like
-- **Goal**: Validate if a stolen card/PAN is active.
-- **Pattern**:
-    - Low value transactions ($0.01 - $2.00).
-    - Diverse cards (many different BINs).
-    - High decline rate (testing blindly).
-    - Random or gibberish email addresses.
-- **Target**: Donation pages, $1 trials, or auth-only endpoints.
+## Why it matters
+The defense strategy is opposite.
+- **Card Testing**: You are the *tool*. The fraudster doesn't want your product; they want to see if the card works. Defense: CAPTCHA (stop the bot).
+- **Velocity Fraud**: You are the *victim*. The fraudster wants your high-value goods (resellable). Defense: User Limits (stop the purchase).
 
-## What velocity fraud looks like
-- **Goal**: Maximize goods/services extracted before the card is burned.
-- **Pattern**:
-    - High value transactions (maxing out the limit).
-    - Single card or small cluster (re-using the "good" card).
-    - High approval rate (until the limit is hit).
-    - Shipping to the same address or using the same device.
-- **Target**: Resellable electronics, digital gift cards.
+## Signals to monitor
+- **Average Ticket Size**: Low ($1) = Testing. Max ($1000) = Velocity.
+- **Bin Diversity**: High (many banks) = Testing. Low (specific banks) = Velocity.
+- **Decline Rate**: High (90%) = Testing. Low (10%) = Velocity (until card burns).
+- **Decline Reasons**: "Invalid Account" = Testing. "Insufficient Funds" = Velocity.
 
-## Why they are often confused
-Both trigger high "requests per second" alerts. A naive rate limiter blocks both, but fails to address the root vulnerability (e.g., an unprotected endpoint vs. a loose velocity rule).
+## Breakdown modes
+- **Midiiagnosis**: Applying CAPTCHA to a Velocity attack (useless; humans can solve CAPTCHA).
+- **Overblocking**: Blocking a specific BIN during a Card Test attack (effective) vs blocking it during Velocity fraud (effective).
 
-## Risk response implications
-- **Card Testing Response**: Implement CAPTCHA, 3DS, or AVS checks on the checkout page. The attacker is a bot network.
-- **Velocity Fraud Response**: Implement limits on "Spend per User" or "Orders per Device." The attacker is a focused criminal pushing specific stolen credentials.
+## Where observability fits
+- **Attack Classification**: Visualizing the "fingerprint" of the attack to guide the response.
+- **Real-time Triage**: "Is this a bot or a human?"
+- **Rule Tuning**: Improving firewall rules based on the specific attack vector.
 
-## What observability infrastructure provides
-- **Shape Analysis**: Visualizing the distribution of transaction amounts (Flat/Low = Testing, High/Variable = Velocity).
-- **Decline Code Clusters**: Testing generates "Invalid Account" codes; Velocity fraud generates "Issuer Decline" or "Insufficient Funds" (after success).
-- **Bin Diversity**: Monitoring the count of unique BINs seen per minute.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where PayFlux fits
-PayFlux visualizes the telemetry needed to classify the attack. It surfaces the specific dimensions—Amount, Bin Diversity, Decline Reason—that allow risk teams to instantly label the event and deploy the correct countermeasure.
+## FAQ
+
+### Which is worse?
+Card Testing hurts your *metrics* (auth fees, decline rates). Velocity Fraud hurts your *wallet* (chargebacks, lost goods).
+
+### Can they happen together?
+Yes. Fraudsters often "Test" a card on a donation site, then "Use" it on an electronics site (Velocity).
+
+### Why CAPTCHA?
+Card testing is almost always automated (bots). Velocity fraud is often manual (humans). CAPTCHA stops bots.
+
+## See also
+- [Detecting Card Testing](./detecting-card-testing-attacks.md)
+- [Understanding Decline Reason Codes](../risk/understanding-decline-reason-codes.md)
+- [Geo Velocity](../risk/how-geo-velocity-affects-risk.md)

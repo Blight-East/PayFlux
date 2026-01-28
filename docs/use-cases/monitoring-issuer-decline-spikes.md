@@ -1,34 +1,43 @@
-# Monitoring Issuer Decline Spikes
+# Issuer Decline Spikes
 
-## Overview
-An issuer decline occurs when the cardholder's bank (the issuer) rejects a transaction, even though the merchant and processor accepted it. A sudden spike in issuer declines indicates that a bank has flagged the merchant or a specific traffic segment as risky.
+## Definition
+Issuer Decline Monitoring tracks the authorization performance of the *Cardholder's Bank*. It isolates declines caused by the Issuer (Chase, Citi) from declines caused by the Gateway or Risk Engine.
 
-## How issuer declines differ from processor declines
-- **Processor Decline**: The payment gateway rejects the transaction (e.g., "Gateway Rejected: Risk").
-- **Issuer Decline**: The gateway sends the transaction to the bank, and the bank responds with a "Do Not Honor" or "Insufficient Funds" content.
+## Why it matters
+Calibration. If your approval rate drops, you need to know *who* is rejecting you.
+- If YOU reject (Risk Engine) -> Your rules are too strict.
+- If GATEWAY rejects -> Configuration error.
+- If ISSUER rejects -> Your traffic quality is poor (or they are having an outage).
 
-## Common causes of decline spikes
-- **BIN Attack**: A fraud attack focusing on a specific Bank Identification Number (BIN) range.
-- **MCC Mismatch**: The merchant is processing under a Category Code (MCC) the issuer blocks (e.g., Crypto).
-- **Reputation Flag**: The issuer's risk model has tagged the merchant descriptor as "high fraud."
-- **Regional Block**: An issuer declining all transactions from a specific country.
+## Signals to monitor
+- **Approval Rate by BIN**: "Is Capital One declining us?"
+- **Decline Reason Codes**: `do_not_honor`, `insufficient_funds`, `transaction_not_allowed`.
+- **Global Error Rate**: Sudden spikes in `500` errors from the card network.
 
-## Risk implications
-- **Revenue Loss**: Legitimate customers are unable to pay.
-- **Velocity Damage**: A high decline rate damages the merchant's reputation with the network.
-- **Authorization Fee Costs**: Merchants pay for every authorization attempt, even declines.
+## Breakdown modes
+- **Bin Attack**: A fraud attack using one specific bank's cards, causing that bank to block your MID completely.
+- **MCC Mismatch**: Issuers blocking your specific Merchant Category Code (e.g., Crypto).
+- **Protocol Failure**: 3D Secure failures causing issuers to soft-decline transactions.
 
-## Operational response requirements
-When a spike is detected, teams must:
-- **Segment the Data**: Is the spike from one bank (Chase), one card type (Visa), or one country?
-- **Check Integration**: Verify that CVV and AVS data are being sent correctly.
-- **Pause Traffic**: Stop the affected segment to protect the authorization rate.
+## Where observability fits
+- **Provider Redundancy**: "Stripe is seeing excessively high declines for Amex. Route Amex to Adyen."
+- **Health Checks**: Distinguishing "It's a bad day for everyone" vs "It's a bad day for US."
+- **Fraud Signal**: A sudden spike in "Insufficient Funds" often indicates a card testing attack (checking limits).
 
-## What infrastructure supports decline monitoring
-Robust infrastructure ensures:
-- **Granular Error Codes**: distinguishing generic "Decline" signals from specific "Stolen Card" signals.
-- **BIN Performance Tracking**: Monitoring approval rates per issuing bank.
-- **Real-time Alerting**: Triggering notifications when the global approval rate drops below a set deviation (e.g., -5%).
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where PayFlux fits
-PayFlux monitors authorization performance at the issuer level. It visualizes approval rates by BIN, country, and card brand, alerting teams to localized decline spikes. PayFlux helps merchants distinguish between a general outage and a targeted issuer block, enabling faster operational triage.
+## FAQ
+
+### What does "Do Not Honor" mean?
+"The bank doesn't like this, but won't tell you why." It is a catch-all generic decline.
+
+### Can I retry an Issuer Decline?
+Only once, if you suspect a technical error. Never retry repeatedly; you will get velocity banned.
+
+### Why is my approval rate low?
+Check your MCC, your formatting (AVS/CVV), and your fraud rate. Issuers block risky merchants.
+
+## See also
+- [Understanding Decline Reason Codes](../risk/understanding-decline-reason-codes.md)
+- [Detecting Cross-PSP Failures](./detecting-cross-psp-failures.md)
+- [Card Network Rule Changes](../how-it-works/how-card-network-rule-changes-affect-merchants.md)

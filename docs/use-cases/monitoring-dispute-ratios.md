@@ -1,33 +1,41 @@
 # Monitoring Dispute Ratios
 
-## Overview
-The dispute ratio is the primary metric used by card networks (Visa, Mastercard) to monitor merchant health. It typically compares the count of disputes to the count of sales transactions. Breaching specific thresholds (e.g., 0.9% for Visa, 1.0% for Mastercard) triggers monitoring programs, fines, or account closure.
+## Definition
+The Dispute Ratio (or Chargeback Rate) is the key health metric for any merchant. It is typically calculated as `Count of Disputes / Count of Sales`. Breaching 0.9% (Visa) or 1.0% (Mastercard) triggers monitoring programs.
 
-## How dispute ratios are calculated
-Calculations vary by network:
-- **Count-based**: Number of disputes / Number of sales.
-- **Volume-based**: Dollar value of disputes / Dollar value of sales.
-- **Time Lag**: Most programs match disputes received in the current month against sales processed in the *same* month (or a prior window).
+## Why it matters
+It is the "Risk Scoreboard." Staying below the threshold keeps you safe. Breaching it leads to fines ($25k+), reserves, and eventual termination (TMF).
 
-*Note: The denominator (sales count) is critical. A drop in sales volume can artificially spike the dispute ratio even if dispute count remains flat.*
+## Signals to monitor
+- **Monthly Ratio**: The official metric used by networks.
+- **Daily Trend**: The leading indicator (moving average).
+- **Sales Volume**: The denominator. (Dropping sales volume causes the ratio to spike even if disputes stay flat).
+- **Vintage Ratio**: Disputes divided by the sales from the *same month* they occurred (Cohort view).
 
-## Why ratios change over time
-Ratios fluctuate due to:
-- **Seasonality**: High sales volume (e.g., Black Friday) dilutes the ratio; low volume (e.g., January) amplifies it.
-- **Attack Cohorts**: A fraud attack from 3 months ago finally maturing into chargebacks.
-- **Product Mix**: Launching a higher-risk product line or expanding into a new geography.
+## Breakdown modes
+- **Denominator Shock**: Turning off marketing reduces sales, causing the dispute ratio to skyrocket (Math problem).
+- **Program Entry**: Entering the "Visa Monitoring Program" (VFMP) or "Mastercard ECP."
+- **Fine Assessment**: Unexpected debits for program fees.
 
-## Operational response requirements
-When ratios trend high, operations teams need to:
-- **Project Month-End**: Estimate where the ratio will land based on current velocity.
-- **Increase Sales**: Legitimate transaction volume helps dilute the ratio (the "denominator effect").
-- **Aggressive Refunds**: Pre-emptively refunding at-risk transactions to prevent them from becoming disputes.
+## Where observability fits
+- **Forecasting**: "At this rate, we will hit 1.1% on the 25th."
+- **Attribution**: "The spike is coming from the affiliate 'Summer_Promo_2024'."
+- **Denom Management**: Identifying the need to push safe volume to dilute the ratio.
 
-## What infrastructure supports ratio tracking
-Effective infrastructure provides:
-- **Multi-Window Calculation**: Tracking daily, weekly, and monthly rolling ratios.
-- **Threshold Alerting**: "Yellow zone" alerts (e.g., at 0.6%) before the "Red zone" (0.9%) is reached.
-- **Attribution**: Breaking down ratios by product, affiliate, or BIN to find the driver.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where PayFlux fits
-PayFlux provides automated dispute ratio monitoring. It continuously calculates ratios across connected processors and provides forecasting logic to predict month-end positions. PayFlux allows teams to see the trajectory of their dispute health, enabling proactive management before network thresholds are breached.
+## FAQ
+
+### Is it by Count or Value?
+Almost always by **Count**. A $1 dispute hurts you exactly as much as a $1,000 dispute.
+
+### What is the "Lookback" window?
+Networks typically compare "Disputes Received this Month" vs "Sales Processed this Month."
+
+### Can I ignore Won disputes?
+No. The ratio counts *all* disputes filed, regardless of whether you win or lose. The damage is done at the filing.
+
+## See also
+- [Network Monitoring Programs](../risk/how-network-monitoring-programs-work.md)
+- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+- [Handling Dispute Surges](./handling-dispute-surges.md)

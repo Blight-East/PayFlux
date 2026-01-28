@@ -1,33 +1,41 @@
-# Monitoring Marketplace Payout Failures
+# Marketplace Payout Failures
 
-## Overview
-In a marketplace model, the platform collects funds from buyers and pays out to sellers. Payout failures occur when the transfer to the seller (via ACH, wire, or push-to-card) is rejected or blocked. These failures create operational debt, seller friction, and potential compliance flags.
+## Definition
+Payout Failure Monitoring tracks the rejection of outbound transfers from a marketplace to its sellers. Unlike inbound payments (cards), outbound payments (ACH/Connect) fail due to banking errors, compliance blocks, or risk holds.
 
-## Common causes of payout failure
-- **Banking Rails**: Invalid routing numbers, closed accounts, or currency mismatch.
-- **KYC/Compliance**: The payout is blocked because the seller failed identity verification or is on a sanctions list.
-- **Risk Holds**: The risk engine blocked the payout due to suspicious activity (e.g., a "bust-out" pattern).
-- **Platform Liquidity**: The platform's funding source (FBO account) has insufficient funds to cover the batch.
+## Why it matters
+Seller Trust. If a seller doesn't get paid, they stop selling. Frequent payout failures churn supply. Additionally, failed payouts often signal that a seller has been flagged by the banking system (AML freeze).
 
-## Relationship to compliance and risk
-Payout failures are often a "smoke signal" for downstream issues. A sudden spike in payout rejections for a specific seller might indicate their bank account has been flagged for fraud elsewhere. Conversely, a platform-wide failure might signal a disconnection with the banking partner.
+## Signals to monitor
+- **Failure Reason Codes**: `invalid_account_number`, `account_closed`, `no_account`.
+- **Blocked Transfers**: Payouts with status `blocked` or `canceled` by the platform.
+- **Return Rates**: The % of payouts sent that bounce back.
+- **Dormancy**: Active sellers with *no* payout method attached.
 
-## Downstream effects on sellers
-- **Cash Flow Crunch**: Sellers rely on payouts to restock inventory.
-- **Trust Erosion**: Repeated failures cause sellers to leave the platform.
-- **Support Volume**: Every failed payout generates a support ticket asking "Where is my money?".
+## Breakdown modes
+- **Typo Friction**: Sellers entering the wrong routing number (most common).
+- **Sanctions Hit**: Payout blocked because the name matches a OFAC list entry.
+- **Platform Insolvency**: Payout failing because the platform's FBO account is empty.
 
-## Operational response needs
-Teams need to:
-- **Categorize Failures**: Distinguish between "soft" failures (can be retried) and "hard" failures (compliance block).
-- **Automate Retries**: Re-attempting failed transfers only when safe.
-- **Proactive Notification**: Alerting the seller to update their bank details before they ask.
+## Where observability fits
+- **Error Translation**: Converting cryptographic bank error codes into plain English ("You typed the account number wrong").
+- **Proactive Validation**: Alerting sellers to fix info *before* the payout cycle runs.
+- **Risk Correlation**: "This seller's payout failed AND they have high disputes. Investigate."
 
-## What observability infrastructure provides
-Robust infrastructure ensures:
-- **Status Normalization**: Mapping diverse error codes from different banks into a standard taxonomy (e.g., "Invalid Account," "Risk Block").
-- **Success Rate Tracking**: Monitoring the % of payouts that settle successfully by region/method.
-- **Audit Trails**: Recording exactly why a specific payout was blocked or failed.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where PayFlux fits
-PayFlux audits the payout lifecycle from instruction to settlement. It logs failure reasons and correlates them with seller risk profiles. PayFlux enables platforms to distinguish between a technical banking error and a deliberate risk hold, streamlining the resolution process for operations teams.
+## FAQ
+
+### What is a "Return?"
+When the receiving bank accepts the ACH initially but sends it back 2 days later (e.g., "Account Frozen").
+
+### Why do verified accounts fail?
+Accounts can close, freeze, or change limits at any time. Verification is a point-in-time check.
+
+### Who pays the return fee?
+Usually the platform. Returns cost money ($2-$15).
+
+## See also
+- [Marketplaces](../verticals/payment-risk-observability-for-marketplaces.md)
+- [Monitoring Settlement Failures](./monitoring-settlement-failures.md)
+- [Compliance Timing Gaps](../risk/how-compliance-timing-gaps-form.md)

@@ -1,31 +1,41 @@
-# Monitoring Manual Review Backlogs
+# Manual Review Backlogs
 
-## Overview
-Many merchants and platforms use manual review queues where human agents analyze suspicious transactions before capturing or rejecting them. A "Backlog" occurs when the inflow of potentially risky transactions exceeds the team's capacity to review them, creating a bottleneck that affects revenue and customer experience.
+## Definition
+A Manual Review Backlog is the accumulation of transactions held for human analysis. When the "Inflow" (new risky orders) exceeds the "Outflow" (analyst decisions), the queue grows, delaying revenue and checking customer patience.
 
-## What manual review queues are
-A holding state between "Authorized" and "Captured."
-- **Logic**: "This looks 70% risky. Let a human look at the IP, email, and social footprint."
-- **SLA**: The target time to make a decision (e.g., 2 hours).
+## Why it matters
+Latency kills conversion. If a legitimate customer waits 12 hours for approval, they will cancel and buy elsewhere. Conversely, rushing reviews leads to "Rubber Stamping" fraud.
 
-## Why they grow
-- **Seasonality**: Black Friday volume spikes imply Black Friday review spikes.
-- **Attack**: A card testing attack dumping thousands of "grey area" transactions into the queue.
-- **Staffing**: Ops team out sick or understaffed during a surge.
+## Signals to monitor
+- **Queue Depth**: Total items pending review.
+- **Oldest Item Age**: The "Max Latency" experienced by a customer.
+- **Agent Velocity**: Decisions per hour per analyst.
+- **Approval Rate**: The % of reviewed items approved (High = Rules too strict; Low = Rules too loose).
 
-## How backlog affects payouts and approvals
-- **Auto-Cancel**: Most authorization holds expire in 7 days. If the review isn't done, the order is auto-cancelled, losing the sale.
-- **Customer Friction**: Legitimate customers wondering "Where is my order confirmation?"
-- **Cash Flow**: Uncaptured funds don't settle. A massive backlog effectively pauses revenue recognition.
+## Breakdown modes
+- **Weekend Spike**: Queue exploding over Saturday/Sunday when staff is low.
+- **Bot Attack**: Attackers flooding the queue with "borderline" transactions to hide real fraud.
+- **Auto-Expire**: Authorizations timing out (voiding) before an agent can get to them.
 
-## Early warning signals
-- **Queue Age**: The average time an item sits in the queue is rising (e.g., from 1 hour to 12 hours).
-- **Inflow > Outflow**: New items arrived > Items resolved per hour.
+## Where observability fits
+- **Operational Health**: Dashboarding the "Heartbeat" of the risk team.
+- **Rule Tuning**: "We are approving 99% of orders from Canada. Let's auto-approve Canada to clear the queue."
+- **Staffing Triggers**: Alerting the lead when Queue Depth > 100.
 
-## What observability infrastructure provides
-- **Capacity Planning**: "We need 5 agents online to handle current volume."
-- **Triage**: Sorting the queue by value or risk score so the most important items are reviewed first.
-- **Performance**: Tracking "Decisions per Hour" per agent.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where PayFlux fits
-PayFlux treats the review queue as a system state. It monitors the *pressure* on the Ops team. By alerting on backlog depth and age, PayFlux helps Ops leads reallocate resources or tighten auto-decline rules to stem the tide before legitimate orders are lost to timeout.
+## FAQ
+
+### What is a good SLA?
+< 1 hour during business hours. < 4 hours off-hours.
+
+### Should I use manual review?
+Only for high-ticket items. Manual review doesn't scale for low-value transactions.
+
+### Can I automate this?
+Yes. Feed the agent decisions back into the model to Train it.
+
+## See also
+- [Merchant Underwriting](../risk/how-merchant-underwriting-works.md)
+- [Transaction Monitoring](../risk/how-transaction-monitoring-works.md)
+- [Payment Risk Events](../pillars/payment-risk-events.md)
