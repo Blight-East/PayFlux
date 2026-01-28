@@ -1,74 +1,37 @@
 # How Card Networks Handle Disputes
 
 ## Overview
-Card networks (such as Visa and Mastercard) define the procedural rules for dispute handling. Payment processors and issuing banks must operate within these frameworks. Networks do not evaluate evidence themselves unless disputes escalate beyond issuing bank review.
+
+Card networks define the procedural rules for dispute handling. Payment processors and issuing banks operate within these frameworks.
 
 ## Dispute Lifecycle
-A typical dispute progresses through several stages:
-
-1. **Cardholder Filing**  
-   The cardholder reports a transaction to their issuing bank.
-
-2. **Issuer Review**  
-   The issuing bank assigns a reason code and forwards the dispute.
-
-3. **Processor Transmission**  
-   The processor relays the dispute to the merchant.
-
-4. **Merchant Representment**  
-   The merchant submits evidence if allowed.
-
-5. **Issuer Decision**  
-   The issuing bank decides based on network rules.
-
-6. **Arbitration (optional)**  
-   The card network arbitrates unresolved cases.
-
-Each step is governed by network-mandated timelines.
+1. Cardholder files dispute.
+2. Issuing bank assigns reason code.
+3. Processor transmits dispute to merchant.
+4. Merchant submits evidence.
+5. Issuer decides.
+6. Network arbitrates if escalated.
 
 ## Network Rulebooks
-Networks publish rulebooks that define:
 
-- Eligible dispute types.
-- Evidence requirements per reason code.
-- Liability allocation.
-- Arbitration thresholds.
-
-These rulebooks are updated periodically and apply uniformly across all processors.
+Networks publish rulebooks defining:
+- Eligible dispute types
+- Evidence requirements
+- Liability allocation
+- Arbitration thresholds
 
 ## Liability Framework
-Dispute outcomes affect liability assignment:
 
-- Merchant liability
-- Issuer liability
-- Network liability (in rare cases)
-
-The processor does not assume liability unless contractually specified.
+Dispute outcomes assign liability to either the merchant, issuer, or network under predefined rules.
 
 ## Escalation Paths
-If a merchant contests an issuer decision, escalation may occur:
 
-- Pre-arbitration (optional negotiation phase)
-- Arbitration (final network ruling)
-
-These stages incur additional fees and stricter evidence requirements.
+Unresolved cases may proceed through pre-arbitration and arbitration with higher evidence thresholds and additional fees.
 
 ## Infrastructure Role
-Dispute infrastructure systems assist by:
 
-- Encoding network rule logic.
-- Tracking dispute stage transitions.
-- Logging outcomes for compliance review.
-- Mapping network codes to merchant-readable explanations.
-
-They do not replace the network’s authority.
+Infrastructure systems encode rule logic, track dispute stage transitions, and log outcomes for compliance review.
 
 ## Where Payflux Fits
-Payflux operates as processor-agnostic infrastructure:
 
-- Consolidates dispute stage data.
-- Normalizes reason code interpretations.
-- Retains dispute lifecycle history.
-- Provides visibility into escalation patterns.
-
-Payflux does not control dispute outcomes or network arbitration.
+Payflux consolidates dispute stage data, normalizes reason code interpretations, and preserves dispute lifecycle history. It does not control dispute outcomes.
