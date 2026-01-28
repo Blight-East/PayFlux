@@ -717,6 +717,7 @@ For details on PayFlux's security posture and data handling:
 ## Operational Risk Documentation
 
 - [Why Payment Processors Freeze Funds](docs/risk/why-payment-processors-freeze-funds.md) — Understanding risk control mechanisms and fund freezes.
+- [What Is a Payment Reserve?](docs/risk/what-is-a-payment-reserve.md) — Understanding capital control mechanisms and risk buffers.
 
 ---
 
