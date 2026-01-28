@@ -723,6 +723,11 @@ For details on PayFlux's security posture and data handling:
 - [Why Processors Request Additional Documents](docs/risk/why-processors-request-documents.md) — Identity verification and regulatory compliance logic.
 - [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 - [How Refunds and Reversals Propagate](docs/risk/how-refunds-and-reversals-propagate.md) — Multi-stage flows and balance impact.
+- [How Rolling Risk Windows Work](docs/risk/how-rolling-risk-windows-work.md) — Trailing averages and delayed recovery.
+- [How Negative Balance Cascades Form](docs/risk/how-negative-balance-cascades-form.md) — Refund spirals and delayed settlement gaps.
+- [How Dispute-Reserve Feedback Loops Work](docs/risk/how-dispute-reserve-feedback-loops-work.md) — Circular causality and liquidity crunches.
+- [How Multi-Signal Correlation Affects Risk](docs/risk/how-multi-signal-correlation-affects-risk.md) — Collapsing probability and compounded severity.
+- [How Liability Horizons Affect Payouts](docs/risk/how-liability-horizons-affect-payouts.md) — Tail risk exposure and settlement holds.
 - [How Refund Abuse Patterns Work](docs/risk/how-refund-abuse-patterns-work.md) — Refund cycling, arbitrage abuse, and masking.
 - [How Geo-Velocity Affects Risk](docs/risk/how-geo-velocity-affects-risk.md) — Cross-border spikes and IP triangulation.
 - [How MCC Drift Affects Underwriting](docs/risk/how-mcc-drift-affects-underwriting.md) — Business model divergence and code misuse.
