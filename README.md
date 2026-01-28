@@ -734,12 +734,15 @@ For details on PayFlux's security posture and data handling:
 ## Verticals
 
 - [Payment Risk Observability for Marketplaces](docs/verticals/payment-risk-observability-for-marketplaces.md) — Multi-seller attribution and platform exposure.
+- [Payment Risk Observability for BNPL Providers](docs/verticals/payment-risk-observability-for-bnpl.md) — Settlement lag and dispute exposure tracking.
 
 ---
 
 ## Use Cases
 
 - [Detecting Stripe Payment Incidents](docs/use-cases/detecting-stripe-payment-incidents.md) — Monitoring API error rates and account status changes.
+- [Monitoring Payout Delays](docs/use-cases/monitoring-payout-delays.md) — Detecting liquidity gaps and schedule deviations.
+- [Handling Dispute Surges](docs/use-cases/handling-dispute-surges.md) — Velocity monitoring and threshold projection.
 
 ---
 
