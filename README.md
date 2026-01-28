@@ -725,6 +725,24 @@ For details on PayFlux's security posture and data handling:
 
 ---
 
+## How It Works
+
+- [How Payment Infrastructure Detects Risk Events](docs/how-it-works/how-payment-infrastructure-detects-risk-events.md) — Understanding threshold evaluation and state transitions.
+
+---
+
+## Verticals
+
+- [Payment Risk Observability for Marketplaces](docs/verticals/payment-risk-observability-for-marketplaces.md) — Multi-seller attribution and platform exposure.
+
+---
+
+## Use Cases
+
+- [Detecting Stripe Payment Incidents](docs/use-cases/detecting-stripe-payment-incidents.md) — Monitoring API error rates and account status changes.
+
+---
+
 ## Infrastructure Pillars
 
 - [Payment Risk Events](docs/pillars/payment-risk-events.md) — Automating risk state detection and recovery.
