@@ -9,14 +9,18 @@ const __dirname = path.dirname(__filename);
 
 // apps/dashboard/scripts -> apps/dashboard -> ../../docs
 const DOCS_DIR = path.resolve(__dirname, '../../../docs');
-const MANIFEST_PATH = path.join(DOCS_DIR, 'manifest.json');
+// Output to src/data so it can be imported (bundled) into the serverless function
+const OUTPUT_PATH = path.join(__dirname, '../src/data/docs.json');
+// We also keep the original manifest path if anything depends on it, but we can deprecate it
+const LEGACY_MANIFEST_PATH = path.join(DOCS_DIR, 'manifest.json');
 
 console.log(`Scanning docs directory: ${DOCS_DIR}`);
 
-function getDocsFiles(dir, fileList = [], relativeDir = '') {
+// Iterate and collect all files
+function getAllDocs(dir, collection = {}, relativeDir = '') {
     if (!fs.existsSync(dir)) {
         console.warn(`Docs directory not found: ${dir}`);
-        return fileList;
+        return collection;
     }
 
     const files = fs.readdirSync(dir);
@@ -30,33 +34,62 @@ function getDocsFiles(dir, fileList = [], relativeDir = '') {
         const stat = fs.statSync(fullPath);
 
         if (stat.isDirectory()) {
-            getDocsFiles(fullPath, fileList, relativePath);
+            getAllDocs(fullPath, collection, relativePath);
         } else {
             // Only include markdown files
             if (file.endsWith('.md')) {
-                // Uniform forward slashes for cross-platform consistency
-                fileList.push(relativePath.split(path.sep).join('/'));
+                const content = fs.readFileSync(fullPath, 'utf8');
+                // Key: risk/foo.md
+                // We normalize separators to /
+                const key = relativePath.split(path.sep).join('/');
+                collection[key] = content;
             }
         }
     });
 
-    return fileList;
+    return collection;
 }
 
 try {
-    const files = getDocsFiles(DOCS_DIR);
+    // Ensure src/data exists
+    const dataDir = path.dirname(OUTPUT_PATH);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
 
-    // Sort for deterministic output
-    files.sort();
+    const docsData = getAllDocs(DOCS_DIR);
+    const fileCount = Object.keys(docsData).length;
 
-    const manifest = {
+    // Sort keys
+    const sortedData = {};
+    const fileList = [];
+    Object.keys(docsData).sort().forEach(key => {
+        sortedData[key] = docsData[key];
+        fileList.push(key);
+    });
+
+    const output = {
         generatedAt: new Date().toISOString(),
-        basePath: 'docs',
-        files: files
+        docs: sortedData
     };
 
-    fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
-    console.log(`✅ Generated docs manifest with ${files.length} markdown files (including index.md) at: ${MANIFEST_PATH}`);
+    // Write the big bundle
+    fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
+    console.log(`✅ Generated docs bundle with ${fileCount} files at: ${OUTPUT_PATH}`);
+
+    // Update the legacy manifest just in case (optional, but good hygiene)
+    const legacyManifest = {
+        generatedAt: new Date().toISOString(),
+        basePath: 'docs',
+        files: fileList
+    };
+    try {
+        fs.writeFileSync(LEGACY_MANIFEST_PATH, JSON.stringify(legacyManifest, null, 2));
+        console.log(`✅ Updated legacy manifest at: ${LEGACY_MANIFEST_PATH}`);
+    } catch (e) {
+        // Ignore if we can't write to docs dir (e.g. read only)
+        console.warn('Could not update legacy manifest in docs folder (likely redundant now)');
+    }
 
 } catch (error) {
     console.error('Failed to generate docs manifest:', error);

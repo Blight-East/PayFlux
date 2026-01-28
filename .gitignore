@@ -33,3 +33,4 @@ payment-node
 verification-reports/
 scripts/ugly_traffic_sim.sh
 scripts/audit_*.sh
+apps/dashboard/src/data/docs.json

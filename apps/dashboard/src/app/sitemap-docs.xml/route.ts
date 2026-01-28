@@ -1,58 +1,32 @@
 
 import { MetadataRoute } from 'next';
-import fs from 'fs';
-import path from 'path';
 import { getBaseUrl } from '@/lib/seo';
-
-// Define the root docs directory relative to CWD (apps/dashboard)
-const MANIFEST_PATH = path.join(process.cwd(), '../../docs/manifest.json');
+import docsBundle from '../../data/docs.json';
 
 const BASE_URL = getBaseUrl();
 
-interface Manifest {
-    generatedAt: string;
-    basePath: string;
-    files: string[];
-}
+// Use the bundled data directly
+const docsFiles = Object.keys(docsBundle.docs);
+const generatedAt = docsBundle.generatedAt;
 
 export async function GET() {
-    let manifest: Manifest;
-
-    try {
-        const fileContents = fs.readFileSync(MANIFEST_PATH, 'utf8');
-        manifest = JSON.parse(fileContents);
-    } catch (error) {
-        console.error('Failed to read docs manifest:', error);
-
-        // Fail loud in production: return 500
-        if (process.env.NODE_ENV === 'production') {
-            return new Response('Docs manifest missing or unreadable. Run build script.', {
-                status: 500,
-                headers: { 'Content-Type': 'text/plain' }
-            });
-        }
-
-        // Fail soft in dev: return minimal sitemap
-        manifest = { generatedAt: new Date().toISOString(), basePath: 'docs', files: [] };
-    }
-
     // Base URLs
     const urls = [
         {
             loc: `${BASE_URL}/docs`,
-            lastmod: manifest.generatedAt,
+            lastmod: generatedAt,
             changefreq: 'daily',
             priority: 0.9
         }
     ];
 
     /*
-      Loop through manifest files and create URLs:
-      docs/risk/foo.md -> https://app.payflux.dev/docs/risk/foo
+      Loop through keys (docs/risk/foo.md) and create URLs:
+      -> https://app.payflux.dev/docs/risk/foo
     */
-    manifest.files.forEach((cleanPath) => {
+    docsFiles.forEach((relativePath) => {
         // Remove extension
-        const routePath = cleanPath.replace(/\.md$/, '');
+        const routePath = relativePath.replace(/\.md$/, '');
         // Ensure forward slashes
         const slug = routePath.split('/').join('/');
 
@@ -61,7 +35,7 @@ export async function GET() {
 
         urls.push({
             loc: `${BASE_URL}/docs/${slug}`,
-            lastmod: manifest.generatedAt,
+            lastmod: generatedAt,
             changefreq: 'monthly',
             priority: 0.7
         });
