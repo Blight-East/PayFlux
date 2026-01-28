@@ -1,36 +1,41 @@
-# How Settlement Batching Works in Payment Systems
+# Settlement Batching
 
-## Overview
-Settlement batching is the process of grouping authorized transactions into a single file for submission to the card networks. This operational step dictates when funds actually move. Understanding batch logic is crucial for reconciling bank deposits with sales data.
+## Definition
+Settlement Batching is the operational step of grouping authorized transactions into a single file "envelope" to be sent to the processor. This usually happens once every 24 hours (e.g., at 5 PM).
 
-## What settlement batching is
-A "batch" acts like a digital envelope.
-1.  **Open**: The batch is open during the business day, collecting captured transactions.
-2.  **Close**: At a specific cutoff time (e.g., 5 PM PST), the batch is "closed."
-3.  **Upload**: The file is sent to the processor/acquirer.
-4.  **Fund**: The acquirer deposits the net total of the batch (Sales - Refunds).
+## Why it matters
+The "Batch Close" is the moment of truth. Before the batch closes, a transaction can be **Voided** (cancelled cheaply). After the batch closes, it must be **Refunded** (costing fees). Batch timing dictates exactly when you get paid.
 
-## Typical batching intervals
-- **Daily**: The standard. one batch per 24-hour cycle.
-- **Intraday**: Multiple batches per day (e.g., every 6 hours) used by high-velocity merchants to speed up funding.
-- **Delayed**: Batches held open for 48+ hours (rare, used to allow ample time for voids).
+## Signals to monitor
+- **Batch State**: Is the current batch `open` or `closed`?
+- **Transaction Count**: Number of items in the envelope.
+- **Net Total**: The mathematical sum of (Sales - Credits) inside the batch.
+- **Error Responses**: Rejections of the entire batch file by the processor.
 
-## How batching affects balance visibility
-Funds are not "real" until the batch closes.
-- **Pending**: A transaction created at 9 AM is "Pending Settlement" until the batch closes at 5 PM.
-- **Void Window**: Before batch closure, a transaction can be "Voided" (cancelled completely). After closure, it must be "Refunded" (net new transaction).
+## Breakdown modes
+- **Upload Failure**: Connectivity issues preventing the batch file from reaching the acquirer (funds delayed 24h).
+- **Held Batch**: One suspicious transaction causing the processor to flag the *entire* batch for review.
+- **Negative Batch**: Refunds exceeding sales, resulting in a debit owed to the processor.
 
-## Relationship to reserves and delays
-Processors often apply risk holds at the *batch* level.
-- **Batch Hold**: If a daily batch contains one highly suspicious transaction, the *entire* batch's funding might be paused for review.
-- **Netting**: Refunds processed in a batch reduce the deposit. If Refunds > Sales, the batch is negative, and the merchant owes the processor.
+## Where observability fits
+- **Lifecycle Monitoring**: Alerting if a batch fails to close on schedule.
+- **Deposit Matching**: Tracking which specific batch corresponds to which bank deposit.
+- **Void Opportunity**: Identifying transactions that should be voided *before* the batch closes to save fees.
 
-## Operational risks introduced
-- **Cutoff Misses**: Technical issues preventing batch closure roll all funds to the next day, causing a cash flow gap.
-- **Reconciliation Lag**: Bank deposits often combine multiple batches or split one batch across days, making 1-to-1 matching difficult.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure monitors the batch lifecycle. It tracks:
-- **Batch State**: Alerting if a batch fails to close by the expected time.
-- **Deposit Matching**: correlating specific batches to specific bank wire amounts.
-- **Funding Efficiency**: Measuring the average time/lag between Batch Close and Funds Available.
+## FAQ
+
+### Can I force a batch close?
+On legacy terminals, yes ("Batch Out"). On modern APIs (Stripe/Adyen), batching is usually automated by the platform.
+
+### What is "Intraday" batching?
+Closing batches multiple times a day (e.g., every 6 hours) to speed up funding or align with shift changes.
+
+### Why did my batch fail?
+Often due to a single malformed transaction or an interrupting connectivity failure during the upload handshake.
+
+## See also
+- [Payment Settlements](./how-payment-settlements-work.md)
+- [Refunds and Reversals](../risk/how-refunds-and-reversals-propagate.md)
+- [Payout Delays](../risk/how-payout-delays-work.md)

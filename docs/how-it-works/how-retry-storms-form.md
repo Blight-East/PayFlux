@@ -1,34 +1,43 @@
-# How Retry Storms Form in Payment Systems
+# Retry Storms
 
-## Overview
-A retry storm occurs when a failure in a payment system triggers a disproportionate volume of re-attempts, overwhelming downstream infrastructure (gateways, card networks). Unlike a DDoS attack, a retry storm is usually self-inflicted by legitimate systems reacting poorly to a temporary outage.
+## Definition
+A Retry Storm is a constructive interference failure where a system outage triggers aggressive automated retries, amplifying traffic volume and prolonging the outage. It is a feedback loop: Failure → Retry → More Load → More Failure.
 
-## What a retry storm is
-Technically, it creates a feedback loop:
-1.  **Initial Failure**: A gateway times out or returns a generic error.
-2.  **Application Logic**: The merchant's billing engine automatically retries the payment immediately.
-3.  **Customer Action**: The user, seeing a spinner or error, clicks "Pay" repeatedly.
-4.  **Amplification**: 1 failed request becomes 10+ attempts in seconds.
+## Why it matters
+It turns a minor hiccup into a major incident. It can cause:
+1.  **Self-DoS**: Crashing your own services.
+2.  **Fee Explosion**: Paying auth fees on thousands of failed retries.
+3.  **Network Bans**: Issuers banning your MID because they see the retries as a "Velocity Attack."
 
-## Common technical triggers
-- **Timeout Loops**: The merchant's timeout (e.g., 5s) is shorter than the gateway's processing time (e.g., 10s), conducting a retry before the first request finishes.
-- **Idempotency Failure**: Retries are not deduplicated, so the network sees them as unique, distinct authorization attempts.
-- **Cascading Retries**: Service A retries Service B 3 times; Service B retries Service C 3 times = 9 total calls.
+## Signals to monitor
+- **Attempts per Order**: The ratio of `payment_attempts` to `unique_order_ids`. (Should be close to 1.1; storms push it to 10+).
+- **Error Consistency**: Seeing the same error code (e.g., `503 Service Unavailable`) repeating.
+- **Gateway Latency**: Response times spiking alongside request counts.
 
-## Relationship to issuer behavior
-Issuers view rapid-fire retries as a "velocity attack" (a sign of card testing).
-- **Block**: The issuer's firewall bans the merchant's MID or the cardholder's pan.
-- **Decline Shift**: A technical timeout evolves into a permanent structural decline (e.g., "Do Not Honor").
+## Breakdown modes
+- **Timeout Loops**: Client times out at 5s, Gateway takes 6s. Client retries. Gateway is now processing 2 requests for 1 result.
+- **Idempotency Leaks**: Retrying without unique keys, creating duplicate charges.
+- **Cascading Retries**: Service A retries Service B, which retries Service C (Multiplicative load).
 
-## Risk amplification effects
-- **Fees**: Merchants pay authorization fees on every retry, even failed ones.
-- **Reputation**: High error rates degrade the merchant's health score with the network.
-- **False Positives**: Fraud models learn to associate the merchant with "robotic" traffic patterns.
+## Where observability fits
+- **Shape Detection**: Alerting on the "slope" of retry volume.
+- **Cost Estimation**: Real-time ticker of "Wasted Fees" from failed retries.
+- **Circuit Breaking**: Triggering a "Stop the Line" alert when retry ratios hit a danger zone.
 
-## Operational visibility needs
-- **Concurrency Tracking**: Monitoring how many duplicate requests are active for a single cart/user.
-- **Error Taxonomy**: Distinguishing between "Busy/Throttled" errors (try later) and "Refused" errors (stop).
-- **Circuit Breaking**: Global switches to stop all retries when a specific gateway error rate exceeds 10%.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure detects the *shape* of traffic spikes. It alerts when the ratio of `attempts : unique_orders` deviates from 1:1. By visualizing retry velocity in real-time, operators can identify a storm forming before it triggers network-level blocks.
+## FAQ
+
+### Should I auto-retry declines?
+Only specific "soft" declines (like networking errors). Never auto-retry "hard" declines (like "Insufficient Funds") instantly.
+
+### What is "Exponential Backoff"?
+Waiting longer between each retry (1s, 2s, 4s, 8s). This lets the downstream system recover.
+
+### Can retries get me banned?
+Yes. Visa/Mastercard have "Excessive Retry" monitoring programs. It looks like card testing.
+
+## See also
+- [Retry Logic](../risk/how-retry-logic-affects-risk.md)
+- [Retry Amplification](../risk/how-retry-amplification-increases-exposure.md)
+- [Transaction Monitoring](../risk/how-transaction-monitoring-works.md)

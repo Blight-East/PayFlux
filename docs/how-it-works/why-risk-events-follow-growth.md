@@ -1,30 +1,41 @@
-# Why Risk Events Often Follow Business Growth
+# Risk Events and Growth
 
-## Overview
-It is a common operational paradox that risk events (funds freezes, reserve impositions) cluster around periods of rapid business success. To the merchant, this feels punitive ("I'm making more money, why are you freezing it?"). To the processor, rapid growth is indistinguishable from a "bust-out" fraud attack until proven otherwise.
+## Definition
+The "Growth Risk Paradox" describes the high correlation between rapid revenue scaling and payment risk events. To a risk model, a sudden spike in sales looks identical to a "Bust-Out" fraud attack (where a bad actor pumps volume before disappearing).
 
-## How growth changes risk profiles
-Growth alters the fundamental risk equation:
-- **Velocity**: Transaction volume exceeds the historical baseline used for underwriting.
-- **Exposure**: The total dollar amount "at risk" (funds paid out but still disputable) grows larger than the merchant's collateral or processing history supports.
-- **Mix Shift**: Rapid scaling often involves acquiring customers from new, potentially riskier channels.
+## Why it matters
+Success is the biggest risk factor. Scaling from $10k/month to $100k/month triggers velocity alerts, credit reviews, and often reserve impositions. Merchants often feel punished for succeeding, but the processor is mathematically reacting to "uncollateralized exposure."
 
-## Lag between revenue and risk signals
-Revenue is realized immediately (T+0), but risk signals lag significantly.
-- **Dispute Lag**: A customer who buys today might not file a dispute for 30-90 days.
-- **Blind Spot**: During a growth spike, a merchant accumulates weeks of revenue before the first "cohort" of disputes arrives. By the time the problem is visible, the processor's exposure is massive.
+## Signals to monitor
+- **Velocity vs Cap**: Current processing volume relative to the "Monthly Limit" set at onboarding.
+- **Average Ticket**: Sudden shifts in AOVs (e.g., selling a new $500 product when usually selling $20 items).
+- **geo_mismatch**: New growth coming from high-risk regions unexpected by the underwriter.
+- **Volume Acceleration**: The derivative of growth (how *fast* it is rising).
 
-## Typical thresholds crossed during scaling
-Processors have automated tripwires based on:
-- **Monthly Volume**: Exceeding the "High Ticket" or "Monthly Cap" set during onboarding.
-- **Average Ticket**: A sudden shift in the average order value (e.g., from $50 to $150).
-- **Ratio Volatility**: A small number of disputes in a low-volume month can trigger a high ratio percentage.
+## Breakdown modes
+- **Velocity Freeze**: Hitting the hard processing cap, causing all subsequent txns to fail.
+- **Protective Reserve**: Processor imposing a 25% hold to cover the "new, untested" volume.
+- **Verification Loop**: Processing paused while the risk team asks for invoices to prove the sales are real.
 
-## Why freezes and reviews cluster after success
-When a merchant breaks a velocity threshold, the system halts settlement to "catch up" the risk exposure. This is not necessarily an accusation of fraud, but a mechanical recalibration of the credit limit. The freeze buys the processor time to verify that the new volume is legitimate sales, not card testing or money laundering.
+## Where observability fits
+- **Capacity Planning**: Tracking "Percent of Monthly Cap Used" to request limit increases *before* hitting the wall.
+- **Cohort Analysis**: proving that the new traffic performs just as well (low disputes) as the old traffic.
+- **Exposure Modeling**: Calculating the processor's "Funds at Risk" to anticipate their anxiety.
 
-## Where observability infrastructure fits
-Infrastructure provides the transparency needed to navigate growth phases. It monitors:
-- **Velocity limits**: Tracking current volume against known processor caps.
-- **Cohort maturation**: Watching the dispute rate of new customer cohorts in real-time.
-- **Exposure modeling**: Calculating the "funds at risk" independently to predict when a processor might trigger a review.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Why do they freeze my money?
+Because if those new sales turn out to be fraud, the processor is liable for the refunds. They hold the money until the delivery window closes.
+
+### How do I prevent this?
+Communication. Tell your account manager *before* you launch a big promo or viral campaign.
+
+### Is it personal?
+No. It's an algorithm detecting a "Volume Anomaly."
+
+## See also
+- [Merchant Underwriting](../risk/how-merchant-underwriting-works.md)
+- [Payment Risk Events](../pillars/payment-risk-events.md)
+- [Risk Threshold Events](../risk/how-risk-threshold-events-work.md)

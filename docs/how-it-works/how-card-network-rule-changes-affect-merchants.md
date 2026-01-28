@@ -1,31 +1,41 @@
-# How Card Network Rule Changes Affect Merchants
+# Card Network Rule Changes
 
-## Overview
-Card networks (Visa, Mastercard, Amex, Discover) periodically update the operating regulations that govern the global payments ecosystem. These rules dictate everything from dispute thresholds to acceptable merchant categories. Changes typically happen twice a year (April and October) but can be impactful immediately.
+## Definition
+Card Network Rules are the operating regulations published by Visa, Mastercard, and others. They dictate liabilities, acceptable use policies, and technical standards. Rules are updated semi-annually (typically April and October), often introducing new compliance mandates or fee structures.
 
-## What card network rules are
-Network rules are the contractual obligations that flow down from the network to the acquiring bank, then to the processor, and finally to the merchant. They cover:
-- **Chargeback limits**: The maximum allowable dispute ratio.
-- **Data field requirements**: What metadata must be sent with an authorization.
-- **Category restrictions**: Which industries are permitted or require special registration.
+## Why it matters
+A rule change can turn a compliant business into a non-compliant one overnight. They are "force majeure" events in payments—non-negotiable and strictly enforced by fines or declines.
 
-## How rule changes propagate
-Rules do not apply directly to merchants; they propagate through the banking chain:
-1.  **Network Mandate**: Visa/Mastercard publishes a technical bulletin updating a rule.
-2.  **Acquirer Implementation**: Acquiring banks update their compliance policies to match.
-3.  **Processor Enforcement**: Processors update their software logic to reject non-compliant transactions or flag violations.
-4.  **Merchant Impact**: The merchant sees sudden declines or receives a compliance notification.
+## Signals to monitor
+- **Bulletin Alerts**: Publications from networks or processors announcing upcoming changes.
+- **Decline Code Shifts**: New errors (e.g., related to 3DS or CVV) appearing suddenly.
+- **Fee Line Items**: New "Integrity Fees" or assessments on the settlement statement.
+- **Compliance Notifications**: Inbound emails from the acquirer citing specific regulation numbers.
 
-## Typical operational impacts
-- **New Decline Codes**: Transactions failing due to missing data fields (e.g., new 3DS requirements).
-- **Lower Thresholds**: A sudden drop in the acceptable dispute rate, pushing a previously "safe" merchant into a monitoring program.
-- **Registration Fees**: High-risk categories (e.g., vape, adult) suddenly requiring expensive annual registration.
+## Breakdown modes
+- **Sudden Incompatibility**: Legacy integration code failing because a new field is now mandatory.
+- **Threshold Compression**: The allowable dispute rate dropping (e.g., from 1% to 0.9%), trapping previously safe merchants.
+- **Category bans**: A specific MCC (e.g., adult, crypto) being reclassified as "Prohibited."
 
-## Why rule changes appear sudden
-While networks announce changes months in advance, the information often gets stuck at the acquirer or processor level. Merchants may not be notified until the rule is actively enforced, making the impact feel abrupt and arbitrary.
+## Where observability fits
+- **Impact Analysis**: Correlating a drop in conversion with a known rule update date.
+- **Health Checks**: Scanning authorization payloads for missing data required by new mandates.
+- **Fee Verification**: Audit-checking that new pass-through fees match the published network rates.
 
-## Where observability infrastructure fits
-Infrastructure monitors the "compliance health" of traffic against known network standards. It tracks:
-- **Decline code shifts**: Detecting if a new error code spikes after a mandate date.
-- **Data completeness**: Verifying that authorization payloads contain all required fields.
-- **Program thresholds**: Benchmarking merchant metrics against updated network limits.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### How do I know about changes?
+Your processor should notify you. However, subscribing to industry newsletters or network technical bulletins is safer.
+
+### Do rules apply to everyone?
+Yes. From the smallest coffee shop to Amazon, the network rules are the law of the land.
+
+### Can I get an exception?
+Extremely rare. Only massive merchants with direct network relationships ever negotiate waivers, and even then, it's temporary.
+
+## See also
+- [Network Monitoring Programs](../risk/how-network-monitoring-programs-work.md)
+- [Understanding Decline Reason Codes](../risk/understanding-decline-reason-codes.md)
+- [Network vs Processor Authority](../risk/how-network-vs-processor-authority-works.md)

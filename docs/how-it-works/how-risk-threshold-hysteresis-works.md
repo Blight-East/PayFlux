@@ -1,28 +1,40 @@
-# How Risk Threshold Hysteresis Works
+# Risk Threshold Hysteresis
 
-## Overview
-In physics, hysteresis is the dependence of the state of a system on its history. In payment risk, it means the threshold to *enter* a penalty box is different from the threshold to *exit* it. Once a merchant is flagged as high-risk, returning to "normal" status is structurally difficult.
+## Definition
+Hysteresis describes a system where the state depends on its history. In payments, it means the **Exit Threshold** (to leave a penalty program) is lower/stricter than the **Entry Threshold** (to enter it). Once you break a rule, you must "over-correct" to return to normal.
 
-## What hysteresis means in risk systems
-- **Entry Threshold**: Dispute rate > 1.0%.
-- **Exit Threshold**: Dispute rate < 0.6% for 3 consecutive months.
-Just fixing the problem isn't enough; the merchant must "over-correct" to prove stability.
+## Why it matters
+It creates a "trap." If the monitoring program limit is 0.9% disputes, you might enter at 0.91%. But to *exit*, the rule often requires you to be under 0.6% for 3 consecutive months. Merely returning to 0.8% (which was safe before) is no longer enough.
 
-## Why thresholds are sticky
-Risk teams are conservative. If a merchant breaches a safety limit, trust is broken. The system requires a "cooling-off period" or meaningful data to rebuild that trust. The lower exit threshold acts as a buffer against volatility.
+## Signals to monitor
+- **Current Metric**: Real-time dispute or fraud rate.
+- **Target Threshold**: The specific number needed to exit the penalty state.
+- **Probation Counter**: "Month 1 of 3" clean months.
+- **Cohort Performance**: The risk score of new traffic vs legacy traffic.
 
-## Relationship to incident cascades
-Hysteresis creates a "trap." A short-term incident (e.g., one bad week of fraud) can trigger a penalty state (Reserve) that lasts for months. The punishment outlives the crime.
+## Breakdown modes
+- **The "Almost" Reset**: Hitting 0.5% for two months, then spiking to 0.65% in month 3, resetting the entire counter to zero.
+- **Permanent Flagging**: Getting stuck in a loop of entry/exit until the processor manually terminates the relationship.
 
-## Why recovery takes longer than failure
-- **Observation Window**: To prove a dispute rate is <0.9%, the processor needs to wait 90 days for the cohort to mature.
-- **Manual Review**: Exiting a penalty state often requires human sign-off, which is slower than the automated trigger that applied the penalty.
+## Where observability fits
+- **Burn-Down Tracking**: Visualizing the path to the exit threshold.
+- **Gap Analysis**: Showing the delta between "Current Reality" and "Required Performance."
+- **Program Management**: Keeping the team focused on the *stricter* recovery goal, not the standard goal.
 
-## Operational impact
-Merchants must plan for "Recovery Mode," where they drastically reduce risk tolerance (blocking even borderline good sales) to drive metrics down far enough to escape the hysteresis zone.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure visualizes the gap between "Current Status" and "Target Status." It tracks:
-- **Distance to Healthy**: "You are at 0.8%, you need to be at 0.5% to release the reserve."
-- **Burn-down**: projecting when the metric will cross the exit threshold based on current volume.
-PayFlux prevents the "Mission Accomplished" fallacy, reminding teams that hitting the *normal* limit isn't enough—they have to hit the *recovery* limit.
+## FAQ
+
+### Why is it unfair?
+It's designed to be conservative. The processor was burned once; they need extra assurance ("over-performance") to trust the volume again.
+
+### How long does it last?
+Typically 3 to 12 months, depending on the severity of the program (VFMP/ECP).
+
+### Can I switch processors to escape?
+Technically yes, but Match/TMF lists often prevent this. You structurally need to fix the risk metrics.
+
+## See also
+- [Risk Threshold Events](../risk/how-risk-threshold-events-work.md)
+- [Network Monitoring Programs](../risk/how-network-monitoring-programs-work.md)
+- [Rolling Risk Windows](../risk/how-rolling-risk-windows-work.md)

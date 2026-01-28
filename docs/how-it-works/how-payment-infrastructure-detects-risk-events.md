@@ -1,61 +1,41 @@
-# How Payment Infrastructure Detects Risk Events
+# Risk Event Detection
 
-## Overview
-Risk events are not subjective judgments of fraud or intent. They are objective system states triggered when processing metrics cross predefined safety thresholds. Detection systems monitor these metrics continuously to protect the settlement network from financial exposure.
+## Definition
+Risk Event Detection is the automated process by which payment processors identify accounts that pose financial capability. It is a state transition triggered when objective metrics (velocity, failure rates, disputes) cross predefined safety thresholds, moving an account from "Active" to "Restricted" or "Reserved."
 
-## What is a risk event?
-A risk event is a state transition within a payment processor’s control system. It occurs when a merchant account moves from a standard processing state to a restricted or monitored state. Common states include:
+## Why it matters
+These detections are the "immune system" of payment processing. They protect the settlement network from insolvency. For merchants, they are the primary mechanism of operation disruption. Understanding them removes the mystery of "sudden" account closures.
 
-- **Active**: Standard processing with normal payout schedules.
-- **Review**: Flagged for manual or automated assessment.
-- **Reserve**: A percentage of funds is held to cover potential liabilities.
-- **Suspended**: Processing or payouts are temporarily paused.
+## Signals to monitor
+- **Transaction Velocity**: Volume per hour/day exceeding historical baselines.
+- **Authorization Rates**: A sudden drop in approval rates (often indicating a carding attack).
+- **Dispute Activity**: Inbound chargeback counts and TC40/SAFE fraud reports.
+- **Refund Patterns**: High refund-to-sales ratios indicating fulfillment failure.
 
-## How detection systems operate
-Detection infrastructure relies on three core components:
+## Breakdown modes
+- **Immediate Suspension**: A "kill switch" triggered by extreme signals (e.g., 90% decline rate).
+- **Latent Queue**: An account being flagged for manual review without immediate suspension.
+- **Reserve Trigger**: Automatically applying a 10-25% hold once a dispute threshold (e.g., 0.6%) is crossed.
 
-1.  **Signal Ingestion**: Continuous collection of transaction data, dispute feedback, and platform metadata.
-2.  **Threshold Evaluation**: Comparison of real-time signals against allowed variance limits.
-3.  **State Transition**: Automated application of controls when limits are exceeded.
+## Where observability fits
+- **Signal Surface**: Exposing the specific metric that triggered the event (e.g., "Velocity Limit Exceeded").
+- **Timeline Tracking**: Logging exactly when the state transition occurred to correlate with deploys or marketing pushes.
+- **Pattern Correlation**: Proving that a spike was a known marketing event, not a fraud attack.
 
-## Signal ingestion
-Systems ingest signals from multiple sources:
-- **Transaction Velocity**: Volume and count per time unit.
-- **Authorization Rates**: Ratio of approved to declined attempts.
-- **Dispute Activity**: Inbound chargebacks and pre-dispute alerts.
-- **Refund Patterns**: Ratio of refunds to sales.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Threshold evaluation
-Each merchant account operates within specific risk parameters. A threshold breach occurs when:
-- Dispute rates exceed network monitoring programs (e.g., >0.9%).
-- Refund rates deviate significantly from historical averages.
-- Processing volume spikes beyond agreed underwriting limits.
-- Unauthorized cross-border traffic is detected.
+## FAQ
 
-## State transition
-When a threshold is breached, the system executes a state transition. This may be:
-- **Immediate**: Automatic suspension or reserve application for high-severity signals.
-- **Latent**: Queuing for analyst review for lower-severity anomalies.
+### Is detection manual or automated?
+90% automated. Human analysts usually only get involved *after* the system has already flagged or restricted the account.
 
-## Why detection appears sudden
-To the merchant, risk events often feel sudden because the contributing signals accumulate silently over time (e.g., delayed chargeback arrival). The system state changes only when the cumulative risk exceeds the safety buffer.
+### Why does it feel sudden?
+Because risk signals accumulate silently (like filling a bucket). You only notice when the bucket overflows (the restriction).
 
-## Role of human review
-While detection is often automated, resolution frequently involves human analysts who:
-- Verify the legitimacy of the anomaly.
-- Review submitted documentation.
-- Determine if the risk state can be reverted.
+### Can I prevent detection?
+No, but you can avoid *triggering* it by keeping metrics healthy and notifying processors of legitimate spikes in advance.
 
-## What infrastructure can and cannot do
-Infrastructure monitoring can:
-- **Surface** the specific signals that triggered a state change.
-- **Track** the timeline of the event.
-- **Correlate** the event with historical patterns.
-
-It **cannot**:
-- Override the processor’s risk model.
-- Prevent the system from applying controls.
-- Guarantee a specific review outcome.
-
-## Where PayFlux fits
-PayFlux operates as an observability layer for payment risk. It ingests the same signals as the processor to provide visibility into risk accumulation and state transitions. PayFlux provides the historical data needed to understand *why* a risk event occurred, ensuring operational clarity without claiming control over the detection process.
+## See also
+- [Payment Risk Events](../pillars/payment-risk-events.md)
+- [Transaction Monitoring](../risk/how-transaction-monitoring-works.md)
+- [Why Risk Events Follow Growth](./why-risk-events-follow-growth.md)
