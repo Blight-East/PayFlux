@@ -1,30 +1,41 @@
-# Payment Risk Observability for Subscription Businesses
+# Subscription Businesses
 
-## Overview
-Subscription models introduce unique risk dynamics due to recurring billing cycles. Unlike one-time purchases, risk in subscriptions is cumulative. A single customer can generate multiple adverse events (declines, disputes) over time while retaining access to the service. Observability focuses on the health of the recurring revenue stream and the "stickiness" of payment methods.
+## Definition
+Subscription Risk Observability is the tracking of recurring payment health over time. It differs from SaaS by often including physical goods (Box-of-the-Month), which adds "Fulfillment Risk" to the standard recurring billing risks.
 
-## Common subscription risk patterns
-Recurring billing faces specific vectors:
-- **Involuntary Churn**: Customers losing service because their card expired or was replaced, not because they cancelled.
-- **Retry Storms**: Aggressive automated retries on declined cards triggering network velocity blocks.
-- **Friendly Fraud**: Long-term subscribers disputing months of historical charges after cancelling.
+## Why it matters
+Shipping goods *before* the payment fully clears (or before a dispute arrives) is a primary loss vector. Subscription businesses are prime targets for "Reselling Fraud" (signing up with stolen cards to get cheap goods).
 
-## How churn and retries affect risk
-Behavioral patterns signal infrastructure health:
-1.  **Soft Declines**: Temporary failures (e.g., "Insufficient Funds") that may recover with a retry.
-2.  **Hard Declines**: Permanent failures (e.g., "Card Stolen") that require user intervention.
-3.  **Excessive Retries**: Retrying a hard decline too often damages the merchant's reputation score with the card network, lowering future authorization rates.
+## Signals to monitor
+- **Involuntary Churn**: Customers lost due to payment failure, not intent.
+- **Dispute Vintage**: Which signup month is generating the most chargebacks?
+- **Address Velocity**: Multiple subscriptions going to the same shipping address (Reseller signal).
+- **Refund Rate**: High refunds often indicate "Box Envy" or fulfillment issues.
 
-## Operational challenges
-- **Dunning Management**: communicating with customers to update payment info without triggering a cancellation.
-- **Cohort Analysis**: Identifying which acquisition months (vintages) are generating the most disputes.
-- **Velocity Control**: Limiting retry attempts to stay within network compliance rules.
+## Breakdown modes
+- **Promo Abuse**: Users signing up for the $5 trial and cancelling immediately, or creating 10 accounts for 10 trials.
+- **Friendly Fraud**: "I didn't receive it" disputes on recurring shipments.
+- **Account Takeover**: Attackers reactivating dormant subscriptions to ship goods to new addresses.
 
-## What observability infrastructure enables
-Effective infrastructure provides:
-- **Decline Classification**: Distinguishing between structural declines (technical) and financial declines (risk).
-- **Retry Success Tracking**: Measuring the recovery rate of dunning strategies.
-- **Dispute Vintage Curves**: Visualizing how dispute rates evolve for a specific sign-up cohort over months.
+## Where observability fits
+- **Trial-to-Paid Conversion**: Monitoring the drop-off and risk rate of the first full-price charge.
+- **Address Clustering**: Visualizing physical delivery hotspots that correlate with fraud.
+- **Cohort Analysis**: Tracking LTV accuracy by factoring in delayed disputes.
 
-## Where PayFlux fits
-PayFlux provides lifecycle observability for recurring payments. It tracks the authorization health of subscription cohorts and monitors the efficiency of retry logic. PayFlux surfaces structural decline patterns—like issuer outages or bin-specific blocks—enabling subscription merchants to differentiate between customer churn and infrastructure failure.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### How do I stop promo abuse?
+Link analysis. Look for shared IP addresses, device fingerprints, or fuzzy-matched shipping addresses across accounts.
+
+### Why are my disputes high?
+Subscription customers often use disputes as a "Nuclear Cancel Button" if your cancellation flow is too difficult (Dark Patterns).
+
+### What is "Involuntary Churn?"
+When a customer *wants* to pay but can't (technological failure). Fixing this is "free money."
+
+## See also
+- [SaaS Platforms](./payment-risk-observability-for-saas.md)
+- [Refunds and Reversals](../risk/how-refunds-and-reversals-propagate.md)
+- [Geo Velocity](../risk/how-geo-velocity-affects-risk.md)

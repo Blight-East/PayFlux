@@ -1,29 +1,41 @@
-# Payment Risk Observability for SaaS Platforms
+# SaaS Platforms
 
-## Overview
-SaaS platforms rely on recurring revenue, making stability and retention paramount. Payment risk in SaaS is rarely about one-time fraud; it is about the "silent churn" of failed renewals and the operational drag of managing thousands of subscriptions.
+## Definition
+SaaS Risk Observability focuses on the health of recurring revenue streams. It deals less with "Fraud" (stolen cards) and more with "Churn" (expired cards, insufficiency funds, and friendly fraud).
 
-## SaaS billing risk profile
-Distinct characteristics include:
-- **Card-on-File**: The customer is not present during the transaction (MIT - Merchant Initiated Transaction).
-- **Small Ticket, High Volume**: Low per-transaction losses, but massive aggregate volume.
-- **Inertia**: Customers often don't update card details until service is cut off.
+## Why it matters
+The "Silent Churn" killer. A 5% failure rate on renewals compounds monthly, destroying LTV. Additionally, aggressive retrying of these failures can trigger network blocks.
 
-## Subscription failure patterns
-- **Soft Declines**: "Insufficient Funds" or "Generic Decline" are common near the end of the month.
-- **Hard Declines**: "Card Replacement" or "Account Closed" require user intervention.
-- **Auth Rot**: Authorization tokens expiring if the card hasn't been charged in 12+ months.
+## Signals to monitor
+- **Renewal Success Rate**: The % of subscriptions that charge successfully on the first attempt.
+- **Auth Decline Mix**: The ratio of "Soft Declines" (Insufficient Funds) vs "Hard Declines" (Lost/Stolen).
+- **Dunning Recovery**: The % of failed payments recovered via email prompts or retry logic.
+- **Vintage Retention**: How newer cohorts perform compared to older ones.
 
-## Dispute and refund dynamics
-- **"I Cancelled That"**: The most common SaaS dispute. Users forget to cancel and chargeback the renewal.
-- **Pro-rated Refunds**: Refunding unused time complicates the ledger and balance tracking.
-- **Double Jeopardy**: Refunding a customer who has already initiated a dispute, leading to a loss of both funds.
+## Breakdown modes
+- **Auth Rot**: Card tokens ("saved cards") expiring because they haven't been used in 12+ months.
+- **Retry Storms**: Internal billing logic retrying a failed card every hour, triggering velocity bans.
+- **Chargeback Lag**: Users cancelling by calling their bank instead of clicking "Unsubscribe."
 
-## Monitoring and alerting needs
-Operations teams need visibility into:
-- **Renewal Success Rate**: The % of scheduled renewals that settle successfully on Day 1 vs Day 3.
-- **Churn Attribution**: Separating "Voluntary Churn" (user cancelled) from "Involuntary Churn" (payment failed).
-- **Dunning Efficiency**: Measuring how many failed payments are recovered by retry logic vs email reminders.
+## Where observability fits
+- **Decline Classification**: differentiating between "Customer broke" vs "System broke."
+- **Win-Back Tracking**: Measuring the effectiveness of dunning emails.
+- **Forecasting**: Predicting cash flow based on the expiration dates of saved cards.
 
-## Where PayFlux fits
-PayFlux provides a dedicated lens for recurring billing health. It tracks the lifecycle of subscription cohorts, identifying structural decline patterns that affect retention. PayFlux helps SaaS platforms differentiate between a customer who wants to leave and a payment rail that is failing to capture revenue.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Why do renewals fail?
+Over 15% of cards change every year (expire, lost, reissued). SaaS models must constantly update payment details.
+
+### What is Friendly Fraud in SaaS?
+"I forgot to cancel." The user subscribed, used the service, forgot about it, and then disputed the renewal charge as "Unauthorized."
+
+### Should I auto-update cards?
+Yes. Use "Account Updater" services (via Stripe/Adyen) to automatically refresh expired card numbers.
+
+## See also
+- [Subscription Businesses](./payment-risk-observability-for-subscription-businesses.md)
+- [Retry Logic](../risk/how-retry-logic-affects-risk.md)
+- [Refund Abuse Patterns](../risk/how-refund-abuse-patterns-work.md)

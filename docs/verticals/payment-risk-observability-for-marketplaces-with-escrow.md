@@ -1,27 +1,41 @@
-# Payment Risk Observability for Marketplaces with Escrow
+# Marketplaces with Escrow
 
-## Overview
-Marketplaces with escrow logic hold buyer funds in a separate ledger (FBO Account) before releasing them to the seller. This introduces a complex "Held" state that must be rigorously monitored to prevent commingling funds or releasing money early.
+## Definition
+Escrow Observability monitors funds held in intermediate states (FBO Accounts) between buyer capture and seller release. It focuses on the trigger events—delivery confirmation, service completion—that unlock the movement of money.
 
-## Escrow-based risk profile
-Escrow adds a temporal risk dimension:
-- **Liability Gap**: The platform is liable for the funds while they are held.
-- **Release Triggers**: Payouts depend on external events (shipping updates, service completion) that can fail or be spoofed.
+## Why it matters
+Escrow adds a "Limbo State" to payments. Funds are captured but not owned by anyone yet. Failure to monitor this state leads to "Stuck Funds" (never paid out) or "Double Release" (paying seller + refunding buyer).
 
-## Payout dependency chains
-Funds must flow strictly: `Buyer Auth -> Capture -> Escrow Hold -> Trigger Event -> Seller Payout`.
-- **Breakage**: If the trigger never fires (e.g., tracking API down), funds sit in limbo.
-- **Race Conditions**: Refunding a buyer *after* paying the seller creates a negative balance for the platform.
+## Signals to monitor
+- **Held Balance Age**: How long specific transactions have been sitting in escrow (e.g., > 30 days).
+- **Trigger Health**: The success rate of the API calls (e.g., Shipping Webhook) that fire releases.
+- **Race Conditions**: Instances where a refund was requested *after* a payout trigger fired.
+- **Ledger Integrity**: Verifying `Inflow == Held + Outflow`.
 
-## Dispute timing challenges
-Disputes often arrive while funds are in escrow.
-- **Scenario A**: Buyer disputes while funds are held. The platform can simply return the money.
-- **Scenario B**: Buyer disputes *after* release. The platform must claw back funds from the seller or eat the loss.
+## Breakdown modes
+- **Ghost Shipments**: Tracking APIs going down, leaving funds trapped in escrow indefinitely.
+- **Dispute Leakage**: A buyer disputing while funds are held; the platform must ensure they don't *also* release funds to the seller.
+- **Regulatory Drift**: Holding funds too long (e.g., > 90 days) can trigger money transmission compliance issues in some jurisdictions.
 
-## Monitoring and alerting needs
-- **Stalled Funds**: Alerting on any escrow balance held longer than X days without release.
-- **Ledger Integrity**: Verifying that `Total Buyer Inflows == Total Seller Outflows + Fees + Escrow Balance`.
-- **Negative Escrow**: Detecting if a specific bucket/order ID typically has a negative balance (indicating a logic error).
+## Where observability fits
+- **State Auditing**: Providing a timestamped log of exactly *why* funds moved (or didn't).
+- **Stuck Fund Alerts**: flagging orders that have exceeded normal delivery windows.
+- **Reconciliation**: Matching the FBO bank balance to the sum of internal ledger states.
 
-## Where PayFlux fits
-PayFlux audits the state transitions of escrowed funds. It acts as a neutral observer, verifying that money moves only when conditions are met. PayFlux highlights operational bottlenecks—like stuck triggers or failed releases—ensuring the marketplace remains compliant with money transmission rules.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Is escrow required?
+Not always, but it builds trust. For services (like Upwork), it ensures work is done before payment.
+
+### What happens if I release early?
+You take the credit risk. If the buyer disputes later, you have no funds to claw back.
+
+### Can PayFlux control the release?
+No. PayFlux monitors the state of the funds. Your backend logic controls the release triggers.
+
+## See also
+- [Marketplaces](./payment-risk-observability-for-marketplaces.md)
+- [Payment Reserves](../risk/what-is-a-payment-reserve.md)
+- [Payout Delays](../risk/how-payout-delays-work.md)

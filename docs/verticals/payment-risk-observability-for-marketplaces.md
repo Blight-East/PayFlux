@@ -1,31 +1,41 @@
-# Payment Risk Observability for Marketplaces
+# Marketplaces
 
-## Overview
-Marketplaces face unique payment risk challenges due to their aggregated liability model. While the risk action (fraud, bad service) occurs at the seller level, the financial and regulatory liability often sits with the platform. Observability is required to decompose platform-level risk into seller-level exposure.
+## Definition
+Marketplace Risk Observability is the practice of monitoring payment liabilities in multi-party environments. Unlike direct merchants, marketplaces often act as the Merchant of Record (MoR), making them financially liable for the behavior of thousands of anonymous sellers.
 
-## Common marketplace risk patterns
-Marketplaces aggregate risk from diverse sources:
-- **Seller Fraud**: Fake listings or non-delivery of goods.
-- **Collusive Activity**: Buyers and sellers coordinating to extract funds via chargebacks.
-- **Category Drift**: Sellers shifting from approved goods to high-risk or prohibited items.
-- **Platform Exposure**: The platform is often the merchant of record (MoR) and liable for the cumulative dispute rate.
+## Why it matters
+One bad seller can sink the ship. If a single fraudster drives the platform's aggregate dispute rate above 1%, the card network will fine or suspend the *platform*, potentially blocking payments for all good sellers.
 
-## How risk propagates across sellers
-Risk signals in a marketplace are often "pooled":
-1.  **Individual Breach**: A single seller spikes in dispute rate.
-2.  **Pool Contamination**: Use of shared MIDs (Merchant IDs) means one bad actor inflates the dispute ratio for the entire pool.
-3.  **Platform Enforcement**: If the pool breaches a network threshold (e.g., 0.9%), the processor penalizes the platform, not just the bad seller.
+## Signals to monitor
+- **Seller Dispute Ratios**: Tracking chargebacks per sub-merchant ID.
+- **Category Drift**: Sellers changing inventory from safe items (books) to risky items (electronics) without re-underwriting.
+- **Collusion Patterns**: Buyer/Seller pairs sharing IP addresses or device fingerprints.
+- **Platform Aggregate**: The rolled-up dispute rate of the entire master account.
 
-## Operational challenges
-- **Attribution**: Identifying exactly which seller is driving the spike in platform-level risk.
-- **Isolation**: Quarantining risky sellers before they impact the master account.
-- **Settlement Lag**: Managing funds when sellers are paid out before the chargeback window closes.
+## Breakdown modes
+- **Pool Contamination**: One toxic seller influencing the risk score of the shared merchant pool.
+- **Settlement Lag**: Paying out a seller *before* the chargeback arrives, leaving the platform with a negative balance.
+- **Identity Recycling**: Banned sellers reappearing with new emails but same bank accounts.
 
-## What observability infrastructure enables
-Effective infrastructure provides:
-- **Granular Attribution**: Mapping disputes and declines to specific connected accounts.
-- **Shared Threshold Monitoring**: Tracking how close a shared MID is to a network limit.
-- **Unified Auditing**: Centralizing risk status and document requirements across the entire seller base.
+## Where observability fits
+- **Attribution**: Decomposing a platform-level risk notification ("You are at 0.9%") into a list of specific offending sellers.
+- **Isolation**: Freezing payouts for specific sub-merchants while keeping the rest of the platform open.
+- **Ledger Auditing**: Tracking the "Net Position" of every seller node in real-time.
 
-## Where PayFlux fits
-PayFlux provides multi-account risk observability for marketplaces. It ingests risk signals and attributes them to specific sub-merchants, enabling platforms to identify liability sources. PayFlux helps marketplaces operationalize their risk response by providing a clear view of exposure across their entire seller ecosystem.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Why am I liable for my sellers?
+If you are the Merchant of Record, the card network sees YOU as the seller. The sub-sellers are just your "suppliers." You own the risk.
+
+### Can I pass the fines to sellers?
+Legally, yes (if in your TOS). Practically, if the seller is a fraudster, they have already withdrawn the money and vanished.
+
+### difference between Marketplace and PayFac?
+Marketplaces sell goods/services (Airbnb, Etsy). PayFacs sell payment processing (Toast, Shopify). The risk models are similar but the regulations differ.
+
+## See also
+- [Aggregators](./payment-risk-observability-for-aggregators.md)
+- [Marketplaces with Escrow](./payment-risk-observability-for-marketplaces-with-escrow.md)
+- [Compliance Timing Gaps](../risk/how-compliance-timing-gaps-form.md)

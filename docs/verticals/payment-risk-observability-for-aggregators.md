@@ -1,27 +1,41 @@
-# Payment Risk Observability for Aggregators
+# Aggregators (PayFacs)
 
-## Overview
-Aggregators (Payment Facilitators or PayFacs) provide processing services to sub-merchants under a master account. This model simplifies onboarding but concentrates risk. The aggregator is financially liable for the losses of every sub-merchant in its portfolio, making risk observability an existential requirement.
+## Definition
+Aggregator Risk Observability tracks the liability of a "Master Merchant" who processes for "Sub-Merchants." Examples include Shopify Payments, Stripe Connect, or Toast. The Aggregator *is* the merchant of record in the eyes of the network.
 
-## Aggregator risk structure
-Aggregators operate a tiered risk model:
-1.  **Sub-Merchant**: The entity generating the transaction and the primary source of risk.
-2.  **Master Account**: The aggregator’s pooled account with the processor/acquirer.
-3.  **Liability Chain**: If a sub-merchant cannot cover a chargeback, the aggregator must pay. If the aggregator fails, the acquirer pays.
+## Why it matters
+Unlike an ISO (who just refers business), an Aggregator is **financially liable**. If a sub-merchant sells non-existent goods and vanishes, the Aggregator must refund the cardholders. Risk management is the core competency of any PayFac.
 
-## Monitoring challenges
-- **Data Isolation**: Keeping sub-merchant data distinct while monitoring aggregate health.
-- **Speed of Action**: Detection must happen faster than the settlement cycle to prevent paying out funds to a fraudulent sub-merchant.
-- **Shadow Risk**: inactive sub-merchants suddenly waking up with high-velocity traffic (signaling account takeover).
+## Signals to monitor
+- **Sub-Merchant Velocity**: Sudden spikes in volume from previously quiet accounts.
+- **Identity Clustering**: The same bank account or IP address appearing across multiple distinct merchant accounts.
+- **Match-List Hits**: Sub-merchants appearing on TMF/MATCH lists.
+- **Negative Balances**: Sub-merchant ledgers dropping below zero (debt).
 
-## How processors assess aggregator exposure
-Processors view the aggregator as a single large merchant. If the aggregate dispute rate breaches 1%, the *entire* platform can be fined or shut down, regardless of how many individual sub-merchants are compliant. This "one bad apple" effect is the primary structural weakness of the aggregator model.
+## Breakdown modes
+- **Account Takeover**: A dormant sub-merchant account being hacked and used to test stolen cards.
+- **Category Laundering**: A sub-merchant approved for "Consulting" suddenly processing "Gambling" transactions.
+- **Flash Fraud**: Opening 50 accounts, processing $5k each in 1 hour, and withdrawing immediately.
 
-## Operational visibility requirements
-Aggregators need:
-- **Real-time Ledger**: Tracking the balance of every sub-merchant continuously.
-- **Cross-Portfolio Alerts**: Detecting if a single identity is operating across multiple sub-merchant accounts (collusion).
-- **Reserve Management**: Automating the collection and release of sub-merchant reserves based on their specific risk score.
+## Where observability fits
+- **Real-Time Ledgering**: Maintaining a "General Ledger" for every sub-merchant to stop payouts instantly if risk flags triggers.
+- **Cross-Account Correlation**: "Knowing" that User A and User B are actually the same person.
+- **Behavioral Baselining**: Establishing "Normal" patterns for every sub-merchant to detect deviations.
 
-## Where PayFlux fits
-PayFlux provides the observability layer for aggregator risk stacks. It ingests risk signals across the entire sub-merchant portfolio, attributing disputes and declines to specific entities. PayFlux helps aggregators protect their master account by identifying and isolating toxic sub-merchants before their behavior impacts the platform's standing with the card networks.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Difference between PayFac and Marketplace?
+A PayFac's primary product is *processing*. A Marketplace's primary product is *customers/demand*.
+
+### Why is underwriting so fast?
+Automated checks (KYC/AML) replace manual review. This speed creates the risk of "Leakage" (bad actors getting through).
+
+### What is "Shadow Risk?"
+The accumulation of potential chargebacks from volume processed but not yet disputed.
+
+## See also
+- [Marketplaces](./payment-risk-observability-for-marketplaces.md)
+- [Merchant Underwriting](../risk/how-merchant-underwriting-works.md)
+- [Compliance Timing Gaps](../risk/how-compliance-timing-gaps-form.md)
