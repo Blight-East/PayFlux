@@ -714,6 +714,12 @@ For details on PayFlux's security posture and data handling:
 
 ---
 
+## Operational Risk Documentation
+
+- [Why Payment Processors Freeze Funds](docs/risk/why-payment-processors-freeze-funds.md) — Understanding risk control mechanisms and fund freezes.
+
+---
+
 ## Data Handling
 
 PayFlux processes pseudonymous operational event data provided by customers for the sole purpose of detecting and reporting payment risk patterns. PayFlux does not process or store cardholder data (PAN), CVV, or personal customer information. All identifiers are hashed or tokenized prior to ingestion.
