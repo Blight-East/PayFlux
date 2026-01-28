@@ -725,6 +725,14 @@ For details on PayFlux's security posture and data handling:
 
 ---
 
+## Infrastructure Pillars
+
+- [Payment Risk Events](docs/pillars/payment-risk-events.md) — Automating risk state detection and recovery.
+- [Payment System Observability](docs/pillars/payment-system-observability.md) — Measuring system-level behavior across networks.
+- [Dispute Infrastructure](docs/pillars/dispute-infrastructure.md) — Procedural governance of evidence and arbitration.
+
+---
+
 ## Compliance Infrastructure Documentation
 
 - [How Transaction Monitoring Works](docs/risk/how-transaction-monitoring-works.md) — Operational analysis of fraud detection and behavioral alerts.
