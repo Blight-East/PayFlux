@@ -1,76 +1,91 @@
-# What Is a Payment Reserve?
+# What Is a Payment Reserve
 
 ## Overview
 
-A payment reserve is a portion of a merchant’s funds that a payment processor temporarily withholds to cover potential future liabilities such as refunds, chargebacks, or regulatory actions. It is a capital control mechanism used to maintain the financial stability of the payment network.
+A payment reserve is a portion of merchant funds that a processor temporarily withholds to cover potential future losses such as refunds, chargebacks, or disputes.
 
-A reserve is not a penalty and does not imply wrongdoing. It is a risk buffer designed to ensure that obligations can be met even if transaction outcomes change after settlement.
+Reserves are a capital protection mechanism used by processors to manage delayed financial risk.
+
+They are not penalties and do not indicate wrongdoing by default.
 
 ## Why Reserves Exist
 
-Card payments settle before final outcomes are known. A transaction can later become:
+Payment systems operate with delayed loss signals:
 
-- A chargeback
-- A fraud claim
-- A regulatory dispute
-- A refunded sale
-- A network compliance issue
+- Customers can dispute transactions weeks later
+- Refund obligations can exceed current balances
+- Card networks enforce liability windows
+- Banks require capital buffers
 
-Processors must remain solvent across all merchants they support. Reserves exist to absorb delayed financial risk.
+A reserve ensures funds remain available if losses occur after payouts have already been issued.
 
-## Common Triggers for a Reserve
+## Common Types of Reserves
 
-Reserves are typically introduced when risk exposure increases beyond baseline assumptions. Common causes include:
+### Rolling Reserve
 
-- **Dispute Ratio Increases:** A rising percentage of transactions converting into chargebacks.
-- **Refund Velocity:** Rapid increases in refund volume or value.
-- **Business Model Shifts:** Changes in fulfillment time, product type, or billing structure.
-- **Volume Spikes:** Sudden growth without historical precedent.
-- **Delayed Delivery:** Products or services delivered weeks or months after payment.
-- **Negative Balance Risk:** Scenarios where potential future losses exceed current available funds.
+A percentage of daily volume (e.g., 10%) is held for a fixed period (e.g., 90 days) and then released on a rolling basis.
 
-## Types of Reserves
+### Fixed Reserve
 
-- **Rolling Reserve:** A percentage of each payout is withheld for a fixed period (e.g., 10% held for 90 days).
-- **Fixed Reserve:** A specific amount is held until risk decreases or an agreement term expires.
-- **Hybrid Reserve:** A combination of rolling and fixed reserve models.
+A specific amount is held until risk thresholds decline or contractual terms are satisfied.
 
-The structure is determined by processor underwriting policy and network rules.
+### Minimum Balance Requirement
 
-## Why Merchants Experience Reserves as Sudden
+The account must maintain a minimum available balance at all times.
 
-Reserves often appear abruptly because:
+Processors may combine these methods depending on risk profile.
 
-- Risk signals arrive after transactions complete
-- Dispute data is delayed by card networks
-- Reviews are conducted in batches
-- Automated systems apply thresholds instantly
-- Human review happens after automated flags
+## What Triggers a Reserve
 
-From the merchant perspective, this feels immediate. From the system perspective, it reflects historical trend detection.
+Reserves are commonly applied when:
 
-## The Role of Support Teams
+- Dispute ratios increase
+- Volume grows rapidly
+- Fulfillment is delayed
+- Business model changes
+- Product category shifts
+- Regulatory reviews occur
+- Negative balance risk rises
 
-Support teams do not control reserves. They cannot:
+These triggers are evaluated automatically and through periodic underwriting review.
 
-- Change underwriting thresholds
-- Override network compliance rules
-- Release held capital
-- Alter reserve formulas
+## Why Reserves Feel Arbitrary
 
-They can only relay outcomes determined by risk systems and banking partners.
+From a merchant perspective, reserves appear sudden because:
+
+- Risk signals arrive after transactions clear
+- Reviews occur in scheduled cycles
+- Thresholds are enforced automatically
+- Decisions are driven by aggregate patterns, not individual intent
+
+The reserve reflects historical behavior reaching a system boundary.
+
+## Why Support Cannot Remove a Reserve
+
+Support teams cannot change:
+
+- Risk scoring models
+- Capital formulas
+- Network liability rules
+- Underwriting thresholds
+- Banking partner requirements
+
+These are embedded into contractual and regulatory frameworks.
 
 ## What Risk Infrastructure Can Do
 
-Risk infrastructure does not remove reserves. It enables operational response by allowing teams to:
+Risk infrastructure cannot remove reserves.
 
-- Track exactly which funds are held
+It can:
+
+- Show exactly how much is reserved
+- Track when funds are scheduled to release
 - Identify which risk signals contributed
-- Monitor reserve decay timelines
-- Maintain documentation for audits or appeals
-- Coordinate response across processors
+- Maintain audit history
+- Organize supporting documentation
+- Coordinate responses across processors
 
-This shifts teams from reactive uncertainty to structured mitigation.
+This enables operational clarity without attempting to bypass controls.
 
 ## Where Payflux Fits
 
@@ -78,13 +93,14 @@ Payflux operates as processor-agnostic risk infrastructure.
 
 It provides:
 
-- **Reserve Visibility:** Unified tracking across multiple processors.
-- **Exposure Mapping:** Clear identification of what funds are held and why.
-- **State Preservation:** Historical continuity even if a processor relationship ends.
-- **Operational Intelligence:** Context for decision-making without attempting to override processor controls.
+- Unified reserve visibility
+- Attribution of contributing risk factors
+- Historical state tracking
+- Cross-processor exposure mapping
+- Structured response coordination
 
-Payflux does not remove reserves. It provides the clarity required to manage them.
+Payflux does not prevent reserves or alter processor policies. It provides operational intelligence to manage them.
 
 ## Boundary Statement
 
-Payflux does not guarantee fund release, prevent reserves, or alter processor risk decisions. It supplies structured insight into system behavior so operators can respond effectively.
+Payflux does not guarantee fund release, remove reserves, or override processor risk decisions. It provides context, continuity, and observability.
