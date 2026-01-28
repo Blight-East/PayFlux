@@ -1,10 +1,8 @@
 
 import { MetadataRoute } from 'next';
+import { getBaseUrl } from '../lib/seo';
 
-const BASE_URL =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.URL ||
-    'https://app.payflux.dev';
+const BASE_URL = getBaseUrl();
 
 export default function robots(): MetadataRoute.Robots {
     return {

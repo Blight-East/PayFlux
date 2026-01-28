@@ -2,15 +2,12 @@
 import { MetadataRoute } from 'next';
 import fs from 'fs';
 import path from 'path';
+import { getBaseUrl } from '../../lib/seo';
 
 // Define the root docs directory relative to CWD (apps/dashboard)
 const MANIFEST_PATH = path.join(process.cwd(), '../../docs/manifest.json');
 
-// Determine Base URL in order: NEXT_PUBLIC_SITE_URL -> URL (Netlify) -> Fallback
-const BASE_URL =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.URL ||
-    'https://app.payflux.dev';
+const BASE_URL = getBaseUrl();
 
 interface Manifest {
     generatedAt: string;
@@ -26,7 +23,16 @@ export async function GET() {
         manifest = JSON.parse(fileContents);
     } catch (error) {
         console.error('Failed to read docs manifest:', error);
-        // Fallback or error - returning empty sitemap for resilience
+
+        // Fail loud in production: return 500
+        if (process.env.NODE_ENV === 'production') {
+            return new Response('Docs manifest missing or unreadable. Run build script.', {
+                status: 500,
+                headers: { 'Content-Type': 'text/plain' }
+            });
+        }
+
+        // Fail soft in dev: return minimal sitemap
         manifest = { generatedAt: new Date().toISOString(), basePath: 'docs', files: [] };
     }
 

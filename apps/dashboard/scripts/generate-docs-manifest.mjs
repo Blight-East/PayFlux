@@ -56,7 +56,7 @@ try {
     };
 
     fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
-    console.log(`✅ Generated docs manifest with ${files.length} files at: ${MANIFEST_PATH}`);
+    console.log(`✅ Generated docs manifest with ${files.length} markdown files (including index.md) at: ${MANIFEST_PATH}`);
 
 } catch (error) {
     console.error('Failed to generate docs manifest:', error);
