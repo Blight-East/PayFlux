@@ -2,7 +2,7 @@
 import { MetadataRoute } from 'next';
 import fs from 'fs';
 import path from 'path';
-import { getBaseUrl } from '../../lib/seo';
+import { getBaseUrl } from '@/lib/seo';
 
 // Define the root docs directory relative to CWD (apps/dashboard)
 const MANIFEST_PATH = path.join(process.cwd(), '../../docs/manifest.json');
@@ -75,6 +75,7 @@ export async function GET() {
     <loc>${url.loc}</loc>
     <lastmod>${url.lastmod}</lastmod>
     <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
   </url>
   `).join('')}
 </urlset>`;

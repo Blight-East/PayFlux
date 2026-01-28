@@ -1,6 +1,6 @@
 
 import { MetadataRoute } from 'next';
-import { getBaseUrl } from '../lib/seo';
+import { getBaseUrl } from '@/lib/seo';
 
 const BASE_URL = getBaseUrl();
 
