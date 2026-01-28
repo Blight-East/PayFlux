@@ -724,6 +724,8 @@ For details on PayFlux's security posture and data handling:
 - [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 - [How Refunds and Reversals Propagate](docs/risk/how-refunds-and-reversals-propagate.md) — Multi-stage flows and balance impact.
 - [How Refund Abuse Patterns Work](docs/risk/how-refund-abuse-patterns-work.md) — Refund cycling, arbitrage abuse, and masking.
+- [How Risk Model Retraining Lag Works](docs/risk/how-risk-model-retraining-lag-works.md) — Concept drift and delayed adaptation.
+- [How BIN–Country Mismatch Affects Payment Risk](docs/risk/how-bin-country-mismatch-affects-risk.md) — Geographic triangulation and issuer mismatch.
 - [How Retry Logic Affects Risk](docs/risk/how-retry-logic-affects-risk.md) — Balancing recovery rates with network compliance.
 - [How Dispute Aging Curves Work](docs/risk/how-dispute-aging-curves-work.md) — Vintage analysis and time-based risk accumulation.
 - [Understanding Decline Reason Codes](docs/risk/understanding-decline-reason-codes.md) — Category taxonomy and issuer behavior.
@@ -735,6 +737,7 @@ For details on PayFlux's security posture and data handling:
 - [How Payment Infrastructure Detects Risk Events](docs/how-it-works/how-payment-infrastructure-detects-risk-events.md) — Understanding threshold evaluation and state transitions.
 - [How Payment Settlements Work](docs/how-it-works/how-payment-settlements-work.md) — Batch cycles, clearing timelines, and funding gaps.
 - [How Settlement Batching Works](docs/how-it-works/how-settlement-batching-works.md) — Ledger gaps and reconciliation lag.
+- [How Risk Threshold Hysteresis Works](docs/how-it-works/how-risk-threshold-hysteresis-works.md) — Penalty states and recovery buffers.
 - [How Card Network Rule Changes Affect Merchants](docs/how-it-works/how-card-network-rule-changes-affect-merchants.md) — Policy updates and compliance enforcement.
 - [Why Risk Events Often Follow Business Growth](docs/how-it-works/why-risk-events-follow-growth.md) — Underwriting drift and velocity thresholds.
 - [How Retry Storms Form in Payment Systems](docs/how-it-works/how-retry-storms-form.md) — Timeout loops and feedback amplification.
@@ -759,6 +762,7 @@ For details on PayFlux's security posture and data handling:
 - [Detecting Stripe Payment Incidents](docs/use-cases/detecting-stripe-payment-incidents.md) — Monitoring API error rates and account status changes.
 - [Monitoring Payout Delays](docs/use-cases/monitoring-payout-delays.md) — Detecting liquidity gaps and schedule deviations.
 - [Handling Dispute Surges](docs/use-cases/handling-dispute-surges.md) — Velocity monitoring and threshold projection.
+- [Monitoring Manual Review Backlogs](docs/use-cases/monitoring-manual-review-backlogs.md) — Queue depth and operational capacity.
 - [Detecting Card Testing Attacks](docs/use-cases/detecting-card-testing-attacks.md) — Identifying velocity spikes and BIN anomalies.
 - [Differentiating Card Testing from Velocity Fraud](docs/use-cases/differentiating-card-testing-from-velocity-fraud.md) — Pattern shape and authorization behavior.
 - [Monitoring Payment Reserves](docs/use-cases/monitoring-payment-reserves.md) — Tracking balance segmentation and release schedules.
