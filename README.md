@@ -714,6 +714,14 @@ For details on PayFlux's security posture and data handling:
 
 ---
 
+## Risk Infrastructure Documentation
+
+- [How Payment Risk Scoring Works](docs/risk/how-payment-risk-scoring-works.md) — Factual overview of scoring models and signals.
+- [How Chargebacks Propagate Through Payment Networks](docs/risk/how-chargebacks-propagate.md) — Structural analysis of the dispute lifecycle.
+- [How KYC and Underwriting Reviews Work](docs/risk/how-kyc-and-underwriting-reviews-work.md) — Infrastructure perspective on compliance and identity verification.
+
+---
+
 ## Operational Risk Documentation
 
 - [Why Payment Processors Freeze Funds](docs/risk/why-payment-processors-freeze-funds.md) — Understanding risk control mechanisms and fund freezes.
