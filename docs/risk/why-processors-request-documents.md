@@ -1,49 +1,40 @@
-# Why Processors Request Additional Documents
+# Document Requests
 
-## Overview
+## Definition
+Document Requests (RFI - Request for Information) are the mechanism processors use to verify a merchant's continued compliance. They are "Spot Checks" on the validity of the business entity, its owners, and its fulfillment model.
 
-Processors request documentation to verify identity, business activity, and regulatory compliance.
+## Why it matters
+Friction. A failure to respond to an RFI typically leads to a Freeze. Treating these emails as "Spam" is a fatal error. They are regulatory mandates (KYC/AML).
 
-## Why This Exists
+## Signals to monitor
+- **Inbound Tickets**: Support tickets with keywords "Compliance," "Verification," "Upload."
+- **Dashboard Notifications**: Banners requiring immediate action.
+- **Payout State**: Payouts often pause *during* the request period.
 
-Financial regulations require ongoing validation of merchant information.
+## Breakdown modes
+- **The "Blurry ID" Loop**: Processors rejecting photos of IDs for low quality (OCR failure).
+- **The Address Mismatch**: Utility bill address not matching the Bank Account address exactly.
+- **The "Beneficial Owner" gap**: Failing to list a 25% shareholder because they are a "Silent Partner" (Violation of FinCEN rules).
 
-## How It Works
+## Where observability fits
+- **Response Timer**: "Request received 2 days ago. Deadline is tomorrow."
+- **Doc Repository**: Centralized storage of current, high-res corporate docs.
+- **Status Tracking**: "Doc submitted. Status: Pending Review."
 
-Document requests may include:
-- Identity verification
-- Proof of address
-- Business registration
-- Bank ownership
-- Product descriptions
-- Fulfillment evidence
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## What Triggers Requests
+## FAQ
 
-- Business model changes
-- Volume growth
-- Geographic expansion
-- Risk alerts
-- Periodic audits
+### Why do they ask again?
+Docs expire (Drivers Licenses). Regulations change. Risk models trigger new reviews.
 
-## Why Requests Feel Repetitive
+### Can I redact info?
+Usually no. Banking partners need full, unredacted copies.
 
-Different processors maintain independent compliance systems.
+### security?
+Upload via secure dashboard only. Never email sensitive docs.
 
-## What Support Can and Cannot Do
-
-Support cannot waive regulatory requirements.
-
-## What Infrastructure Can Do
-
-Infrastructure can:
-- Centralize documents
-- Track request history
-- Preserve submission timelines
-
-## Where Payflux Fits
-
-Payflux organizes compliance documentation across systems.
-
-> [!NOTE]
-> Payflux does not approve or reject compliance reviews.
+## See also
+- [KYC Reviews](./how-kyc-and-underwriting-reviews-work.md)
+- [Merchant Underwriting](./how-merchant-underwriting-works.md)
+- [Compliance Timing Gaps](./how-compliance-timing-gaps-form.md)

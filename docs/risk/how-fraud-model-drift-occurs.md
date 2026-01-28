@@ -1,34 +1,40 @@
-# How Fraud Model Drift Occurs
+# Fraud Model Drift
 
-## Overview
-Fraud models are trained on historical data. "Model Drift" is the degradation of a model's predictive power as the real-world behavior of fraudsters and legitimate customers changes over time. It is the reason why a "perfect" fraud filter eventually becomes useless.
+## Definition
+Model Drift is the subtle decay of a fraud model's accuracy over time. As fraud patterns evolve (e.g., from stolen cards to account takeovers), a static model catches less fraud (False Negatives) and blocks more good users (False Positives).
 
-## What model drift is
-- **Training Data**: 2023 Fraud Patterns (Stolen Credit Cards).
-- **Live Data**: 2025 Fraud Patterns (Synthetic Identity + Real-time Payment Scams).
-- **Result**: The model is looking for the wrong signals.
+## Why it matters
+Silent Failure. A server crash triggers an alert. Model drift does not. It manifests as a slow, creeping increase in chargebacks over months, or a gradual decline in conversion rates. By the time you notice, the damage is significant.
 
-## Why transaction populations change
-- **New Products**: Selling high-risk crypto instead of low-risk t-shirts changes the buyer profile.
-- **New Markets**: Launching in Brazil introduces different velocity/payment habits than the US.
-- **Macroeconomics**: Recessions increase "Friendly Fraud" (customers disputing valid charges to save money).
+## Signals to monitor
+- **Score Distribution**: "Last month, average risk score was 20. This month, it's 15." (The model thinks traffic is cleaner; is it?)
+- **Approval Rate Erosion**: A steady 0.5% drop per month.
+- **Top Feature Shift**: The primary reason for blocking changing from "AVS Mismatch" to "Velocity" without a logic change.
 
-## How drift degrades accuracy
-- **False Negatives**: The model fails to catch new attack types (Fraud gets through).
-- **False Positives**: The model flags valid new customer behaviors as suspicious (Good sales are blocked).
+## Breakdown modes
+- **Concept Drift**: The definition of "Fraud" changes (e.g., Valid customers acting "weird" during a flash sale).
+- **Data Drift**: The input data changes (e.g., Mobile traffic overtaking Desktop traffic, changing the device fingerprint baseline).
+- **Adversarial Adaptation**: Fraudsters figuring out the rules ("Buy under $50") and adapting their attack to bypass the model.
 
-## Relationship to approval rates
-Drift often manifests as a slow erosion of approval rates.
-- **Day 1**: 95% Approval.
-- **Day 90**: 94% Approval.
-- **Day 180**: 91% Approval.
-The decline is subtle enough to be ignored day-to-day but significant over quarters.
+## Where observability fits
+- **Baseline Comparison**: Overlaying "This Month's" score curve against "Last Month's."
+- **Precision/Recall Tracking**: Measuring the specific performance of high-risk rules.
+- **Shadow Modeling**: Running a new model in "Listen Mode" to compare its decisions against the live model.
 
-## Why retraining lags
-Retraining requires "Labeled Data" (knowing for sure what was fraud). Chargebacks take 90 days to arrive. Therefore, the ground truth is always 3 months old. You are always correcting for the drift that happened last quarter, not today.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure provides "Drift Detection" proxies. It tracks:
-- **Feature Distribution**: "Why did the average transaction amount suddenly jump by 50%?"
-- **Score Distribution**: "Why is the model scoring 80% of users as 'Low Risk' when it used to be 95%?"
-- **Hold-Out Performance**: Running a shadow model to compare against the production model in real-time.
+## FAQ
+
+### How often should models retrain?
+Ideally continuously. Practically, most systems retrain weekly or bi-weekly.
+
+### Can I detect drift manually?
+Yes. If your "Manual Review" queue suddenly fills up with obvious approvals, your model has drifted (too strict).
+
+### What is "Seasonality?"
+A form of temporary drift. Holiday shoppers behave differently (faster, higher amounts) than normal shoppers.
+
+## See also
+- [Risk Model Retraining Lag](./how-risk-model-retraining-lag-works.md)
+- [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+- [Multi-Signal Correlation](./how-multi-signal-correlation-affects-risk.md)

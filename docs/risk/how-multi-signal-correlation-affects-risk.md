@@ -1,40 +1,42 @@
-# How Multi-Signal Correlation Affects Risk
+# Multi-Signal Correlation
 
-## Overview
-Single risk signals (e.g., a high value transaction) are often false positives. "Correlated Risk" looks for the coincidence of multiple weak signals that, when combined, indicate a near-certainty of fraud or insolvency.
+## Definition
+Multi-Signal Correlation is the risk technique of combining multiple "Weak" signals to form one "Strong" conviction.
+(Foreign IP) + (High Value) + (New Device) = 99% Fraud.
+Any one of these alone might be valid; together, they are damning.
 
-## What correlated signals are
-- **Signal A**: Velocity Spike (Sales up 200%).
-- **Signal B**: Geo Mismatch (IP != Billing Address).
-- **Signal C**: Bin Cluster (All cards from one bank).
-Individually, these might be explainable (Sale, Travel, Corporate event). Together, they are a card testing attack.
+## Why it matters
+False Positive Reduction. Blocking all "Foreign IPs" kills valid travel sales. Blocking all "High Value" kills your best customers. Blocking only the *intersection* of Foreign + High Value allows you to accept more revenue safely.
 
-## Examples of correlated risk events
-- **The "Bust-Out"**: High Velocity + High Average Ticket + Nighttime Processing.
-- **The "Account Takeover"**: New Device ID + Password Change + Instant Withdrawal request.
-- **The "Business Failure"**: Rising Refund Rate + Falling Sales Volume + Increasing Support Ticket Age.
+## Signals to monitor
+- **Device + Velocity**: New Device + High Velocity.
+- **Bin + IP**: UK Card + Russian IP.
+- **Email + Name**: "John Smith" + "xy837@protonmail.com".
 
-## Why correlation increases severity
-Risk engines use multiplicative scoring.
-- Score(A) = 10
-- Score(B) = 10
-- Score(A + B) = 100
-The presence of multiple independent warning signs collapses the probability space; it is statistically unlikely to be a coincidence.
+## Breakdown modes
+- **The Perfect Storm**: A legitimate user doing something weird (Buying a gift while traveling on a VPN) triggering all flags at once.
+- **Blind Spots**: Having great IP data but no Device data, breaking the correlation link.
+- **Signal Decay**: Relying on an old "Bad IP" list that has since been reassigned to a legitimate ISP.
 
-## Relationship to automated controls
-High-correlation events trigger "Auto-Kill" switches rather than "Manual Review."
-- **Review**: "Check this weird ID."
-- **Kill**: "Freeze the account immediately; we are being attacked."
+## Where observability fits
+- **Correlation Matrix**: Visualizing which signals appear together most often in chargebacks.
+- **Rule Tuning**: "Signal A predicted fraud 50% of the time. Signal A+B predicted it 90% of the time."
+- **Explainability**: Helping support agents explain *why* a customer was blocked. "It wasn't just the amount; it was the amount plus the location."
 
-## Why correlation is hard to unwind
-If an account is frozen due to multi-signal correlation, the merchant has to disprove *all* the signals.
-- "Yes, I had a sale (Velocity)."
-- "Yes, I targeted users in Brazil (Geo)."
-- "Yes, they used huge coupons (Ticket size)."
-Explaining away a perfect storm of risk signals requires massive documentation.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure provides the "Reasoning Trace." It visualizes:
-- **Signal Stack**: Showing exactly which combinations of factors triggered the high score.
-- **Temporal Alignment**: displaying how the signals lined up on the timeline.
-- **False Positive Tuning**: Helping teams identify valid business patterns (like a product drop) that mimic fraud correlations.
+## FAQ
+
+### How many signals do I need?
+Standard models use 100-200 features. Simple rules might use 3-5.
+
+### Is correlation causation?
+In fraud, usually yes. In credit risk, maybe not.
+
+### Can I verify signals?
+Yes. Use 3D Secure to challenge the user. If they pass, the "Risk Signals" were wrong.
+
+## See also
+- [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+- [Geo Velocity](./how-geo-velocity-affects-risk.md)
+- [BIN/Country Mismatch](./how-bin-country-mismatch-affects-risk.md)

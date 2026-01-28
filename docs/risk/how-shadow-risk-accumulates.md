@@ -1,33 +1,40 @@
-# How Shadow Risk Accumulates
+# Shadow Risk
 
-## Overview
-"Shadow Risk" refers to financial exposure that exists in reality but has not yet materialized in the primary ledger or dashboard. It is the "dark matter" of payment risk—invisible until it hits the balance sheet all at once.
+## Definition
+Shadow Risk is the accumulation of exposure that has not yet appeared on a dashboard. It includes "Authorized but not Settled" transactions, "In-Transit" refunds, and "Pre-Dispute" inquiries. It is the invisible liability that causes sudden account freezes.
 
-## What shadow risk is
-It is the delta between "Perceived Cash Position" and "Actual Solvency."
-- **Example**: A merchant has \$10k in their account. They have processed \$50k in high-risk sales yesterday that are not yet settled but have already been shipped. If those sales turn out to be fraudulent, the merchant is actually \$40k in debt, but the dashboard shows green.
+## Why it matters
+Predictability. Dashboards show the *past* (Settled Sales). Shadow Risk shows the *future* (Pending Chargebacks). Monitoring Shadow Risk is the only way to predict a freeze *before* it happens.
 
-## Common sources of hidden exposure
-- **Unsettled Funds**: Transactions that are authorized but not captured/settled.
-- **Pending Disputes**: Retrieval requests (pre-disputes) that haven't converted to chargebacks yet.
-- **Delayed Reversals**: ACH returns that take 3-5 days to bounce (e.g., R01 - Insufficient Funds).
+## Signals to monitor
+- **Open Authorizations**: The total value of "Held" funds on customer cards that haven't been captured.
+- **Retrieval Requests**: The volume of "Soft Inquiries" from banks (precursors to chargebacks).
+- **Pending Refunds**: Refunds initiated by the merchant but not yet debited from the balance.
 
-## Relationship to lagging metrics
-Dashboards act as rear-view mirrors.
-- **Chargeback Rate**: Reflects sales from 1-3 months ago.
-- **Refund Rate**: Reflects operational decisions from 1-7 days ago.
-- **Shadow Risk**: Is the *prediction* of future losses based on current activity.
+## Breakdown modes
+- **The Auth bomb**: A bot testing 10,000 cards with $1.00 Auths. The merchant sees $0 sales, but the network sees 10,000 risk events.
+- **The Retrieval Spike**: Receiving 50 retrieval requests in one day. The Chargeback rate is 0%, but the Shadow Risk is 100%.
+- **The Settlement Gap**: Sales settling in T+3, Refunds settling in T+1. The dashboard looks positive, but the bank account is negative.
 
-## Why it escapes dashboards
-Most dashboards sum up "Settled Transaction Status." They do not sum up "Potential Liability of Open Authorizations." Shadow risk lives in the *state transitions* (Auth -> Settle, Settle -> Dispute), not in the static states.
+## Where observability fits
+- **Leading Indicators**: "Retrievals are up 200%. Expect chargebacks to rise in 2 weeks."
+- **State Tracking**: Monitoring the lifecycle of a transaction *between* statuses (e.g., Auth -> Capture).
+- **Risk Scoring**: Assigning a "Shadow Score" to the account based on pending activity, not just settled activity.
 
-## How it surfaces suddenly
-Shadow risk collapses into real loss during "Settlement Batches."
-- **Monday**: 100 R01 returns arrive at once.
-- **Impact**: The merchant's balance goes from +\$100k to -\$50k in a single update tick.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure illuminates the shadow. It tracks:
-- **Pending Exposure**: Sum of all authorized-but-not-settled funds.
-- **Return Probability**: Estimating the % of ACH deposits that will bounce based on bank signaling.
-- **Vintage Analysis**: Projecting the "expected chargebacks" of the current month's cohort before they happen.
+## FAQ
+
+### Is "Shadow Risk" a standard term?
+It is an industry term for "Unrealized Liability."
+
+### Can I see Retrieval Requests?
+Yes, most processors expose them via API. You should monitor them closely.
+
+### Do Auths count for disputes?
+No, a transaction must be Captured to be disputed. But Auths DO count for Velocity limits.
+
+## See also
+- [Dispute Aging Curves](./how-dispute-aging-curves-work.md)
+- [Transaction Monitoring](./how-transaction-monitoring-works.md)
+- [Negative Balance Cascades](./how-negative-balance-cascades-form.md)

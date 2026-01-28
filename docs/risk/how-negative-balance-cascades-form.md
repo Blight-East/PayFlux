@@ -1,32 +1,43 @@
-# How Negative Balance Cascades Form
+# Negative Balance Cascades
 
-## Overview
-A negative balance occurs when a merchant's liabilities (Refunds/Chargebacks/Fees) exceed their assets (Settled Sales) in a given period. A "Cascade" happens when this deficit persists across multiple settlement cycles, consuming future revenue and potentially triggering bank debits that fail, compounding the problem.
+## Definition
+A Negative Balance Cascade is a financial chain reaction.
+Step 1: Returns exceed Sales -> Negative Balance.
+Step 2: Processor debits Bank Account -> Debit Fails (NSF).
+Step 3: Processor freezes processing -> No new Sales to fill hole.
+The merchant is trapped: they need sales to fix the balance, but can't process sales *because* of the balance.
 
-## What a negative balance cascade is
-It is a debt spiral within the payment ledger.
-1.  **Day 1**: Merchant processes \$100 in sales, refunds \$150. Balance: -\$50.
-2.  **Day 2**: Merchant processes \$20 in sales. Balance absorbs it. New Balance: -\$30.
-3.  **Result**: Merchant receives \$0 payout for Day 2, despite making sales.
+## Why it matters
+Existential Risk. This state kills startups. It converts an operational problem (high returns) into a terminal infrastructure problem (Loss of Ability to Transact).
 
-## Common triggering conditions
-- **Mass Refunds**: Cancelling an event or recalling a faulty product line.
-- **Chargeback Spikes**: A fraud attack maturing all at once.
-- **Delayed Settlement**: If sales settle in 3 days but refunds settle in 1 day (common), a merchant can go negative operationally even if they are profitable on paper.
+## Signals to monitor
+- **Daily Net**: (Sales - Refunds - Disputes - Fees). If < 0, danger.
+- **Bank Balance**: Ensuring operational accounts always cover at least 3 days of peak refund volume.
+- **Recovery Status**: `debit_failed` events from the processor.
 
-## Relationship to dispute timing
-Disputes are instant debits. If a merchant has low daily volume (e.g., weekend), a single large dispute can flip the daily batch negative.
+## Breakdown modes
+- **The Weekend Gap**: Refunds process 24/7. Settlements (Deposits) only happen Mon-Fri. You can go massively negative on Saturday and recover on Monday, but the "Low Point" might trigger a risk freeze on Sunday.
+- **Fee Shock**: Processor debiting monthly fees ($5k) from a low-volume account, pushing it negative.
 
-## Interaction with payout schedules
-If the negative balance exceeds the incoming sales, the processor must debit the merchant's bank account (ACH Debit).
-- **Risk**: If the merchant has already spent the money, the ACH Debit fails (NSF).
-- **Consequence**: The processor now has a specialized "Collection" risk exposure and will likely freeze all processing to prevent the hole from getting deeper.
+## Where observability fits
+- **Liquidity Monitoring**: Real-time ticker of "Available Processor Balance."
+- **Debit Prediction**: "Warning: Large negative batch closing in 2 hours. Ensure bank funds are available."
+- **Collection Tracking**: Monitoring the processor's attempts to recover funds.
 
-## Why cascades propagate
-Once in a negative state, every new sale is "eaten" by the debt. This starves the merchant of operating cash (inventory/payroll), forcing them to potentially cancel more orders (causing more refunds), accelerating the downward spiral.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure provides the "Fuel Gauge." It monitors:
-- **Burn Rate**: How fast the negative balance is being paid down by new sales.
-- **Debit Failure Risk**: Predicting the probability of an ACH failure based on bank balance checks (if available).
-- **Zero-Day Alerts**: Warning immediately when a batch is trending negative *before* it closes.
+## FAQ
+
+### Can I wire money to fix it?
+Yes. Most processors allow a "Wire Top-up" to clear a negative balance.
+
+### Will they sue me?
+If the amount is large and you go silent, yes. It is a debt.
+
+### How do I prevent it?
+Keep a "Float" in your processor account (don't pay out 100% of sales daily).
+
+## See also
+- [Monitoring Negative Balances](../use-cases/monitoring-negative-balances.md)
+- [Payment Reserves](./what-is-a-payment-reserve.md)
+- [Settlement Failures](../use-cases/monitoring-settlement-failures.md)

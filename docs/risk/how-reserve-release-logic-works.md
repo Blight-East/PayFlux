@@ -1,33 +1,40 @@
-# How Reserve Release Logic Works
+# Reserve Release Logic
 
-## Overview
-A "Rolling Reserve" holds a percentage of a merchant's daily processing volume (e.g., 10%) for a fixed duration (e.g., 180 days) to cover potential future chargebacks. "Release Logic" dictates when and how that money is returned to the merchant.
+## Definition
+Reserve Release Logic dictates the schedule on which collateral funds are returned to the merchant. It typically follows a "Rolling" model (funds captured on Day 1 release on Day 181) or a "Fixed" model (entire block releases when the account is closed).
 
-## What reserves are designed to cover
-Reserves are collateral against "Tail Risk."
-- **The Gap**: A merchant processes \$1M in January and goes bankrupt in February.
-- **The Liability**: Cardholders dispute the January charges in March. The processor must refund them. The reserve pays for this.
+## Why it matters
+Financial Planning. Merchants often treat reserves as "Lost Money." In reality, it is a forced savings account. Knowing *exactly* when that capital unlocks allows for strategic reinvestment or debt repayment.
 
-## Why release is delayed
-Release logic mirrors the "Dispute Aging Curve."
-- **Day 1**: 100% risk (Sale just happened).
-- **Day 90**: 20% risk (Most disputes would have happened by now).
-- **Day 180**: 1% risk (Chargeback window is effectively closed).
-Processors hold funds until the probability of a chargeback drops to near zero (typically 180 days).
+## Signals to monitor
+- **Vintage Buckets**: Tracking volume by "Processing Date" to predict "Release Date."
+- **Net Release**: The daily flow of (Released Funds - New Reserves Withheld).
+- **Release Failures**: Funds that *should* have released but didn't (System error or extended hold).
 
-## Relationship to dispute aging
-The release schedule is often tied to the specific "Vintage" of the funds.
-- **Fixed Release**: "On July 1st, release the funds captured on January 1st."
-- **Performance Release**: "If the dispute rate stays below 0.5%, release funds early. If it spikes, extend the hold."
+## Breakdown modes
+- **The Extension**: Processor extending the hold from 120 days to 180 days silently because of a slight uptick in refunds.
+- **The Offset**: Processor using the releasing reserve to pay off a negative balance in the *current* processing account.
+- **The Forever Hold**: Funds held indefinitely because the merchant cannot pass a closing KYB check.
 
-## Risk of early release
-Releasing reserves too early is the #1 cause of processor losses. If the processor releases the collateral and then a wave of disputes arrives, the processor is left holding the bag.
+## Where observability fits
+- **Release Calendar**: "You have $10k releasing on Friday."
+- **Audit**: Verifying that the processor actually paid out the correct amount.
+- **Liquidity Modeling**: Including "Future Reserve Releases" as an asset class in financial reporting.
 
-## Why reserves feel opaque
-Merchants see a "Negative Balance" or "Unavailable Funds" but often lack a detailed ledger showing *exactly* which bucket of money is scheduled for release on which date. This lack of transparency causes immense friction.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure provides the "Collateral Ledger." It tracks:
-- **Bucket Aging**: Tracking the age of every dollar held in reserve.
-- **Release Schedule**: projecting future cash flows ("You will receive \$50k on Monday from the Jan 1-7 bucket").
-- **Net Position**: Real-time calculation of `(Total Reserves - Expected Liabilities)`.
+## FAQ
+
+### Is the release date guaranteed?
+No. If risk increases, the processor can extend the hold.
+
+### Do I earn interest?
+Almost never. The processor keeps the float interest.
+
+### Can I request early release?
+Rarely. Only if you can prove the risk has disappeared (e.g., delivered all goods).
+
+## See also
+- [Payment Reserves](./what-is-a-payment-reserve.md)
+- [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
+- [Liability Horizons](./how-liability-horizons-affect-payouts.md)

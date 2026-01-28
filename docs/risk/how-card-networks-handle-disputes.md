@@ -1,37 +1,40 @@
-# How Card Networks Handle Disputes
+# Card Network Dispute Handling
 
-## Overview
+## Definition
+Network Dispute Handling is the "Court System" operated by Visa/Mastercard. It defines the rules of engagement for a chargeback: what evidence is admissible, who has the burden of proof, and who wins in a tie.
 
-Card networks define the procedural rules for dispute handling. Payment processors and issuing banks operate within these frameworks.
+## Why it matters
+Liability Shift. Understanding the rules tells you when you have already lost. For example, in a "Cardholder Does Not Recognize" dispute, if you didn't use 3D Secure, the Network rules say you lose automatically. No amount of evidence will save you.
 
-## Dispute Lifecycle
-1. Cardholder files dispute.
-2. Issuing bank assigns reason code.
-3. Processor transmits dispute to merchant.
-4. Merchant submits evidence.
-5. Issuer decides.
-6. Network arbitrates if escalated.
+## Signals to monitor
+- **Reason Code Mix**: "Fraud" vs "Service" disputes have completely different rulebooks.
+- **Win Rates**: Your success rate in overturning disputes. (Average is 20-30%).
+- **Pre-Arb Volume**: The number of cases where the issuer rejects your evidence and demands a second round (with fees).
 
-## Network Rulebooks
+## Breakdown modes
+- **Compelling Evidence Failure**: Submitting a text receipt when the rules require a signature.
+- **Time Bar**: Submitting evidence 1 hour after the network deadline.
+- **Currency Mismatch**: Winning the dispute but losing money on FX conversion during the reversal.
 
-Networks publish rulebooks defining:
-- Eligible dispute types
-- Evidence requirements
-- Liability allocation
-- Arbitration thresholds
+## Where observability fits
+- **Deadline Tracking**: "3 days remaining to respond to Case #123."
+- **Rule Updates**: Tracking when Visa changes the definition of "Compelling Evidence" (e.g., CE 3.0).
+- **Cost/Benefit**: "It costs $15 to fight this $10 dispute. Auto-accept it."
 
-## Liability Framework
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-Dispute outcomes assign liability to either the merchant, issuer, or network under predefined rules.
+## FAQ
 
-## Escalation Paths
+### Can I email Visa?
+No. You talk to your Acquirer. Your Acquirer talks to Visa.
 
-Unresolved cases may proceed through pre-arbitration and arbitration with higher evidence thresholds and additional fees.
+### What is Arbitration?
+The "Supreme Court." If you and the Issuer can't agree, Visa decides. The loser pays a ~$500 fine.
 
-## Infrastructure Role
+### What is 3D Secure?
+A protocol that shifts liability for fraud disputes from You to the Issuer.
 
-Infrastructure systems encode rule logic, track dispute stage transitions, and log outcomes for compliance review.
-
-## Where Payflux Fits
-
-Payflux consolidates dispute stage data, normalizes reason code interpretations, and preserves dispute lifecycle history. It does not control dispute outcomes.
+## See also
+- [How Chargebacks Propagate](./how-chargebacks-propagate.md)
+- [Dispute Evidence](./how-dispute-evidence-works.md)
+- [Network vs Processor Authority](./how-network-vs-processor-authority-works.md)

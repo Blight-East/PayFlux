@@ -1,24 +1,40 @@
-# Why Dispute Win Rates Vary
+# Dispute Win Rates
 
-## Overview
+## Definition
+The Dispute Win Rate is the percentage of chargebacks fully overturned in the merchant's favor. `(Won / Total Disputes)`. It measures the effectiveness of the evidence submission process.
 
-Dispute win rates vary across time, processors, and product lines due to procedural and categorical factors.
+## Why it matters
+Profitability. A bad win rate (0-10%) means you are bleeding revenue. A good win rate (30-40%) recovers significant margin. However, a *perfect* win rate usually means your fraud filters are too strict (rejecting good customers).
 
-## Primary Drivers
-- Reason code distribution
-- Evidence completeness
-- Timing compliance
-- Transaction context
-- Issuer variance
+## Signals to monitor
+- **Win Rate by Reason Code**: "Fraud" (Hard to win) vs "Product Not Received" (Easier to win).
+- **Win Rate by Card Brand**: Amex is known to be more cardholder-friendly than Visa.
+- **Auto-Loss Rate**: Disputes lost because no evidence was submitted (Administrative failure).
 
-## Structural Limitations
+## Breakdown modes
+- **The 3DS Gap**: Losing "Fraud" disputes because 3D Secure was not used (Automatic Liability).
+- **The Admin Fail**: Losing disputes because the team forgot to upload the PDF.
+- **The Policy Gap**: Losing "Subscription" disputes because the "Cancellation Policy" wasn't clearly visible on the checkout page.
 
-Dispute processes operate under fixed response windows, standardized schemas, and limited merchant feedback loops.
+## Where observability fits
+- **A/B Testing**: Testing different evidence templates to see which yields higher win rates.
+- **Cost Analysis**: "It costs $20 to fight. We only win 10% of $10 disputes. Stop fighting them."
+- **Feedback Loop**: Using win/loss data to update the Terms of Service.
 
-## Infrastructure Role
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-Systems segment disputes by category, track historical success patterns, and preserve documentation.
+## FAQ
 
-## Where Payflux Fits
+### What is a good win rate?
+20-30% is standard. >40% is excellent. >50% suggests you are over-blocking.
 
-Payflux aggregates dispute outcome data, surfaces variance drivers, and enables comparative analysis across processors. It does not modify win rates.
+### Does winning help my ratio?
+Usually NO. The ratio includes *all* disputes filed. Winning gets your money back, but usually doesn't remove the "Strike" from your record.
+
+### Why did I lose even with proof?
+The Issuer decides. They prioritize their customer (the cardholder) over you.
+
+## See also
+- [Dispute Evidence](./how-dispute-evidence-works.md)
+- [Card Network Dispute Handling](./how-card-networks-handle-disputes.md)
+- [Monitoring Dispute Ratios](../use-cases/monitoring-dispute-ratios.md)

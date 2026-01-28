@@ -1,46 +1,40 @@
-# How Dispute Evidence Works
+# Dispute Evidence
 
-## Overview
+## Definition
+Dispute Evidence is the "Legal Brief" a merchant submits to fight a chargeback. It must prove the transaction was valid relative to the *specific* Reason Code filed by the cardholder.
 
-When a cardholder disputes a transaction, the merchant is required to submit evidence to support the validity of the charge. This evidence is evaluated by the card network and issuing bank, not by the payment processor directly. The outcome depends on whether the submitted materials satisfy predefined reason-code rules.
+## Why it matters
+Specificity. Sending a tracking number for a "Fraud" dispute is useful. Sending a tracking number for a "Credit Not Processed" dispute is useless. You must answer the *specific* accusation made by the cardholder.
 
-## Evidence Categories
+## Signals to monitor
+- **Representment Rate**: The % of disputes you choose to fight.
+- **Win Rate by Code**: "We win 40% of Fraud disputes but 0% of Service disputes."
+- **Auto-Win Potential**: Identifying cases where you have perfect evidence (e.g., AVS Match + 3DS Auth).
 
-Dispute evidence typically falls into several categories:
-- **Transaction Proof**: Receipts, invoices, or order confirmations.
-- **Customer Identity**: IP address logs, device fingerprints, or account history.
-- **Delivery Confirmation**: Shipping carrier records or digital delivery logs.
-- **Usage Records**: Login timestamps, service access logs, or content consumption history.
-- **Policy Disclosure**: Refund policy or terms accepted at checkout.
+## Breakdown modes
+- **Data Dump**: Uploading 50 pages of unorganized logs. The bank analyst has 60 seconds to review; they will reject it.
+- **Illegible Docs**: blurry screenshots or tiny text.
+- **Wrong Evidence**: Proving delivery to "123 Main St" when the billing address was "456 Oak St" (AVS Mismatch).
 
-Each dispute reason code determines which categories are considered relevant.
+## Where observability fits
+- **Asset Retrieval**: Automatically fetching the invoice, logs, and shipping proof associated with the Transaction ID.
+- **Template Matching**: Suggesting the right response template based on the Reason Code.
+- **Outcome Analysis**: "We lost because the tracking number didn't show the 'Delivered' status."
 
-## Reason Code Mapping
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-Card networks assign a reason code to each dispute. The reason code dictates:
-- What evidence is acceptable.
-- How evidence must be formatted.
-- Whether representment is allowed at all.
+## FAQ
 
-## Time Constraints
+### What is "Compelling Evidence?"
+A specific term in Visa rules. It refers to data points (IP, Device ID, Account History) that link the dispute to previous undisputed transactions.
 
-Evidence must be submitted within a fixed response window. These windows are enforced by card network rules and cannot be extended by processors or support teams.
+### Can I submit video?
+Usually no. PDFs or JPEGs are the standard.
 
-## Evaluation Process
+### Does the customer see my evidence?
+Yes. The bank often shares it with the cardholder to say "Look, you did buy this."
 
-Once evidence is submitted:
-1. The processor packages the data according to network format rules.
-2. The issuing bank reviews the evidence.
-3. The card network arbitrates if escalation occurs.
-
-## Infrastructure Role
-
-Dispute infrastructure systems help by:
-- Normalizing evidence formats across processors.
-- Tracking submission deadlines.
-- Preserving historical records of prior disputes.
-- Mapping reason codes to evidence requirements.
-
-## Where Payflux Fits
-
-Payflux functions as infrastructure for dispute observability. It aggregates dispute metadata, tracks evidence submission state, preserves audit trails, and surfaces contributing transaction patterns. It does not influence network adjudication.
+## See also
+- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+- [Card Network Dispute Handling](./how-card-networks-handle-disputes.md)
+- [Dispute Win Rates](./why-dispute-win-rates-vary.md)

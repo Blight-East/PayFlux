@@ -1,48 +1,40 @@
-# How Payout Delays Work
+# Payout Delays
 
-## Overview
+## Definition
+Payout Delays occur when a processor pauses the settlement of funds for a specific batch or time period. Unlike a "Freeze" (which is indefinite), a Delay is usually temporary (24-72 hours) while a specific risk signal is investigated.
 
-Payout delays occur when a processor temporarily withholds settlement of funds to manage financial or compliance risk.
+## Why it matters
+Cash Flow. Most merchants operate on tight cycles (Received funds Pay for Inventory). A 3-day delay can cause a merchant to miss payroll or default on vendor payments, creating a cascade of failure.
 
-## Why This Exists
+## Signals to monitor
+- **Transit Time**: "Avg Time from Batch Close to Bank Deposit" (Standard T+2).
+- **Batch Status**: Moving from `paid` to `in_transit` or `pending_review`.
+- **Weekend Effects**: Accounting for non-banking days properly in the forecast.
 
-Processors advance funds before downstream risks such as fraud, refunds, and chargebacks are fully known.
+## Breakdown modes
+- **The Weekend Trap**: A Friday batch delayed by 1 day settles on Tuesday instead of Monday.
+- **The Holiday Cluster**: A 3-day banking holiday causing 4 days of sales to dump into the bank at once (triggering AML alerts).
+- **The Silent Hold**: Processor holding funds without sending an email notification.
 
-## How It Works
+## Where observability fits
+- **SLA Tracking**: "Processor promised T+2. Actual is T+4. We define this as a Delay."
+- **Cash Forecasting**: "Given the delay, do we have enough cash in the operating account for Friday payroll?"
+- **Anomaly Detection**: "Why is the batch for the 15th still pending while the 16th is paid?"
 
-Processors:
-- Hold funds in a pending state
-- Recalculate reserve requirements
-- Wait for risk or compliance resolution
-- Release funds when thresholds are satisfied
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## What Triggers Delays
+## FAQ
 
-- Sudden volume increases
-- High refund activity
-- Dispute accumulation
-- Compliance review
-- Account changes
+### Is a delay a ban?
+Usually no. It is an investigation. If you pass, funds release.
 
-## Why Delays Feel Sudden
+### Can I speed it up?
+No. Wires move at bank speed. Instant Payouts (Push to Card) are faster but riskier.
 
-Risk signals arrive after transactions complete. Delays often follow batch reviews.
+### Why do they hold weekends?
+Because the Federal Reserve (ACH system) is closed on weekends.
 
-## What Support Can and Cannot Do
-
-Support cannot override reserve logic or settlement timing.
-
-## What Infrastructure Can Do
-
-Infrastructure can:
-- Track held balances
-- Explain delay reasons
-- Preserve payout history
-- Model release conditions
-
-## Where Payflux Fits
-
-Payflux provides visibility into payout state changes across processors.
-
-> [!NOTE]
-> Payflux does not control payout timing or settlement decisions.
+## See also
+- [Monitoring Payout Delays](../use-cases/monitoring-payout-delays.md)
+- [Payment Settlements](../how-it-works/how-payment-settlements-work.md)
+- [Compliance Timing Gaps](./how-compliance-timing-gaps-form.md)

@@ -1,113 +1,40 @@
-# Why Stripe, PayPal, and Adyen Freeze Funds
+# Funds Freezes (Major Processors)
 
-## Overview
+## Definition
+A Funds Freeze (or Account Hold) is when a processor stops payouts and/or processing. For major aggregators like Stripe, PayPal, and Adyen, this is largely automated based on machine learning models detecting risk anomalies.
 
-Major payment processors such as Stripe, PayPal, and Adyen freeze merchant funds when internal risk thresholds are crossed. These actions are not discretionary customer service decisions. They are automated and policy-driven controls designed to protect the payment network from future financial loss.
+## Why it matters
+Continuity. Aggregators (PSPs) are "At-Will" service providers. They can terminate service instantly if their model flags you. Diversification across multiple processors is the only defense against a single point of failure.
 
-A freeze is a risk containment mechanism, not a fraud verdict.
+## Signals to monitor
+- **Account Status API**: Polling `account.status` for changes from `active` to `restricted`.
+- **Payout Failures**: `payout_failed` webhooks often precede a formal freeze notice.
+- **Support Ticket Sentiment**: Aggressive or automated responses from support often signal an internal risk flag.
 
-## Shared Risk Model Across Processors
+## Breakdown modes
+- **Stripe**: Known for "Match List" triggers and "High Deviation from Baseline" freezes.
+- **PayPal**: Known for "21-Day Holds" on new accounts and "Dispute Spikes."
+- **Adyen**: Enterprise-focused; freezes often relate to "Scheme Compliance" (Visa/MC rules).
 
-Although processors differ in product design, they operate under similar constraints:
+## Where observability fits
+- **Multi-PSP Routing**: "Stripe is frozen. Route traffic to Adyen immediately."
+- **Freeze Detection**: "Alert: Payouts paused on Account A."
+- **Risk Mirroring**: Ensuring that "High Risk" traffic is balanced, not dumped onto one provider (which triggers a freeze).
 
-- Card network liability (Visa, Mastercard, etc.)
-- Banking partner exposure
-- Regulatory compliance (KYC, AML, sanctions)
-- Delayed dispute and refund risk
-- Capital adequacy requirements
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-This results in structurally similar freeze behavior across providers.
+## FAQ
 
-## Common System Triggers
+### Can they keep my money?
+Yes, for the duration of the Liability Horizon (120-180 days).
 
-Processors typically initiate a freeze when one or more of the following occur:
+### Why no warning?
+If they warn you, you might "Run Off" (process fraud and vanish). Surprise is a security feature.
 
-- **Dispute Ratio Elevation:** A higher-than-expected percentage of transactions converting into chargebacks.
-- **Volume or Velocity Spikes:** Rapid growth beyond historical processing patterns.
-- **Business Model Drift:** A mismatch between the registered business description and observed transaction behavior.
-- **Delayed Fulfillment:** Long delivery timelines that increase refund and dispute probability.
-- **Negative Balance Risk:** Potential future losses exceeding current available funds.
-- **Verification Gaps:** Missing documentation or unresolved beneficial ownership checks.
+### How do I appeal?
+Submit the requested documents clearly. Do not spam support.
 
-These triggers are evaluated through automated systems and escalated through scheduled reviews.
-
-## Why Freezes Appear Sudden
-
-To merchants, freezes feel instantaneous. In reality:
-
-- Risk signals are delayed (e.g., disputes post-settlement)
-- Systems analyze historical patterns, not real-time intent
-- Reviews occur in operational batches
-- Thresholds are enforced automatically
-- Human review occurs after system flags
-
-The freeze reflects prior behavior reaching a policy boundary, not a real-time event.
-
-## Why Support Cannot Reverse the Decision
-
-Front-line support teams do not control:
-
-- Underwriting thresholds
-- Network risk limits
-- Capital reserve formulas
-- Compliance enforcement
-- Banking partner exposure
-
-These are embedded into risk engines and contractual obligations. Support can communicate outcomes but cannot override them.
-
-## Processor-Specific Context
-
-### Stripe
-
-Primarily focuses on:
-- Dispute rate thresholds
-- Subscription churn risk
-- Delivery timelines
-- Platform abuse patterns
-
-### PayPal
-
-Emphasizes:
-- Buyer complaint volume
-- Account history and linkage
-- Seller protection exposure
-- Regulatory review triggers
-
-### Adyen
-
-Centers on:
-- Enterprise risk models
-- Network compliance
-- Transaction profile consistency
-- Jurisdictional controls
-
-Despite differences, the outcome mechanism is structurally the same.
-
-## What Risk Infrastructure Can and Cannot Do
-
-Risk infrastructure does not override processor controls.
-
-It enables operators to:
-- Visualize which funds are frozen and why
-- Identify contributing risk signals
-- Track historical state before and after the freeze
-- Organize documentation for review or appeal
-- Coordinate response across multiple processors
-
-This provides operational clarity, not decision authority.
-
-## Where Payflux Fits
-
-Payflux operates as processor-agnostic risk infrastructure.
-
-It provides:
-- **Unified Freeze Visibility:** One view across Stripe, PayPal, Adyen, and others.
-- **Exposure Attribution:** Clear mapping of which risk factors contributed.
-- **State Continuity:** Preservation of data even if processor access is restricted.
-- **Operational Intelligence:** Insight into system behavior without attempting to bypass it.
-
-Payflux does not remove freezes. It enables structured response.
-
-## Boundary Statement
-
-Payflux does not prevent freezes, guarantee fund release, or alter processor risk decisions. It provides the operational context required to understand and manage them.
+## See also
+- [Payment Reserves](./what-is-a-payment-reserve.md)
+- [Why Processors Request Documents](./why-processors-request-documents.md)
+- [Detecting Stripe Incidents](../use-cases/detecting-stripe-payment-incidents.md)
