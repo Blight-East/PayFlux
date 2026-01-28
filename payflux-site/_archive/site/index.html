@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayFlux | Payment Observability Infrastructure</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/favicon.png">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <div class="container">
+      <nav>
+        <div class="logo">PayFlux</div>
+        <a href="#early-access" class="btn">Request Access</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container text-center">
+      <h1>Payment observability that sees processor risk before Stripe/Adyen do ⚠️</h1>
+      <p class="hero-sub">
+        HTTP ingest → normalized streams → real-time risk scoring → alerts
+      </p>
+
+      <div class="hero-code mono">
+        <span class="text-secondary">$</span> curl -X GET payflux.local/signals/risk_score
+      </div>
+
+      <div>
+        <a href="#early-access" class="btn btn-submit">Request Early Access</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="outcomes">
+    <div class="container">
+      <span class="section-title text-center">Capabilities v0.2.x</span>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Processor Risk Score</h3>
+          <p>
+            Deterministic, explainable scoring based on payment velocity, retry storms, and regional success rates.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Export Health Tracking</h3>
+          <p>
+            Per-destination health metrics for every export sink. Identify downstream latency or connectivity issues
+            before data loss occurs.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Observability Buffer</h3>
+          <p>
+            Best-effort export for high-volume streams. ACK events instantly to producers, then stream normalized
+            signals to your BI and fraud tools.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Production Ready</h3>
+          <p>
+            Built for scale with K8s operators, systemd units, and Docker Compose examples for instant deployment.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Operational Maturity</h3>
+          <p>
+            Structured JSON logs and an automated on-call runbook to minimize MTTR during processor outages.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="diagram-section">
+    <div class="container text-center">
+      <span class="section-title">Architecture</span>
+
+      <div class="flow-container">
+        <div class="flow-box">
+          <span class="label">Ingest</span>
+          <span class="title">HTTP Events</span>
+          <span class="desc">Producers never block</span>
+        </div>
+
+        <div class="flow-box active">
+          <span class="risk-badge">Risk Score 8.2/10</span>
+          <span class="label">Process</span>
+          <span class="title">PayFlux Node</span>
+          <span class="desc">Ordered Redis Streams</span>
+        </div>
+
+        <div class="flow-box">
+          <span class="label">Egress</span>
+          <span class="title">Alerts & Sink</span>
+          <span class="desc">Fraud, Retries, BI</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="signals-section">
+    <div class="container">
+      <div class="signals-grid">
+        <div class="json-viewer mono">
+          <pre>
+{
+  <span class="text-secondary">"score"</span>: 8.2,
+  <span class="text-secondary">"band"</span>: <span style="color:var(--risk-low)">"LOW"</span>,
+  <span class="text-secondary">"drivers"</span>: [
+    { <span class="text-secondary">"type"</span>: <span style="color:var(--accent)">"velocity"</span>, <span class="text-secondary">"impact"</span>: 1.2 },
+    { <span class="text-secondary">"type"</span>: <span style="color:var(--accent)">"retry_storm"</span>, <span class="text-secondary">"impact"</span>: 0.5 }
+  ],
+  <span class="text-secondary">"window_ms"</span>: 60000,
+  <span class="text-secondary">"timestamp"</span>: <span style="color:var(--risk-med)">"2026-01-09T12:54:28Z"</span>
+}
+</pre>
+        </div>
+        <div>
+          <span class="section-title">Depth</span>
+          <h2>Deterministic Signals</h2>
+          <p class="text-secondary">
+            Every risk score is backed by raw payment signals. No black boxes. Just explainable infra for high-stakes
+            payment teams.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="comparisons">
+    <div class="container">
+      <span class="section-title text-center">Outcome Comparison</span>
+      <div class="comparison-grid">
+        <div class="comp-card bad">
+          <div class="comp-header">
+            <span>Standard Stack</span>
+            <span style="color:var(--risk-high)">❌ Account Flagged</span>
+          </div>
+          <p class="text-secondary">Processor identifies bulk retries after 4 hours, blocks account, and requires 48hr
+            manual review.</p>
+        </div>
+        <div class="comp-card good">
+          <div class="comp-header">
+            <span>PayFlux Enabled</span>
+            <span style="color:var(--risk-low)">⚠️ Alerted (T+2s)</span>
+          </div>
+          <p class="text-secondary">Infrastructure identifies retry storm in real-time. Circuit breaker trips before
+            processor flags the volume.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="container text-center">
+      <h2>See processor timeouts → retry storms → account flags before they happen</h2>
+
+      <div class="metrics-preview">
+        <img id="metrics-img" src="assets/metrics-preview.png" alt="Prometheus metrics for processor risk score" />
+      </div>
+
+      <div id="early-access" style="margin-top: 60px;">
+        <p class="text-secondary">Request early access for v0.2.x</p>
+        <!-- ✅ Visible Netlify form -->
+        <form class="form-container" name="early-access" method="POST" data-netlify="true" netlify-honeypot="bot-field"
+          action="/success.html" style="max-width: 440px; margin: 24px auto; display: flex; gap: 12px;">
+          <input type="hidden" name="form-name" value="early-access" />
+          <p style="display:none;"><label><input name="bot-field" /></label></p>
+          <input type="email" name="email" placeholder="you@company.com" required
+            style="flex:1; padding: 12px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: #fff; outline: none;" />
+          <button type="submit" class="btn btn-submit">
+            Get Access
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ Netlify hidden form (required) -->
+  <form name="early-access" netlify netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="early-access" />
+    <input type="email" name="email" />
+    <input name="bot-field" />
+  </form>
+
+  <footer>
+    <div class="container">
+      <div class="footer-flex">
+        <div>
+          <div class="logo">PayFlux</div>
+          <div class="disclaimer">Infrastructure, not a payment processor.</div>
+        </div>
+        <div>
+          <a href="mailto:hello@payflux.dev" class="text-secondary" style="text-decoration: none;">hello@payflux.dev</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
