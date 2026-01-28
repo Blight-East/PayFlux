@@ -723,6 +723,11 @@ For details on PayFlux's security posture and data handling:
 - [Why Processors Request Additional Documents](docs/risk/why-processors-request-documents.md) — Identity verification and regulatory compliance logic.
 - [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 - [How Refunds and Reversals Propagate](docs/risk/how-refunds-and-reversals-propagate.md) — Multi-stage flows and balance impact.
+- [How Shadow Risk Accumulates](docs/risk/how-shadow-risk-accumulates.md) — Unsettled visibility and pending exposure.
+- [How Retry Amplification Increases Exposure](docs/risk/how-retry-amplification-increases-exposure.md) — Determining the multiplier effect of aggressive retries.
+- [How Fraud Model Drift Occurs](docs/risk/how-fraud-model-drift-occurs.md) — Behavioral change vs static risk rules.
+- [How Compliance Timing Gaps Form](docs/risk/how-compliance-timing-gaps-form.md) — AML triage lag and exposure windows.
+- [How Network vs Processor Authority Works](docs/risk/how-network-vs-processor-authority-works.md) — Hierarchy of enforcement and policy propagation.
 - [How Rolling Risk Windows Work](docs/risk/how-rolling-risk-windows-work.md) — Trailing averages and delayed recovery.
 - [How Negative Balance Cascades Form](docs/risk/how-negative-balance-cascades-form.md) — Refund spirals and delayed settlement gaps.
 - [How Dispute-Reserve Feedback Loops Work](docs/risk/how-dispute-reserve-feedback-loops-work.md) — Circular causality and liquidity crunches.
