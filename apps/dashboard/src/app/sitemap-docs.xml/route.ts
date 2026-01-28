@@ -4,62 +4,58 @@ import fs from 'fs';
 import path from 'path';
 
 // Define the root docs directory relative to CWD (apps/dashboard)
-const DOCS_DIRECTORY = path.join(process.cwd(), '../../docs');
-const BASE_URL = 'https://payflux.dev';
+const MANIFEST_PATH = path.join(process.cwd(), '../../docs/manifest.json');
 
-function getDocsFiles(dir: string, fileList: string[] = [], relativeDir = ''): string[] {
-    const files = fs.readdirSync(dir);
+// Determine Base URL in order: NEXT_PUBLIC_SITE_URL -> URL (Netlify) -> Fallback
+const BASE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.URL ||
+    'https://app.payflux.dev';
 
-    files.forEach((file) => {
-        // Skip hidden files/dirs and drafts (underscore prefix)
-        if (file.startsWith('.') || file.startsWith('_')) return;
-
-        const fullPath = path.join(dir, file);
-        const relativePath = path.join(relativeDir, file);
-        const stat = fs.statSync(fullPath);
-
-        if (stat.isDirectory()) {
-            getDocsFiles(fullPath, fileList, relativePath);
-        } else {
-            // Only include markdown files
-            if (file.endsWith('.md')) {
-                fileList.push(relativePath);
-            }
-        }
-    });
-
-    return fileList;
+interface Manifest {
+    generatedAt: string;
+    basePath: string;
+    files: string[];
 }
 
 export async function GET() {
-    const allFiles = getDocsFiles(DOCS_DIRECTORY);
+    let manifest: Manifest;
+
+    try {
+        const fileContents = fs.readFileSync(MANIFEST_PATH, 'utf8');
+        manifest = JSON.parse(fileContents);
+    } catch (error) {
+        console.error('Failed to read docs manifest:', error);
+        // Fallback or error - returning empty sitemap for resilience
+        manifest = { generatedAt: new Date().toISOString(), basePath: 'docs', files: [] };
+    }
 
     // Base URLs
     const urls = [
         {
             loc: `${BASE_URL}/docs`,
-            lastmod: new Date().toISOString(),
+            lastmod: manifest.generatedAt,
             changefreq: 'daily',
             priority: 0.9
         }
     ];
 
     /*
-      Loop through files and create URLs:
-      docs/risk/foo.md -> https://payflux.dev/docs/risk/foo
+      Loop through manifest files and create URLs:
+      docs/risk/foo.md -> https://app.payflux.dev/docs/risk/foo
     */
-    allFiles.forEach((cleanPath) => {
+    manifest.files.forEach((cleanPath) => {
         // Remove extension
         const routePath = cleanPath.replace(/\.md$/, '');
         // Ensure forward slashes
-        const slug = routePath.split(path.sep).join('/');
+        const slug = routePath.split('/').join('/');
 
         // Skip index.md as it is covered by /docs (or mapping to /docs)
         if (slug === 'index') return;
 
         urls.push({
             loc: `${BASE_URL}/docs/${slug}`,
-            lastmod: new Date().toISOString(), // In real app, git mtime is better, but build time is accepted constraint
+            lastmod: manifest.generatedAt,
             changefreq: 'monthly',
             priority: 0.7
         });

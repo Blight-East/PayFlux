@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npm run docs:manifest && next dev",
+    "build": "npm run docs:manifest && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "docs:manifest": "node scripts/generate-docs-manifest.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.10",

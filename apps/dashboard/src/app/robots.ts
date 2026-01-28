@@ -1,6 +1,11 @@
 
 import { MetadataRoute } from 'next';
 
+const BASE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.URL ||
+    'https://app.payflux.dev';
+
 export default function robots(): MetadataRoute.Robots {
     return {
         rules: {
@@ -10,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
             // but requirements say "Append... Do NOT remove existing" (implies manual check).
             // Since this file didn't exist, we create minimal permissive + docs.
         },
-        sitemap: 'https://payflux.dev/sitemap-docs.xml',
+        sitemap: `${BASE_URL}/sitemap-docs.xml`,
     };
 }
