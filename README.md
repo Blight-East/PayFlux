@@ -724,6 +724,7 @@ For details on PayFlux's security posture and data handling:
 - [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 - [How Refunds and Reversals Propagate](docs/risk/how-refunds-and-reversals-propagate.md) — Multi-stage flows and balance impact.
 - [How Retry Logic Affects Risk](docs/risk/how-retry-logic-affects-risk.md) — Balancing recovery rates with network compliance.
+- [How Dispute Aging Curves Work](docs/risk/how-dispute-aging-curves-work.md) — Vintage analysis and time-based risk accumulation.
 - [Understanding Decline Reason Codes](docs/risk/understanding-decline-reason-codes.md) — Category taxonomy and issuer behavior.
 
 ---
@@ -734,6 +735,7 @@ For details on PayFlux's security posture and data handling:
 - [How Payment Settlements Work](docs/how-it-works/how-payment-settlements-work.md) — Batch cycles, clearing timelines, and funding gaps.
 - [How Card Network Rule Changes Affect Merchants](docs/how-it-works/how-card-network-rule-changes-affect-merchants.md) — Policy updates and compliance enforcement.
 - [Why Risk Events Often Follow Business Growth](docs/how-it-works/why-risk-events-follow-growth.md) — Underwriting drift and velocity thresholds.
+- [How Retry Storms Form in Payment Systems](docs/how-it-works/how-retry-storms-form.md) — Timeout loops and feedback amplification.
 
 ---
 
@@ -745,6 +747,7 @@ For details on PayFlux's security posture and data handling:
 - [Payment Risk Observability for Subscription Businesses](docs/verticals/payment-risk-observability-for-subscription-businesses.md) — Churn recovery and retry storm monitoring.
 - [Payment Risk Observability for High-Risk Merchants](docs/verticals/payment-risk-observability-for-high-risk-merchants.md) — Volume volatility and reserve monitoring.
 - [Payment Risk Observability for Aggregators](docs/verticals/payment-risk-observability-for-aggregators.md) — Sub-merchant pooling and liability tiers.
+- [Payment Risk Observability for SaaS Platforms](docs/verticals/payment-risk-observability-for-saas.md) — Recurring billing friction and soft decline recovery.
 
 ---
 
@@ -760,6 +763,7 @@ For details on PayFlux's security posture and data handling:
 - [Monitoring Settlement Failures](docs/use-cases/monitoring-settlement-failures.md) — Bank rejects and ledger reconciliation.
 - [Monitoring Issuer Decline Spikes](docs/use-cases/monitoring-issuer-decline-spikes.md) — Identifying BIN attacks and regional blocks.
 - [Monitoring Marketplace Payout Failures](docs/use-cases/monitoring-marketplace-payout-failures.md) — KYC holds and banking rail blocks.
+- [Detecting Cross-PSP Payment Failures](docs/use-cases/detecting-cross-psp-failures.md) — Correlated outages and issuer blocks.
 
 ---
 
