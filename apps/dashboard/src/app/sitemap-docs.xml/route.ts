@@ -11,6 +11,7 @@ const generatedAt = docsBundle.generatedAt;
 
 export async function GET() {
     // Base URLs
+    // Note: getBaseUrl() is configured to fallback/prioritize payflux.dev
     const urls = [
         {
             loc: `${BASE_URL}/docs`,
@@ -22,7 +23,7 @@ export async function GET() {
 
     /*
       Loop through keys (docs/risk/foo.md) and create URLs:
-      -> https://app.payflux.dev/docs/risk/foo
+      -> https://payflux.dev/docs/risk/foo (via BASE_URL)
     */
     docsFiles.forEach((relativePath) => {
         // Remove extension
