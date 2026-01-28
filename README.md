@@ -723,6 +723,7 @@ For details on PayFlux's security posture and data handling:
 - [Why Processors Request Additional Documents](docs/risk/why-processors-request-documents.md) — Identity verification and regulatory compliance logic.
 - [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 - [How Refunds and Reversals Propagate](docs/risk/how-refunds-and-reversals-propagate.md) — Multi-stage flows and balance impact.
+- [How Retry Logic Affects Risk](docs/risk/how-retry-logic-affects-risk.md) — Balancing recovery rates with network compliance.
 
 ---
 
@@ -730,6 +731,7 @@ For details on PayFlux's security posture and data handling:
 
 - [How Payment Infrastructure Detects Risk Events](docs/how-it-works/how-payment-infrastructure-detects-risk-events.md) — Understanding threshold evaluation and state transitions.
 - [How Payment Settlements Work](docs/how-it-works/how-payment-settlements-work.md) — Batch cycles, clearing timelines, and funding gaps.
+- [How Card Network Rule Changes Affect Merchants](docs/how-it-works/how-card-network-rule-changes-affect-merchants.md) — Policy updates and compliance enforcement.
 
 ---
 
@@ -739,6 +741,7 @@ For details on PayFlux's security posture and data handling:
 - [Payment Risk Observability for BNPL Providers](docs/verticals/payment-risk-observability-for-bnpl.md) — Settlement lag and dispute exposure tracking.
 - [Payment Risk Observability for PSPs](docs/verticals/payment-risk-observability-for-psps.md) — Portfolio-wide dispute aggregation and settlement float.
 - [Payment Risk Observability for Subscription Businesses](docs/verticals/payment-risk-observability-for-subscription-businesses.md) — Churn recovery and retry storm monitoring.
+- [Payment Risk Observability for High-Risk Merchants](docs/verticals/payment-risk-observability-for-high-risk-merchants.md) — Volume volatility and reserve monitoring.
 
 ---
 
@@ -752,6 +755,7 @@ For details on PayFlux's security posture and data handling:
 - [Monitoring Negative Balances](docs/use-cases/monitoring-negative-balances.md) — Tracking debt exposure and refund liability.
 - [Monitoring Dispute Ratios](docs/use-cases/monitoring-dispute-ratios.md) — Network threshold forecasting and volume normalization.
 - [Monitoring Settlement Failures](docs/use-cases/monitoring-settlement-failures.md) — Bank rejects and ledger reconciliation.
+- [Monitoring Issuer Decline Spikes](docs/use-cases/monitoring-issuer-decline-spikes.md) — Identifying BIN attacks and regional blocks.
 
 ---
 
