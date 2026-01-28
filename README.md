@@ -735,6 +735,7 @@ For details on PayFlux's security posture and data handling:
 
 - [Payment Risk Observability for Marketplaces](docs/verticals/payment-risk-observability-for-marketplaces.md) — Multi-seller attribution and platform exposure.
 - [Payment Risk Observability for BNPL Providers](docs/verticals/payment-risk-observability-for-bnpl.md) — Settlement lag and dispute exposure tracking.
+- [Payment Risk Observability for PSPs](docs/verticals/payment-risk-observability-for-psps.md) — Portfolio-wide dispute aggregation and settlement float.
 
 ---
 
@@ -745,6 +746,8 @@ For details on PayFlux's security posture and data handling:
 - [Handling Dispute Surges](docs/use-cases/handling-dispute-surges.md) — Velocity monitoring and threshold projection.
 - [Detecting Card Testing Attacks](docs/use-cases/detecting-card-testing-attacks.md) — Identifying velocity spikes and BIN anomalies.
 - [Monitoring Payment Reserves](docs/use-cases/monitoring-payment-reserves.md) — Tracking balance segmentation and release schedules.
+- [Monitoring Negative Balances](docs/use-cases/monitoring-negative-balances.md) — Tracking debt exposure and refund liability.
+- [Monitoring Dispute Ratios](docs/use-cases/monitoring-dispute-ratios.md) — Network threshold forecasting and volume normalization.
 
 ---
 
