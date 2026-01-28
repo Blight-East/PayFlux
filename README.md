@@ -724,6 +724,10 @@ For details on PayFlux's security posture and data handling:
 - [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 - [How Refunds and Reversals Propagate](docs/risk/how-refunds-and-reversals-propagate.md) — Multi-stage flows and balance impact.
 - [How Refund Abuse Patterns Work](docs/risk/how-refund-abuse-patterns-work.md) — Refund cycling, arbitrage abuse, and masking.
+- [How Geo-Velocity Affects Risk](docs/risk/how-geo-velocity-affects-risk.md) — Cross-border spikes and IP triangulation.
+- [How MCC Drift Affects Underwriting](docs/risk/how-mcc-drift-affects-underwriting.md) — Business model divergence and code misuse.
+- [How Network Monitoring Programs Work](docs/risk/how-network-monitoring-programs-work.md) — VAMP, ECP, and penalty thresholds.
+- [How Reserve Release Logic Works](docs/risk/how-reserve-release-logic-works.md) — Liability decay and rolling windows.
 - [How Risk Model Retraining Lag Works](docs/risk/how-risk-model-retraining-lag-works.md) — Concept drift and delayed adaptation.
 - [How BIN–Country Mismatch Affects Payment Risk](docs/risk/how-bin-country-mismatch-affects-risk.md) — Geographic triangulation and issuer mismatch.
 - [How Retry Logic Affects Risk](docs/risk/how-retry-logic-affects-risk.md) — Balancing recovery rates with network compliance.
