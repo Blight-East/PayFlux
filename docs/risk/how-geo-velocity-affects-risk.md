@@ -1,32 +1,40 @@
-# How Geographic Velocity Affects Payment Risk
+# Geographic Velocity
 
-## Overview
-Geographic velocity measures the speed at which transactions originate from different physical locations relative to a single entity (card or user). It is a primary signal for detecting compromised credentials and bot attacks.
+## Definition
+Geographic Velocity tracks the "Speed of Travel" of a card or identity. Identifying "Impossible Travel" (a card used in New York at 9am and London at 10am) is a primary method for detecting stolen credentials.
 
-## What geographic velocity is
-- **Impossible Travel**: A card used in London at 10:00 AM and New York at 10:05 AM.
-- **Concentration**: 500 transactions from 500 different cards originating from a single IP subnet in Vietnam within 1 hour.
-- **Hopping**: A single device ID appearing to move between 20 countries in a day (VPN usage).
+## Why it matters
+Botnets. Attackers use residential proxies to make it look like attacks are coming from 10,000 different houses. However, they often reuse the *same* card across these locations. Geo Velocity catches the card moving too fast.
 
-## Common causes
-- **Botnets**: Using residential proxies to distribute attacks across thousands of IPs to evade rate limits.
-- **Card Testing**: Fraudsters checking the validity of stolen cards from a specific region (e.g., BR) against a vulnerable merchant.
-- **Lost/Stolen**: Physical card theft used locally vs. digital card theft (CNP) used globally.
+## Signals to monitor
+- **Locations per Card**: Count of distinct countries associated with a single PAN in the last hour.
+- **Hopping Rate**: The calculated speed (mph) required to move between two transaction points.
+- **IP Diversity**: The number of unique IPs used by a single User ID.
 
-## How risk systems interpret velocity
-Risk engines treat velocity as a "multiplier" for risk scores.
-- **Local Velocity**: High volume from a known good IP is "Power User" behavior (Low Risk).
-- **Foreign Velocity**: High volume from a new, foreign IP is "Account Takeover" behavior (High Risk).
-- **Issuer Alignment**: High velocity from an IP that matches the Card Issuer's country is safer than mismatched velocity.
+## Breakdown modes
+- **VPN Jumping**: A user toggling their VPN server causes them to "teleport" across the globe.
+- **Shared Credentials**: A Netflix account shared by a family in 3 different states triggers velocity alarms.
+- **Tor Exit Nodes**: Traffic exiting from random global points.
 
-## Relationship to fraud models
-Velocity features are often the strongest predictors in ML fraud models. They capture the *behavior* of the attack rather than the *identity* of the attacker. Identity can be spoofed; the speed of the attack is harder to hide.
+## Where observability fits
+- **Identity Graphing**: Linking disparate IPs to a single "Actor" based on device fingerprint.
+- **Speed Limits**: Setting rules like "Max 2 countries per hour."
+- **Allowlisting**: Exempting known corporate IPs or VPN gateways.
 
-## When velocity becomes structural
-For digital goods merchants (gaming, crypto), high geographic velocity is normal (global user base). If the risk model is tuned for a local bakery, it will falsely block this legitimate global traffic. This is a "structural mismatch" between the merchant's business model and the processor's risk appetite.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure provides the "Speedometer" for traffic. It monitors:
-- **Geo-Distribution**: Visualizing the % of traffic per country in real-time.
-- **Velocity Spikes**: Alerting when `Transactions / Hour` for a specific country code breaches a standard deviation.
-- **Routing Efficiency**: Tracking approval rates by `(IP Country, Card Country)` pairs to identify corridors that are failing.
+## FAQ
+
+### How accurate is IP Geolocation?
+Country-level is 99% accurate. City-level is ~80%. Street-level is unreliable.
+
+### What about legitimate travel?
+Legitimate travel takes time (hours). Fraud travel is instant (seconds).
+
+### Can I block by Country?
+Yes (Geo-Fencing). Many merchants block high-risk countries entirely to reduce noise.
+
+## See also
+- [BIN/Country Mismatch](./how-bin-country-mismatch-affects-risk.md)
+- [Card Testing Attacks](../use-cases/detecting-card-testing-attacks.md)
+- [Payment Risk Events](../pillars/payment-risk-events.md)

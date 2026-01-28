@@ -1,33 +1,40 @@
-# How MCC Drift Affects Underwriting
+# MCC Drift
 
-## Overview
-Merchant Category Codes (MCCs) classify a business's industry (e.g., 5411 for Grocery Stores, 5734 for Computer Software). "MCC Drift" occurs when a merchant's actual transaction patterns diverge from the behavior expected for their assigned MCC, signaling a potential compliance violation or business pivot.
+## Definition
+MCC (Merchant Category Code) Drift occurs when a business evolves (or pivots) away from its original classification. A bookstore (MCC 5942, Low Risk) that starts selling Crypto (MCC 6051, High Risk) has "Drifted."
 
-## What MCC drift is
-- **Pivot**: A company starts as a "Software Consultant" (low risk) but pivots to selling "Crypto Mining Rigs" (high risk).
-- **Inventory Shift**: A clothing store starts selling CBD oil or supplements.
-- **Gaming the System**: Intentionally miscoding a gambling site as a video game store to increase approval rates.
+## Why it matters
+Compliance. Processors underwrite you for a specific risk profile. If you change your business model without telling them, you are effectively "hiding" risk. This often leads to immediate termination for "Breach of Contract" or "Laundering."
 
-## Why it happens
-- **Evolution**: Startups change rapidly; they rarely update their processor application.
-- **Ignorance**: Merchants don't realize that adding a risky SKU requires a new underwriting review.
-- **Malice**: "Transaction Laundering" (factoring) relies on hiding high-risk sales behind a low-risk shell company.
+## Signals to monitor
+- **Ticket Size**: A sudden jump in Average Order Value (e.g., $20 -> $500).
+- **Dispute Reasons**: A service business receiving "Merchandise Not Received" disputes.
+- **Descriptor Match**: Does the credit card statement descriptor match the current website content?
 
-## How processors detect drift
-- **Ticket Size**: A "Coffee Shop" processing \$2,000 transactions.
-- **Chargeback Reasons**: A "Consultant" getting chargebacks for "Item Not Received" (services don't have shipping).
-- **Web Crawling**: Automated bots scanning the merchant's website for prohibited keywords.
+## Breakdown modes
+- **The Pivot**: A failing startup pivots to a high-risk model to survive, forgetting to update Stripe.
+- **Scope Creep**: A marketplace adding a new "category" that is actually regulated/prohibited.
+- **Transaction Laundering**: Intentionally using a shell company's MCC to process payments for a banned substance.
 
-## Relationship to reserves and holds
-Drift doesn't just block transactions; it triggers holistic account reviews.
-- **The "Match" List**: If a merchant is caught laundering, they are blacklisted globally (TMF/MATCH).
-- **Immediate Freeze**: Processors pause all funds until the new business model is verified.
+## Where observability fits
+- **Anomaly Detection**: Alerting when traffic patterns deviate significantly from the "Profile."
+- **Periodic Review**: Triggering internal audits every 6 months to verify the website matches the MCC.
+- **Portfolio Health**: Ensuring the mix of MCCs in a platform account remains balanced.
 
-## Why corrections take time
-Changing an MCC is not a database toggle. It requires re-underwriting the account with the sponsor bank. This often involves new contracts, different fee structures, and potentially migrating the merchant to a different processing platform entirely.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure provides a "Drift Monitor." It tracks:
-- **Average Ticket vs MCC Baseline**: Alerting if a merchant's ATP exceeds the industry norm by 300%.
-- **Ratio Volatility**: Detecting sudden shifts in dispute reasons that don't align with the vertical.
-- **Keyword Ingestion**: integrating website crawling data to flag prohibited terms alongside transaction metrics.
+## FAQ
+
+### Can I have multiple MCCs?
+Yes, but you usually need separate Merchant Accounts (MIDs) for each business line.
+
+### Who assigns the MCC?
+The Processor/Acquirer assigns it during onboarding based on your website and application.
+
+### Is Drift always bad?
+No. Growing is good. But *unreported* drift is bad. Tell your processor before you pivot.
+
+## See also
+- [Merchant Underwriting](./how-merchant-underwriting-works.md)
+- [High-Risk Merchants](../verticals/payment-risk-observability-for-high-risk-merchants.md)
+- [Compliance Timing Gaps](./how-compliance-timing-gaps-form.md)

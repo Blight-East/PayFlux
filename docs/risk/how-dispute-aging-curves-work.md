@@ -1,32 +1,40 @@
-# How Dispute Aging Curves Work
+# Dispute Aging Curves
 
-## Overview
-A dispute aging curve (or "vintage curve") visualizes how chargebacks materialize over time for a specific cohort of sales. It answers the critical question: "Of the sales we processed in January, how many have been disputed *so far*, and how many *will be* disputed total?"
+## Definition
+Dispute Aging Curves (Vintage Analysis) visualize the arrival of disputes over time for a specific sales cohort. It answers: "For the sales we made in January, how many disputes have arrived by Feb? By March? By April?"
 
-## Dispute lifecycle stages
-1.  **Sale Date**: The transaction occurs (Day 0).
-2.  **Incubation**: The silent period where the cardholder has not yet noticed or acted (Days 1-30).
-3.  **Arrival**: The first disputes arrive, usually from "friendly fraud" or immediate regret (Days 31-60).
-4.  **Tail**: Late-arriving disputes from statement reviews or compromised cards (Days 61-120).
+## Why it matters
+Forecasting. Disputes take up to 120 days to fully materialize. If you only look at "Today's Disputes," you are missing 90% of the risk from recent sales. The Curve allows you to predict the "Final Loss" based on early indicators.
 
-## Time-based risk accumulation
-Risk is not static. A "low risk" month can turn into a "high risk" month 90 days later as the cohort matures.
-- **Green Zone**: Early performance looks good (0.1% dispute rate).
-- **Red Zone**: Maturation pushes the final rate above 1.0%, triggering fines retroactively.
+## Signals to monitor
+- **Shape of the Curve**: Is it flattening (Safe) or accelerating (Danger)?
+- **Day 30%**: "Typically, 40% of disputes arrive by Day 30. This month, it's 60%. Something is wrong."
+- **Expected vs Actual**: Comparing the current cohort against the 12-month average.
 
-## Why loss probability changes over time
-Different fraud types arrive at different speeds:
-- **Friendly Fraud**: Fast. Customers recognize the charge and dispute it immediately.
-- **True Fraud**: Slower. Cardholders may not check statements for weeks.
-- **Auth Fraud**: Slowest. Stolen cards are often used for months before the account is closed.
+## Breakdown modes
+- **The Long Tail**: A forgotten recurring billing charge generating disputes 11 months later.
+- **The Spike**: A shipping failure causes the curve to go vertical on Day 15 (Arrival of goods).
+- **Cohort Rot**: A specific marketing campaign brings in users with a permanently worse curve than organic users.
 
-## Network-specific timing rules
-- **Visa**: Typically monitors the ratio of (Current Month Disputes / Current Month Sales).
-- **Mastercard**: Often looks at (Current Month Disputes / Sales from the Transaction Month).
-*Note: Understanding which denominator is used is crucial for compliance.*
+## Where observability fits
+- **Predictive Alerting**: "Based on Day 30 data, the Jan Cohort is projected to hit 1.2% by Day 90."
+- **Marketing Feedback**: Telling the Growth team which campaigns are acquiring "Bad Curves."
+- **Reserve Modeling**: Calculating how much money needs to be held to cover the remaining tail risk.
 
-## Where observability infrastructure fits
-Infrastructure models the "expected" vs "actual" curve. It tracks:
-- **Vintage Analysis**: Plotting the curve for each sales month independently.
-- **Projection**: Using historical decay rates to predict the final landing point of a current month's cohort.
-- **Alerting**: Flagging if a recent cohort is "maturing faster" than the historical average (steepening curve).
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### How long is the tail?
+Usually 120 days covers 98% of disputes. Some can go up to 540 days (rare).
+
+### Why calculate by vintage?
+Because calculating by "Activity Month" (Total Disputes / Total Sales) hides the delay. Vintage is the only "True" view of risk.
+
+### Can I change the curve?
+Yes. Better shipping/communication flattens the curve (stops late disputes).
+
+## See also
+- [Monitoring Dispute Ratios](../use-cases/monitoring-dispute-ratios.md)
+- [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
+- [How Chargebacks Propagate](./how-chargebacks-propagate.md)

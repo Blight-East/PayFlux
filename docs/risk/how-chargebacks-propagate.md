@@ -1,49 +1,40 @@
-# How Chargebacks Propagate Through Payment Networks
+# Chargeback Propagation
 
-## Overview
+## Definition
+Chargeback Propagation is the multi-step journey of a dispute from the Cardholder's Bank (Issuer) -> Card Network -> Acquiring Bank -> Processor -> Merchant. It is a slow, asynchronous message chain that often takes weeks to complete.
 
-A chargeback begins with a cardholder dispute and propagates through multiple systems before reaching the merchant.
+## Why it matters
+Latency. You might receive a chargeback notification 45 days after the sale. This "Blind Spot" means your current risk models are always fighting the war from last month. Understanding the lag is critical for accurate forecasting.
 
-## Why This Exists
+## Signals to monitor
+- **TC40 / SAFE Reports**: Early fraud warnings sent by the network days before the actual chargeback.
+- **Retrieval Requests**: A "soft inquiry" from the bank asking for details (often a precursor to a chargeback).
+- **Dispute Webhooks**: The real-time ping from the processor when the dispute officially lands.
 
-Card networks require dispute mechanisms to protect cardholders from fraud and misbilling.
+## Breakdown modes
+- **Evidence Timeout**: Failing to respond within the strict timeframe (usually 14-20 days) leads to automatic loss.
+- **Double Refund**: Refunding the customer *after* the chargeback has arrived (losing the money twice).
+- **Representment Failure**: Submitting illegible or irrelevant evidence that gets auto-rejected.
 
-## How It Works
+## Where observability fits
+- **Lag Tracking**: Measuring the "Days to Dispute" (Sale Date vs Dispute Date) to model the exposure tail.
+- **Win Rate**: Tracking the success of representment efforts by reason code.
+- **Financial Reconciliation**: verifying that funds debited for disputes are credited back if you win.
 
-1. Customer disputes transaction
-2. Issuing bank opens case
-3. Network transmits claim
-4. Processor debits merchant
-5. Evidence window opens
-6. Outcome is adjudicated
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## What Triggers Escalation
+## FAQ
 
-- Multiple disputes
-- Similar transaction patterns
-- Repeat customers
-- Time-delayed fulfillment
+### Why does it take so long?
+Because it involves 4 different banks and a manual review process by the issuer.
 
-## Why Chargebacks Lag Sales
+### Can I stop a chargeback?
+No. Once filed, it must play out. You can only prevent it via refunds *before* it is filed.
 
-Disputes arrive weeks after purchase. Risk systems respond to delayed loss signals.
+### Who decides who wins?
+The Issuing Bank (the customer's bank) is the judge. This is why merchants often feel the system is biased.
 
-## What Support Can and Cannot Do
-
-Support cannot stop network processes or reverse filed disputes.
-
-## What Infrastructure Can Do
-
-Infrastructure can:
-
-- Track dispute velocity
-- Identify clustering
-- Preserve evidence history
-- Model exposure
-
-## Where Payflux Fits
-
-Payflux organizes dispute data across processors to allow earlier pattern recognition.
-
-> [!NOTE]
-> Payflux does not prevent chargebacks or influence network decisions.
+## See also
+- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+- [How Refunds Propagate](./how-refunds-and-reversals-propagate.md)
+- [Handling Dispute Surges](../use-cases/handling-dispute-surges.md)

@@ -1,34 +1,43 @@
-# How Network vs Processor Authority Works
+# Network vs Processor Authority
 
-## Overview
-The payment ecosystem is a hierarchy of authority. Understanding who holds the "Trump Card" (the ultimate power to block or reverse a transaction) is essential for navigating disputes and risk policies. Rules flow downhill, but enforcement often bubbles up.
+## Definition
+The Authority Hierarchy defines who has the final say in a risk decision.
+Level 1: **Card Network** (Visa/MC) - The Lawmakers.
+Level 2: **Issuing Bank** (Chase/Citi) - The Judges (Decide disputes).
+Level 3: **Acquirer/Processor** (Stripe/Adyen) - The Enforcers (Manage the merchant).
 
-## Card network authority
-Visa and Mastercard are the "Supreme Court."
-- **Role**: They write the rules, set the interchange rates, and define dispute rights.
-- **Power**: They can fine processors, deregister merchants (MATCH list), and revoke acquiring licenses. They rarely interact with merchants directly.
+## Why it matters
+Appeals. You can appeal a Processor decision (e.g., a Reserve). You typically *cannot* appeal a Network decision (e.g., MATCH list placement) without a lawyer. Knowing who made the call tells you if it's worth fighting.
 
-## Processor authority
-The Processor/Acquirer (e.g., Stripe, Adyen, Chase) is the "Enforcer."
-- **Role**: They underwrite the merchant and hold the financial liability.
-- **Power**: They can freeze funds, close accounts, and set reserves *stricter* than network rules to protect themselves.
+## Signals to monitor
+- **Source of Action**: Did the email cite "Network Compliance" or "Terms of Service"?
+- **Program Name**: "VFMP" = Visa (Network). "High Risk Monitoring" = Processor.
+- **Scope**: Is the action specific to one card brand (Network) or the whole account (Processor)?
 
-## How rules propagate
-- **Network**: "Dispute rate must be < 0.9%."
-- **Processor**: "I will warn you at 0.6% and drop you at 0.8% because I don't want to get fined by the Network."
-The processor acts as a buffer, translating network mandates into local policy.
+## Breakdown modes
+- **The Squeeze**: The Network fines the Processor for your behavior. The Processor passes the fine to you + adds a markup.
+- **The Firewall**: The Processor suspends you preemptively to *prevent* the Network from noticing you.
+- **The Conflict**: Processor wants to keep you (Revenue), Network wants to ban you (Risk). Network wins.
 
-## When overrides occur
-**Can a Processor override a Network?** No.
-**Can a Network override a Processor?** Yes.
-If a processor wants to keep a high-risk merchant, the Network can force the processor to terminate them.
+## Where observability fits
+- **Policy Tracing**: Tagging every incident with its Source Authority.
+- **Rule alignment**: Ensuring your internal controls match the *strictest* authority (usually the Network).
+- **Communication**: "This 25% reserve is a Processor decision, not a Visa one. We can negotiate."
 
-## Why conflicts arise
-- **Risk Appetite**: A processor might want to support a new vertical (e.g., Crypto), but the Network says "No."
-- **Regulation**: Local laws (e.g., GDPR, PSD2) might conflict with global Network rules, putting the processor in a bind.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure provides the "Policy Traceability." It maps:
-- **Source of Truth**: "Was this account closed because of a Processor Risk internal score or a specific Visa Monitoring Program rule?"
-- **Rule Breaches**: Tracking metrics against both Network thresholds (0.9%) and internal Processor thresholds (0.6%).
-- **Authority Levels**: Tagging operational actions with the Authority that mandated them (e.g., "Action: Reserve, Source: Issuer Mandate").
+## FAQ
+
+### Can a processor ignore Visa?
+No. They will lose their license to process.
+
+### Who is "The Scheme?"
+"The Scheme" is European terminology for "Card Network" (Visa/Mastercard schemes).
+
+### Why is the processor so strict?
+They are liable. If you go bust, they pay your fines. They are protecting their own balance sheet.
+
+## See also
+- [Card Network Rules](../how-it-works/how-card-network-rule-changes-affect-merchants.md)
+- [Network Monitoring Programs](./how-network-monitoring-programs-work.md)
+- [Merchant Underwriting](./how-merchant-underwriting-works.md)

@@ -1,30 +1,40 @@
-# How Risk Model Retraining Lag Works
+# Risk Model Retraining Lag
 
-## Overview
-Machine earning models used by payment processors are not updated in real-time. They are retrained in batches. This introduces a "lag" between the emergence of a new fraud pattern and the system's ability to detect it. "Retraining Lag" explains why effective fraud attacks often last for days before being abruptly blocked.
+## Definition
+Retraining Lag is the delay between a new fraud pattern emerging and the Risk Model learning to block it. Fraud models are not usually real-time learners; they are retrained in batches (e.g., weekly) using historical data.
 
-## What model retraining is
-Retraining is the process of feeding recent transaction data (approvals, declines, and chargebacks) back into the risk engine to update its weights.
-- **Feedback Loop**: Yesterday's fraud becomes today's training data.
-- **Latency**: The time it takes for a chargeback to materialize (30 days) means models are always learning from the past.
+## Why it matters
+The "Zero Day" Exploit. Fraudsters constantly test new attacks. When they find one that works, they have a window of opportunity (The Lag) to exploit it before the model updates. During this window, your approval rate stays high, but your future chargeback risk is skyrocketing.
 
-## Why retraining is delayed
-- **Compute Cost**: Retraining deep learning models on petabytes of data is expensive and slow.
-- **Stability Checks**: Engineers manually review new models to ensure they don't accidentally block legitimate traffic (false positive spikes).
-- **Deployment Windows**: New models are often rolled out on a schedule (e.g., weekly) rather than continuously.
+## Signals to monitor
+- **Approval Rate Stability**: A sudden, unexplained drop in approval rate often means a new model has been deployed.
+- **Fraud Vintage**: The date the fraud occurred vs the date the model started blocking it.
+- **False Positive Spikes**: New models often "over-correct," blocking good users until tuned.
 
-## Impact on real-world merchants
-- **The "Safety" Period**: A new attack vector works flawlessly for 24-72 hours.
-- **The "Cliff"**: Once the model updates, the attack stops working instantly. Valid transactions that resemble the attack pattern might also get swept up in the new block.
+## Breakdown modes
+- **The Open Window**: 48 hours where a specific card bin + email pattern bypasses all checks.
+- **The Slam**: The model updates, and suddenly 20% of your valid traffic is declined because it resembles the attack.
+- **The Yo-Yo**: Models oscillating between "Too Loose" and "Too Strict" with every deployment.
 
-## Relationship to sudden risk events
-A sudden spike in declines often indicates a model update, not a change in customer behavior. The rules of the game changed overnight because the "Referee" (the risk model) learned a new pattern.
+## Where observability fits
+- **Change Detection**: "Risk Score Distribution shifted significantly at 4am UTC."
+- **Feedback Loop**: Sending manual review decisions back to the processor to speed up the learning process.
+- **Gap Protection**: Implementing manual rules (velocity checks) to cover the gap while waiting for the model to catch up.
 
-## Why changes feel abrupt
-Merchants experience risk as "binary": yesterday everything was fine, today everything is declined. This step-function behavior is a direct result of batch retraining. The model didn't gradually dislike the traffic; it suddenly "realized" the traffic was risky.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure tracks the *stability* of approval rates over time. It can differentiate between:
-- **Drift**: A gradual decline in performance (customer behavior change).
-- **Shift**: A sudden drop (model update).
-PayFlux effectively "detects the detection," alerting operations teams when the underlying risk environment has shifted.
+## FAQ
+
+### How often do models update?
+Processors like Stripe/Adyen update constantly (daily/hourly). Legacy processors might update monthly.
+
+### Can I force an update?
+No. But you can add your own "Block Rules" instantly to stop an active attack.
+
+### Why did my good customers get blocked?
+Model "Overfitting." The model learned a rule that was too broad (e.g., "Block all Gmail users") to stop the fraud.
+
+## See also
+- [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+- [Transaction Monitoring](./how-transaction-monitoring-works.md)
+- [Machine Learning Basics](../how-it-works/how-payment-infrastructure-detects-risk-events.md)

@@ -1,33 +1,40 @@
-# How Compliance Timing Gaps Form
+# Compliance Timing Gaps
 
-## Overview
-Compliance processes (KYC, AML, Sanctions Screening) often run on different "clocks" than payment processing. A "Compliance Timing Gap" occurs when money creates a risk event *faster* than the compliance team can review it, creating a period of potentially illegal exposure.
+## Definition
+A Compliance Timing Gap is the dangerous window between "Money Moving" and "Risk Checking." It occurs when instant payments outpace asynchronous compliance checks (KYC/AML), leaving the platform exposed to regulatory violations.
 
-## What timing gaps are
-- **Instant**: User signs up and processes \$100k (T=0).
-- **Lagged**: AML Alert triggers (T+1 hour).
-- **Reviewed**: Compliance Officer opens the ticket (T+24 hours).
-- **Gap**: For 24 hours, the platform is facilitating money transmission for a potentially sanctioned entity.
+## Why it matters
+Liability. If a sanctioned entity (terrorist/criminal) moves money on your platform, you are liable even if you ban them 1 hour later. The violation occurred the moment the money moved. Regulators punish the *gap*.
 
-## Relationship between risk and compliance
-- **Risk**: "Is this transaction going to cause a chargeback?" (Financial Loss).
-- **Compliance**: "Is this user a terrorist or money launderer?" (Regulatory Jail).
-They are often separate teams with separate data silos, exacerbating the gap.
+## Signals to monitor
+- **Time-to-Review**: The average minutes between "User Signup" and "Compliance Decision."
+- **Gap Volume**: Total dollars processed by users in the "Pending Review" state.
+- **Enforcement Lag**: The time between "Clicking Ban" and the user actually being blocked in the database.
 
-## Why reviews lag transactions
-- **Volume**: Automated onboarding allows 1,000 signups/hour. Human review capacity is 10/hour.
-- **Data Availability**: Third-party identity providers (IDV) might have downtime or latency, delaying the "Clear/Fail" signal while the user is already transacting.
+## Breakdown modes
+- **Instant Payouts**: Letting a user withdraw funds *before* the KYC vendor returns a result.
+- **Queue Overload**: A backlog of manual reviews extending the gap from minutes to days.
+- **Fail-Open**: System defaulting to "Allowed" when the compliance API is down.
 
-## How gaps increase exposure
-If the user turns out to be a bad actor, every dollar processed during the gap is a violation.
-- **Clawbacks**: Regulators may demand disgorgement of all fees earned.
-- **Fines**: Penalties are assessed per violation occurrence during the gap.
+## Where observability fits
+- **Exposure Meter**: "We currently have $50,000 flowing through unverified users."
+- **Vendor Latency**: Tracking how long IDV providers (e.g., Persona, Checkr) take to return signals.
+- **State Integrity**: Ensuring no user can reach `payout_enabled: true` without `kyc: approved`.
 
-## Why closure is delayed
-Even after a decision is made ("Ban this user"), the technical enforcement (closing the account, freezing funds, refunding buyers) takes time to propagate through database replicas and payment gateways.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure measures the "Exposure Window." It tracks:
-- **Time-to-Review**: Median time from Alert -> Human Decision.
-- **Gap Volume**: Total \$ volume processed by users currently in the "Alerted but Review Pending" state.
-- **Enforcement Latency**: Time from "Ban Decision" -> "Last API Call Succeeded."
+## FAQ
+
+### Can I do checks later?
+For low amounts, sometimes. But for high velocity or payouts, checks must be blocking (synchronous).
+
+### What is "Fail-Open" vs "Fail-Closed"?
+Fail-Closed means "If we can't verify you, you can't transact." This is safer but hurts conversion.
+
+### Why is the gap dangerous?
+Because money moves faster than data. ACH is slow, but crypto/push-to-card is instant.
+
+## See also
+- [Merchant Underwriting](./how-merchant-underwriting-works.md)
+- [Manual Review Backlogs](../use-cases/monitoring-manual-review-backlogs.md)
+- [Payout Delays](./how-payout-delays-work.md)

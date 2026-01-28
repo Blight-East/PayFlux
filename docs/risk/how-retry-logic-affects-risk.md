@@ -1,31 +1,40 @@
-# How Retry Logic Affects Risk
+# Retry Logic Risk
 
-## Overview
-Retry logic is the automated process of re-submitting a declined transaction. While retries can recover lost revenue from temporary failures (like "Insufficient Funds"), aggressive or improper retries amplify risk signals and can trigger network enforcement.
+## Definition
+Retry Logic Risk is the danger inherent in automated recovery systems. While retrying failed payments is a standard revenue recovery tactic (Smart Dunning), doing it incorrectly violates network rules (Excessive Retries) and provides data to card testers.
 
-## What retry logic is
-Retry strategies define:
-- **Timing**: How long to wait before trying again (Dunning cycle).
-- **Frequency**: How many times to retry total.
-- **Conditionals**: Which decline codes are eligible for retry.
+## Why it matters
+Compliance vs Revenue. You want to recover the 5% of failed payments that are salvageable, without triggering the alarms designed to catch the 95% that are fraud/hard declines. It is a precision game.
 
-## How retries change network signals
-Every retry counts as a new authorization attempt.
-- **Good Retry**: Retrying a "Soft Decline" (temporary issue) leads to an improved approval rate.
-- **Bad Retry**: Retrying a "Hard Decline" (e.g., Stolen Card, Account Closed) is forbidden by network rules.
-- **Signal Noise**: Excessive retries inflate the transaction count, artificially lowering the overall approval rate ratio.
+## Signals to monitor
+- **Recovery Rate**: The % of retries that succeed. (If < 5%, your logic is too aggressive).
+- **Retry Interval**: The time wait between attempts.
+- **Decline Code Mix**: Are you retrying `Lost/Stolen` (Bad) or `Insufficient Funds` (Good)?
 
-## Balance and dispute effects
-- **Balance**: Successful retries increase revenue.
-- **Disputes**: Retrying a customer too aggressively can lead to a "Processing Error" or "Authorization" dispute if the customer believed the service was cancelled.
+## Breakdown modes
+- **Rule Violation**: Retrying a card 16 times in 30 days (Visa limit is 15).
+- **Information Leakage**: Allowing fraudsters to "ping" cards repeatedly to determine balances.
+- **Reputation Damage**: Issuers lowering your approval rate for *new* customers because your retry traffic is so noisy.
 
-## Operational tradeoffs
-Merchants must balance recovery vs. compliance:
-- **Too Passive**: Leaving revenue on the table.
-- **Too Aggressive**: Triggering excessive retry fines and damaging network reputation.
+## Where observability fits
+- **Safety Audits**: Scanning logs for illegal retry patterns.
+- **Optimization**: "Retrying at 2am fails. Retrying at 9am on Payday succeeds. Shift the schedule."
+- **Cohort Tracking**: Measuring the long-term value of recovered customers vs the cost of retries.
 
-## Where observability infrastructure fits
-Infrastructure audits the retry loop to ensure compliance. It tracks:
-- **Retry Success Rate**: The % of retries that convert to success.
-- **Error Code Compliance**: Alerting if a hard decline code is ever retried.
-- **Velocity Limits**: Ensuring retries do not exceed network frequency caps (e.g., 15 attempts in 30 days).
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### When should I retry?
+Only on "Soft Declines" (Insufficient Funds, Network Error).
+
+### How often?
+A standard Smart Dunning schedule: Day 1, Day 3, Day 7, Day 14.
+
+### does Stripe handle this?
+Yes, "Smart Retries" uses ML to optimize timing. But you are still liable if you add your own layer on top.
+
+## See also
+- [Retry Amplification](./how-retry-amplification-increases-exposure.md)
+- [SaaS Risk](../verticals/payment-risk-observability-for-saas.md)
+- [Decline Reason Codes](./understanding-decline-reason-codes.md)
