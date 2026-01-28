@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "KYC and Underwriting Reviews",
+  "description": "KYC (Know Your Customer) and Underwriting are the \"Gatekeepers.\" KYC verifies *Identity* (Who are you?), while Underwriting verifies *Business Risk* (What do you sell?).",
+  "about": "KYC and Underwriting Reviews",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are KYC and Underwriting Reviews?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "KYC (Know Your Customer) and Underwriting are the \"Gatekeepers.\" KYC verifies *Identity* (Who are you?), while Underwriting verifies *Business Risk* (What do you sell?)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do KYC and Underwriting Reviews matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Regulatory requirement. You physically cannot process money without knowing who you are processing for. Failures here lead to immediate shutdowns by banking partners."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Merchant Underwriting](./how-merchant-underwriting-works.md)
+See also: [Document Requests](./why-processors-request-documents.md)
+
 # KYC and Underwriting Reviews
 
 ## Definition

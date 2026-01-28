@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Marketplace Payout Failures",
+  "description": "Payout Failure Monitoring tracks the rejection of outbound transfers from a marketplace to its sellers. Unlike inbound payments, outbound payments fail due to banking errors or compliance.",
+  "about": "Marketplace Payout Failures",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Marketplace Payout Failures?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Payout Failure Monitoring tracks the rejection of outbound transfers from a marketplace to its sellers. Unlike inbound payments (cards), outbound payments (ACH/Connect) fail due to banking errors, compliance blocks, or risk holds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Marketplace Payout Failures matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Seller Trust. If a seller doesn't get paid, they stop selling. Frequent payout failures churn supply. Additionally, failed payouts often signal that a seller has been flagged by the banking system (AML freeze)."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Monitoring Payout Delays](./monitoring-payout-delays.md)
+
 # Marketplace Payout Failures
 
 ## Definition

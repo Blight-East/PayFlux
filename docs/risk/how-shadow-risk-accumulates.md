@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Shadow Risk",
+  "description": "Shadow Risk is the accumulation of exposure that has not yet appeared on a dashboard. It includes \"Authorized but not Settled\" transactions, \"In-Transit\" refunds, and \"Pre-Dispute\" inquiries. It is the invisible liability that causes sudden account freezes.",
+  "about": "Shadow Risk",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Shadow Risk?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Shadow Risk is the accumulation of exposure that has not yet appeared on a dashboard. It includes \"Authorized but not Settled\" transactions, \"In-Transit\" refunds, and \"Pre-Dispute\" inquiries. It is the invisible liability that causes sudden account freezes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Shadow Risk matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Predictability. Dashboards show the *past* (Settled Sales). Shadow Risk shows the *future* (Pending Chargebacks). Monitoring Shadow Risk is the only way to predict a freeze *before* it happens."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)
+See also: [Risk Growth Correlation](./mechanics-risk-growth-correlation.md)
+
 # Shadow Risk
 
 ## Definition

@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Refunds and Reversals",
+  "description": "Refunds and Reversals are the mechanisms for returning funds to a cardholder. A Reversal (or Void) cancels an authorized transaction *before* it settles. A Refund returns funds *after* settlement via a new credit transaction.",
+  "about": "Refunds and Reversals",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Refunds and Reversals?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Refunds and Reversals are the mechanisms for returning funds to a cardholder. A **Reversal** (or Void) cancels an authorized transaction *before* it settles. A **Refund** returns funds *after* settlement via a new credit transaction."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does the distinction between Refunds and Reversals matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The distinction impacts fees and speed. Reversals are usually fee-free and instant for the customer. Refunds incur processing fees (which you don't get back) and take days to appear. Mismanaging this distinction causes \"Double Refunds\" (refunding a charge that was already voided or disputed)."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Settlements](./mechanics-payment-settlements.md)
+See also: [Refund Abuse Patterns](./how-refund-abuse-patterns-work.md)
+
 # Refunds and Reversals
 
 ## Definition

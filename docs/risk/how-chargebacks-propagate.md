@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Chargeback Propagation",
+  "description": "Chargeback Propagation is the multi-step journey of a dispute from the Cardholder's Bank (Issuer) -> Card Network -> Acquiring Bank -> Processor -> Merchant. It is a slow, asynchronous message chain that often takes weeks to complete.",
+  "about": "Chargeback Propagation",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Chargeback Propagation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Chargeback Propagation is the multi-step journey of a dispute from the Cardholder's Bank (Issuer) -> Card Network -> Acquiring Bank -> Processor -> Merchant. It is a slow, asynchronous message chain that often takes weeks to complete."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Chargeback Propagation matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Latency. You might receive a chargeback notification 45 days after the sale. This \"Blind Spot\" means your current risk models are always fighting the war from last month. Understanding the lag is critical for accurate forecasting."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Dispute Evidence](./how-dispute-evidence-works.md), [Dispute Win Rates](./why-dispute-win-rates-vary.md)
+
 # Chargeback Propagation
 
 ## Definition

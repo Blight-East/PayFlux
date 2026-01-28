@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Dispute Win Rates",
+  "description": "The Dispute Win Rate is the percentage of chargebacks fully overturned in the merchant's favor. It measures the effectiveness of the evidence submission process.",
+  "about": "Dispute Win Rates",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Dispute Win Rate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Dispute Win Rate is the percentage of chargebacks fully overturned in the merchant's favor. `(Won / Total Disputes)`. It measures the effectiveness of the evidence submission process."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does a Dispute Win Rate matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Profitability. A bad win rate (0-10%) means you are bleeding revenue. A good win rate (30-40%) recovers significant margin. However, a *perfect* win rate usually means your fraud filters are too strict (rejecting good customers)."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Dispute Evidence](./how-dispute-evidence-works.md)
+
 # Dispute Win Rates
 
 ## Definition

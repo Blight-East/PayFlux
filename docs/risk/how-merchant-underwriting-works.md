@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Merchant Underwriting",
+  "description": "Merchant Underwriting is the process of evaluating a business's creditworthiness and fraud risk *before* allowing them to process payments.",
+  "about": "Merchant Underwriting",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Merchant Underwriting?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Merchant Underwriting is the process of evaluating a business's creditworthiness and fraud risk *before* allowing them to process payments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Merchant Underwriting matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Risk Prevention. The goal is to stop bad actors at the door. Once a merchant is live, the processor is liable for their losses."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)
+See also: [KYC and Underwriting](./how-kyc-and-underwriting-reviews-work.md)
+
 # Merchant Underwriting
 
 ## Definition

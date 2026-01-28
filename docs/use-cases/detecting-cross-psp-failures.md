@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Cross-PSP Failures",
+  "description": "Cross-PSP Detection identifies systemic payment failures that affect *multiple* processors simultaneously. It differentiates \"My Processor is down\" from \"The Card Network is down.\"",
+  "about": "Cross-PSP Failures",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Cross-PSP Failures?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cross-PSP Detection identifies systemic payment failures that affect *multiple* processors simultaneously. It differentiates \"My Processor is down\" from \"The Card Network is down.\""
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Cross-PSP Failures matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Routing logic. If Stripe is down, you route to Adyen. If *Visa* is down, routing to Adyen is useless (and costs fees). Identifying the root scope prevents wasted retries and allows for accurate status page communication."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Detecting Stripe Incidents](./detecting-stripe-payment-incidents.md)
+
 # Cross-PSP Failures
 
 ## Definition

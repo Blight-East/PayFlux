@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "BNPL Providers",
+  "description": "BNPL Risk Observability monitors the intersection of Credit Risk and Payment Risk. BNPL providers pay the merchant upfront but collect from the consumer over time.",
+  "about": "BNPL Providers",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are BNPL Providers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "BNPL Risk Observability monitors the intersection of **Credit Risk** (Consumer Default) and **Payment Risk** (Merchant Disputes). BNPL providers pay the merchant upfront but collect from the consumer over time, creating a massive \"Float\" and specialized liability."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does risk observability matter for BNPL Providers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Double Jeopardy. A consumer can default on the loan (Credit Loss) OR dispute the transaction (Payment Loss). Sometimes they do both. Additionally, the BNPL provider relies on *their own* processor to collect repayments."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Subscription Businesses](./payment-risk-observability-for-subscription-businesses.md), [High-Risk Merchants](./payment-risk-observability-for-high-risk-merchants.md)
+
 # BNPL Providers
 
 ## Definition

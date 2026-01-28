@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Fraud Model Drift",
+  "description": "Model Drift is the subtle decay of a fraud model's accuracy over time. As fraud patterns evolve (e.g., from stolen cards to account takeovers), a static model catches less fraud (False Negatives) and blocks more good users (False Positives).",
+  "about": "Fraud Model Drift",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Fraud Model Drift?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Model Drift is the subtle decay of a fraud model's accuracy over time. As fraud patterns evolve (e.g., from stolen cards to account takeovers), a static model catches less fraud (False Negatives) and blocks more good users (False Positives)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Fraud Model Drift matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Silent Failure. A server crash triggers an alert. Model drift does not. It manifests as a slow, creeping increase in chargebacks over months, or a gradual decline in conversion rates. By the time you notice, the damage is significant."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+See also: [Risk Model Retraining Lag](./mechanics-risk-thresholds-and-hysteresis.md)
+
 # Fraud Model Drift
 
 ## Definition

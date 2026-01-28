@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Monitoring Dispute Ratios",
+  "description": "The Dispute Ratio (or Chargeback Rate) is the key health metric for any merchant. It is typically calculated as `Count of Disputes / Count of Sales`. Breaching 0.9% triggers monitoring programs.",
+  "about": "Monitoring Dispute Ratios",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Dispute Ratio?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Dispute Ratio (or Chargeback Rate) is the key health metric for any merchant. It is typically calculated as `Count of Disputes / Count of Sales`. Breaching 0.9% (Visa) or 1.0% (Mastercard) triggers monitoring programs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does a Dispute Ratio matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is the \"Risk Scoreboard.\" Staying below the threshold keeps you safe. Breaching it leads to fines ($25k+), reserves, and eventual termination (TMF)."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Handling Dispute Surges](./handling-dispute-surges.md)
+
 # Monitoring Dispute Ratios
 
 ## Definition

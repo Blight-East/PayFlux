@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Refund Abuse Patterns",
+  "description": "Refund Abuse is the exploitation of a merchant's return policy to obtain goods/services for free or to test stolen cards. It utilizes the merchant's voluntary mechanisms rather than the bank's dispute system.",
+  "about": "Refund Abuse Patterns",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Refund Abuse?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Refund Abuse is the exploitation of a merchant's return policy to obtain goods/services for free or to test stolen cards. It utilizes the merchant's voluntary mechanisms rather than the bank's dispute system."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Refund Abuse matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Profitability. While chargebacks get all the attention (fines), refund abuse can silently drain 10-20% of revenue. It is also a precursor to fraud; card testers often \"Buy and Refund\" to validate cards without triggering bank alerts."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+See also: [Refunds and Reversals](./how-refunds-and-reversals-propagate.md)
+
 # Refund Abuse Patterns
 
 ## Definition

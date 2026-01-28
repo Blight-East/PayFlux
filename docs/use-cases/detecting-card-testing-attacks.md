@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Detecting Card Testing",
+  "description": "Card Testing (or \"Carding\") is an automated attack where fraudsters use a merchant's checkout to validate stolen credit card numbers. The goal is to identify which cards work.",
+  "about": "Detecting Card Testing",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Card Testing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Card Testing (or \"Carding\") is an automated attack where fraudsters use a merchant's checkout to validate stolen credit card numbers. The goal is to identify which cards work (\"live cards\") to resell them on the dark web or use for larger purchases elsewhere."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Card Testing matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Card testing destroys merchant reputation. It generates thousands of authorization fees (costing money) and spikes the decline rate (damaging network standing). If unchecked, it can lead to immediate account closure by the processor."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Card Testing vs. Velocity Fraud](./differentiating-card-testing-from-velocity-fraud.md)
+
 # Detecting Card Testing
 
 ## Definition

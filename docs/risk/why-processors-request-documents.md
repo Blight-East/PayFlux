@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Document Requests",
+  "description": "Document Requests (RFI - Request for Information) are the mechanism processors use to verify a merchant's continued compliance. They are \"Spot Checks\" on the validity of the business entity.",
+  "about": "Document Requests",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Document Requests?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Document Requests (RFI - Request for Information) are the mechanism processors use to verify a merchant's continued compliance. They are \"Spot Checks\" on the validity of the business entity, its owners, and its fulfillment model."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Document Requests matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Friction. A failure to respond to an RFI typically leads to a Freeze. Treating these emails as \"Spam\" is a fatal error. They are regulatory mandates (KYC/AML)."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Merchant Underwriting](./how-merchant-underwriting-works.md)
+See also: [Account Freezes](./mechanics-account-freezes-and-holds.md)
+
 # Document Requests
 
 ## Definition

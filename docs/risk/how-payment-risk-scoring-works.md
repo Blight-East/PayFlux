@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Payment Risk Scoring",
+  "description": "Payment Risk Scoring is the automated evaluation of merchants or transactions to estimate the probability of financial loss. These scores are composites of multiple signals and determine whether processing should be allowed, paused, or reserved.",
+  "about": "Payment Risk Scoring",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Payment Risk Scoring?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Payment Risk Scoring is the automated evaluation of merchants or transactions to estimate the probability of financial loss. These scores are composites of multiple signals (velocity, disputes, credit history) and determine whether processing should be allowed, paused, or reserved."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Payment Risk Scoring matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Scoring systems replace human intuition with statistical probability. They enable processors to manage millions of merchants at scale. However, because they are automated, they can produce \"false positives\" where legitimate businesses are penalized for anomalous but benign behavior."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Transaction Monitoring](./how-transaction-monitoring-works.md), [Fraud Model Drift](./how-fraud-model-drift-occurs.md)
+
 # Payment Risk Scoring
 
 ## Definition

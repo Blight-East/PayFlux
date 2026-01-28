@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Network Monitoring Programs",
+  "description": "Network Monitoring Programs (such as Visa's VFMP or Mastercard's ECP) are enforcement frameworks operated by Card Networks to police merchant behavior. They set strict thresholds for disputes and fraud.",
+  "about": "Network Monitoring Programs",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Network Monitoring Programs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Network Monitoring Programs (such as Visa's **VFMP** or Mastercard's **ECP**) are enforcement frameworks operated by Card Networks to police merchant behavior. They set strict thresholds for disputes and fraud. Exceeding these thresholds places a merchant in a \"program\" involving fines, remediation plans, and potential termination."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Network Monitoring Programs matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "These programs are the \"Supreme Court\" mandates of payments. While a processor might tolerate risk, they *cannot* tolerate a network violation. Entering a program is an existential threat to a merchant account, often leading to immediate reserves or closure to protect the processor."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Card Network Rules](./mechanics-card-network-rules.md)
+See also: [Risk Thresholds and Hysteresis](./mechanics-risk-thresholds-and-hysteresis.md)
+
 # Network Monitoring Programs
 
 ## Definition

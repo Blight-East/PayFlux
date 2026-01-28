@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Payment Service Providers (PSPs)",
+  "description": "PSP Observability is the \"Control Tower\" view of payment processing. PSPs aggregate thousands of merchants. Their risk is Systemic.",
+  "about": "Payment Service Providers (PSPs)",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Payment Service Providers (PSPs)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PSP Observability is the \"Control Tower\" view of payment processing. PSPs aggregate thousands of merchants. Their risk is **Systemic**: if the PSP's master risk ratios breach network thresholds, the entire portfolio is threatened."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does risk observability matter for PSPs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PSPs operate on thin margins and high volume. A single fraudulent merchant processing $1M in bad volume can wipe out the profit of 1,000 good merchants. Worse, it can cause the acquiring bank to \"turn off\" the PSP."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Aggregators](./payment-risk-observability-for-aggregators.md), [Marketplaces](./payment-risk-observability-for-marketplaces.md)
+
 # Payment Service Providers (PSPs)
 
 ## Definition

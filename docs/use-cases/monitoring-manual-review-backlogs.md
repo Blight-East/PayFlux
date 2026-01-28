@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Manual Review Backlogs",
+  "description": "A Manual Review Backlog is the accumulation of transactions held for human analysis. When the \"Inflow\" exceeds the \"Outflow,\" the queue grows, delaying revenue.",
+  "about": "Manual Review Backlogs",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Manual Review Backlog?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Manual Review Backlog is the accumulation of transactions held for human analysis. When the \"Inflow\" (new risky orders) exceeds the \"Outflow\" (analyst decisions), the queue grows, delaying revenue and checking customer patience."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does a Manual Review Backlog matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Latency kills conversion. If a legitimate customer waits 12 hours for approval, they will cancel and buy elsewhere. Conversely, rushing reviews leads to \"Rubber Stamping\" fraud."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Monitoring Settlement Failures](./monitoring-settlement-failures.md)
+
 # Manual Review Backlogs
 
 ## Definition

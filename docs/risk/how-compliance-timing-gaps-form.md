@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Compliance Timing Gaps",
+  "description": "A Compliance Timing Gap is the dangerous window between \"Money Moving\" and \"Risk Checking.\" It occurs when instant payments outpace asynchronous compliance checks (KYC/AML), leaving the platform exposed to regulatory violations.",
+  "about": "Compliance Timing Gaps",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Compliance Timing Gap?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Compliance Timing Gap is the dangerous window between \"Money Moving\" and \"Risk Checking.\" It occurs when instant payments outpace asynchronous compliance checks (KYC/AML), leaving the platform exposed to regulatory violations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Compliance Timing Gaps matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Liability. If a sanctioned entity (terrorist/criminal) moves money on your platform, you are liable even if you ban them 1 hour later. The violation occurred the moment the money moved. Regulators punish the *gap*."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)
+See also: [Payout Delays](./how-payout-delays-work.md)
+
 # Compliance Timing Gaps
 
 ## Definition

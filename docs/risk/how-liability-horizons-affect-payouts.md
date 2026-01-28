@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Liability Horizons",
+  "description": "A Liability Horizon is the time period during which a transaction can still be contested. It defines the \"Risk Tail\" of valid payments.",
+  "about": "Liability Horizons",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Liability Horizon?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Liability Horizon is the time period during which a transaction can still be contested. It defines the \"Risk Tail\" of valid payments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Liability Horizons matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cash Flow. If the bank believes the horizon is 120 days (industry standard), they may hold reserves for that duration. Shortening the perceived horizon (e.g., through fast delivery proof) releases cash faster."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Reserves](./mechanics-payment-reserves-and-balances.md)
+See also: [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
+
 # Liability Horizons
 
 ## Definition

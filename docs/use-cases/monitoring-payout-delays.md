@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Payout Delays",
+  "description": "Payout Delay Monitoring is the tracking of \"Expected\" vs \"Actual\" settlement times. It compares the promised schedule (e.g., T+2) against the actual arrival of funds.",
+  "about": "Payout Delays",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Payout Delays?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Payout Delay Monitoring is the tracking of \"Expected\" vs \"Actual\" settlement times. It compares the promised schedule (e.g., T+2) against the actual arrival of funds in the bank account."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Payout Delays matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Delays are the canary in the coal mine. Processors often silently hold a payout \"for review\" before formally notifying the merchant of a risk issue. Detecting a missing payout is often the first sign of an impending freeze."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)
+See also: [Settlement Failures](./monitoring-settlement-failures.md)
+
 # Monitoring Payout Delays
 
 ## Definition

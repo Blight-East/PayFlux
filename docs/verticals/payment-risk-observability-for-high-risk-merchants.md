@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "High-Risk Merchants",
+  "description": "High-Risk Observability focuses on merchants in regulated or volatile industries (Travel, Gaming, Crypto, Adult). These merchants operate under the constant threat of account closure.",
+  "about": "High-Risk Merchants",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are High-Risk Merchants?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "High-Risk Observability focuses on merchants in regulated or volatile industries (Travel, Gaming, Crypto, Adult). These merchants operate under the constant threat of account closure and aggressive monitoring programs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does risk observability matter for High-Risk Merchants?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Survival. For high-risk merchants, \"Risk Management\" is not a back-office function; it is the core constraint on revenue. Breaching a threshold doesn't mean a fee; it means \"Termination\" (TMF), which can permanent kill the business."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Subscription Businesses](./payment-risk-observability-for-subscription-businesses.md), [Aggregators](./payment-risk-observability-for-aggregators.md)
+
 # High-Risk Merchants
 
 ## Definition

@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Marketplaces",
+  "description": "Marketplace Risk Observability is the practice of monitoring payment liabilities in multi-party environments. Unlike direct merchants, marketplaces often act as the Merchant of Record (MoR).",
+  "about": "Marketplaces",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Marketplaces?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Marketplace Risk Observability is the practice of monitoring payment liabilities in multi-party environments. Unlike direct merchants, marketplaces often act as the Merchant of Record (MoR), making them financially liable for the behavior of thousands of anonymous sellers."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does risk observability matter for Marketplaces?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "One bad seller can sink the ship. If a single fraudster drives the platform's aggregate dispute rate above 1%, the card network will fine or suspend the *platform*, potentially blocking payments for all good sellers."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Aggregators](./payment-risk-observability-for-aggregators.md), [PSPs](./payment-risk-observability-for-psps.md)
+
 # Marketplaces
 
 ## Definition

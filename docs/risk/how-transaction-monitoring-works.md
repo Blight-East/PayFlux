@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Transaction Monitoring",
+  "description": "Transaction Monitoring is the real-time surveillance of individual payment flows to detect fraud, money laundering, or policy violations. Unlike underwriting (which looks at the merchant), transaction monitoring looks at the *payments* passing through the merchant.",
+  "about": "Transaction Monitoring",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Transaction Monitoring?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Transaction Monitoring is the real-time surveillance of individual payment flows to detect fraud, money laundering, or policy violations. Unlike underwriting (which looks at the merchant), transaction monitoring looks at the *payments* passing through the merchant."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Transaction Monitoring matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is the first line of defense against loss. Effective monitoring blocks bad cards before they become chargebacks. However, aggressive monitoring causes \"False Declines\" (insult rates), rejecting good customers and costing revenue."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+
 # Transaction Monitoring
 
 ## Definition

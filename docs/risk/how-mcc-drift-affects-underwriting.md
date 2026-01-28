@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "MCC Drift",
+  "description": "MCC Drift occurs when a merchant's actual business activity diverges from the Merchant Category Code (MCC) assigned at onboarding.",
+  "about": "MCC Drift",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is MCC Drift?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "MCC Drift occurs when a merchant's actual business activity diverges from the Merchant Category Code (MCC) assigned at onboarding. For example, a bookstore (low risk) starting to sell electronics (high risk)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does MCC Drift matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Compliance. Using the wrong MCC is a violation of network rules (Code Misuse) and can lead to immediate termination and MATCH list placement."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Merchant Underwriting](./how-merchant-underwriting-works.md)
+See also: [Card Network Rules](./mechanics-card-network-rules.md)
+
 # MCC Drift
 
 ## Definition

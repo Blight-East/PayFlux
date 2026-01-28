@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Multi-Signal Correlation",
+  "description": "Multi-Signal Correlation is the risk technique of combining multiple \"Weak\" signals to form one \"Strong\" conviction. (Foreign IP) + (High Value) + (New Device) = 99% Fraud.",
+  "about": "Multi-Signal Correlation",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Multi-Signal Correlation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Multi-Signal Correlation is the risk technique of combining multiple \"Weak\" signals to form one \"Strong\" conviction.\n(Foreign IP) + (High Value) + (New Device) = 99% Fraud.\nAny one of these alone might be valid; together, they are damning."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Multi-Signal Correlation matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "False Positive Reduction. Blocking all \"Foreign IPs\" kills valid travel sales. Blocking all \"High Value\" kills your best customers. Blocking only the *intersection* of Foreign + High Value allows you to accept more revenue safely."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+See also: [Risk Detection Infrastructure](./mechanics-risk-detection-infrastructure.md)
+
 # Multi-Signal Correlation
 
 ## Definition

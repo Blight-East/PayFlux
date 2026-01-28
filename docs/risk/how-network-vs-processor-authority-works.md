@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Network vs Processor Authority",
+  "description": "The Authority Hierarchy defines who has the final say in a risk decision. Network (Lawmakers) -> Issuing Bank (Judges) -> Processor (Enforcers).",
+  "about": "Network vs Processor Authority",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the Network vs Processor Authority hierarchy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Authority Hierarchy defines who has the final say in a risk decision.\nLevel 1: **Card Network** (Visa/MC) - The Lawmakers.\nLevel 2: **Issuing Bank** (Chase/Citi) - The Judges (Decide disputes).\nLevel 3: **Acquirer/Processor** (Stripe/Adyen) - The Enforcers (Manage the merchant)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does the Authority Hierarchy matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Appeals. You can appeal a Processor decision (e.g., a Reserve). You typically *cannot* appeal a Network decision (e.g., MATCH list placement) without a lawyer. Knowing who made the call tells you if it's worth fighting."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Card Network Rules](./mechanics-card-network-rules.md)
+See also: [Network Monitoring Programs](./how-network-monitoring-programs-work.md)
+
 # Network vs Processor Authority
 
 ## Definition

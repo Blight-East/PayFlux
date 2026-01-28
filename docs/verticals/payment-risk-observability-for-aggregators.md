@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Payment Aggregators",
+  "description": "Aggregators (like Stripe Connect, PayPal) allow sub-merchants to process payments under a master entity. The aggregator assumes the risk of its sub-merchants.",
+  "about": "Payment Aggregators",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Payment Aggregators?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aggregators (like Stripe Connect, PayPal) allow sub-merchants to process payments under a master entity. The aggregator assumes the risk of its sub-merchants, meaning if a sub-merchant disappears, the aggregator pays the bill."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does risk observability matter for Payment Aggregators?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your worst user defines your destiny. If 1% of your sub-merchants are fraudsters, they can drag the entire platform's dispute rate over the 1% threshold, killing processing for the 99% of good users."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Marketplaces](./payment-risk-observability-for-marketplaces.md), [PSPs](./payment-risk-observability-for-psps.md)
+
 # Aggregators (PayFacs)
 
 ## Definition

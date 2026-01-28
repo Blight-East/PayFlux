@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Subscription Businesses",
+  "description": "Subscription Risk Observability is the tracking of recurring payment health over time. It differs from SaaS by often including physical goods (Box-of-the-Month), which adds \"Fulfillment Risk\".",
+  "about": "Subscription Businesses",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Subscription Businesses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Subscription Risk Observability is the tracking of recurring payment health over time. It differs from SaaS by often including physical goods (Box-of-the-Month), which adds \"Fulfillment Risk\" to the standard recurring billing risks."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does risk observability matter for Subscription Businesses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Shipping goods *before* the payment fully clears (or before a dispute arrives) is a primary loss vector. Subscription businesses are prime targets for \"Reselling Fraud\" (signing up with stolen cards to get cheap goods)."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [SaaS Platforms](./payment-risk-observability-for-saas.md), [High-Risk Merchants](./payment-risk-observability-for-high-risk-merchants.md)
+
 # Subscription Businesses
 
 ## Definition

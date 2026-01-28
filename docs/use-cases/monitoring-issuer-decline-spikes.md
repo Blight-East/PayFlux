@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Issuer Decline Spikes",
+  "description": "Issuer Decline Monitoring tracks the authorization performance of the Cardholder's Bank. It isolates declines caused by the Issuer from declines caused by the Gateway.",
+  "about": "Issuer Decline Spikes",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Issuer Decline Spikes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Issuer Decline Monitoring tracks the authorization performance of the *Cardholder's Bank*. It isolates declines caused by the Issuer (Chase, Citi) from declines caused by the Gateway or Risk Engine."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Issuer Decline Spikes matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Calibration. If your approval rate drops, you need to know *who* is rejecting you. If the ISSUER rejects, your traffic quality might be poor or they are having an outage."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Card Testing vs. Velocity Fraud](./differentiating-card-testing-from-velocity-fraud.md)
+
 # Issuer Decline Spikes
 
 ## Definition

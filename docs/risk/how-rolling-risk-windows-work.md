@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Rolling Risk Windows",
+  "description": "Rolling Windows are the timeframes used to calculate liability. \"Trailing 30 Days\" means \"Today plus the last 29 days.\" This moving window smooths out volatility but creates a \"Memory Effect\" where past bad events haunt the score for weeks.",
+  "about": "Rolling Risk Windows",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Rolling Risk Windows?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Rolling Windows are the timeframes used to calculate liability. \"Trailing 30 Days\" means \"Today plus the last 29 days.\" This moving window smooths out volatility but creates a \"Memory Effect\" where past bad events haunt the score for weeks."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Rolling Risk Windows matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Calculation Confusion. Merchants often think \"I fixed the fraud today, so my score should be good.\" But the Rolling Window includes the fraud from 2 weeks ago. The score won't recover until that bad day \"falls off\" the back of the window."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Reserves](./mechanics-payment-reserves-and-balances.md)
+See also: [Risk Thresholds and Hysteresis](./mechanics-risk-thresholds-and-hysteresis.md)
+
 # Rolling Risk Windows
 
 ## Definition

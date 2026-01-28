@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "AML Screening",
+  "description": "AML (Anti-Money Laundering) Screening is the mandatory process of checking customer identities against government watchlists (OFAC, UN Sanctions). It is a \"Gateway Check\" that must pass before any money can move.",
+  "about": "AML Screening",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is AML Screening?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AML (Anti-Money Laundering) Screening is the mandatory process of checking customer identities against government watchlists (OFAC, UN Sanctions). It is a \"Gateway Check\" that must pass before any money can move."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does AML Screening matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Jail Time. Unlike fraud (where you lose money), AML violations result in criminal liability for executives and massive fines for the platform. It is the one area where \"Reasonable Effort\" is not enough; strict compliance is required."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Merchant Underwriting](./how-merchant-underwriting-works.md)
+See also: [KYC and Underwriting](./how-kyc-and-underwriting-reviews-work.md)
+
 # AML Screening
 
 ## Definition

@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Settlement Failures",
+  "description": "Settlement Failure Monitoring tracks the successful movement of funds from the processor to the merchant's bank account. A \"Sent\" payout in the dashboard does not guarantee \"Received\" funds.",
+  "about": "Settlement Failures",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Settlement Failures?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Settlement Failure Monitoring tracks the successful movement of funds from the processor to the merchant's bank account. A \"Sent\" payout in the dashboard does not guarantee \"Received\" funds in the bank."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Settlement Failures matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cash is oxygen. A settlement failure breaks the link between \"Revenue\" and \"Cash.\" Identifying failures early (before checks bounce) is critical for treasury management."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Monitoring Payout Delays](./monitoring-payout-delays.md)
+
 # Settlement Failures
 
 ## Definition

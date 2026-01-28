@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Dispute Evidence",
+  "description": "Dispute Evidence is the \"Legal Brief\" a merchant submits to fight a chargeback. It must prove the transaction was valid relative to the specific Reason Code filed by the cardholder.",
+  "about": "Dispute Evidence",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Dispute Evidence?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Dispute Evidence is the \"Legal Brief\" a merchant submits to fight a chargeback. It must prove the transaction was valid relative to the *specific* Reason Code filed by the cardholder."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Dispute Evidence matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Specificity. Sending a tracking number for a \"Fraud\" dispute is useful. Sending a tracking number for a \"Credit Not Processed\" dispute is useless. You must answer the *specific* accusation made by the cardholder."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Chargeback Propagation](./how-chargebacks-propagate.md), [Dispute Win Rates](./why-dispute-win-rates-vary.md)
+
 # Dispute Evidence
 
 ## Definition

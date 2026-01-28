@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Card Testing vs. Velocity Fraud",
+  "description": "Distinguishing between two common high-velocity attack patterns. Card Testing is validating stolen data (low value, high failure). Velocity Fraud is stealing goods (high value, high success).",
+  "about": "Card Testing vs. Velocity Fraud",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between Card Testing and Velocity Fraud?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Distinguishing between two common high-velocity attack patterns. **Card Testing** is validating stolen data (low value, high failure). **Velocity Fraud** is stealing goods (high value, high success)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does the distinction matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The defense strategy is opposite. **Card Testing**: You are the *tool*. Defense: CAPTCHA. **Velocity Fraud**: You are the *victim*. Defense: User Limits."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Detecting Card Testing](./detecting-card-testing-attacks.md)
+
 # Card Testing vs. Velocity Fraud
 
 ## Definition

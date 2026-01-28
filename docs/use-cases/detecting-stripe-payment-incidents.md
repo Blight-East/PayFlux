@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Detecting Stripe Incidents",
+  "description": "Stripe Incident Detection is the monitoring of account capability status. Stripe (and other aggregators) can programmatically restrict processing, payouts, or both based on automated risk assessments.",
+  "about": "Detecting Stripe Incidents",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Stripe Incident Detection?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Stripe Incident Detection is the monitoring of account capability status. Stripe (and other aggregators) can programmatically restrict processing, payouts, or both based on automated risk assessments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Stripe Incident Detection matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Speed. If Stripe disables your payouts, you have hours to respond before cash flow affects operations. If they disable processing, your business is effectively offline. Detecting this via API (vs waiting for an email) allows for instant reaction."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Cross-PSP Failures](./detecting-cross-psp-failures.md)
+
 # Detecting Stripe Incidents
 
 ## Definition

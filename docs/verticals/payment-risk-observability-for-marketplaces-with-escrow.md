@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Marketplaces with Escrow",
+  "description": "Escrow Observability monitors funds held in intermediate states (FBO Accounts) between buyer capture and seller release. It focuses on trigger events like delivery confirmation.",
+  "about": "Marketplaces with Escrow",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Marketplaces with Escrow?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Escrow Observability monitors funds held in intermediate states (FBO Accounts) between buyer capture and seller release. It focuses on the trigger events—delivery confirmation, service completion—that unlock the movement of money."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does risk observability matter for Marketplaces with Escrow?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Escrow adds a \"Limbo State\" to payments. Funds are captured but not owned by anyone yet. Failure to monitor this state leads to \"Stuck Funds\" (never paid out) or \"Double Release\" (paying seller + refunding buyer)."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Marketplaces](./payment-risk-observability-for-marketplaces.md), [Aggregators](./payment-risk-observability-for-aggregators.md)
+
 # Marketplaces with Escrow
 
 ## Definition

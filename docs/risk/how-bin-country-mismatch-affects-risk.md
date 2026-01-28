@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "BIN/Country Mismatch",
+  "description": "A Mismatch is a geographic discrepancy between the Card (Issuer Country), the User (IP Country), and the Destination (Shipping Country). It is a classic fraud signal.",
+  "about": "BIN/Country Mismatch",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a BIN/Country Mismatch?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Mismatch is a geographic discrepancy between the Card (Issuer Country), the User (IP Country), and the Destination (Shipping Country). It is a classic fraud signal. \"French Card + Russian IP + Nigerian Shipping Address\" = 99.9% Fraud."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does BIN/Country Mismatch matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "False Positives. While mismatch is a strong fraud signal, it also flags high-value customers: Travelers, Expats, and Digital Nomads. Blocking all mismatches kills valid revenue; allowing all mismatches invites fraud."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+See also: [Geo Velocity Risk](./how-geo-velocity-affects-risk.md)
+
 # BIN/Country Mismatch
 
 ## Definition

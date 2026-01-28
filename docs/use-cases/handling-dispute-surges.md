@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Handling Dispute Surges",
+  "description": "A Dispute Surge is a rapid acceleration in incoming chargebacks. It is a \"Force Majeure\" event for a merchant, threatening immediate account suspension if not contained.",
+  "about": "Handling Dispute Surges",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Dispute Surge?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Dispute Surge is a rapid acceleration in incoming chargebacks. It is a \"Force Majeure\" event for a merchant, threatening immediate account suspension if not contained."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does a Dispute Surge matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Time. You have a 30-day \"Dispute Lag.\" The surge identifying today is from sales made 30 days ago. The surge *caused* by sales today won't hit for 30 days. Managing a surge requires managing this time delay."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Monitoring Dispute Ratios](./monitoring-dispute-ratios.md)
+
 # Handling Dispute Surges
 
 ## Definition

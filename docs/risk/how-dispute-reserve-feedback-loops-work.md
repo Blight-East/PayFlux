@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Dispute-Reserve Feedback Loops",
+  "description": "A Feedback Loop is a dangerous \"Death Spiral\" where a Risk action (Reserve) worsens the very metric it monitors (Disputes). Reserve -> Cash Flow Crunch -> Service Failure -> Customer Anger -> More Disputes -> Higher Reserve.",
+  "about": "Dispute-Reserve Feedback Loops",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Dispute-Reserve Feedback Loop?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Feedback Loop is a dangerous \"Death Spiral\" where a Risk action (Reserve) worsens the very metric it monitors (Disputes).\nReserve -> Cash Flow Crunch -> Service Failure -> Customer Anger -> More Disputes -> Higher Reserve."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does a Dispute-Reserve Feedback Loop matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Survival. A feedback loop can destroy a healthy business in 60 days. Identifying the loop *early* allows you to plead with the processor for a \"Release Valve\" before the operational collapse becomes irreversible."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Reserves](./mechanics-payment-reserves-and-balances.md)
+See also: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+
 # Dispute-Reserve Feedback Loops
 
 ## Definition

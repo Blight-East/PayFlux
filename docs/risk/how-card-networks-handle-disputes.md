@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Card Network Dispute Handling",
+  "description": "Network Dispute Handling is the \"Court System\" operated by Visa/Mastercard. It defines the rules of engagement for a chargeback: what evidence is admissible, who has the burden of proof, and who wins in a tie.",
+  "about": "Card Network Dispute Handling",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Card Network Dispute Handling?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Network Dispute Handling is the \"Court System\" operated by Visa/Mastercard. It defines the rules of engagement for a chargeback: what evidence is admissible, who has the burden of proof, and who wins in a tie."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Card Network Dispute Handling matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Liability Shift. Understanding the rules tells you when you have already lost. For example, in a \"Cardholder Does Not Recognize\" dispute, if you didn't use 3D Secure, the Network rules say you lose automatically. No amount of evidence will save you."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Network Monitoring Programs](./how-network-monitoring-programs-work.md)
+
 # Card Network Dispute Handling
 
 ## Definition

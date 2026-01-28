@@ -1,3 +1,50 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Dispute Infrastructure",
+  "description": "Dispute infrastructure is the procedural framework governing how contested transactions are adjudicated. It involves a rigid workflow of evidence submission, network routing, and timeline management between Merchants, Acquirers, Card Networks, and Issuing Banks.",
+  "about": "Dispute infrastructure",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is dispute infrastructure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Dispute infrastructure is the procedural framework governing how contested transactions are adjudicated. It involves a rigid workflow of evidence submission, network routing, and timeline management between Merchants, Acquirers, Card Networks, and Issuing Banks."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does dispute infrastructure matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Disputes are not simple database updates; they are legal-framework processes that determine financial liability. Misunderstanding the infrastructure leads to lost revenue (lost disputes) and operational penalties (excessive dispute monitoring programs)."
+      }
+    }
+  ]
+}
+</script>
+
+This page is part of the Payment Risk Mechanics series and serves as the primary reference for this topic.
+
+Up: [Documentation Index](../index.md)
+See also: [Payment System Observability](./payment-system-observability.md), [Payment Risk Events](./payment-risk-events.md)
+
 # Dispute Infrastructure
 
 ## Definition

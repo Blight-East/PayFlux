@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Dispute Aging Curves",
+  "description": "Dispute Aging Curves (Vintage Analysis) visualize the arrival of disputes over time for a specific sales cohort. It answers: \"For the sales we made in January, how many disputes have arrived by Feb? By March? By April?\"",
+  "about": "Dispute Aging Curves",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Dispute Aging Curves?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Dispute Aging Curves (Vintage Analysis) visualize the arrival of disputes over time for a specific sales cohort. It answers: \"For the sales we made in January, how many disputes have arrived by Feb? By March? By April?\""
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Dispute Aging Curves matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Forecasting. Disputes take up to 120 days to fully materialize. If you only look at \"Today's Disputes,\" you are missing 90% of the risk from recent sales. The Curve allows you to predict the \"Final Loss\" based on early indicators."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Liability Horizons](./how-liability-horizons-affect-payouts.md)
+
 # Dispute Aging Curves
 
 ## Definition

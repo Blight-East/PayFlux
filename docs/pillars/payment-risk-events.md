@@ -1,3 +1,50 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Payment Risk Events",
+  "description": "A Payment Risk Event is a discrete control action taken by a processor or acquiring bank to limit financial exposure. These are state changes—such as freezing funds, imposing reserves, or terminating processing—triggered by risk models or compliance mandates.",
+  "about": "Payment Risk Events",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a Payment Risk Event?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Payment Risk Event is a discrete control action taken by a processor or acquiring bank to limit financial exposure. These are state changes—such as freezing funds, imposing reserves, or terminating processing—triggered by risk models or compliance mandates."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do payment risk events matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Risk events are \"circuit breakers\" for the payment system. While they protect the ecosystem, for a merchant, they result in immediate cash flow disruption. Understanding them is critical to distinguishing between a routine review and an existential business threat."
+      }
+    }
+  ]
+}
+</script>
+
+This page is part of the Payment Risk Mechanics series and serves as the primary reference for this topic.
+
+Up: [Documentation Index](../index.md)
+See also: [Payment Reserves](../risk/mechanics-payment-reserves-and-balances.md), [Account Freezes](../risk/mechanics-account-freezes-and-holds.md)
+
 # Payment Risk Events
 
 ## Definition

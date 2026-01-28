@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Geographic Velocity",
+  "description": "Geographic Velocity tracks the \"Speed of Travel\" of a card or identity. Identifying \"Impossible Travel\" (a card used in New York at 9am and London at 10am) is a primary method for detecting stolen credentials.",
+  "about": "Geographic Velocity",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Geographic Velocity?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Geographic Velocity tracks the \"Speed of Travel\" of a card or identity. Identifying \"Impossible Travel\" (a card used in New York at 9am and London at 10am) is a primary method for detecting stolen credentials."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Geographic Velocity matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Botnets. Attackers use residential proxies to make it look like attacks are coming from 10,000 different houses. However, they often reuse the *same* card across these locations. Geo Velocity catches the card moving too fast."
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment Risk Scoring](./how-payment-risk-scoring-works.md)
+See also: [BIN/Country Mismatch](./how-bin-country-mismatch-affects-risk.md)
+
 # Geographic Velocity
 
 ## Definition

@@ -1,3 +1,48 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Decline Reason Codes",
+  "description": "Decline Codes are the cryptic messages sent by banks to explain why a transaction failed. They range from specific (Insufficient Funds) to generic (Do Not Honor).",
+  "about": "Decline Reason Codes",
+  "author": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PayFlux"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Decline Reason Codes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Decline Codes are the cryptic messages sent by banks to explain why a transaction failed. They range from specific (`51: Insufficient Funds`) to generic (`05: Do Not Honor`). Understanding them is the key to fixing acceptance rates."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do Decline Reason Codes matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Retry Logic. If you retry a \"Technical Error\" (Code 91), you might get paid. If you retry a \"Stolen Card\" (Code 43), you will get fined or banned. Classifying codes correctly is the difference between \"Optimization\" and \"Abuse.\""
+      }
+    }
+  ]
+}
+</script>
+
+Up: [Payment System Observability](../pillars/payment-system-observability.md)
+See also: [Risk Detection Infrastructure](./mechanics-risk-detection-infrastructure.md)
+
 # Decline Reason Codes
 
 ## Definition
