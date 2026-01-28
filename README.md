@@ -723,6 +723,7 @@ For details on PayFlux's security posture and data handling:
 - [Why Processors Request Additional Documents](docs/risk/why-processors-request-documents.md) — Identity verification and regulatory compliance logic.
 - [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 - [How Refunds and Reversals Propagate](docs/risk/how-refunds-and-reversals-propagate.md) — Multi-stage flows and balance impact.
+- [How Refund Abuse Patterns Work](docs/risk/how-refund-abuse-patterns-work.md) — Refund cycling, arbitrage abuse, and masking.
 - [How Retry Logic Affects Risk](docs/risk/how-retry-logic-affects-risk.md) — Balancing recovery rates with network compliance.
 - [How Dispute Aging Curves Work](docs/risk/how-dispute-aging-curves-work.md) — Vintage analysis and time-based risk accumulation.
 - [Understanding Decline Reason Codes](docs/risk/understanding-decline-reason-codes.md) — Category taxonomy and issuer behavior.
@@ -733,6 +734,7 @@ For details on PayFlux's security posture and data handling:
 
 - [How Payment Infrastructure Detects Risk Events](docs/how-it-works/how-payment-infrastructure-detects-risk-events.md) — Understanding threshold evaluation and state transitions.
 - [How Payment Settlements Work](docs/how-it-works/how-payment-settlements-work.md) — Batch cycles, clearing timelines, and funding gaps.
+- [How Settlement Batching Works](docs/how-it-works/how-settlement-batching-works.md) — Ledger gaps and reconciliation lag.
 - [How Card Network Rule Changes Affect Merchants](docs/how-it-works/how-card-network-rule-changes-affect-merchants.md) — Policy updates and compliance enforcement.
 - [Why Risk Events Often Follow Business Growth](docs/how-it-works/why-risk-events-follow-growth.md) — Underwriting drift and velocity thresholds.
 - [How Retry Storms Form in Payment Systems](docs/how-it-works/how-retry-storms-form.md) — Timeout loops and feedback amplification.
@@ -742,6 +744,7 @@ For details on PayFlux's security posture and data handling:
 ## Verticals
 
 - [Payment Risk Observability for Marketplaces](docs/verticals/payment-risk-observability-for-marketplaces.md) — Multi-seller attribution and platform exposure.
+- [Payment Risk Observability for Marketplaces with Escrow](docs/verticals/payment-risk-observability-for-marketplaces-with-escrow.md) — Held funds and release triggers.
 - [Payment Risk Observability for BNPL Providers](docs/verticals/payment-risk-observability-for-bnpl.md) — Settlement lag and dispute exposure tracking.
 - [Payment Risk Observability for PSPs](docs/verticals/payment-risk-observability-for-psps.md) — Portfolio-wide dispute aggregation and settlement float.
 - [Payment Risk Observability for Subscription Businesses](docs/verticals/payment-risk-observability-for-subscription-businesses.md) — Churn recovery and retry storm monitoring.
@@ -757,6 +760,7 @@ For details on PayFlux's security posture and data handling:
 - [Monitoring Payout Delays](docs/use-cases/monitoring-payout-delays.md) — Detecting liquidity gaps and schedule deviations.
 - [Handling Dispute Surges](docs/use-cases/handling-dispute-surges.md) — Velocity monitoring and threshold projection.
 - [Detecting Card Testing Attacks](docs/use-cases/detecting-card-testing-attacks.md) — Identifying velocity spikes and BIN anomalies.
+- [Differentiating Card Testing from Velocity Fraud](docs/use-cases/differentiating-card-testing-from-velocity-fraud.md) — Pattern shape and authorization behavior.
 - [Monitoring Payment Reserves](docs/use-cases/monitoring-payment-reserves.md) — Tracking balance segmentation and release schedules.
 - [Monitoring Negative Balances](docs/use-cases/monitoring-negative-balances.md) — Tracking debt exposure and refund liability.
 - [Monitoring Dispute Ratios](docs/use-cases/monitoring-dispute-ratios.md) — Network threshold forecasting and volume normalization.
