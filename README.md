@@ -725,6 +725,14 @@ For details on PayFlux's security posture and data handling:
 
 ---
 
+## Compliance Infrastructure Documentation
+
+- [How Transaction Monitoring Works](docs/risk/how-transaction-monitoring-works.md) — Operational analysis of fraud detection and behavioral alerts.
+- [How AML Screening Works](docs/risk/how-aml-screening-works.md) — Infrastructure perspective on sanctions, PEP, and adverse media screening.
+- [How Merchant Underwriting Works](docs/risk/how-merchant-underwriting-works.md) — Structural breakdown of business risk assessment and tiering.
+
+---
+
 ## Dispute Infrastructure Documentation
 
 - [How Dispute Evidence Works](docs/risk/how-dispute-evidence-works.md) — Operational overview of evidence categories and submission mechanics.
