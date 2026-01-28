@@ -53,6 +53,15 @@ Detailed explanations of specific risk factors and behaviors.
 - [Rolling Risk Windows](risk/how-rolling-risk-windows-work.md)
 - [Refund Abuse Patterns](risk/how-refund-abuse-patterns-work.md)
 - [Decline Reason Codes](risk/understanding-decline-reason-codes.md)
+- [AML Screening](risk/how-aml-screening-works.md)
+- [Dispute Evidence](risk/how-dispute-evidence-works.md)
+- [Dispute Win Rates](risk/why-dispute-win-rates-vary.md)
+- [Card Network Dispute Handling](risk/how-card-networks-handle-disputes.md)
+- [Processor Freezes](risk/why-payment-processors-freeze-funds.md)
+- [Major Processor Freezes](risk/why-major-processors-freeze-funds.md)
+- [Document Requests](risk/why-processors-request-documents.md)
+- [Retry Logic Risk](risk/how-retry-logic-affects-risk.md)
+- [Risk Threshold Events](risk/how-risk-threshold-events-work.md)
 
 ## Verticals
 tailored observability guides for specific business models.
