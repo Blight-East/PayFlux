@@ -719,6 +719,9 @@ For details on PayFlux's security posture and data handling:
 - [How Payment Risk Scoring Works](docs/risk/how-payment-risk-scoring-works.md) — Factual overview of scoring models and signals.
 - [How Chargebacks Propagate Through Payment Networks](docs/risk/how-chargebacks-propagate.md) — Structural analysis of the dispute lifecycle.
 - [How KYC and Underwriting Reviews Work](docs/risk/how-kyc-and-underwriting-reviews-work.md) — Infrastructure perspective on compliance and identity verification.
+- [How Payout Delays Work](docs/risk/how-payout-delays-work.md) — Understanding settlement timing and risk holds.
+- [Why Processors Request Additional Documents](docs/risk/why-processors-request-documents.md) — Identity verification and regulatory compliance logic.
+- [How Risk Threshold Events Work](docs/risk/how-risk-threshold-events-work.md) — Automated enforcement of risk policy boundaries.
 
 ---
 
