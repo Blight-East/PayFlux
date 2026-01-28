@@ -720,6 +720,7 @@ For details on PayFlux's security posture and data handling:
 > **Start Here**: View the full [Documentation Index](docs/index.md) for a categorized guide to all 60+ risk and observability pages.
 
 - [How Payment Risk Scoring Works](docs/risk/how-payment-risk-scoring-works.md) — Factual overview of scoring models and signals.
+- [Stripe Applied Views](docs/index.md#4-stripe-applied-views-grid-batch-1) — 12+ guides for Stripe-specific observability (Connect, SaaS, BNPL).
 - [How Chargebacks Propagate Through Payment Networks](docs/risk/how-chargebacks-propagate.md) — Structural analysis of the dispute lifecycle.
 - [How KYC and Underwriting Reviews Work](docs/risk/how-kyc-and-underwriting-reviews-work.md) — Infrastructure perspective on compliance and identity verification.
 - [How Payout Delays Work](docs/risk/how-payout-delays-work.md) — Understanding settlement timing and risk holds.
