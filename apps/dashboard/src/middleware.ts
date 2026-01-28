@@ -7,6 +7,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/health/evidence',
   '/terms',
   '/privacy',
+  '/docs(.*)',
+  '/sitemap-docs.xml',
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
