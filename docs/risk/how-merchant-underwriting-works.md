@@ -1,42 +1,41 @@
-# How Merchant Underwriting Works
+# Merchant Underwriting
 
-## Overview
+## Definition
+Merchant Underwriting is the risk assessment process performed by processors and acquiring banks to evaluate a business's eligibility for payment accounts. It analyzes creditworthiness, business model risk, and fraud exposure both at onboarding and continuously throughout the relationship.
 
-Merchant underwriting is the process of assessing business risk prior to enabling payment acceptance. Underwriting decisions determine approval, reserve requirements, and processing limits.
+## Why it matters
+Underwriting defines the "terms of service" for a merchant: how fast they get paid, how much they can process, and what fees they pay. It is not a one-time gate; "Periodic Review" means underwriting can intervene years into a relationship if risk factors change.
 
-## Evaluation Criteria
+## Signals to monitor
+- **Account Status**: Flags like `pending_review`, `active`, or `rejected`.
+- **Information Requests**: Urgent demands for invoices, tracking numbers, or identity documents.
+- **Processing Limits**: Errors indicating "Volume Limit Exceeded" or "Ticket Size Limit Exceeded."
+- **Category Codes**: The assigned MCC (Merchant Category Code) which dictates network rules.
 
-Underwriting evaluates:
-- Business model
-- Product category
-- Ownership structure
-- Geographic exposure
-- Historical processing behavior
+## Breakdown modes
+- **MCC Drift**: A merchant changing what they sell (e.g., T-shirts to Crypto) without notifying the processor, triggering a violation.
+- **Volume Shock**: Processing significantly more than the "Estimated Monthly Volume" declared at onboarding.
+- **Document Rejection**: Automated systems failing to parse a valid PDF invoice.
 
-## Risk Classification
+## Where observability fits
+- **Status Monitoring**: Alerting immediately when an account enters a review state.
+- **Limit Tracking**: Visualizing current volume against approved underwriting caps.
+- **Change Detection**: Audit logging modification to business details that might trigger re-underwriting.
 
-Merchants are categorized into risk tiers which influence:
-- Settlement delays
-- Reserve percentages
-- Processing caps
-- Review frequency
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Ongoing Reviews
+## FAQ
 
-Underwriting is not static. Merchants may be re-evaluated based on:
-- Volume changes
-- Dispute ratios
-- Regulatory updates
-- Documentation updates
+### Why are they reviewing me again?
+Underwriting is continuous. Triggers include sudden growth, dispute spikes, or even routine annual compliance checks.
 
-## Infrastructure Role
+### Can I speed up the review?
+Only by providing exactly the documents requested as fast as possible. Support tickets rarely expedite the queue.
 
-Underwriting systems:
-- Encode classification rules
-- Store merchant profiles
-- Track review events
-- Log decision history
+### What is a "Match" list?
+The TMF (Terminated Merchant File) or MATCH list is a shared database where processors blacklist merchants who were terminated for high risk. Being on this list makes getting a new account nearly impossible.
 
-## Where Payflux Fits
-
-Payflux aggregates underwriting status signals and preserves classification changes for operational observability. It does not approve or deny merchants.
+## See also
+- [KYC and Underwriting Reviews](./how-kyc-and-underwriting-reviews-work.md)
+- [MCC Drift](./how-mcc-drift-affects-underwriting.md)
+- [Compliance Timing Gaps](./how-compliance-timing-gaps-form.md)

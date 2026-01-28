@@ -1,53 +1,44 @@
 # Payment System Observability
 
-## Overview
-Payment systems are composed of multiple independent actors: processors, card networks, issuing banks, fraud systems, and compliance frameworks. Observability refers to the ability to measure and explain system behavior across these layers.
+## Definition
+Payment system observability is the practice of measuring and explaining the behavior of payment infrastructure over time. Unlike transaction monitoring (which checks if *this* payment succeeded), observability tracks the state, availability, and performance of the underlying systems (processors, networks, banks) to understand *why* outcomes occur.
 
-Unlike transaction monitoring, observability focuses on system-level state rather than individual outcomes.
+## Why it matters
+Payment systems are complex distributed networks. When approvals drop or payouts stall, transaction logs rarely explain the root cause. Observability provides the "flight recorder" data needed to distinguish between a bad customer (fraud), a technical failure (downtime), or a systemic policy shift (risk restriction).
 
-## What is payment system observability?
-Payment system observability is the practice of measuring how payment infrastructure behaves over time. It tracks:
-- Availability  
-- Latency  
-- Failure rates  
-- Restriction states  
-- Recovery cycles  
+## Signals to monitor
+- **Authorization Decline Rates**: Spikes in specific failure codes (e.g., `do_not_honor`).
+- **Latency Distribution**: How long different processors take to respond to auth requests.
+- **Status Transitions**: Changes in account standing (e.g., `active` → `restricted`).
+- **Payout Timing**: Deviations from expected settlement schedules.
+- **Webhook Reliability**: The success rate of asynchronous state updates.
 
-The goal is not optimization, but explanation.
+## Breakdown modes
+- **Latency Drift**: Slow API responses causing timeouts downstream.
+- **State Desynchronization**: The processor thinks an account is active, but the network rejects txns.
+- **Webhook Failures**: Critical updates (like chargebacks) failing to allow ingestion.
+- **Threshold Crossings**: Metrics inadvertently triggering automated risk controls.
 
-## Why transaction logs are insufficient
-Transaction logs show what happened. They do not show:
-- Why behavior changed  
-- Whether failures are correlated  
-- Which upstream system caused the change  
-- Whether the issue is localized or systemic  
+## Where observability fits
+- **Unified Signals**: Aggregating data across multiple processors into a single view.
+- **State Preservation**: keeping a history of account status changes for auditability.
+- **Incident Semantics**: Translating raw error codes into human-readable incidents.
+- **Audit Trails**: Organizing evidence of system behavior for compliance or disputes.
 
-Observability requires aggregation and time-series context.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Signals observed in payment systems
-- Authorization decline rates  
-- Dispute ratios  
-- Payout timing changes  
-- Reserve activations  
-- Processor status transitions  
-- Risk threshold crossings  
+## FAQ
 
-These signals often originate in different systems and must be correlated to be meaningful.
+### How does this differ from APM (Datadog/NewRelic)?
+APM monitors *your* code and servers. Payment observability monitors the *external dependencies* (Stripe, Adyen, Visa) that handle your money.
 
-## How observability differs from fraud tools
-Fraud tools focus on user intent.  
-Observability focuses on infrastructure behavior.
+### Does this replace fraud tools?
+No. Fraud tools analyze *user intent* (is this person stealing?). Observability analyzes *infrastructure behavior* (is the processor rejecting valid cards?).
 
-It answers:
-- What state is the system in?  
-- When did it change?  
-- What signals moved with it?
+### Can it fix a declined transaction?
+No. It explains *why* the decline happened so you can decide whether to retry, route elsewhere, or ask the user for a new method.
 
-## Relationship to Payflux
-Payflux operates as infrastructure observability for payment systems. It aggregates risk and status signals from processors and preserves historical behavior for inspection and audit without altering transaction flows.
-
-## Related documentation
-- [How payment risk scoring works](../risk/how-payment-risk-scoring-works.md)  
-- [How payout delays work](../risk/how-payout-delays-work.md)  
-- [How chargebacks propagate](../risk/how-chargebacks-propagate.md)  
-- [How KYC and underwriting reviews work](../risk/how-kyc-and-underwriting-reviews-work.md)
+## See also
+- [Payment Risk Scoring](../risk/how-payment-risk-scoring-works.md)
+- [Payment Risk Events](./payment-risk-events.md)
+- [Dispute Infrastructure](./dispute-infrastructure.md)

@@ -1,36 +1,41 @@
-# How Card Network Monitoring Programs Work
+# Network Monitoring Programs
 
-## Overview
-Visa and Mastercard operate monitoring programs to police the specialized ecosystem. These programs (like Visa's VFMP/VDMP or Mastercard's ECP) enforce thresholds for disputes and fraud. Entering a program brings fines, intense scrutiny, and the threat of permanent termination.
+## Definition
+Network Monitoring Programs (such as Visa's **VFMP** or Mastercard's **ECP**) are enforcement frameworks operated by Card Networks to police merchant behavior. They set strict thresholds for disputes and fraud. Exceeding these thresholds places a merchant in a "program" involving fines, remediation plans, and potential termination.
 
-## What monitoring programs are
-They are "penalty boxes" for merchants who exceed network safety limits.
-- **Standard Programs**: For general high dispute rates (e.g., >0.9%).
-- **Excessive Programs**: For dangerously high rates (e.g., >1.8%).
-- **Fraud Programs**: Specifically for fraud-coded chargebacks (TC40/SAFE data).
+## Why it matters
+These programs are the "Supreme Court" mandates of payments. While a processor might tolerate risk, they *cannot* tolerate a network violation. Entering a program is an existential threat to a merchant account, often leading to immediate reserves or closure to protect the processor.
 
-## How merchants enter them
-Entry is automatic based on monthly metrics.
-- **Threshold 1 (Count)**: E.g., > 100 disputes/month.
-- **Threshold 2 (Ratio)**: E.g., > 0.9% Dispute-to-Sales ratio.
-Both must be breached to trigger entry. This protects small merchants (who might have 1 dispute on 10 sales = 10% ratio) from being penalized.
+## Signals to monitor
+- **Dispute-to-Sales Ratio**: The key metric (typically monitored against 0.9% or 1.8%).
+- **Fraud-to-Sales Ratio**: Calculated using TC40/SAFE data (reported fraud) vs sales.
+- **Program Identification**: Specific flags in processor reports indicating `VDMP` or `ECP` status.
+- **Remediation Timelines**: Countdown clocks for exiting the program (usually requiring 3 clean months).
 
-## What metrics trigger escalation
-Once in a program, the clock starts ticking.
-- **Month 1-3**: Warning / Small Fines.
-- **Month 4-6**: Escalating Fines (often \$25k - \$100k per month).
-- **Month 7+**: Card brand disqualification (Merchant is banned from accepting Visa/MC).
+## Breakdown modes
+- **The Denominator Effect**: Sales volume drops (seasonality), but dispute counts stay flat (lagging), causing the *ratio* to spike above 0.9%.
+- **Program Graduation**: Moving from "Standard" (warnings) to "Excessive" (heavy fines) programs.
+- **Fine Allocation**: Unexpected large debits appearing on the settlement statement.
 
-## Relationship to processor actions
-Processors are liable for these fines if the merchant doesn't pay. Therefore, processors will preemptively shut down or reserve a merchant *before* they hit the network limits. The processor's internal threshold is always stricter than the network's threshold.
+## Where observability fits
+- **Forecasting**: Predicting month-end ratios based on real-time data to warn of breaches *before* they happen.
+- **Fine Liability**: Calculating potential fines based on current tiering.
+- **Root Cause Isolation**: determining *which* bin or geo is driving the program breach.
 
-## Duration and exit conditions
-Exiting is harder than entering.
-- **The "3-Month Rule"**: Typically, a merchant must be below the threshold for 3 consecutive months to exit.
-- **Probation**: One bad month resets the clock.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Where observability infrastructure fits
-Infrastructure serves as the "Speed Limit Warning." It tracks:
-- **Projected Ratio**: Forecasting the month-end ratio based on current day's volume.
-- **Program Status**: Explicitly tracking "Months in Program" and "Months Clean."
-- **Fine Liability**: calculating potential fines based on current tiers to inform reserve logic.
+## FAQ
+
+### Can I just pay the fine?
+For a while, yes. But eventually (usually after 12 months), the networks will force the acquirer to close your account. You cannot "pay to play" indefinitely.
+
+### Who pays the fine?
+The Network fines the Acquirer. The Acquirer passes the fine (plus a markup) to You.
+
+### How do I exit?
+You typically need 3 consecutive months below the threshold (e.g., < 0.9%) to "graduate" out of the program. One bad month resets the clock.
+
+## See also
+- [Network vs Processor Authority](./how-network-vs-processor-authority-works.md)
+- [Decline Reason Codes](./understanding-decline-reason-codes.md)
+- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)

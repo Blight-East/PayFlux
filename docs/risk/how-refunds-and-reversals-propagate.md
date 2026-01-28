@@ -1,32 +1,41 @@
-# How Refunds and Reversals Propagate
+# Refunds and Reversals
 
-## Overview
-Refunds and reversals are mechanisms to return funds to a cardholder. While they appear similar to the consumer, they operate on different infrastructure rails and behave differently in terms of speed, cost, and state finality.
+## Definition
+Refunds and Reversals are the mechanisms for returning funds to a cardholder. A **Reversal** (or Void) cancels an authorized transaction *before* it settles. A **Refund** returns funds *after* settlement via a new credit transaction.
 
-## Refund vs reversal vs chargeback
-- **Reversal (Void)**: Cancelling an authorization *before* settlement. The funds never leave the cardholder’s bank. No fees are incurred.
-- **Refund**: Returning funds *after* settlement. The merchant sends a new credit transaction. Processing fees are usually not returned.
-- **Chargeback**: A forced refund initiated by the bank. This incurs a penalty fee and counts against the merchant's risk ratios.
+## Why it matters
+The distinction impacts fees and speed. Reversals are usually fee-free and instant for the customer. Refunds incur processing fees (which you don't get back) and take days to appear. Mismanaging this distinction causes "Double Refunds" (refunding a charge that was already voided or disputed).
 
-## Timing and state transitions
-Propagation timelines vary by type:
-1.  **Reversal**: Instant. The pending charge disappears from the statement.
-2.  **Refund**: Async (3-10 days). The original charge remains, and a separate credit line item appears later.
-3.  **Chargeback**: Slow (30-90 days). The dispute process involves evidence submission and decision cycles.
+## Signals to monitor
+- **Refund Status**: Lifecycle states like `pending`, `succeeded`, or `failed`.
+- **ARN Generation**: The Acquirer Reference Number confirming the refund hit the banking network.
+- **Balance Impact**: Deductions from Available vs Pending balances.
+- **Void-to-Refund Ratio**: High refund counts might indicate a failure to void transactions in time.
 
-## Ledger and balance impact
-Refunds leverage the merchant’s held balance:
-- **Available Balance**: Refunds are deducted from funds waiting to be paid out.
-- **Negative Balance**: If the balance is insufficient, the refund creates a debt (negative balance) that must be covered by a bank debit.
-- **Reserve Usage**: In some cases, refunds deplete the risk reserve before hitting the operating balance.
+## Breakdown modes
+- **Insufficient Funds**: A refund failing because the merchant's balance is zero.
+- **Orphaned Credits**: A refund successfully sent by the processor but rejected by the cardholder's bank (closed account).
+- **Double Dipping**: Refunding a transaction that has *also* received a chargeback, resulting in losing the money twice.
 
-## Operational challenges
-- **Double Refund Risk**: Refunding a transaction that has *already* been disputed (leading to a lost chargeback AND a voluntary refund).
-- **ARN Tracking**: Acquirer Reference Numbers (ARNs) are needed to prove to a customer that a refund was sent.
-- **Orphaned Credits**: Refunds that succeed at the processor but fail to reach the closed card account.
+## Where observability fits
+- **State Consistency**: Blocking refunds on transactions that are already in a dispute state.
+- **Lifecycle Tracking**: Tracing a refund from API call → Processor Accepted → Bank Cleared.
+- **Cost Analysis**: reporting on the "Dead Loss" from processing fees on refunded volume.
 
-## Where observability infrastructure fits
-Infrastructure tracks the linkage between the original sale and the subsequent return event. It ensures:
-- **State Consistency**: Preventing refunds on already-disputed charges.
-- **Fee Visibility**: Calculating the net cost of the return (original fee + lost revenue).
-- **Lifecycle Finality**: Confirming the refund actually settled to the network, not just the processor.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+
+## FAQ
+
+### Why do refunds take so long?
+Because they travel through the legacy clearing cycle (ACH/Interchange). It is not a real-time message; it is a batch file processed overnight.
+
+### Do I get my fees back?
+Usually, no. The processor and network did the work to move the money. They keep their cut even if you give the money back.
+
+### What is an ARN?
+Acquirer Reference Number. It is the "FedEx Tracking Number" for a refund. If a customer says "I didn't get it," giving them the ARN allows their bank to find the missing money.
+
+## See also
+- [Chargeback Propagation](./how-chargebacks-propagate.md)
+- [Refund Abuse Patterns](./how-refund-abuse-patterns-work.md)
+- [Negative Balance Cascades](./how-negative-balance-cascades-form.md)

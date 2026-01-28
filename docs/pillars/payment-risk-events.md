@@ -1,51 +1,42 @@
 # Payment Risk Events
 
-## Overview
-Payment risk events occur when a payment processor’s internal risk controls transition a merchant or account into a restricted state. These events are not judgments of fraud. They are automated or manual control actions taken to limit exposure while risk signals are evaluated.
+## Definition
+A Payment Risk Event is a discrete control action taken by a processor or acquiring bank to limit financial exposure. These are state changes—such as freezing funds, imposing reserves, or terminating processing—triggered by risk models or compliance mandates.
 
-Common risk events include fund freezes, rolling reserves, payout delays, and document requests. They are triggered by system thresholds rather than individual transactions.
+## Why it matters
+Risk events are "circuit breakers" for the payment system. While they protect the ecosystem, for a merchant, they result in immediate cash flow disruption. Understanding them is critical to distinguishing between a routine review and an existential business threat.
 
-## What is a payment risk event?
-A payment risk event is a change in processing behavior initiated by a processor’s risk or compliance system. It typically results in limited access to funds, delayed payouts, or temporary account restrictions.
+## Signals to monitor
+- **Payout Status**: Shifts from `paid` to `in_transit` to `failed` or `held`.
+- **Balance Availability**: A growing "Current Balance" but zero "Available Balance."
+- **Account Service Flags**: API warnings indicating restricted capabilities (e.g., `transfers_disabled`).
+- **Information Requests**: Inbound tickets asking for invoices, IDs, or tracking numbers.
 
-Risk events exist to protect:
-- The processor’s balance sheet  
-- Card networks (Visa, Mastercard, etc.)  
-- Issuing banks  
-- The broader settlement network  
+## Breakdown modes
+- **Threshold Trips**: Exceeding a monitored metric (e.g., 1% dispute rate).
+- **Velocity Spikes**: Processing too much volume too quickly for a new account.
+- **Matchlisting**: Being flagged on various industry blocklists (TMF/MATCH).
+- **Review Backlogs**: Risk events persisting because the manual review queue is stalled.
 
-## Common types of risk events
-- Fund availability restrictions  
-- Rolling reserves  
-- Delayed payouts  
-- Enhanced monitoring  
-- Mandatory documentation reviews  
-- Temporary processing limits  
+## Where observability fits
+- **Event Correlation**: Linking a sudden reserve to the specific dispute spike that caused it.
+- **Duration Tracking**: Measuring how long funds have been held relative to policy limits.
+- **Cause Analysis**: differentiating between automated system triggers and manual compliance interventions.
 
-These actions are applied at the system level, not at the transaction level.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Why risk events feel sudden
-Risk systems operate on delayed signals:
-- Chargebacks arrive days or weeks after transactions  
-- Pattern detection uses rolling windows  
-- Reviews often happen in scheduled batches  
+## FAQ
 
-As a result, a restriction can be triggered by behavior that occurred in the past rather than the present.
+### Is a risk event the same as a ban?
+Not necessarily. Many risk events (like a temporary hold or a document request) are solvable. A "termination" is a specific, final type of risk event.
 
-## What risk infrastructure can observe
-Risk infrastructure does not override processor decisions. It provides visibility into:
-- When a risk event began  
-- What signals contributed to it  
-- Which funds are affected  
-- How long the state has persisted  
+### Can I override a risk event?
+No. The processor holds the liability. You can only provide the data they need to feel safe releasing the restriction.
 
-This allows operators to distinguish between system behavior and operational error.
+### Why wasn't I warned?
+Many risk controls are automated and act immediately to prevent further loss. The "warning" was likely the trending metrics visible in your observability data prior to the event.
 
-## Relationship to Payflux
-Payflux functions as processor-agnostic risk observability infrastructure. It preserves historical state, aggregates signals across systems, and exposes the mechanical causes of risk events without modifying processor controls.
-
-## Related documentation
-- [Why payment processors freeze funds](../risk/why-payment-processors-freeze-funds.md)  
-- [What is a payment reserve](../risk/what-is-a-payment-reserve.md)  
-- [How risk threshold events work](../risk/how-risk-threshold-events-work.md)  
-- [Why processors request documents](../risk/why-processors-request-documents.md)
+## See also
+- [What is a Payment Reserve](../risk/what-is-a-payment-reserve.md)
+- [Why Processors Freeze Funds](../risk/why-payment-processors-freeze-funds.md)
+- [Risk Threshold Events](../risk/how-risk-threshold-events-work.md)

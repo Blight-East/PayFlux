@@ -1,56 +1,41 @@
-# How Payment Risk Scoring Works
+# Payment Risk Scoring
 
-## Overview
+## Definition
+Payment Risk Scoring is the automated evaluation of merchants or transactions to estimate the probability of financial loss. These scores are composites of multiple signals (velocity, disputes, credit history) and determine whether processing should be allowed, paused, or reserved.
 
-Payment processors evaluate merchants using risk scoring systems that estimate the probability of future financial loss. These systems operate continuously and adjust as new transaction data arrives.
+## Why it matters
+Scoring systems replace human intuition with statistical probability. They enable processors to manage millions of merchants at scale. However, because they are automated, they can produce "false positives" where legitimate businesses are penalized for anomalous but benign behavior.
 
-## Why Risk Scoring Exists
+## Signals to monitor
+- **Score Changes**: Shifts in proprietary risk levels (if exposed via API).
+- **Velocity Limit Trips**: Hitting daily/weekly transaction count ceilings.
+- **Gateway Alerts**: Warnings about "High Risk" transactions.
+- **Degraded States**: Slow degradation in approval rates (often a proxy for internal risk downgrades).
 
-Processors settle funds before all fraud, disputes, and refunds are known. Risk scoring allows them to price and control that uncertainty.
+## Breakdown modes
+- **Concept Drift**: The model's training data becoming outdated, leading to wrong classification.
+- **Feedback Loops**: A lower score causing restricted processing, which causes weird volume patterns, which lowers the score further.
+- **Signal Outage**: A missing input (e.g., credit bureau down) causing the model to default to a "Safe" (restrictive) mode.
 
-## How It Works
+## Where observability fits
+- **Factor Isolation**: Identifying which specific metric (e.g., refund rate) is dragging the score down.
+- **Trend Analysis**: Visualizing the risk trajectory *before* it hits a penalty threshold.
+- **Model Comparison**: Benchmarking performance across different payment processors.
 
-Risk models combine:
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-- Transaction velocity
-- Dispute history
-- Refund ratios
-- Product category
-- Fulfillment timing
-- Account age
-- Geographic signals
+## FAQ
 
-Each factor contributes to a composite score.
+### Can I see my risk score?
+Rarely. Most processors keep the exact score hidden to prevent gaming. You must infer it from the actions they take (reserves, limits).
 
-## What Triggers Score Changes
+### How do I improve my score?
+Consistency is key. Smooth volume, low disputes, and quick responses to information requests build "trust" in the model variables.
 
-- Sudden volume increases
-- New product launches
-- Marketing spikes
-- Subscription churn
-- High refund windows
-- Chargeback clustering
+### Is the score fair?
+It is "statistically rational" for the processor, but not always "fair" to the individual. Automated models optimize for portfolio protection, not individual merchant growth.
 
-## Why Changes Feel Sudden
-
-Signals arrive after transactions clear. Scoring updates often occur in review cycles rather than continuously.
-
-## What Support Can and Cannot Do
-
-Support teams cannot modify scoring models or thresholds. These are owned by underwriting and banking partners.
-
-## What Infrastructure Can Do
-
-Infrastructure can surface:
-
-- Which signals changed
-- When the score crossed thresholds
-- Which product lines contribute risk
-- Historical comparisons
-
-## Where Payflux Fits
-
-Payflux aggregates risk signals across processors and preserves scoring history to provide operational visibility.
-
-> [!NOTE]
-> Payflux does not modify or bypass risk models. It provides interpretability and continuity.
+## See also
+- [Fraud Model Drift](./how-fraud-model-drift-occurs.md)
+- [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
+- [Multi-Signal Correlation](./how-multi-signal-correlation-affects-risk.md)

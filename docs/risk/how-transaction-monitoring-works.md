@@ -1,40 +1,41 @@
-# How Transaction Monitoring Works
+# Transaction Monitoring
 
-## Overview
+## Definition
+Transaction Monitoring is the real-time surveillance of individual payment flows to detect fraud, money laundering, or policy violations. Unlike underwriting (which looks at the merchant), transaction monitoring looks at the *payments* passing through the merchant.
 
-Transaction monitoring systems analyze payment activity to detect patterns associated with financial risk, fraud, or regulatory violations. These systems operate continuously and evaluate transactions against predefined behavioral models.
+## Why it matters
+It is the first line of defense against loss. Effective monitoring blocks bad cards before they become chargebacks. However, aggressive monitoring causes "False Declines" (insult rates), rejecting good customers and costing revenue.
 
-## Monitoring Signals
+## Signals to monitor
+- **Review Queues**: Counts of transactions held for manual inspection.
+- **Decline Reason Distribution**: Spikes in `fraud_suspected` or `high_risk` declines.
+- **Rule Trigger Rates**: Which specific rules (e.g., "Velocity > 10 in 1 hour") are firing most often.
+- **Approval Rate Volatility**: Sudden drops in acceptance for specific bins or geographies.
 
-Common monitoring inputs include:
-- Transaction velocity
-- Geographic inconsistencies
-- Product category changes
-- Refund and dispute ratios
-- Customer behavior patterns
+## Breakdown modes
+- **Velocity Storms**: A bot attack triggering hundreds of velocity rules at once.
+- **Rule Decay**: Static rules (e.g., "Block IP 1.2.3.4") remaining active long after the threat is gone.
+- **Latency Spikes**: Monitoring checks taking too long, causing the transaction to time out.
 
-## Rule-Based and Model-Based Systems
+## Where observability fits
+- **Alert Aggregation**: Centralizing alerts from multiple gateways into one dashboard.
+- **Performance Tracking**: Measuring the financial impact (blocked $ volume) of specific rules.
+- **False Positive Tuning**: Identifying rules that catch zero fraud but block many good users.
 
-Monitoring systems typically combine:
-- Rule-based thresholds
-- Statistical models
-- Machine learning classifiers
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## Alert Generation
+## FAQ
 
-When thresholds are exceeded:
-- Alerts are generated
-- Transactions may be flagged for review
-- Accounts may enter restricted states
+### Difference between Rule and Model?
+A **Rule** is simple logic: `IF amount > $500 THEN decline`. A **Model** is complex probability: `IF likelihood_of_fraud > 0.9 THEN decline`.
 
-## Infrastructure Role
+### Should I review transactions manually?
+Only if you have the data to make a better decision than the machine. Manual review adds friction and delays shipping.
 
-Monitoring infrastructure:
-- Aggregates transaction streams
-- Applies detection logic
-- Logs alert history
-- Preserves auditability
+### Why was this valid charge blocked?
+Likely because it shared a feature (IP, Device ID, Email pattern) with a previous fraudster. This is called "Link Analysis."
 
-## Where Payflux Fits
-
-Payflux aggregates monitoring signals across processors and preserves historical alert state for operational visibility. It does not determine enforcement outcomes.
+## See also
+- [Geo Velocity](./how-geo-velocity-affects-risk.md)
+- [BIN-Country Mismatch](./how-bin-country-mismatch-affects-risk.md)
+- [Retry Logic](./how-retry-logic-affects-risk.md)

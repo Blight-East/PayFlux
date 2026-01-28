@@ -1,53 +1,43 @@
 # Dispute Infrastructure
 
-## Overview
-Dispute infrastructure governs how contested transactions move through card networks, issuing banks, and processors. It is a procedural system rather than a real-time one, operating on evidence submission windows, response deadlines, and network rules.
+## Definition
+Dispute infrastructure is the procedural framework governing how contested transactions are adjudicated. It involves a rigid workflow of evidence submission, network routing, and timeline management between Merchants, Acquirers, Card Networks, and Issuing Banks.
 
-Disputes are not resolved by merchants and processors directly. They are adjudicated by issuing banks under network policy.
+## Why it matters
+Disputes are not simple database updates; they are legal-framework processes that determine financial liability. Misunderstanding the infrastructure leads to lost revenue (lost disputes) and operational penalties (excessive dispute monitoring programs).
 
-## What is dispute infrastructure?
-Dispute infrastructure consists of:
-- Evidence formats  
-- Timelines  
-- Arbitration rules  
-- Network routing logic  
-- Outcome classification  
+## Signals to monitor
+- **Inbound Dispute Volume**: The raw count of new cases.
+- **Reason Code Distribution**: The mix of "Fraud" vs "Service" vs "Processing" claims.
+- **Win/Loss Ratios**: The effectiveness of evidence templates per reason code.
+- **Response Latency**: Time remaining before network deadlines expire.
+- **Pre-Dispute Alerts**: Early warning signals (TC40/SAFE) from networks.
 
-Each dispute progresses through defined stages regardless of merchant intent.
+## Breakdown modes
+- **Evidence Timeout**: Missing the strict network deadline (automatic loss).
+- **Format Rejection**: Submitting evidence files that fail network spec (file size/type).
+- **Notification Lag**: Receiving the dispute notice too late to stop shipment.
+- **Blind Spots**: Failing to link a dispute back to the original order string/descriptor.
 
-## Why disputes are slow by design
-Disputes move at the speed of:
-- Issuer review  
-- Card network routing  
-- Evidence evaluation  
-- Regulatory constraints  
+## Where observability fits
+- **Timeline Tracking**: Visualizing the deadlines for every open case.
+- **State Management**: Mapping the complex status transitions (e.g., `chargeback` → `representment` → `pre-arbitration`).
+- **Evidence Organization**: Associating logistical data (tracking numbers, logs) with financial claims.
 
-This creates delays measured in weeks, not minutes.
+> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
-## What affects dispute outcomes
-Outcomes depend on:
-- Evidence structure  
-- Reason codes  
-- Issuer interpretation  
-- Network policy  
-- Historical merchant patterns  
+## FAQ
 
-Win rates vary because disputes are not judged solely on transaction facts.
+### Why is the process so slow?
+It involves multiple banks and the card network manually reviewing documents. A standard cycle handles response times of 30+ days per stage.
 
-## Role of evidence systems
-Evidence systems organize:
-- Transaction context  
-- Customer communications  
-- Policy disclosures  
-- Refund timing  
-- Delivery confirmation  
+### Can software win disputes automatically?
+Software can *submit* evidence automatically, but the *decision* is made by a human at the issuing bank based on the strength of that evidence.
 
-They do not determine verdicts. They provide structured input into issuer decisions.
+### Does PayFlux stop disputes?
+No. PayFlux tracks them. Stopping disputes requires operational changes (better descriptors, clearer refund policies, fraud tools).
 
-## Relationship to Payflux
-Payflux acts as dispute infrastructure observability. It preserves evidence state, tracks dispute propagation, and exposes outcome patterns across processors without influencing network decisions.
-
-## Related documentation
-- [How dispute evidence works](../risk/how-dispute-evidence-works.md)  
-- [How card networks handle disputes](../risk/how-card-networks-handle-disputes.md)  
-- [Why dispute win rates vary](../risk/why-dispute-win-rates-vary.md)
+## See also
+- [How Chargebacks Propagate](../risk/how-chargebacks-propagate.md)
+- [How Dispute Evidence Works](../risk/how-dispute-evidence-works.md)
+- [Network Monitoring Programs](../risk/how-network-monitoring-programs-work.md)
