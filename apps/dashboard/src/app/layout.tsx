@@ -30,6 +30,9 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
+          <head>
+            <meta name="google-site-verification" content="95b0G_oVNrlvQOz4Rop3q_652BAI2H8RF2n2Sa8V0Wg" />
+          </head>
           {children}
         </body>
       </html>
