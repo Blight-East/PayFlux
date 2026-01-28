@@ -743,6 +743,8 @@ For details on PayFlux's security posture and data handling:
 - [Detecting Stripe Payment Incidents](docs/use-cases/detecting-stripe-payment-incidents.md) — Monitoring API error rates and account status changes.
 - [Monitoring Payout Delays](docs/use-cases/monitoring-payout-delays.md) — Detecting liquidity gaps and schedule deviations.
 - [Handling Dispute Surges](docs/use-cases/handling-dispute-surges.md) — Velocity monitoring and threshold projection.
+- [Detecting Card Testing Attacks](docs/use-cases/detecting-card-testing-attacks.md) — Identifying velocity spikes and BIN anomalies.
+- [Monitoring Payment Reserves](docs/use-cases/monitoring-payment-reserves.md) — Tracking balance segmentation and release schedules.
 
 ---
 
