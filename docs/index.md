@@ -37,6 +37,11 @@ These documents apply the core mechanics to specific business models and operati
 - [High-Risk Merchants](verticals/payment-risk-observability-for-high-risk-merchants.md)
 - [Detecting Card Testing](use-cases/detecting-card-testing-attacks.md)
 - [Handling Dispute Surges](use-cases/handling-dispute-surges.md)
+- [Shadow Risk in SaaS](verticals/shadow-risk-in-saas.md)
+- [Retry Amplification in Marketplaces](verticals/retry-amplification-in-marketplaces.md)
+- [Model Drift in Fraud Operations](verticals/model-drift-in-fraud-operations.md)
+- [Compliance Gaps in BNPL](verticals/compliance-gaps-in-bnpl.md)
+- [Liability Horizons for Aggregators](verticals/liability-horizons-for-aggregators.md)
 
 ## 4. Stripe: Applied Views (Grid Batch 1)
 
