@@ -30,6 +30,11 @@ These documents explain how payment systems behave under risk, load, and network
 - [What Is Model Drift?](risk/what-is-model-drift-in-fraud.md)
 - [What Are Compliance Gaps?](risk/what-are-compliance-gaps.md)
 - [What Is a Liability Horizon?](risk/what-is-a-liability-horizon.md)
+- [What is Dispute Propagation?](risk/what-is-dispute-propagation.md)
+- [What is Reserve Formation?](risk/what-is-reserve-formation.md)
+- [What is Threshold Hysteresis?](risk/what-is-threshold-hysteresis.md)
+- [What is Settlement Timing Risk?](risk/what-is-settlement-timing-risk.md)
+- [What is a Retry Storm?](risk/what-is-a-retry-storm.md)
 
 ## 3. Applied Views (Verticals & Use Cases)
 

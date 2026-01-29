@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-29T20:29:37.752Z",
+  "generatedAt": "2026-01-29T20:38:38.037Z",
   "basePath": "docs",
   "files": [
     "AUTH_DENIAL_METRICS.md",
@@ -68,9 +68,14 @@
     "risk/what-are-compliance-gaps.md",
     "risk/what-is-a-liability-horizon.md",
     "risk/what-is-a-payment-reserve.md",
+    "risk/what-is-a-retry-storm.md",
+    "risk/what-is-dispute-propagation.md",
     "risk/what-is-model-drift-in-fraud.md",
+    "risk/what-is-reserve-formation.md",
     "risk/what-is-retry-amplification.md",
+    "risk/what-is-settlement-timing-risk.md",
     "risk/what-is-shadow-risk.md",
+    "risk/what-is-threshold-hysteresis.md",
     "risk/why-dispute-win-rates-vary.md",
     "risk/why-major-processors-freeze-funds.md",
     "risk/why-payment-processors-freeze-funds.md",
