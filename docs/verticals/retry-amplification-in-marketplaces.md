@@ -1,100 +1,55 @@
+# What is Retry Amplification in Marketplaces?
+
+Retry amplification in marketplaces occurs when payment retry logic increases transaction volume faster than successful settlement, multiplying operational load and financial exposure.
+
+Marketplaces depend on complex multi-party flows: buyers, sellers, platforms, and processors. When failures occur, retries can unintentionally create more risk than resolution.
+
+Retry amplification forms when:
+• Declines are retried without root-cause classification  
+• Multiple sellers share a buyer retry cycle  
+• Network timeouts trigger duplicate attempts  
+• Queues retry asynchronously  
+
+This results in:
+• More authorization attempts  
+• More dispute probability  
+• Higher fraud detection sensitivity  
+• Artificial success rates  
+
+## Mechanical effect
+
+Instead of solving a failure, retries:
+• Inflate transaction volume  
+• Trigger issuer suspicion  
+• Increase dispute ratios  
+• Degrade trust signals  
+
+Retry amplification is not an error — it is a feedback loop.
+
+## Structural cause
+
+Marketplaces abstract payments away from sellers. This centralizes retry behavior, making small logic flaws system-wide multipliers.
+
+---
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "What is retry amplification?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Retry amplification is when retries multiply failures instead of resolving them."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Why does it affect marketplaces more?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Because marketplaces retry payments on behalf of many sellers using shared logic."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Is retry amplification intentional?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "No. It is an emergent behavior from automated retry systems."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Can retry amplification be prevented?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "It can be reduced by adaptive retry logic and isolation strategies."
-      }
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "What is retry amplification?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Retry amplification is when payment retries increase transaction attempts faster than successful settlements, amplifying risk and load."
     }
-  ]
+  },{
+    "@type": "Question",
+    "name": "Why is retry amplification dangerous in marketplaces?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Because retries affect multiple sellers and shared buyers, compounding disputes and triggering fraud controls at scale."
+    }
+  }]
 }
 </script>
-
-# Retry Amplification in Marketplaces
-
-Retry amplification in marketplaces occurs when payment retry logic multiplies transaction volume and failure cascades across many sellers simultaneously.
-
-Marketplaces amplify retries because they batch, pool, and proxy transactions on behalf of independent merchants.
-
-## How Retry Amplification Forms
-
-Retry amplification forms when:
-
-- Failed payments are retried automatically  
-- Multiple sellers depend on shared retry policies  
-- Retries occur faster than issuer recovery  
-- Declines trigger upstream system reactions  
-
-## Mechanical Pathway
-
-1. Issuer declines spike  
-2. Retry logic activates  
-3. Retry volume multiplies  
-4. Issuer risk scoring worsens  
-5. Further declines occur  
-
-This creates a positive feedback loop.
-
-## Why Marketplaces Are Vulnerable
-
-- Centralized payment orchestration  
-- Shared retry strategies  
-- Uniform decline handling  
-- High concurrency across sellers  
-
-## System Effects
-
-- Artificial traffic spikes  
-- Higher decline rates  
-- Processor scrutiny  
-- Reserve adjustments  
-
-## Mitigation Mechanics
-
-- Adaptive retry timing  
-- Decline-type filtering  
-- Per-merchant retry isolation  
-- Backoff-based recovery windows  
-
-## FAQ
-
-### What is retry amplification?
-Retry amplification is when retries multiply failures instead of resolving them.
-
-### Why does it affect marketplaces more?
-Because marketplaces retry payments on behalf of many sellers using shared logic.
-
-### Is retry amplification intentional?
-No. It is an emergent behavior from automated retry systems.
-
-### Can retry amplification be prevented?
-It can be reduced by adaptive retry logic and isolation strategies.

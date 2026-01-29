@@ -1,98 +1,47 @@
+# What is a Liability Horizon for Aggregators?
+
+A liability horizon is the maximum time window during which a transaction can still generate financial loss after initial settlement.
+
+For aggregators, liability persists beyond payout because:
+• Disputes post late  
+• Refunds reverse balances  
+• Seller defaults occur  
+• Fraud is retroactive  
+
+## Mechanical effect
+
+Liability horizons define:
+• Capital buffers  
+• Reserve sizing  
+• Risk windows  
+• Settlement pacing  
+
+They are not accounting artifacts — they are temporal risk boundaries.
+
+## Structural cause
+
+Aggregators intermediate between merchants and processors. This makes them temporal shock absorbers for delayed losses.
+
+---
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "What is a liability horizon?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "It is the time window during which financial responsibility remains open."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Why do aggregators face longer horizons?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Because they intermediate payments and disputes."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Does settlement end liability?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "No. Liability can persist after settlement."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Can liability horizons be shortened?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "They can be reduced but not eliminated."
-      }
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "What is a liability horizon?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "A liability horizon is the time period during which a settled transaction can still produce financial loss."
     }
-  ]
+  },{
+    "@type": "Question",
+    "name": "Why do aggregators have long liability horizons?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Because disputes, refunds, and fraud are delayed relative to settlement."
+    }
+  }]
 }
 </script>
-
-# Liability Horizons for Aggregators
-
-A liability horizon is the time window over which financial responsibility remains open after a transaction is processed.
-
-For payment aggregators, liability horizons extend beyond settlement due to disputes, refunds, and regulatory reversals.
-
-## How Liability Horizons Form
-
-They form when:
-
-- Funds are disbursed before finality  
-- Merchants churn  
-- Chargebacks are delayed  
-- Regulatory claims occur post-settlement  
-
-## Mechanical Pathway
-
-1. Transaction settles  
-2. Funds are released  
-3. Dispute or reversal occurs  
-4. Merchant account is unavailable  
-5. Aggregator absorbs loss  
-
-## Why Aggregators Are Exposed
-
-- They intermediate payments  
-- They pool merchant risk  
-- They front liquidity  
-- They own dispute flows  
-
-## Consequences
-
-- Reserve requirements  
-- Capital lockup  
-- Risk repricing  
-- Merchant restrictions  
-
-## Mitigation Mechanics
-
-- Horizon modeling  
-- Dynamic reserves  
-- Merchant risk stratification  
-- Delayed fund release  
-
-## FAQ
-
-### What is a liability horizon?
-It is the time window during which financial responsibility remains open.
-
-### Why do aggregators face longer horizons?
-Because they intermediate payments and disputes.
-
-### Does settlement end liability?
-No. Liability can persist after settlement.
-
-### Can liability horizons be shortened?
-They can be reduced but not eliminated.
