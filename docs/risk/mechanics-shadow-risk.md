@@ -1,3 +1,29 @@
+# Shadow Risk
+
+## Definition
+Shadow risk is unobserved or indirectly observed exposure accumulating outside visible failure events.
+
+## Why it matters
+Shadow risk grows silently and manifests later as enforcement, reserves, or account termination.
+
+## Signals to monitor
+- Latent dispute probability  
+- Risk score drift without volume change  
+- Enforcement warnings without incidents  
+- Hidden cohort correlation  
+- Exposure accumulation rate  
+
+## Breakdown modes
+- Delayed reserve triggers  
+- Sudden freezes without recent disputes  
+- Retroactive fraud labeling  
+- Portfolio-level enforcement  
+- Model feedback loops  
+
+## Implementation notes
+Shadow risk requires correlation tracing rather than event alerting.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -5,67 +31,36 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is shadow risk in payments?",
+      "name": "What is shadow risk?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Shadow risk is financial or operational exposure created by indirect system behavior rather than explicit policy decisions."
+        "text": "Shadow risk is liability that accumulates without immediate visible failures."
       }
     },
     {
       "@type": "Question",
-      "name": "Why is shadow risk hard to detect?",
+      "name": "Why does shadow risk appear suddenly?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Because it emerges from interactions between systems, not from single transactions or rules."
+        "text": "Because it is revealed only when thresholds or policies are triggered."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is shadow risk fraud?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Not necessarily. It reflects model and policy projections."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can shadow risk be observed?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "By tracking risk signals over time instead of isolated incidents."
       }
     }
   ]
 }
 </script>
-
-Up: [Payment Risk Events](../pillars/payment-risk-events.md)  
-See also: [Retry Amplification](./mechanics-retry-amplification.md)
-
-# What is Shadow Risk in Payments?
-
-## Definition
-Shadow risk is exposure created by secondary system effects rather than direct transaction decisions.
-
-It arises when multiple systems interact in ways not explicitly modeled:
-- retry logic
-- risk thresholds
-- monitoring automation
-- payout timing
-- compliance rules
-
-## Why it matters
-Shadow risk accumulates silently and is usually detected only after:
-- reserves increase
-- accounts are frozen
-- dispute ratios spike
-- processors intervene
-
-It is risk created by *system shape*, not merchant intent.
-
-## Common sources
-- Retry loops interacting with issuer velocity limits
-- Refund logic colliding with settlement batching
-- Fraud rules reinforcing decline patterns
-- Monitoring tools triggering each other
-
-## Breakdown modes
-- Latent exposure builds with no visible alerts
-- Correlation is mistaken for causation
-- Risk appears suddenly after a threshold is crossed
-
-## Where observability fits
-- Tracks cross-system feedback loops
-- Surfaces accumulation patterns
-- Shows second-order effects
-
-## FAQ
-### Is shadow risk the same as fraud?
-No. Fraud is an external adversary. Shadow risk is internal system behavior.
-
-### Can shadow risk be eliminated?
-No. It can only be surfaced and constrained.

@@ -1,3 +1,29 @@
+# Model Drift
+
+## Definition
+Model drift is the degradation of predictive accuracy due to changing input distributions or feedback loops.
+
+## Why it matters
+Drift causes false positives, missed fraud, and unstable enforcement.
+
+## Signals to monitor
+- Feature distribution shifts  
+- Label delay growth  
+- Precision/recall decay  
+- Population stability index  
+- Correlation breakdowns  
+
+## Breakdown modes
+- Overblocking  
+- Fraud leakage  
+- Sudden rule overrides  
+- Policy misalignment  
+- Enforcement cascades  
+
+## Implementation notes
+Drift must be monitored continuously, not during retraining only.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -5,51 +31,36 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is model drift in fraud systems?",
+      "name": "What is model drift?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Model drift is the degradation of fraud model accuracy over time due to changing data patterns."
+        "text": "Model drift is loss of predictive accuracy as real-world behavior changes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does drift happen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Because training data no longer matches live transaction patterns."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can drift cause freezes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Drift can inflate risk scores and trigger enforcement."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is drift detected?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "By measuring distribution shifts and performance decay over time."
       }
     }
   ]
 }
 </script>
-
-Up: [Payment Risk Events](../pillars/payment-risk-events.md)  
-See also: [Compliance Gaps](./mechanics-compliance-gaps.md)
-
-# What is Model Drift in Fraud Systems?
-
-## Definition
-Model drift occurs when prediction models no longer match real-world transaction behavior.
-
-## Why it matters
-Drift causes:
-- rising false positives
-- missed fraud
-- unstable approval rates
-- regulatory exposure
-
-## Sources of drift
-- customer behavior changes
-- fraud strategy changes
-- product changes
-- data pipeline changes
-
-## Breakdown modes
-- Silent approval collapse
-- Sudden block waves
-- Increased disputes
-- Unexplained revenue loss
-
-## Where observability fits
-- Tracks outcome accuracy
-- Shows divergence trends
-- Correlates policy shifts
-
-## FAQ
-### Can drift be prevented?
-No. It can only be monitored and corrected.
-
-### Is drift a bug?
-No. It is a property of time.

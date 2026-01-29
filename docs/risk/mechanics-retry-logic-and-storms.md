@@ -1,20 +1,31 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Retry Logic and Storms",
-  "description": "The automated mechanics of recovering failed payments. Includes Smart Retries (legitimate recovery), Retry Amplification (multiplier effect), and Retry Storms (self-reinforcing failure loops).",
-  "about": "Retry Logic and Storms",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# Retry Logic & Storms
+
+## Definition
+Retry logic is the automated process by which failed payment attempts are re-submitted.  
+A retry storm occurs when retry logic amplifies failure by rapidly increasing transaction volume after an initial decline event.
+
+## Why it matters
+Retry storms convert localized failures into systemic load and risk events. They increase issuer declines, elevate fraud scores, and raise dispute exposure through repeated authorization attempts.
+
+## Signals to monitor
+- Retry rate per transaction over rolling 5–10 minute windows  
+- Authorization attempt count per card or account  
+- Decline reason concentration (e.g., insufficient funds, issuer unavailable)  
+- Latency growth correlated with retry volume  
+- Retry success rate delta over time  
+
+## Breakdown modes
+- Exponential retry loops without backoff  
+- Synchronized retries across merchants or platforms  
+- Retry logic reacting to transient processor outages  
+- Model-triggered retries based on false negatives  
+- Issuer throttling due to rapid resubmission  
+
+## Implementation notes
+Retry behavior should be observable as a flow graph, not isolated events.  
+Propagation paths and amplification ratios are required to distinguish noise from storms.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -22,73 +33,36 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is Retry Logic?",
+      "name": "What is a retry storm?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The automated mechanics of recovering failed payments. It ranges from Smart Retries (algorithmic scheduling) to Retry Storms (self-reinforcing failure loops)."
+        "text": "A retry storm is a surge in transaction volume caused by automated retry logic repeatedly resubmitting failed payments."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does Retry Logic matter?",
+      "name": "Why do retry storms increase risk?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Network Compliance and Infrastructure Health. Visa/Mastercard equate \"High Retry Rates\" with \"Brute Force Attacks.\" A buggy retry loop looks like a fraud ring, leading to instant blocking."
+        "text": "They amplify declines, stress issuer systems, and create correlated fraud and dispute signals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are retry storms caused by attackers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. They are most often caused by system design interacting with transient failures."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can retry storms be detected?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "By observing retry volume, retry success rate decay, and synchronized failure patterns."
       }
     }
   ]
 }
 </script>
-
-This page is part of the Payment Risk Mechanics series and serves as the primary reference for this topic.
-
-Up: [Payment System Observability](../pillars/payment-system-observability.md)
-See also: [Risk Thresholds and Hysteresis](./mechanics-risk-thresholds-and-hysteresis.md), [Transaction Monitoring](./how-transaction-monitoring-works.md)
-
-# Retry Logic and Storms
-
-## Definition
-The automated mechanics of recovering failed payments.
-- **Smart Retries**: The legitimate algorithmic scheduling of attempts to recover "Soft Declines" (e.g., Insufficient Funds).
-- **Retry Amplification**: The multiplier effect where a single legitimate transaction spawns multiple failed retries, inflating the error rate seen by the network.
-- **Retry Storm**: A self-reinforcing failure loop where system outages trigger aggressive retries, causing a DoS effect and massive fee accumulation.
-
-## Why It Matters
-Network Compliance and Infrastructure Health.
-- **The "Velocity" Trap**: Visa/Mastercard equate "High Retry Rates" with "Brute Force Attacks." A buggy retry loop looks exactly like a fraud ring, leading to instant Merchant ID (MID) blocking.
-- **Self-Inflicted Wounds**: Aggressive retries during an outage can crash your own services (Self-DoS) and rack up thousands of dollars in "Auth Fees" for failed attempts.
-
-## Signals to Monitor
-- **Amplification Factor**: `Total Attempts / Unique Orders`. (Target: ~1.1. Danger: > 2.0).
-- **Recovery Rate**: The % of retries that actually succeed. (If < 5%, the logic is too aggressive/useless).
-- **Error Consistency**: Seeing the same error code (e.g., `503 Service Unavailable`) repeating rapidly (Signature of a storm).
-- **Decline Code Mix**: Retrying `Lost/Stolen` (Hard Decline = Illegal) vs `Insufficient Funds` (Soft Decline = Legal).
-
-## How It Breaks Down
-- **Rule Violation**: Retrying a card >15 times in 30 days, triggering fines.
-- **The Hammer**: A buggy loop retrying 100 times in 1 second.
-- **Cross-PSP Leak**: Retrying a blocked card on Stripe, then Adyen, then PayPal, maximizing exposure across the ecosystem.
-- **Timeout Mismatch**: Client times out at 5s, Gateway takes 6s. Client retries. Gateway processes 2 requests for 1 result.
-
-## How Risk Infrastructure Surfaces This
-An observability system would surface these mechanics by:
-- **Circuit Breakers**: Detecting when the Amplification Factor spikes and auto-killing the retry worker ("Stop the line").
-- **Cost Estimation**: Real-time ticker of "Wasted Fees" ($0.05 per fail) to quantify the financial bleed of a storm.
-- **Shape Detection**: Alerting on the "slope" of retry volume to differentiate organic traffic from a bot/storm.
-- **Safe Recovery**: enforcing "Exponential Backoff" (waiting 1s, 2s, 4s, 8s) to let downstream systems recover.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### When is it safe to retry?
-Only on "Soft Declines" (Insufficient Funds, Network Error). NEVER on "Hard Declines" (Lost/Stolen, Account Closed).
-
-### Does Stripe/Adyen handle this?
-They offer "Smart Retries," but if you build your own retry layer *on top* of theirs, you can easily trigger a ban.
-
-### What is a Retry Storm?
-A feedback loop: Failure -> Retry -> More Load -> More Failure.
-
-### Can I retry a "Do Not Honor" code?
-Generally no. It is a catch-all rejection that usually implies a Hard Decline.
