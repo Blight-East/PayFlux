@@ -1,20 +1,33 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Liability Horizons",
-  "description": "A Liability Horizon is the time period during which a transaction can still be contested. It defines the \"Risk Tail\" of valid payments.",
-  "about": "Liability Horizons",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# Liability Horizons and Payouts
+
+Up: [Liability Horizons](mechanics-liability-horizons.md)
+See also:
+- [What Is a Liability Horizon?](what-is-a-liability-horizon.md)
+- [How Payout Delays Work](how-payout-delays-work.md)
+- [Settlement Timing Risk](what-is-settlement-timing-risk.md)
+
+## Definition
+The Liability Horizon is the maximum time window during which a transaction can result in a chargeback or refund. While the standard is often 120 days, it can extend significantly for pre-orders or specific dispute types. It defines the "Risk Tail" of valid payments.
+
+## Why it matters
+Cash Flow and Account Security. Processors often hold funds for the duration of the liability horizon (e.g., 120 days) after an account closure to ensure they have collateral for potential future disputes. Understanding this window is critical for accurate payout forecasting.
+
+## Signals to monitor
+- **Vintage Exposure**: Volume of sales still within the 120-day (or relevant) window.
+- **Tail Risk Projection**: Projected dispute rates for aging cohorts.
+- **Reserve Release Maturity**: Dates when specific bundles of held funds pass their liability threshold.
+- **Delivery date shifts**: Changes in fulfillment timing that push horizon clocks forward.
+
+## Breakdown modes
+- **The Delivery Gap**: For pre-orders, the 120-day clock only starts *on delivery*, not on sale, extending exposure.
+- **The Subscription Tail**: Disputes occurring at the end of a long-term service period (e.g., Month 11 of 12).
+- **The Liquidity Trap**: Having capital in reserves but being unable to use it for operations due to horizon duration.
+- **Inherited Liability**: Processors incurring 100% of horizon risk if a merchant becomes insolvent.
+
+## Implementation notes
+Observability should track the "Liability Ledger" to visualize open exposure against held reserves and forecast fund releases based on expiration dates.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -25,68 +38,33 @@
       "name": "What is a Liability Horizon?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "A Liability Horizon is the time period during which a transaction can still be contested. It defines the \"Risk Tail\" of valid payments."
+        "text": "A Liability Horizon is the time period during which a transaction can still be contested. It defines the 'Risk Tail' of valid payments."
       }
     },
     {
       "@type": "Question",
-      "name": "Why do Liability Horizons matter?",
+      "name": "Why do Liability Horizons matter for payouts?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Cash Flow. If the bank believes the horizon is 120 days (industry standard), they may hold reserves for that duration. Shortening the perceived horizon (e.g., through fast delivery proof) releases cash faster."
+        "text": "They determine how long the bank or processor may hold reserves. Shortening the perceived horizon (e.g., through fast delivery proof) can release cash faster."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I shorten the horizon?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, it is set by Network Rules. However, fast shipping closes the delivery-related risk window earlier."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it apply to refunds?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Transactions can usually be refunded for 90-180 days, which must be accounted for in the liability window."
       }
     }
   ]
 }
 </script>
-
-Up: [Payment Reserves](./mechanics-payment-reserves-and-balances.md)
-See also: [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
-
-# Liability Horizons
-
-Up: [How Payout Delays Work](how-payout-delays-work.md)
-See also:
-- [What Is a Liability Horizon?](what-is-a-liability-horizon.md)
-- [Settlement Timing Risk](what-is-settlement-timing-risk.md)
-- [Liability Horizons](mechanics-liability-horizons.md)
-
-
-## Definition
-The Liability Horizon is the maximum time window during which a transaction can come back to haunt the processor (via Chargeback or Refund). Standard is 120 days, but it can extend to 540 days for certain disputes.
-
-## Why it matters
-Account Closure. Merchants are often shocked when a processor holds their funds for 120 days *after* they close the account. This is not punishment; it is the duration of the Liability Horizon. The processor is holding the collateral until the risk window closes.
-
-## Signals to monitor
-- **Vintage Exposure**: The $ volume of sales that are still within the 120-day window.
-- **Tail Risk**: The projected dispute rate of the remaining open cohort.
-- **Reserve Release Date**: The calendar date when the oldest batch of held funds matures.
-
-## Breakdown modes
-- **The Delivery Gap**: Selling "Pre-Orders" for a product shipping in 6 months extends the horizon. The 120-day clock only starts *on delivery*.
-- **Subscription Tails**: A user cancelling a year-long subscription on Month 11 and disputing the original charge.
-- **Bankruptcy**: If a merchant goes bust, the processor inherits 100% of the horizon liability.
-
-## Where observability fits
-- **Liability Ledger**: Tracking "Open Exposure" vs "Cash in Reserve."
-- **Contract Monitoring**: Alerting when the "Delivery Date" shifts, pushing the horizon further out.
-- **Payout Forecasting**: "On July 1st, $10k of liability expires, so we should expect a reserve release."
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### Can I shorten the horizon?
-No, it is set by Network Rules. However, fast shipping closes the risk window earlier (for delivery disputes).
-
-### Why 120 days?
-It is the standard timeframe given to cardholders to file a dispute (roughly 4 billing cycles).
-
-### Does it apply to refunds?
-Yes. You can usually refund a transaction up to 90-180 days, depending on the processor.
-
-## See also
-- [Dispute Aging Curves](./how-dispute-aging-curves-work.md)
-- [Payment Reserves](./what-is-a-payment-reserve.md)
-- [Rolling Risk Windows](./how-rolling-risk-windows-work.md)

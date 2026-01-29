@@ -1,57 +1,30 @@
 # What Is a Liability Horizon?
 
-Up: [What is a Liability Horizon?](mechanics-liability-horizons.md)
+Up: [Liability Horizons](mechanics-liability-horizons.md)
 See also:
 - [How Liability Horizons Affect Payouts](how-liability-horizons-affect-payouts.md)
 
+## Definition
+A liability horizon is the time window between when a transaction is processed and when its financial or legal responsibility becomes fixed. Risk exists inside this window, which varies based on network rules, dispute windows, and regulatory timelines.
 
-A liability horizon is the time window between when a transaction is processed and when its financial or legal responsibility becomes fixed.
+## Why it matters
+Liability horizons determine when funds are truly safe, when reversals can occur, and when final compliance obligations activate. Ignoring these horizons creates false confidence and hides future costs behind current revenue.
 
-Risk exists inside this window.
+## Signals to monitor
+- Settlement delay alerts
+- Dispute volume spikes
+- Active risk investigations
+- Pending enforcement actions
+- Funding cycle shifts
+- Chargeback lag metrics
 
-## How Liability Horizons Form
-
-Liability horizons depend on:
-- Settlement timing
-- Dispute windows
-- Reserve policies
-- Regulatory timelines
-
-During this period, exposure can grow without being realized.
-
-## Why Liability Horizons Matter
-
-They determine:
-- When funds are truly safe
-- When reversals can occur
-- When compliance obligations activate
-
-Ignoring liability horizons creates false confidence.
-
-## What Extends Liability Horizons
-
-Horizons lengthen when:
-- Settlement is delayed
-- Dispute volumes rise
-- Investigations occur
-- Enforcement is pending
-
-Exposure exists until closure.
+## Breakdown modes
+- **Latent Exposure**: Cumulative risk accumulating without being realized in current metrics.
+- **False Confidence**: Treating processed funds as safe before the liability window closes.
+- **Overlapping Horizons**: Multiple transactions sharing overlapping exposure windows, complicating risk assessment.
+- **Retroactive Realization**: Realizing exposure only after a discrete event like a freeze or clawback.
 
 ## FAQ
-
-### Is liability horizon the same as settlement time?
-No. Settlement ends money movement. Liability may persist after.
-
-### Can liability horizons overlap?
-Yes. Multiple transactions can share overlapping exposure windows.
-
-### Are liability horizons visible?
-Usually not. They must be inferred from system rules and events.
-
-### Why are liability horizons dangerous?
-They hide future costs behind current revenue.
-
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -71,6 +44,30 @@ They hide future costs behind current revenue.
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "They define when risk truly ends and when exposure can still turn into losses."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is liability horizon the same as settlement time?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Settlement ends money movement, but liability can persist for months after funds reach the bank."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can liability horizons overlap?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Multiple transactions share overlapping exposure windows, creating cumulative portfolio-level risk."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can liability horizons be observed?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "They must be inferred from system rules, network dispute windows, and historical loss patterns."
       }
     }
   ]

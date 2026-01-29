@@ -1,46 +1,30 @@
-# What is Dispute Propagation?
+# Dispute Propagation
 
 Up: [Chargeback Propagation](how-chargebacks-propagate.md)
 See also:
 - [How Refunds and Reversals Propagate](how-refunds-and-reversals-propagate.md)
-
-
-Up: [Chargeback Propagation](how-chargebacks-propagate.md)
-See also:
 - [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
 - [How Dispute Aging Curves Work](how-dispute-aging-curves-work.md)
 
+## Definition
+Dispute propagation is the process by which a single disputed transaction causes downstream risk effects across an account, merchant portfolio, or payment network. Disputes are signals that trigger automated responses in fraud models, risk scoring systems, and enforcement engines.
 
-Dispute propagation is the process by which a single disputed transaction causes downstream risk effects across an account, merchant portfolio, or payment network.
+## Why it matters
+Propagation creates delayed and indirect risk. A single chargeback is often separated by time and space from the enforcement event (like an account freeze) it triggers. Root cause analysis is difficult without tracing how signals propagate through the system.
 
-In modern payment systems, disputes are not isolated events. They are signals that trigger automated responses in fraud models, risk scoring systems, and enforcement engines. These responses can affect unrelated transactions and future payment activity.
+## Signals to monitor
+- High-confidence fraud labels in training sets
+- Rolling window dispute ratios
+- Model generalization from sparse signals
+- Cross-portfolio signal correlation
+- System-wide decline rate shifts
 
-Dispute propagation occurs through three main paths:
-
-1. **Model feedback loops**  
-Disputes are used as training labels for fraud and risk models. A localized dispute cluster can shift model behavior globally, increasing decline rates or triggering stricter controls for similar traffic.
-
-2. **Threshold-based enforcement**  
-Many processors enforce account restrictions when dispute ratios exceed predefined thresholds. Once crossed, new transactions may be delayed, held, or blocked regardless of their individual risk.
-
-3. **Policy inheritance**  
-Dispute patterns associated with one merchant, product line, or user cohort can be generalized and applied to other traffic segments, even when causal linkage is weak.
-
-Dispute propagation explains why small, localized failures can result in system-wide impact, including account freezes, reserve imposition, or sudden traffic suppression.
-
-## Key Mechanics
-
-- Disputes are treated as high-confidence fraud labels  
-- Risk thresholds operate on rolling windows  
-- Enforcement actions are applied at account or portfolio scope  
-- Models generalize from sparse but high-impact signals  
-
-## Why Dispute Propagation Matters
-
-Dispute propagation creates delayed and indirect risk. The visible failure (a chargeback) is often separated in time and space from the enforcement event it triggers. This makes root cause analysis difficult without propagation tracing.
+## Breakdown modes
+- **Model Feedback Loops**: Localized dispute clusters shifting global model behavior and increasing decline rates for similar traffic.
+- **Threshold-based Enforcement**: Crossing dispute ratios that trigger automated account restrictions (delays, holds, blocks) regardless of individual transaction risk.
+- **Policy Inheritance**: Generalizing dispute patterns from one segment (merchant, product line, or user cohort) and applying them to unrelated traffic.
 
 ## FAQ
-
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -51,7 +35,7 @@ Dispute propagation creates delayed and indirect risk. The visible failure (a ch
       "name": "What is dispute propagation?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Dispute propagation is the way chargebacks and disputes influence fraud models, thresholds, and enforcement systems, causing downstream effects on future transactions."
+        "text": "Dispute propagation is the process where chargebacks influence fraud models and enforcement systems, causing downstream effects on future transactions."
       }
     },
     {
@@ -59,7 +43,7 @@ Dispute propagation creates delayed and indirect risk. The visible failure (a ch
       "name": "Why do disputes affect unrelated transactions?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Because disputes are used as training labels and risk signals, they can alter model behavior and trigger account-level enforcement beyond the original transaction."
+        "text": "Disputes are used as training labels for fraud models. A single dispute can alter model behavior for similar transaction patterns globally."
       }
     },
     {
@@ -67,7 +51,7 @@ Dispute propagation creates delayed and indirect risk. The visible failure (a ch
       "name": "Is dispute propagation immediate?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. Effects are often delayed due to rolling windows, batch model updates, and threshold evaluations."
+        "text": "No. Effects are often delayed due to rolling window evaluations, batch model updates, and secondary threshold checks."
       }
     }
   ]
