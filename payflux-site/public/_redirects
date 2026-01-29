@@ -1,4 +1,5 @@
 /docs/*  https://app.payflux.dev/docs/:splat  200!
 /sitemap-docs.xml  https://app.payflux.dev/sitemap-docs.xml  200!
+/googlec9febe29141cc19f.html  https://app.payflux.dev/googlec9febe29141cc19f.html  200!
 /robots.txt  https://app.payflux.dev/robots.txt  200!
 /*  /index.html  200

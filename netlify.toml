@@ -16,6 +16,12 @@
   force = true
 
 [[redirects]]
+  from = "/googlec9febe29141cc19f.html"
+  to = "https://app.payflux.dev/googlec9febe29141cc19f.html"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/robots.txt"
   to = "https://app.payflux.dev/robots.txt"
   status = 200
