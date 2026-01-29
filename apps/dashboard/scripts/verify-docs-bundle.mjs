@@ -27,7 +27,8 @@ try {
     // Tripwire assertions
     const requiredKeys = [
         'index.md',
-        'risk/mechanics-payment-reserves-and-balances.md'
+        'risk/mechanics-payment-reserves-and-balances.md',
+        'verticals/payment-risk-observability-for-saas.md'
     ];
 
     const missingKeys = requiredKeys.filter(key => !data.docs[key]);
