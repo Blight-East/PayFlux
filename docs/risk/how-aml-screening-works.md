@@ -1,20 +1,29 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "AML Screening",
-  "description": "AML (Anti-Money Laundering) Screening is the mandatory process of checking customer identities against government watchlists (OFAC, UN Sanctions). It is a \"Gateway Check\" that must pass before any money can move.",
-  "about": "AML Screening",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# How AML Screening Works
+
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)
+See also: [KYC and Underwriting](./how-kyc-and-underwriting-reviews-work.md)
+
+## Definition
+AML (Anti-Money Laundering) Screening is the automated process of checking transactions and account holders against global sanctioned lists (OFAC, UN, SDNs) and Politically Exposed Persons (PEPs). It identifies "Bad Actors" before they can use the financial system to move illicit funds.
+
+## Why it matters
+Legal Survival. Violating AML laws is a criminal offense, not just a contractual one. If you process a transaction for a sanctioned entity, you are liable for massive fines and loss of your processing license. It is the "Hard Gate" of the financial world.
+
+## Signals to monitor
+- **Name Match Probability**: The % similarity between a user's name and a sanctioned entity.
+- **Geographic Proximity**: Transactions originating from or destined for high-risk/sanctioned regions.
+- **Velocity Spikes**: Sudden, unexplained jumps in transaction frequency or volume that mimic laundering patterns.
+- **Structural Anomaly**: Small, repetitive transactions designed to stay under reporting thresholds (Structuring).
+
+## Breakdown modes
+- **The False Match**: A legitimate user sharing a name with a criminal (e.g., "John Smith"), triggering a manual review.
+- **Outdated Lists**: Using a screening vendor that lags behind OFAC updates.
+- **Parsing Failures**: Automated systems missing a match due to special characters or transliteration errors (e.g., "Cyrano" vs "Kyrano").
+
+## Where observability fits
+Observability provides an audit trail of "When" and "Why" someone was screened, allowing you to prove compliance to regulators and track the "Review Queue" length to prevent operational bottlenecks.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -25,61 +34,25 @@
       "name": "What is AML Screening?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "AML (Anti-Money Laundering) Screening is the mandatory process of checking customer identities against government watchlists (OFAC, UN Sanctions). It is a \"Gateway Check\" that must pass before any money can move."
+        "text": "AML Screening is the process of checking users and transactions against global watchlists to prevent illicit money movement."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does AML Screening matter?",
+      "name": "Is screening mandatory?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Jail Time. Unlike fraud (where you lose money), AML violations result in criminal liability for executives and massive fines for the platform. It is the one area where \"Reasonable Effort\" is not enough; strict compliance is required."
+        "text": "Yes. It is a legal requirement for any entity that moves or handles money."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if there is a match?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The transaction is usually paused or frozen, and a manual review (SAR filing) may be required."
       }
     }
   ]
 }
 </script>
-
-Up: [Merchant Underwriting](./how-merchant-underwriting-works.md)
-See also: [KYC and Underwriting](./how-kyc-and-underwriting-reviews-work.md)
-
-# AML Screening
-
-## Definition
-AML (Anti-Money Laundering) Screening is the mandatory process of checking customer identities against government watchlists (OFAC, UN Sanctions). It is a "Gateway Check" that must pass before any money can move.
-
-## Why it matters
-Jail Time. Unlike fraud (where you lose money), AML violations result in criminal liability for executives and massive fines for the platform. It is the one area where "Reasonable Effort" is not enough; strict compliance is required.
-
-## Signals to monitor
-- **Hit Rate**: The % of users flagged as potential matches. (Should be < 1% for normal traffic).
-- **False Positive Rate**: The % of flags that are cleared after manual review.
-- **Review Queue Age**: How long flagged users wait for a human decision.
-
-## Breakdown modes
-- **Name Collisions**: "John Smith" matches a sanctioned individual. Without secondary data (DOB, Address), this blocks a valid user.
-- **Transliteration Errors**: Arabic/Cyrillic names translated to English differently by the user vs the watchlist.
-- **Pep Spikes**: A sudden influx of "Politically Exposed Persons" (e.g., during an election) swamping the compliance team.
-
-## Where observability fits
-- **Vendor Latency**: "The IDV provider is taking 45 seconds to respond, timing out the signup flow."
-- **Audit Trails**: Logging the exact timestamp and watchlist version used for every screen.
-- **Status Sync**: Ensuring that a user blocked in the AML tool is actually blocked in the Payment Ledger.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### Can I automate clearing hits?
-Only for obvious mismatches (e.g., different Country). True name matches usually require human eyes.
-
-### What is a PEP?
-Politically Exposed Person (Politician, Diplomat). They are not banned, but require "Enhanced Due Diligence" (EDD) to prevent bribery/corruption.
-
-### How often should I rescreen?
-Continuously. A user might be clean today but sanctioned tomorrow. Most firms rescreen daily/weekly.
-
-## See also
-- [Compliance Timing Gaps](./how-compliance-timing-gaps-form.md)
-- [KYC Reviews](./how-kyc-and-underwriting-reviews-work.md)
-- [Merchant Underwriting](./how-merchant-underwriting-works.md)

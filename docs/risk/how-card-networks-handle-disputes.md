@@ -1,20 +1,28 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Card Network Dispute Handling",
-  "description": "Network Dispute Handling is the \"Court System\" operated by Visa/Mastercard. It defines the rules of engagement for a chargeback: what evidence is admissible, who has the burden of proof, and who wins in a tie.",
-  "about": "Card Network Dispute Handling",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# How Card Networks Handle Disputes
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [How Chargebacks Propagate](./how-chargebacks-propagate.md)
+
+## Definition
+Card Networks (Visa, Mastercard, Amex) act as the "Supreme Court" of payments. They do not hold money or talk to customers; instead, they define the rules (Reason Codes) and the legal process (Arbitration) that banks must follow when a cardholder disputes a charge. 
+
+## Why it matters
+The Network is the final authority. If a merchant and an issuer cannot agree on a dispute, the Network decides. Their rules are binding and often change twice a year in "Mandate Updates." Successfully navigating a dispute requires speaking the specific "Language" of the Network's Reason Codes.
+
+## Signals to monitor
+- **Reason Code**: The specific 4-digit ID (e.g., Visa 10.4) that defines the accusation.
+- **Cycle Status**: Where the dispute is in the chain (Retrieval, Chargeback, Representment, Arbitration).
+- **Mandate Updates**: Biannual changes to trial rules and evidence requirements.
+
+## Breakdown modes
+- **Reason Code Mismatch**: Proving delivery to fight a "Card Not Present Fraud" dispute is valid. Proving delivery to fight a "Credit Not Processed" dispute is a waste of time.
+- **Arbitration Fees**: If you lose an appeal at the Network level, they charge a ~$500 "Arbitration Fee"—often more than the transaction itself.
+- **Mandate Lag**: Failing to update your evidence engine to match new Network rules for 3D Secure or recurring billing.
+
+## Where observability fits
+Observability tracks the source of the dispute rules. By monitoring Network "Mandates" and automated "Reponse Engines," you can ensure that the evidence you submit always matches the absolute latest Network requirements.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -22,69 +30,28 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is Card Network Dispute Handling?",
+      "name": "Can I email Visa to fight a dispute?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Network Dispute Handling is the \"Court System\" operated by Visa/Mastercard. It defines the rules of engagement for a chargeback: what evidence is admissible, who has the burden of proof, and who wins in a tie."
+        "text": "No. You talk to your Acquirer/Processor. They represent you to the Card Network."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does Card Network Dispute Handling matter?",
+      "name": "What is Arbitration?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Liability Shift. Understanding the rules tells you when you have already lost. For example, in a \"Cardholder Does Not Recognize\" dispute, if you didn't use 3D Secure, the Network rules say you lose automatically. No amount of evidence will save you."
+        "text": "The final stage of a dispute where the Card Network acts as a judge. The loser pays a heavy fine (~$500)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is 3D Secure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A network protocol that shifts liability for fraud disputes from the merchant to the issuing bank."
       }
     }
   ]
 }
 </script>
-
-Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
-See also: [Network Monitoring Programs](./how-network-monitoring-programs-work.md)
-
-# Card Network Dispute Handling
-
-Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
-See also:
-- [How Dispute Evidence Works](how-dispute-evidence-works.md)
-
-
-## Definition
-Network Dispute Handling is the "Court System" operated by Visa/Mastercard. It defines the rules of engagement for a chargeback: what evidence is admissible, who has the burden of proof, and who wins in a tie.
-
-## Why it matters
-Liability Shift. Understanding the rules tells you when you have already lost. For example, in a "Cardholder Does Not Recognize" dispute, if you didn't use 3D Secure, the Network rules say you lose automatically. No amount of evidence will save you.
-
-## Signals to monitor
-- **Reason Code Mix**: "Fraud" vs "Service" disputes have completely different rulebooks.
-- **Win Rates**: Your success rate in overturning disputes. (Average is 20-30%).
-- **Pre-Arb Volume**: The number of cases where the issuer rejects your evidence and demands a second round (with fees).
-
-## Breakdown modes
-- **Compelling Evidence Failure**: Submitting a text receipt when the rules require a signature.
-- **Time Bar**: Submitting evidence 1 hour after the network deadline.
-- **Currency Mismatch**: Winning the dispute but losing money on FX conversion during the reversal.
-
-## Where observability fits
-- **Deadline Tracking**: "3 days remaining to respond to Case #123."
-- **Rule Updates**: Tracking when Visa changes the definition of "Compelling Evidence" (e.g., CE 3.0).
-- **Cost/Benefit**: "It costs $15 to fight this $10 dispute. Auto-accept it."
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### Can I email Visa?
-No. You talk to your Acquirer. Your Acquirer talks to Visa.
-
-### What is Arbitration?
-The "Supreme Court." If you and the Issuer can't agree, Visa decides. The loser pays a ~$500 fine.
-
-### What is 3D Secure?
-A protocol that shifts liability for fraud disputes from You to the Issuer.
-
-## See also
-- [How Chargebacks Propagate](./how-chargebacks-propagate.md)
-- [Dispute Evidence](./how-dispute-evidence-works.md)
-- [Network vs Processor Authority](./how-network-vs-processor-authority-works.md)

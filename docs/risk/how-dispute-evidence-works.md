@@ -1,20 +1,29 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Dispute Evidence",
-  "description": "Dispute Evidence is the \"Legal Brief\" a merchant submits to fight a chargeback. It must prove the transaction was valid relative to the specific Reason Code filed by the cardholder.",
-  "about": "Dispute Evidence",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# Dispute Evidence
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Chargeback Propagation](./how-chargebacks-propagate.md), [Dispute Win Rates](./why-dispute-win-rates-vary.md)
+
+## Definition
+Dispute Evidence is the "Legal Brief" a merchant submits to fight a chargeback. It is a collection of data points—invoices, shipping proofs, logs—that must prove the transaction was valid relative to the *specific* Reason Code filed by the cardholder.
+
+## Why it matters
+Specificity Wins. Sending a tracking number for a "Fraud" dispute is useful. Sending a tracking number for a "Credit Not Processed" dispute is useless. You must answer the *specific* accusation made by the cardholder. A "Data Dump" leads to an automatic loss.
+
+## Signals to monitor
+- **Representment Rate**: The % of disputes you choose to fight vs. accept.
+- **Win Rate by Code**: "We win 40% of Fraud disputes but 0% of Service disputes."
+- **Auto-Win Potential**: Identifying cases with perfect evidence (AVS Match + 3DS Auth) that should be fought automatically.
+- **Cost/Benefit**: Tracking whether the cost of fighting a dispute ($15 processing fee) exceeds the transaction value.
+
+## Breakdown modes
+- **The Data Dump**: Uploading 50 pages of unorganized logs. The bank analyst has roughly 60 seconds to review; they will reject unorganized files.
+- **Illegible Docs**: Using blurry screenshots or tiny text that automated network scanners cannot parse.
+- **Wrong Evidence Type**: Proving delivery to "Main St" when the cardholder's billing address was "Oak St" (AVS Mismatch).
+
+## Where observability fits
+Observability automates "Asset Retrieval." By linking a Dispute ID to its original Transaction ID, the system can instantly pull the relevant invoice, shipping proof, and IP logs into a standardized PDF format designed for bank approval.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -22,64 +31,28 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is Dispute Evidence?",
+      "name": "What is 'Compelling Evidence'?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Dispute Evidence is the \"Legal Brief\" a merchant submits to fight a chargeback. It must prove the transaction was valid relative to the *specific* Reason Code filed by the cardholder."
+        "text": "A specific network term for data points (IP, Device ID, History) that link a dispute to previous undisputed transactions by the same user."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does Dispute Evidence matter?",
+      "name": "Can I submit video evidence?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Specificity. Sending a tracking number for a \"Fraud\" dispute is useful. Sending a tracking number for a \"Credit Not Processed\" dispute is useless. You must answer the *specific* accusation made by the cardholder."
+        "text": "Generally no. PDFs or JPEGs are the industry standard for network submissions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the customer see the evidence?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Often yes. The issuing bank shares it with the cardholder to confirm if they wish to proceed with the dispute."
       }
     }
   ]
 }
 </script>
-
-Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
-See also: [Chargeback Propagation](./how-chargebacks-propagate.md), [Dispute Win Rates](./why-dispute-win-rates-vary.md)
-
-# Dispute Evidence
-
-## Definition
-Dispute Evidence is the "Legal Brief" a merchant submits to fight a chargeback. It must prove the transaction was valid relative to the *specific* Reason Code filed by the cardholder.
-
-## Why it matters
-Specificity. Sending a tracking number for a "Fraud" dispute is useful. Sending a tracking number for a "Credit Not Processed" dispute is useless. You must answer the *specific* accusation made by the cardholder.
-
-## Signals to monitor
-- **Representment Rate**: The % of disputes you choose to fight.
-- **Win Rate by Code**: "We win 40% of Fraud disputes but 0% of Service disputes."
-- **Auto-Win Potential**: Identifying cases where you have perfect evidence (e.g., AVS Match + 3DS Auth).
-
-## Breakdown modes
-- **Data Dump**: Uploading 50 pages of unorganized logs. The bank analyst has 60 seconds to review; they will reject it.
-- **Illegible Docs**: blurry screenshots or tiny text.
-- **Wrong Evidence**: Proving delivery to "123 Main St" when the billing address was "456 Oak St" (AVS Mismatch).
-
-## Where observability fits
-- **Asset Retrieval**: Automatically fetching the invoice, logs, and shipping proof associated with the Transaction ID.
-- **Template Matching**: Suggesting the right response template based on the Reason Code.
-- **Outcome Analysis**: "We lost because the tracking number didn't show the 'Delivered' status."
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### What is "Compelling Evidence?"
-A specific term in Visa rules. It refers to data points (IP, Device ID, Account History) that link the dispute to previous undisputed transactions.
-
-### Can I submit video?
-Usually no. PDFs or JPEGs are the standard.
-
-### Does the customer see my evidence?
-Yes. The bank often shares it with the cardholder to say "Look, you did buy this."
-
-## See also
-- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
-- [Card Network Dispute Handling](./how-card-networks-handle-disputes.md)
-- [Dispute Win Rates](./why-dispute-win-rates-vary.md)

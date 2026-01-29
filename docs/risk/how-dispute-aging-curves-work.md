@@ -1,20 +1,28 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Dispute Aging Curves",
-  "description": "Dispute Aging Curves (Vintage Analysis) visualize the arrival of disputes over time for a specific sales cohort. It answers: \"For the sales we made in January, how many disputes have arrived by Feb? By March? By April?\"",
-  "about": "Dispute Aging Curves",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# Dispute Aging Curves
+
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also: [Liability Horizons](./how-liability-horizons-affect-payouts.md)
+
+## Definition
+Dispute Aging Curves (Vintage Analysis) visualize the arrival of disputes over time for a specific sales cohort. Instead of looking at disputes as they happen, it answers: "For the sales we made in January, how many disputes have arrived by Day 30? Day 60? Day 120?" 
+
+## Why it matters
+Forecasting. Disputes take up to 120 days to fully materialize. If you only look at "Today's Disputes," you are missing 90% of the risk from recent sales. The Curve allows you to predict the "Final Loss" of a cohort based on its early trajectory, allowing you to stop a bad marketing campaign before the bills come due.
+
+## Signals to monitor
+- **Curve Velocity**: The slope of the line. Is it flattening (Safe) or going vertical (Danger)?
+- **Day 30% Projection**: "Typically, 40% of disputes arrive by Day 30. If this month is 60%, the final rate will be 1.5x higher than normal."
+- **Cohort Delta**: Comparing the current cohort's curve against the 12-month historical average.
+
+## Breakdown modes
+- **The Long Tail**: A forgotten recurring billing charge generating a "curve spike" 11 months after the initial sale.
+- **The Delivery Spike**: A shipping failure that causes the curve to hit its maximum on Day 15 (when customers expect the goods).
+- **Cohort Rot**: A specific marketing campaign or affiliate partner bringing in users with permanently worse aging curves than organic users.
+
+## Where observability fits
+Observability provides predictive alerting. By modeling the "Expected Shape" of your curve, the system can alert you on Day 10 that a cohort is likely to breach network thresholds on Day 60, giving you 50 days to take corrective action.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -22,64 +30,28 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What are Dispute Aging Curves?",
+      "name": "How long is the tail of the curve?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Dispute Aging Curves (Vintage Analysis) visualize the arrival of disputes over time for a specific sales cohort. It answers: \"For the sales we made in January, how many disputes have arrived by Feb? By March? By April?\""
+        "text": "Usually 120 days covers 98% of disputes, though some network rules allow for up to 540 days."
       }
     },
     {
       "@type": "Question",
-      "name": "Why do Dispute Aging Curves matter?",
+      "name": "Why calculate by vintage instead of activity?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Forecasting. Disputes take up to 120 days to fully materialize. If you only look at \"Today's Disputes,\" you are missing 90% of the risk from recent sales. The Curve allows you to predict the \"Final Loss\" based on early indicators."
+        "text": "Calculating by 'Activity Month' hides the delay. Vintage is the only 'True' view of the actual loss rate of a specific sale."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I influence the curve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Better shipping notifications and active customer communication flatten the 'late' part of the curve."
       }
     }
   ]
 }
 </script>
-
-Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
-See also: [Liability Horizons](./how-liability-horizons-affect-payouts.md)
-
-# Dispute Aging Curves
-
-## Definition
-Dispute Aging Curves (Vintage Analysis) visualize the arrival of disputes over time for a specific sales cohort. It answers: "For the sales we made in January, how many disputes have arrived by Feb? By March? By April?"
-
-## Why it matters
-Forecasting. Disputes take up to 120 days to fully materialize. If you only look at "Today's Disputes," you are missing 90% of the risk from recent sales. The Curve allows you to predict the "Final Loss" based on early indicators.
-
-## Signals to monitor
-- **Shape of the Curve**: Is it flattening (Safe) or accelerating (Danger)?
-- **Day 30%**: "Typically, 40% of disputes arrive by Day 30. This month, it's 60%. Something is wrong."
-- **Expected vs Actual**: Comparing the current cohort against the 12-month average.
-
-## Breakdown modes
-- **The Long Tail**: A forgotten recurring billing charge generating disputes 11 months later.
-- **The Spike**: A shipping failure causes the curve to go vertical on Day 15 (Arrival of goods).
-- **Cohort Rot**: A specific marketing campaign brings in users with a permanently worse curve than organic users.
-
-## Where observability fits
-- **Predictive Alerting**: "Based on Day 30 data, the Jan Cohort is projected to hit 1.2% by Day 90."
-- **Marketing Feedback**: Telling the Growth team which campaigns are acquiring "Bad Curves."
-- **Reserve Modeling**: Calculating how much money needs to be held to cover the remaining tail risk.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### How long is the tail?
-Usually 120 days covers 98% of disputes. Some can go up to 540 days (rare).
-
-### Why calculate by vintage?
-Because calculating by "Activity Month" (Total Disputes / Total Sales) hides the delay. Vintage is the only "True" view of risk.
-
-### Can I change the curve?
-Yes. Better shipping/communication flattens the curve (stops late disputes).
-
-## See also
-- [Monitoring Dispute Ratios](../use-cases/monitoring-dispute-ratios.md)
-- [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
-- [How Chargebacks Propagate](./how-chargebacks-propagate.md)
