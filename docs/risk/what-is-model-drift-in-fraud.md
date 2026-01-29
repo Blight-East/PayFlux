@@ -1,58 +1,29 @@
 # What is Model Drift in Fraud?
 
-Up: [What is Model Drift in Fraud Systems?](mechanics-model-drift.md)
+Up: [Model Drift](mechanics-model-drift.md)
 See also:
 - [How Fraud Model Drift Occurs](how-fraud-model-drift-occurs.md)
 
+## Definition
+Model drift is the gradual loss of accuracy in fraud detection models as transaction patterns change over time. The model still produces scores, but the meaning of those scores degrades.
 
-Model drift is the gradual loss of accuracy in fraud detection models as transaction patterns change over time.
+## Why it matters
+Drift causes false positives to increase (blocking good users), true fraud to be missed, and trust thresholds to misalign. Decisions become based on stale assumptions, making the system unreliable.
 
-The model still produces scores, but the meaning of those scores degrades.
+## Signals to monitor
+- Rising disputes despite stable risk scores  
+- Declines increasing without fraud explanation  
+- Sudden enforcement actions  
+- Divergence between expected and observed outcomes  
+- Score distribution shifts  
 
-## How Model Drift Occurs
-
-Model drift happens when:
-- Customer behavior shifts
-- Attack strategies evolve
-- Merchant mix changes
-- Network conditions fluctuate
-
-The statistical relationship between inputs and outcomes changes.
-
-## Why Drift Is Dangerous
-
-Drift causes:
-- False positives to increase
-- True fraud to be missed
-- Trust thresholds to misalign
-- Policy decisions to be based on stale assumptions
-
-The model appears operational but becomes unreliable.
-
-## Signs of Model Drift
-
-Common indicators include:
-- Rising disputes despite stable scores
-- Declines increasing without fraud explanation
-- Sudden enforcement actions
-- Divergence between expected and observed outcomes
-
-Drift is often discovered only after consequences occur.
+## Breakdown modes
+- Customer behavior shifts  
+- Evolving attack strategies  
+- Merchant mix changes  
+- Network condition fluctuations  
 
 ## FAQ
-
-### Is model drift a bug?
-No. It is a natural effect of changing environments.
-
-### Can drift be prevented?
-Not fully. It must be detected and corrected.
-
-### Is drift the same as overfitting?
-No. Overfitting is a training problem. Drift is a deployment problem.
-
-### How often does drift occur?
-Continuously. Its impact depends on how fast the environment changes.
-
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -60,18 +31,34 @@ Continuously. Its impact depends on how fast the environment changes.
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is model drift in fraud systems?",
+      "name": "Is model drift a bug?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Model drift is when fraud detection models lose accuracy as transaction behavior changes over time."
+        "text": "No. It is a natural effect of changing environments and evolving fraud patterns."
       }
     },
     {
       "@type": "Question",
-      "name": "Why is model drift risky?",
+      "name": "Can drift be prevented?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Drift causes models to make decisions based on outdated patterns, leading to missed fraud or excessive declines."
+        "text": "Not fully. It must be detected and corrected through retraining and calibration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is drift the same as overfitting?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Overfitting is a training problem. Drift is a deployment problem where live data diverges from training data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How often does drift occur?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Continuously. Its impact depends on how fast the environment changes."
       }
     }
   ]

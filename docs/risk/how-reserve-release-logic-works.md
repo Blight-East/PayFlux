@@ -1,53 +1,61 @@
-# Reserve Release Logic
-
-Up: [What Is a Payment Reserve](what-is-a-payment-reserve.md)
-See also:
-- [What is Reserve Formation?](what-is-reserve-formation.md)
-- [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
-- [How Payout Delays Work](how-payout-delays-work.md)
-
+# How Reserve Release Logic Works
 
 Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
 See also:
-- [What is a Payment Reserve?](what-is-a-payment-reserve.md)
 - [What is Reserve Formation?](what-is-reserve-formation.md)
-
+- [What is a Payment Reserve?](what-is-a-payment-reserve.md)
 
 ## Definition
 Reserve Release Logic dictates the schedule on which collateral funds are returned to the merchant. It typically follows a "Rolling" model (funds captured on Day 1 release on Day 181) or a "Fixed" model (entire block releases when the account is closed).
 
 ## Why it matters
-Financial Planning. Merchants often treat reserves as "Lost Money." In reality, it is a forced savings account. Knowing *exactly* when that capital unlocks allows for strategic reinvestment or debt repayment.
+Financial Planning. Merchants often treat reserves as "lost money," but they are forced savings. Knowing *exactly* when capital unlocks allows for strategic reinvestment or debt repayment.
 
 ## Signals to monitor
-- **Vintage Buckets**: Tracking volume by "Processing Date" to predict "Release Date."
-- **Net Release**: The daily flow of (Released Funds - New Reserves Withheld).
-- **Release Failures**: Funds that *should* have released but didn't (System error or extended hold).
+- Vintage Buckets (Volume by processing date)  
+- Net Release Flow (Released Funds vs New Withholding)  
+- Release Failures (Funds overdue for release)  
+- Release Date Projections  
 
 ## Breakdown modes
-- **The Extension**: Processor extending the hold from 120 days to 180 days silently because of a slight uptick in refunds.
-- **The Offset**: Processor using the releasing reserve to pay off a negative balance in the *current* processing account.
-- **The Forever Hold**: Funds held indefinitely because the merchant cannot pass a closing KYB check.
+- "The Extension" (Holding funds longer due to refund upticks)  
+- "The Offset" (Using released reserves to cover current negative balances)  
+- "The Forever Hold" (Indefinite hold due to failed KYB at closure)  
+- Calculation errors in rolling windows  
 
-## Where observability fits
-- **Release Calendar**: "You have $10k releasing on Friday."
-- **Audit**: Verifying that the processor actually paid out the correct amount.
-- **Liquidity Modeling**: Including "Future Reserve Releases" as an asset class in financial reporting.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+## Implementation notes
+Observability should track a "Release Calendar" and audit that payouts match expected release amounts. Future releases should be modeled as an asset class.
 
 ## FAQ
-
-### Is the release date guaranteed?
-No. If risk increases, the processor can extend the hold.
-
-### Do I earn interest?
-Almost never. The processor keeps the float interest.
-
-### Can I request early release?
-Rarely. Only if you can prove the risk has disappeared (e.g., delivered all goods).
-
-## See also
-- [Payment Reserves](./what-is-a-payment-reserve.md)
-- [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
-- [Liability Horizons](./how-liability-horizons-affect-payouts.md)
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is the release date guaranteed?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. If risk increases, the processor can extend the hold duration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I earn interest on reserves?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Almost never. The processor typically keeps the float interest."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I request early release?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Rarely. Only if you can prove the risk has disappeared (e.g., all goods delivered and confirmed)."
+      }
+    }
+  ]
+}
+</script>

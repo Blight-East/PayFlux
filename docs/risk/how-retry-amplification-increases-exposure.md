@@ -1,45 +1,60 @@
-# Retry Amplification
+# How Retry Amplification Increases Exposure
 
-Up: [Retry Logic & Storms](mechanics-retry-logic-and-storms.md)
+Up: [Retry Amplification](mechanics-retry-amplification.md)
 See also:
 - [What is Retry Amplification?](what-is-retry-amplification.md)
 
-
 ## Definition
-Retry Amplification is the multiplier effect where a single failed transaction spawns multiple additional attempts. If a merchant retries a decline 5 times, the network sees 6 total attempts. This amplifies the "error signal" the merchant is broadcasting to the ecosystem.
+Retry Amplification Increases Exposure through a multiplier effect where a single failed transaction spawns multiple additional attempts. If a merchant retries a decline 5 times, the network sees 6 total attempts, amplifying the "error signal" the merchant is broadcasting to the ecosystem.
 
 ## Why it matters
-Network Health. Visa and Mastercard equate "High Retry Rates" with "Bot Attacks." A valid merchant with a buggy retry loop looks exactly like a brute-force attack. This leads to MID blocking and fines.
+Networks equate high retry rates with bot attacks. A valid merchant with a buggy retry loop looks exactly like a brute-force attacker, leading to MID blocking, fines, and reputation damage.
 
 ## Signals to monitor
-- **Amplification Factor**: `Total Attempts / Unique Orders`. (Should be ~1.1. If > 2.0, you have a problem).
-- **Retry Compliance**: The % of retries performed on "Hard Declines" (Illegal) vs "Soft Declines" (Legal).
-- **Error Cascades**: One gateway outage causing a 10x spike in traffic to the backup gateway.
+- Amplification Factor (Total Attempts / Unique Orders)  
+- Retry Compliance (% of retries on hard vs soft declines)  
+- Error Cascades (gateway outages triggering retry spikes)  
+- Gateway-specific error rates  
 
 ## Breakdown modes
-- **The Hammer**: Retrying 100 times in 1 second (Buggy Loop).
-- **The Zombie**: Retrying a transaction that failed 30 days ago (Stale Logic).
-- **Cross-PSP Leaks**: Retrying a blocked card on Stripe, then Adyen, then PayPal (maximizing exposure).
+- "The Hammer" (rapid-fire retries in seconds)  
+- "The Zombie" (retrying stale transactions from days ago)  
+- Cross-PSP Leaks (retrying blocked cards across multiple providers)  
+- Infinite loops due to unhandled error codes  
 
-## Where observability fits
-- **Circuit Breakers**: Detecting when the Amplification Factor spikes and auto-killing the retry worker.
-- **Cost Estimation**: "We spent $5,000 in auth fees on failed retries this month."
-- **Root Cause**: Identifying *which* decline code is triggering the loop.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+## Implementation notes
+Circuit breakers should auto-kill retry workers when the Amplification Factor spikes. Root cause analysis must identify *which* decline code is triggering the loop.
 
 ## FAQ
-
-### Why do networks care?
-Capacity. Useless retries clog the global payment rails (TPS) and look like potential DDoS or card testing.
-
-### Is there a safe retry limit?
-General rule: Max 4 retries over 15 days. Never retry a hard decline.
-
-### What is a "Hard Decline?"
-A permanent rejection (Stolen Card, Account Closed). No amount of retrying will fix it.
-
-## See also
-- [Retry Logic](./how-retry-logic-affects-risk.md)
-- [Retry Storms](../how-it-works/how-retry-storms-form.md)
-- [Transaction Monitoring](./how-transaction-monitoring-works.md)
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Why do networks care about retries?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Useless retries clog global payment capacity (TPS) and look like potential DDoS or card testing attacks."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there a safe retry limit?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "General rule: Max 4 retries over 15 days. Never retry a hard decline (e.g., Stolen Card)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a Hard Decline?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A permanent rejection (e.g., Account Closed). No amount of retrying will fix it."
+      }
+    }
+  ]
+}
+</script>

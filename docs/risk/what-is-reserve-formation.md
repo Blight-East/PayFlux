@@ -1,48 +1,31 @@
 # What is Reserve Formation?
 
-Up: [What Is a Payment Reserve](what-is-a-payment-reserve.md)
-See also:
-- [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
-- [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
-- [Why Payment Processors Freeze Funds](why-payment-processors-freeze-funds.md)
-
-
 Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
 See also:
-- [What is a Payment Reserve?](what-is-a-payment-reserve.md)
 - [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
+- [What is a Payment Reserve?](what-is-a-payment-reserve.md)
 
+## Definition
+Reserve formation is the process by which a payment processor withholds a portion of merchant funds to cover anticipated future losses. It is not triggered by a single event but forms when accumulated risk indicators exceed internal tolerances.
 
-Reserve formation is the process by which a payment processor withholds a portion of merchant funds to cover anticipated future losses.
+## Why it matters
+Reserve formation creates sudden liquidity constraints. Merchants experience it as abrupt fund withholding, often without clear warning, because the causal signals (disputes, refunds) formed over long periods.
 
-Reserves are not triggered by a single event. They form when accumulated risk indicators exceed internal thresholds related to disputes, refunds, fraud rates, or policy violations.
+## Signals to monitor
+- Risk accumulation (dispute ratios, refund velocity)  
+- Policy thresholds (internal processor limits)  
+- Liquidity protection triggers  
+- Loss projection deltas  
+- Rolling exposure estimates  
 
-Reserve formation is driven by:
-
-1. **Risk accumulation**  
-Metrics such as dispute ratios, refund velocity, and transaction reversals increase expected loss projections.
-
-2. **Policy thresholds**  
-When these projections exceed predefined tolerances, automated systems apply reserve requirements.
-
-3. **Liquidity protection logic**  
-Processors impose reserves to ensure they can cover downstream chargebacks and regulatory liabilities.
-
-Reserves are typically calculated as a percentage of future transaction volume or as a fixed amount based on historical exposure.
-
-## Key Mechanics
-
-- Rolling evaluation windows  
-- Risk-weighted exposure estimates  
-- Automated enforcement triggers  
+## Breakdown modes
+- Step-function increases  
 - Delayed visibility to merchants  
-
-## Why Reserve Formation Matters
-
-Reserve formation creates sudden liquidity constraints. Merchants often experience reserves as abrupt fund withholding without clear explanation, because the causal signals formed over long periods and across many transactions.
+- Triggering on false positives  
+- Portfolio-wide application  
+- Reserve stacking  
 
 ## FAQ
-
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",

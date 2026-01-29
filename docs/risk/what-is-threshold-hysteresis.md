@@ -2,39 +2,28 @@
 
 Up: [Risk Thresholds & Hysteresis](mechanics-risk-thresholds-and-hysteresis.md)
 See also:
-- [How Risk Threshold Events Work](how-risk-threshold-events-work.md)
+- [How Risk Threshold Hysteresis Works](../how-it-works/how-risk-threshold-hysteresis-works.md)
 
+## Definition
+Threshold hysteresis is the phenomenon where risk enforcement systems activate and deactivate at different metric levels, creating persistence in enforcement even after conditions improve. The "Exit" threshold is stricter than the "Entry" threshold.
 
-Threshold hysteresis is the phenomenon where risk enforcement systems activate and deactivate at different metric levels, creating persistence in enforcement even after conditions improve.
+## Why it matters
+Merchants may correct the original issue (e.g., lowering disputes) but remain restricted because the system requires sustained "over-performance" to release controls. This prevents rapid toggling but delays recovery.
 
-In payment systems, thresholds are used to trigger actions such as:
+## Signals to monitor
+- Entry Threshold (Activates penalty)  
+- Exit Threshold (Deactivates penalty)  
+- Hysteresis Gap (Difference between Entry and Exit)  
+- Probation Duration (Time required below Exit threshold)  
+- Oscillation Rate (frequency of entering/exiting)  
 
-- account reviews  
-- transaction throttling  
-- reserve imposition  
-- feature suspension  
-
-Hysteresis occurs when:
-
-- Enforcement activates at a high-risk threshold  
-- Deactivation requires a much lower risk level  
-- The system resists returning to its previous state  
-
-This prevents oscillation but creates delayed recovery.
-
-## Key Mechanics
-
-- Separate trigger and release thresholds  
-- Rolling average evaluation  
-- Stability bias in enforcement logic  
-- Lagged normalization  
-
-## Why Threshold Hysteresis Matters
-
-Merchants may correct the original issue but remain restricted because the system requires sustained improvement before releasing enforcement.
+## Breakdown modes
+- Enforcement persistence after fix  
+- Getting stuck in "Probation" loops  
+- Threshold stacking (multiple rules keeping account frozen)  
+- Failed exit due to single spike  
 
 ## FAQ
-
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -45,7 +34,7 @@ Merchants may correct the original issue but remain restricted because the syste
       "name": "What is threshold hysteresis?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Threshold hysteresis is when enforcement systems require much lower risk levels to deactivate controls than they did to activate them."
+        "text": "It is when enforcement systems require much lower risk levels to deactivate controls than they did to activate them."
       }
     },
     {
@@ -53,7 +42,7 @@ Merchants may correct the original issue but remain restricted because the syste
       "name": "Why is hysteresis used?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "It prevents rapid toggling of controls but increases recovery time."
+        "text": "It prevents rapid oscillation of controls (on/off flipping) and ensures risk is genuinely stabilized before releasing restrictions."
       }
     },
     {
@@ -61,7 +50,7 @@ Merchants may correct the original issue but remain restricted because the syste
       "name": "Does hysteresis cause delays?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Enforcement persists even after conditions improve."
+        "text": "Yes. Merchants often remain restricted long after their metrics have returned to 'normal' levels."
       }
     }
   ]
