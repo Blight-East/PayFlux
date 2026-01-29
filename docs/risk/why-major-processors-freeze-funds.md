@@ -1,7 +1,10 @@
 # Funds Freezes (Major Processors)
 
 Up: [Why Payment Processors Freeze Funds](why-payment-processors-freeze-funds.md)
-See also: Docs Index
+See also:
+- [Payment Reserves & Balances](what-is-a-payment-reserve.md)
+- [How Payout Delays Work](how-payout-delays-work.md)
+- [Why Processors Request Documents](why-processors-request-documents.md)
 
 Canonical: why-payment-processors-freeze-funds.md
 
