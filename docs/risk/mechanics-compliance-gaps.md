@@ -1,37 +1,54 @@
-# Compliance Gaps
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are compliance gaps?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Compliance gaps are mismatches between regulatory obligations and actual system behavior."
+      }
+    }
+  ]
+}
+</script>
 
-Compliance gaps arise when operational behavior diverges from regulatory or network requirements.
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)  
+See also: [Liability Horizons](./mechanics-liability-horizons.md)
 
-## How Gaps Form
+# What are Compliance Gaps?
 
-Compliance gaps appear when:
-- Monitoring is incomplete
-- Rules change without propagation
-- Controls are manual
-- Thresholds are outdated
-- Escalation paths are undefined
+## Definition
+Compliance gaps occur when operational systems violate regulatory expectations unintentionally.
 
-## Risk Impact
+## Why it matters
+They create:
+- enforcement risk
+- processor penalties
+- retroactive liability
+- audit failures
 
-Gaps can trigger:
-- Processor intervention
-- Forced audits
-- Account suspension
-- Fund holds
-- Contract termination
+## Causes
+- incomplete logging
+- partial KYC
+- inconsistent enforcement
+- data retention failures
 
-## Common Gap Areas
+## Breakdown modes
+- delayed detection
+- regulatory escalation
+- forced shutdowns
 
-- Dispute ratio thresholds
-- Velocity limits
-- KYC refresh intervals
-- Prohibited business detection
-- Chargeback response timing
+## Where observability fits
+- maps control coverage
+- surfaces missing enforcement
+- tracks obligation fulfillment
 
-## Example
+## FAQ
+### Are gaps intentional?
+Rarely. They usually emerge from system growth.
 
-A merchant crosses a dispute ratio threshold without alerting. Weeks later, payouts are frozen without warning.
-
-## Key Insight
-
-Compliance failures are usually structural, not malicious.
+### Do gaps always cause fines?
+No. But they always create exposure.

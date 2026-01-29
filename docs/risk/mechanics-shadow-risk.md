@@ -1,44 +1,71 @@
-# Shadow Risk
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is shadow risk in payments?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Shadow risk is financial or operational exposure created by indirect system behavior rather than explicit policy decisions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is shadow risk hard to detect?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Because it emerges from interactions between systems, not from single transactions or rules."
+      }
+    }
+  ]
+}
+</script>
 
-Shadow risk refers to latent financial and compliance exposure that is not visible in standard payment dashboards but accumulates silently through system behavior.
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)  
+See also: [Retry Amplification](./mechanics-retry-amplification.md)
 
-## What Creates Shadow Risk
+# What is Shadow Risk in Payments?
 
-Shadow risk forms when:
-- Failed payments are retried automatically without visibility
-- Disputes propagate across linked accounts
-- Reserve balances lag behind real exposure
-- Fraud signals are suppressed by aggregation
-- Compliance thresholds are crossed without alerts
+## Definition
+Shadow risk is exposure created by secondary system effects rather than direct transaction decisions.
 
-## Why It Matters
+It arises when multiple systems interact in ways not explicitly modeled:
+- retry logic
+- risk thresholds
+- monitoring automation
+- payout timing
+- compliance rules
 
-Shadow risk causes:
-- Sudden account freezes
-- Unexpected reserve increases
-- Delayed payouts
-- Compliance escalations
-- Merchant terminations
+## Why it matters
+Shadow risk accumulates silently and is usually detected only after:
+- reserves increase
+- accounts are frozen
+- dispute ratios spike
+- processors intervene
 
-These events appear sudden but are usually the result of gradual, unobserved accumulation.
+It is risk created by *system shape*, not merchant intent.
 
-## Observability Implications
+## Common sources
+- Retry loops interacting with issuer velocity limits
+- Refund logic colliding with settlement batching
+- Fraud rules reinforcing decline patterns
+- Monitoring tools triggering each other
 
-Shadow risk cannot be detected by:
-- Transaction volume alone
-- Revenue metrics
-- Simple decline rates
+## Breakdown modes
+- Latent exposure builds with no visible alerts
+- Correlation is mistaken for causation
+- Risk appears suddenly after a threshold is crossed
 
-It requires:
-- State-aware monitoring
-- Exposure tracking
-- Threshold drift detection
-- Dispute velocity tracking
+## Where observability fits
+- Tracks cross-system feedback loops
+- Surfaces accumulation patterns
+- Shows second-order effects
 
-## Example
+## FAQ
+### Is shadow risk the same as fraud?
+No. Fraud is an external adversary. Shadow risk is internal system behavior.
 
-A merchant retries failed payments aggressively. Each retry raises dispute probability. The system shows stable revenue, but dispute velocity increases. Shadow risk accumulates until the processor applies a reserve.
-
-## Key Insight
-
-Shadow risk is not a single event. It is an invisible system state.
+### Can shadow risk be eliminated?
+No. It can only be surfaced and constrained.

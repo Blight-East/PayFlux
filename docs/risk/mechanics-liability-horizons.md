@@ -1,33 +1,54 @@
-# Liability Horizons
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a liability horizon?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A liability horizon is the time window during which a transaction can create financial or legal exposure."
+      }
+    }
+  ]
+}
+</script>
 
-Liability horizons define the time window during which a processed transaction carries financial risk (e.g., chargeback liability).
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)  
+See also: [Compliance Gaps](./mechanics-compliance-gaps.md)
 
-## What Determines a Horizon
+# What is a Liability Horizon?
 
-Horizons vary based on:
-- Card network rules (typically 120 days)
-- Processor contracts
-- Regional laws
-- Delivery windows (goods vs services)
+## Definition
+A liability horizon is the period after a transaction during which reversal or dispute remains possible.
 
-## Why It Matters
+## Why it matters
+It determines:
+- reserve requirements
+- payout delays
+- accounting treatment
+- capital exposure
 
-Understanding the horizon determines:
-- Reserve release schedules
-- Exposure calculation
-- Cash flow planning
-- Tail risk estimation
+## Examples
+- Card disputes: 120–540 days
+- ACH returns: up to 60 days
+- BNPL defaults: months
+- Fraud claims: variable
 
-## Risk Dynamics
+## Breakdown modes
+- underfunded reserves
+- premature payouts
+- unexpected clawbacks
 
-- Long horizons (e.g., event tickets, travel) store risk for months.
-- Short horizons (e.g., immediate digital goods) clear risk faster.
-- Refunds typically reset or extend the horizon.
+## Where observability fits
+- maps exposure windows
+- aligns funds to risk
+- forecasts release timing
 
-## Example
+## FAQ
+### Does settlement end liability?
+No. Settlement only moves funds, not responsibility.
 
-A travel agency sells tickets 6 months in advance. The liability horizon is at least 6 months plus the claim window. A bankruptcy during this window triggers massive chargebacks.
-
-## Key Insight
-
-Cash in the bank is not profit until the liability horizon closes.
+### Are horizons fixed?
+No. They vary by network and product.

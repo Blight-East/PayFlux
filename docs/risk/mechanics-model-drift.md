@@ -1,39 +1,55 @@
-# Model Drift
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is model drift in fraud systems?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Model drift is the degradation of fraud model accuracy over time due to changing data patterns."
+      }
+    }
+  ]
+}
+</script>
 
-Model drift describes the degradation of fraud and risk model accuracy as real-world behavior changes.
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)  
+See also: [Compliance Gaps](./mechanics-compliance-gaps.md)
 
-## Causes of Drift
+# What is Model Drift in Fraud Systems?
 
-Drift occurs when:
-- Merchant behavior changes
-- Fraud patterns evolve
-- Network policies shift
-- Data distributions move
-- Models are not retrained
+## Definition
+Model drift occurs when prediction models no longer match real-world transaction behavior.
 
-The model still runs, but its assumptions become wrong.
+## Why it matters
+Drift causes:
+- rising false positives
+- missed fraud
+- unstable approval rates
+- regulatory exposure
 
-## Consequences
+## Sources of drift
+- customer behavior changes
+- fraud strategy changes
+- product changes
+- data pipeline changes
 
-Drift produces:
-- False positives
-- False negatives
-- Delayed interventions
-- Mispriced reserves
-- Unstable thresholds
+## Breakdown modes
+- Silent approval collapse
+- Sudden block waves
+- Increased disputes
+- Unexplained revenue loss
 
-## Detection
+## Where observability fits
+- Tracks outcome accuracy
+- Shows divergence trends
+- Correlates policy shifts
 
-Drift can be detected by:
-- Rising override rates
-- Performance decay over time
-- Divergence between prediction and outcome
-- Threshold instability
+## FAQ
+### Can drift be prevented?
+No. It can only be monitored and corrected.
 
-## Example
-
-A fraud model trained on card testing patterns fails to detect synthetic identity fraud, allowing exposure to grow.
-
-## Key Insight
-
-Models fail silently before they fail visibly.
+### Is drift a bug?
+No. It is a property of time.

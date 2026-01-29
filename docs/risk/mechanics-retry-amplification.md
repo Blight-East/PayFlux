@@ -1,40 +1,68 @@
-# Retry Amplification
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is retry amplification?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Retry amplification occurs when automated retries increase risk instead of reducing failure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do retries increase risk?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Because networks interpret repeated failures as abuse or fraud."
+      }
+    }
+  ]
+}
+</script>
 
-Retry amplification occurs when automated payment retries increase risk faster than they recover revenue.
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)  
+See also: [Shadow Risk](./mechanics-shadow-risk.md)
 
-## How Retry Amplification Forms
+# What is Retry Amplification?
 
-Retry amplification emerges when:
-- Declines trigger immediate retries
-- Retries are not rate-limited
-- Issuer behavior is ignored
-- Failure reasons are not segmented
+## Definition
+Retry amplification is when recovery logic (retries) increases failure rates instead of decreasing them.
 
-Instead of improving success rates, retries multiply network load and fraud scoring.
+## Why it matters
+Retries affect:
+- network velocity scores
+- fraud classifiers
+- issuer trust
+- dispute ratios
 
-## Risk Effects
+Beyond a point, retries worsen outcomes.
 
-Retry amplification increases:
-- Issuer suspicion
-- Fraud scores
-- Network flags
-- Dispute probability
-- Infrastructure costs
+## Mechanism
+1. Transaction fails
+2. System retries
+3. Issuer flags velocity
+4. More declines occur
+5. System retries again
 
-It can convert transient declines into structural risk.
+This forms a positive feedback loop.
 
-## Observable Signals
+## Breakdown modes
+- Retry storms
+- Issuer blacklisting
+- Processor throttling
+- Elevated dispute rates
 
-Indicators include:
-- Rising retry-to-success ratio
-- Increasing soft declines
-- Elevated network error codes
-- Correlated dispute spikes
+## Where observability fits
+- Shows retry clusters
+- Detects compounding loops
+- Maps decline reason shifts
 
-## Example
+## FAQ
+### Are retries always bad?
+No. They are harmful only when unconstrained.
 
-A subscription platform retries cards every 15 minutes after failure. Issuers detect velocity and downgrade trust, causing even valid cards to fail.
-
-## Key Insight
-
-Retries change system behavior. They are not neutral actions.
+### What triggers amplification?
+High-frequency retries on soft declines.
