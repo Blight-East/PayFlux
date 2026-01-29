@@ -18,7 +18,8 @@
     "autoprefixer": "^10.4.23",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-plugin-static-copy": "^3.2.0"
   },
   "dependencies": {
     "lucide-react": "^0.562.0",
