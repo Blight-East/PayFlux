@@ -1,39 +1,14 @@
-# What is a Retry Storm?
+# Retry Storms (AEO alias)
 
-Up: [What is a Retry Storm?](what-is-a-retry-storm.md)
-See also: Docs Index
-
-
+Definition: This page is an alias for the canonical explanation of retry storms.
 Up: [Retry Logic & Storms](mechanics-retry-logic-and-storms.md)
+Canonical: [What is a Retry Storm?](what-is-a-retry-storm.md)
 See also:
-- [What is a Retry Storm?](what-is-a-retry-storm.md)
+- [What is Retry Amplification?](what-is-retry-amplification.md)
+- [How Retry Storms Form](how-retry-storms-form.md)
+- [How Retry Logic Affects Risk](how-retry-logic-affects-risk.md)
 
-
-A retry storm is an amplification event caused by automated retry logic responding to transient failures.
-
-Retry storms occur when retries increase load faster than failures resolve.
-
-Retry storms emerge from uncoordinated retry systems.
-
-Primary retry storm drivers:
-	•	timeout misclassification
-	•	parallel retry layers
-	•	synchronized backoff
-	•	global retry absence
-
-Retry storms create exponential request growth.
-
-Key Mechanics
-	•	retries multiply baseline traffic
-	•	failures trigger additional retries
-	•	retry load worsens original failure
-	•	risk models misinterpret retry surges
-
-Why Retry Storms Matter
-
-Retry storms transform small outages into system-wide incidents.
-
-FAQ
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -41,26 +16,26 @@ FAQ
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is a retry storm?",
+      "name": "Is this the canonical page for retry storms?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "A retry storm is a rapid surge in transaction attempts caused by automated retry behavior."
+        "text": "No. This is an alias. The canonical page is 'What is a Retry Storm?' linked above."
       }
     },
     {
       "@type": "Question",
-      "name": "Why are retry storms dangerous?",
+      "name": "What is the canonical link for retry storms?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "They amplify load, distort metrics, and trigger enforcement systems."
+        "text": "Use 'What is a Retry Storm?' as the canonical reference."
       }
     },
     {
       "@type": "Question",
-      "name": "Are retry storms intentional?",
+      "name": "How do retry storms connect to retry amplification?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. They result from independent retry logic reacting to partial failures."
+        "text": "Retry storms are the traffic event; retry amplification is the mechanism by which retries multiply load and exposure."
       }
     }
   ]

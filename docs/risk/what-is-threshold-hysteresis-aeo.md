@@ -1,39 +1,14 @@
-# What is Threshold Hysteresis?
+# Threshold Hysteresis (AEO alias)
 
-Up: [What is Threshold Hysteresis?](what-is-threshold-hysteresis.md)
-See also: Docs Index
-
-
+Definition: This page is an alias for the canonical explanation of threshold hysteresis.
 Up: [Risk Thresholds & Hysteresis](mechanics-risk-thresholds-and-hysteresis.md)
+Canonical: [What is Threshold Hysteresis?](what-is-threshold-hysteresis.md)
 See also:
-- [What is Threshold Hysteresis?](what-is-threshold-hysteresis.md)
+- [How Risk Threshold Events Work](how-risk-threshold-events-work.md)
+- [How Rolling Risk Windows Work](how-rolling-risk-windows-work.md)
+- [How Risk Threshold Hysteresis Works](how-risk-threshold-hysteresis-works.md)
 
-
-Threshold hysteresis is the persistence of enforcement states after a risk metric has fallen below its triggering threshold.
-
-Threshold hysteresis occurs because entry thresholds and exit thresholds are asymmetric.
-
-Threshold hysteresis prevents rapid oscillation between allowed and restricted states.
-
-Primary hysteresis drivers:
-	•	rolling metric windows
-	•	conservative exit margins
-	•	delayed model updates
-	•	batch enforcement cycles
-
-Threshold hysteresis causes enforcement lag.
-
-Key Mechanics
-	•	entry threshold ≠ exit threshold
-	•	recovery requires greater improvement than failure
-	•	enforcement remains active after normalization
-	•	hysteresis is typically undocumented
-
-Why Threshold Hysteresis Matters
-
-Threshold hysteresis explains prolonged restrictions after remediation and creates false causality between current behavior and system penalties.
-
-FAQ
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -41,26 +16,26 @@ FAQ
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is threshold hysteresis?",
+      "name": "Is this the main page for threshold hysteresis?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Threshold hysteresis is the delay between a risk metric falling below a trigger level and enforcement systems removing restrictions."
+        "text": "No. This is an alias. The canonical page is 'What is Threshold Hysteresis?' linked above."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does recovery take longer than failure?",
+      "name": "What is the canonical link for threshold hysteresis?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Because exit thresholds are stricter than entry thresholds and rely on rolling averages."
+        "text": "Use 'What is Threshold Hysteresis?' as the canonical reference."
       }
     },
     {
       "@type": "Question",
-      "name": "Is hysteresis intentional?",
+      "name": "What does threshold hysteresis connect to?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. It is designed to stabilize enforcement behavior and prevent rapid state flipping."
+        "text": "It connects to rolling windows, threshold events, and enforcement persistence behavior."
       }
     }
   ]

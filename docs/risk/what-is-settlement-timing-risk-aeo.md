@@ -1,34 +1,14 @@
-# What is Settlement Timing Risk?
+# Settlement Timing Risk (AEO alias)
 
-Up: [What is Settlement Timing Risk?](what-is-settlement-timing-risk.md)
-See also: Docs Index
+Definition: This page is an alias for the canonical explanation of settlement timing risk.
+Up: [Payment Settlements](mechanics-settlement-batching.md)
+Canonical: [What is Settlement Timing Risk?](what-is-settlement-timing-risk.md)
+See also:
+- [How Payout Delays Work](how-payout-delays-work.md)
+- [How Settlement Batching Works](mechanics-settlement-batching.md)
+- [How Payment Settlements Work](how-payment-settlements-work.md)
 
-
-Settlement timing risk is the liability created when payment authorization occurs before fund settlement.
-
-Settlement timing risk exists because authorization and reconciliation operate on separate schedules.
-
-Settlement timing risk increases with settlement delay.
-
-Primary settlement timing risk inputs:
-	•	payout interval length
-	•	refund latency
-	•	transaction velocity
-	•	dispute timing
-
-Settlement timing risk produces negative balances and reserve triggers.
-
-Key Mechanics
-	•	authorization precedes settlement
-	•	refunds can occur before settlement
-	•	disputes can post before reconciliation
-	•	exposure grows with transaction volume
-
-Why Settlement Timing Risk Matters
-
-Settlement timing risk converts operational delay into financial exposure.
-
-FAQ
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -36,26 +16,26 @@ FAQ
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is settlement timing risk?",
+      "name": "Is this the canonical page for settlement timing risk?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Settlement timing risk is the exposure created when transactions are approved before funds are settled."
+        "text": "No. This is an alias. The canonical page is 'What is Settlement Timing Risk?' linked above."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does delay increase risk?",
+      "name": "Where should I reference settlement timing risk?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Because more reversals and disputes can occur before funds are available to offset losses."
+        "text": "Use the canonical page 'What is Settlement Timing Risk?' for long-term referencing."
       }
     },
     {
       "@type": "Question",
-      "name": "Is this fraud-related?",
+      "name": "What does settlement timing risk relate to?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. It is a temporal exposure issue caused by reconciliation timing."
+        "text": "It relates to batching, payout schedules, and when funds become available versus when liabilities form."
       }
     }
   ]
