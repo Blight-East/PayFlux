@@ -1,5 +1,8 @@
 [build]
   command = "npm run build"
+  
+[context.production.environment]
+  CANONICAL_SITE_URL = "https://payflux.dev"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -22,7 +22,12 @@ export async function generateMetadata({ params }: DocsPageProps): Promise<Metad
         };
     }
 
-    const canonicalUrl = `${getBaseUrl()}/docs/${doc.slug}`;
+
+    // Enforce canonical base domain = https://payflux.dev for ALL docs pages
+    const canonicalBase = 'https://payflux.dev';
+    // Handle root /docs vs sub-pages to avoid trailing slash on root if doc.slug is empty
+    const suffix = doc.slug ? `/${doc.slug}` : '';
+    const canonicalUrl = `${canonicalBase}/docs${suffix}`;
 
     return {
         title: doc.title,

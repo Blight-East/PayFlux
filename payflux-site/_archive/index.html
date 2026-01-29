@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayFlux | Early Warning for Payment Processor Risk</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/favicon.png">
+  <link rel="mask-icon" href="/favicon.svg" color="#3b82f6">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <div class="container">
+      <nav>
+        <div class="logo">PayFlux</div>
+        <a href="#early-access" class="btn">Request Access</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container text-center">
+      <h1>Payment risk doesn't fail loudly. We make it visible.</h1>
+      <p class="hero-sub">
+        PayFlux provides real-time payment observability, early warning signals, and durable proof of stability —
+        without touching the payment flow.
+      </p>
+
+      <div style="display: flex; gap: 16px; justify-content: center; margin-top: 48px;">
+        <a href="#early-access" class="btn btn-submit">Start in Pilot</a>
+        <a href="#control-levels" class="btn">View Levels of Control</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="problem-section">
+    <div class="container text-center">
+      <h2>Payment failures don't look dangerous — until they are.</h2>
+      <p class="problem-copy">
+        Payment issues don't announce themselves.<br><br>
+        They emerge gradually — as patterns, not incidents.<br><br>
+        And by the time most teams recognize them, the processor already has.
+      </p>
+      <p class="problem-solution">
+        PayFlux exists to surface those patterns early — and give teams durable proof they're operating within safe
+        bounds.
+      </p>
+    </div>
+  </section>
+
+  <section class="how-it-works-section">
+    <div class="container text-center">
+      <span class="section-title">How PayFlux Works</span>
+      <div class="how-grid">
+        <div class="how-item">
+          <h3>Live visibility into payment events</h3>
+          <p>Immediate signals from your payment flow without blocking or altering it.</p>
+        </div>
+        <div class="how-item">
+          <h3>Pattern detection across time</h3>
+          <p>Emerging risk patterns surface early — before they escalate.</p>
+        </div>
+        <div class="how-item">
+          <h3>Durable historical records</h3>
+          <p>Retained proof of stability backed by complete event history.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <div class="pricing-pilot-setup-block">
+    <section id="control-levels" class="control-levels-section">
+      <div class="container text-center">
+        <span class="section-title">Choose Your Level of Control</span>
+        <h2>Match your payment risk maturity to your business stage</h2>
+
+        <div class="tier-grid">
+          <!-- Pilot Tier -->
+          <div class="tier-card pilot">
+            <div class="tier-header">
+              <h3>Pilot</h3>
+              <p class="tier-tagline">Visibility</p>
+            </div>
+
+            <div class="tier-outcome">
+              <strong>Outcome:</strong> See emerging processor-risk patterns before they become an incident.
+            </div>
+
+            <div class="tier-for">
+              <strong>For:</strong> Teams who need signal on live traffic without changing their payment flow.
+            </div>
+
+            <div class="tier-features">
+              <p class="tier-features-label">You get immediately:</p>
+              <ul>
+                <li>Real-time processor risk warnings (observability-only)</li>
+                <li>Retry storm + silent failure detection</li>
+                <li>Risk band indicators with basic context</li>
+              </ul>
+            </div>
+
+            <div class="tier-proof">
+              <strong>Proof artifact:</strong> A defensible incident trail you can reference during disputes or
+              escalations.
+            </div>
+
+            <div class="tier-coverage">
+              <strong>Coverage:</strong> Observed-volume metering with soft thresholds. Never blocks payments.
+            </div>
+
+            <div class="tier-commercial">
+              <strong>Commercial:</strong><br>
+              $5,000 total for 90 days<br>
+              <em>Pilot is validation, not ARR.</em>
+            </div>
+
+            <a href="#early-access" class="btn btn-submit">Start a Pilot</a>
+          </div>
+
+          <!-- Growth Tier -->
+          <div class="tier-card growth">
+            <div class="tier-header">
+              <h3>Growth</h3>
+              <p class="tier-tagline">Control</p>
+            </div>
+
+            <div class="tier-outcome">
+              <strong>Outcome:</strong> Turn risk visibility into operational control and repeatability.
+            </div>
+
+            <div class="tier-for">
+              <strong>For:</strong> Teams scaling volume who need consistency and auditability.
+            </div>
+
+            <div class="tier-features">
+              <p class="tier-features-label">You get immediately:</p>
+              <ul>
+                <li>Everything in Pilot</li>
+                <li>Month-to-date coverage visibility</li>
+                <li>80% usage threshold warnings</li>
+                <li>Durable daily snapshots</li>
+              </ul>
+            </div>
+
+            <div class="tier-proof">
+              <strong>Proof artifact:</strong> Exportable record of observed behavior and response timing.
+            </div>
+
+            <div class="tier-coverage">
+              <strong>Coverage:</strong> Up to $25M observed TPV per month. Soft coverage only.
+            </div>
+
+            <div class="tier-commercial">
+              <strong>Commercial:</strong><br>
+              Starts at $2,500 / month
+            </div>
+
+            <a href="#early-access" class="btn">Move to Growth</a>
+          </div>
+
+          <!-- Scale Tier -->
+          <div class="tier-card scale">
+            <div class="tier-header">
+              <h3>Scale</h3>
+              <p class="tier-tagline">Enterprise-Safe</p>
+            </div>
+
+            <div class="tier-outcome">
+              <strong>Outcome:</strong> Operate with an enterprise-grade risk posture under scrutiny.
+            </div>
+
+            <div class="tier-for">
+              <strong>For:</strong> High-volume or high-risk merchants where processor tolerance is tight.
+            </div>
+
+            <div class="tier-features">
+              <p class="tier-features-label">You get immediately:</p>
+              <ul>
+                <li>Everything in Growth</li>
+                <li>Higher TPV coverage</li>
+                <li>Longer retention window</li>
+                <li>Multi-team visibility</li>
+              </ul>
+            </div>
+
+            <div class="tier-proof">
+              <strong>Proof artifact:</strong> A durable control record that survives "what happened last month?"
+              questions.
+            </div>
+
+            <div class="tier-coverage">
+              <strong>Coverage:</strong> Up to $100M observed TPV per month.
+            </div>
+
+            <div class="tier-commercial">
+              <strong>Commercial:</strong><br>
+              Starts at $7,500 / month
+            </div>
+
+            <a href="#early-access" class="btn">Move to Scale</a>
+          </div>
+
+          <!-- Enterprise Tier -->
+          <div class="tier-card enterprise">
+            <div class="tier-header">
+              <h3>Enterprise</h3>
+              <p class="tier-tagline">Custom Coverage</p>
+            </div>
+
+            <div class="tier-outcome">
+              <strong>Outcome:</strong> Custom coverage aligned to complex, high-volume payment programs.
+            </div>
+
+            <div class="tier-for">
+              <strong>For:</strong> $100M+ GPV programs with multiple MIDs or compliance constraints.
+            </div>
+
+            <div class="tier-features">
+              <p class="tier-features-label">You get immediately:</p>
+              <ul>
+                <li>Flat platform fee</li>
+                <li>Declining bps overage model</li>
+                <li>Custom coverage design</li>
+              </ul>
+            </div>
+
+            <div class="tier-commercial">
+              <strong>Commercial:</strong><br>
+              Typically $15k–$40k / month depending on scope
+            </div>
+
+            <a href="mailto:hello@payflux.dev" class="btn">Design an Enterprise Plan</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+
+
+
+    <section class="trust-section">
+      <div class="container text-center">
+        <h2>Built for real payment systems</h2>
+        <div class="trust-grid">
+          <div class="trust-item">
+            <p>Observability-only (never blocks payments)</p>
+          </div>
+          <div class="trust-item">
+            <p>Designed for high-risk verticals</p>
+          </div>
+          <div class="trust-item">
+            <p>Safe to deploy in production from day one</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="setup-section">
+      <div class="container">
+        <div class="setup-content">
+          <div class="setup-block">
+            <span class="section-title">Before You Start</span>
+            <p>PayFlux runs as a secure container on your infrastructure.</p>
+            <p>You'll need Docker installed:</p>
+            <ul class="setup-list">
+              <li><strong>Mac / Windows:</strong> Docker Desktop</li>
+              <li><strong>Linux:</strong> Docker Engine</li>
+            </ul>
+            <p class="setup-note">If Docker runs, PayFlux runs.</p>
+          </div>
+
+          <div class="setup-block">
+            <span class="section-title">One-Command Setup</span>
+            <p>Once Docker is installed, onboarding is a single command.</p>
+            <p>You'll connect your processor, choose your tier, and generate a ready-to-run setup — all from the
+              dashboard.</p>
+            <div class="setup-command mono">
+              <span class="command-text"><span class="text-secondary">$</span> payflux setup --tier 2</span>
+              <button class="copy-btn" aria-label="Copy setup command" onclick="copyCommand(this)">Copy</button>
+            </div>
+            <p class="text-secondary">What happens next:</p>
+            <ul class="setup-list">
+              <li>PayFlux starts locally in a secure container</li>
+              <li>A health check confirms everything is running</li>
+              <li>Warnings (Tier 2 + Pilot) appear in the dashboard automatically</li>
+              <li>You can stop everything instantly with one command</li>
+            </ul>
+            <p class="setup-note">No agents. No system changes. Nothing runs outside Docker.</p>
+          </div>
+
+          <div class="setup-block">
+            <span class="section-title">What You Get Immediately</span>
+            <ul class="setup-list">
+              <li>HTTP ingestion endpoint at <code>/ingest</code></li>
+              <li>Health check endpoint at <code>/health</code></li>
+              <li>Warnings surface in the dashboard when detected</li>
+              <li>Optional alerting sidecar forwards warnings to Slack/webhooks (Tier 2)</li>
+            </ul>
+            <p class="setup-note">That's it. No wizard fatigue. No YAML spelunking.</p>
+            <p class="setup-guardrail">PayFlux surfaces signals and operational context; it does not block payments.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="cta-section">
+    <div class="container text-center">
+      <h2>Start with visibility. Earn control.</h2>
+
+      <div class="metrics-preview">
+        <img id="metrics-img" src="assets/metrics-preview.png" alt="Prometheus metrics for processor risk score" />
+      </div>
+
+      <div id="early-access" style="margin-top: 60px;">
+        <p class="text-secondary">Request early access for v0.2.x</p>
+        <!-- ✅ Visible Netlify form -->
+        <form class="form-container" name="early-access" method="POST" data-netlify="true" netlify-honeypot="bot-field"
+          action="/success.html" style="max-width: 440px; margin: 24px auto; display: flex; gap: 12px;">
+          <input type="hidden" name="form-name" value="early-access" />
+          <p style="display:none;"><label><input name="bot-field" /></label></p>
+          <input type="email" name="email" placeholder="you@company.com" required
+            style="flex:1; padding: 12px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: #fff; outline: none;" />
+          <button type="submit" class="btn btn-submit">
+            Get Access
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ Netlify hidden form (required) -->
+  <form name="early-access" netlify netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="early-access" />
+    <input type="email" name="email" />
+    <input name="bot-field" />
+  </form>
+
+  <footer>
+    <div class="container">
+      <div class="footer-flex">
+        <div>
+          <div class="logo">PayFlux</div>
+          <div class="disclaimer">Infrastructure, not a payment processor.</div>
+        </div>
+        <div style="display: flex; gap: 24px; align-items: center;">
+          <a href="/terms" class="text-secondary" style="text-decoration: none;">Terms</a>
+          <a href="/privacy" class="text-secondary" style="text-decoration: none;">Privacy</a>
+          <a href="mailto:hello@payflux.dev" class="text-secondary" style="text-decoration: none;">hello@payflux.dev</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copyCommand(btn) {
+      const command = 'payflux setup --tier 2';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(command).then(function () {
+          btn.textContent = 'Copied';
+          setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+        }).catch(function () {
+          fallbackCopy(btn, command);
+        });
+      } else {
+        fallbackCopy(btn, command);
+      }
+    }
+    function fallbackCopy(btn, text) {
+      var textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+      } catch (e) { }
+      document.body.removeChild(textArea);
+    }
+  </script>
+
+</body>
+
+</html>
