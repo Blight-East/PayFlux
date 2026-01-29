@@ -25,6 +25,11 @@ These documents explain how payment systems behave under risk, load, and network
 - [Model Drift](risk/mechanics-model-drift.md)
 - [Compliance Gaps](risk/mechanics-compliance-gaps.md)
 - [Liability Horizons](risk/mechanics-liability-horizons.md)
+- [What Is Shadow Risk?](risk/what-is-shadow-risk.md)
+- [What Is Retry Amplification?](risk/what-is-retry-amplification.md)
+- [What Is Model Drift?](risk/what-is-model-drift-in-fraud.md)
+- [What Are Compliance Gaps?](risk/what-are-compliance-gaps.md)
+- [What Is a Liability Horizon?](risk/what-is-a-liability-horizon.md)
 
 ## 3. Applied Views (Verticals & Use Cases)
 
