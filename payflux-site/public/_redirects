@@ -1,10 +1,13 @@
+# PROXIES FIRST
 /docs/*  https://app.payflux.dev/docs/:splat  200!
 /sitemap-docs.xml  https://app.payflux.dev/sitemap-docs.xml  200!
 /robots.txt  https://app.payflux.dev/robots.txt  200!
 /googlec9febe29141cc19f.html  https://app.payflux.dev/googlec9febe29141cc19f.html  200!
 
+# STATIC LEGAL REWRITES NEXT
 /terms    /terms.html    200
 /privacy  /privacy.html  200
 /refunds  /refunds.html  200
 
+# SPA CATCH-ALL LAST
 /*  /index.html  200
