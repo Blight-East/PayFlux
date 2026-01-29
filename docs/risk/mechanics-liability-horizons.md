@@ -1,80 +1,33 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Liability Horizons",
-  "description": "Liability horizon is the time window during which a payment can generate financial exposure through refunds, disputes, reversals, or network penalties. Reserves, holds, and payout schedules are designed to keep the processor solvent across that horizon.",
-  "about": "Liability horizons in payment systems",
-  "author": { "@type": "Organization", "name": "PayFlux" },
-  "publisher": { "@type": "Organization", "name": "PayFlux" }
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "What is a liability horizon?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Liability horizon is the time window during which a payment can generate financial exposure through refunds, disputes, reversals, or network penalties. Reserves, holds, and payout schedules are designed to keep the processor solvent across that horizon."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Why do liability horizons matter?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "They explain why funds can be held after sales occur. If dispute windows extend beyond payout timing, the system must hold capital to cover potential reversals and losses."
-      }
-    }
-  ]
-}
-</script>
-
-Up: [Payment Reserves & Balances](./mechanics-payment-reserves-and-balances.md)  
-See also: [Dispute Aging Curves](./how-dispute-aging-curves-work.md), [Refunds & Reversals](./how-refunds-and-reversals-propagate.md), [Account Freezes & Holds](./mechanics-account-freezes-and-holds.md)
-
 # Liability Horizons
 
-## Definition
-Liability horizon is the time window during which a payment can generate financial exposure through refunds, disputes, reversals, or network penalties.
+Liability horizons define the time window during which a processed transaction carries financial risk (e.g., chargeback liability).
+
+## What Determines a Horizon
+
+Horizons vary based on:
+- Card network rules (typically 120 days)
+- Processor contracts
+- Regional laws
+- Delivery windows (goods vs services)
 
 ## Why It Matters
-Liability horizons explain why payment systems hold or delay funds. If the horizon of potential reversals is longer than payout timing, processors must retain capital to remain solvent and compliant with network and bank requirements.
 
-## Signals to Monitor
-- **Time-to-dispute distribution** (how many disputes arrive at T+7, T+30, T+60).
-- **Refund timing** (refunds issued soon after purchase vs long-tail refunds).
-- **Fulfillment timelines** (shipping/service delivery lag increases exposure window).
-- **Dispute aging buckets** (open cases by deadline proximity).
-- **Reserve coverage ratio** (held funds vs projected liability).
-- **Negative balance risk** (projected reversals exceeding upcoming inflows).
+Understanding the horizon determines:
+- Reserve release schedules
+- Exposure calculation
+- Cash flow planning
+- Tail risk estimation
 
-## How It Breaks Down
-- **Long-tail disputes**: disputes arrive late, after funds were already paid out.
-- **Slow fulfillment**: delayed delivery increases “services not provided” exposure.
-- **Refund friction**: customers dispute when refunds are slow or unclear.
-- **Penalty risk**: monitoring programs add costs and tighter controls when ratios exceed thresholds.
-- **Liquidity mismatch**: payouts outpace the timeline of chargebacks/refunds, forcing reserves/holds.
+## Risk Dynamics
 
-## How Risk Infrastructure Surfaces This
-A risk observability layer surfaces liability horizons by:
-- **Aging curves** for disputes and refunds to quantify exposure windows.
-- **Liability forecasts** that compare expected reversals vs future settlement inflows.
-- **Cohort analysis** to see which products/channels create longer horizons.
-- **Reserve logic explainers** that show what the system is protecting against.
+- Long horizons (e.g., event tickets, travel) store risk for months.
+- Short horizons (e.g., immediate digital goods) clear risk faster.
+- Refunds typically reset or extend the horizon.
 
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+## Example
 
-## FAQ
-### Why can my funds be held even if today’s sales look fine?
-Because liability is measured over a window. The system prices risk across the horizon, not just today’s volume.
+A travel agency sells tickets 6 months in advance. The liability horizon is at least 6 months plus the claim window. A bankruptcy during this window triggers massive chargebacks.
 
-### How do reserves relate to liability horizons?
-Reserves are capital buffers sized to cover expected losses during the horizon.
+## Key Insight
 
-### What shortens a liability horizon in practice?
-Faster fulfillment, clearer refund policies, reduced dispute ratios, and quicker customer support resolution.
+Cash in the bank is not profit until the liability horizon closes.

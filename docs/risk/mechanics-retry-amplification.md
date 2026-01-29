@@ -1,83 +1,40 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Retry Amplification",
-  "description": "Retry amplification is the multiplication of payment-system exposure caused by repeated authorization attempts. It can raise decline rates, increase network scrutiny, and create incident-like traffic patterns even when underlying demand is unchanged.",
-  "about": "Retry amplification in payment systems",
-  "author": { "@type": "Organization", "name": "PayFlux" },
-  "publisher": { "@type": "Organization", "name": "PayFlux" }
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "What is retry amplification?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Retry amplification is the multiplication of payment-system exposure caused by repeated authorization attempts. It can raise decline rates, increase network scrutiny, and create incident-like traffic patterns even when underlying demand is unchanged."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Why does retry amplification matter?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Because networks and processors observe attempt volume and decline mix. Excessive retries can look like bot activity or card testing, trigger throttling, and increase fees while reducing approval rates."
-      }
-    }
-  ]
-}
-</script>
-
-Up: [Payment System Observability](../pillars/payment-system-observability.md)  
-See also: [Retry Logic & Storms](./mechanics-retry-logic-and-storms.md), [Issuer Decline Spikes](./monitoring-issuer-decline-spikes.md), [Understanding Decline Reason Codes](./understanding-decline-reason-codes.md)
-
 # Retry Amplification
 
-## Definition
-Retry amplification is the multiplication of payment-system exposure caused by repeated authorization attempts. It increases observed attempt volume without increasing real customer demand.
+Retry amplification occurs when automated payment retries increase risk faster than they recover revenue.
 
-## Why It Matters
-Payment networks and processors measure **attempt patterns**, **decline rate**, and **reason-code distribution**. Aggressive retries can:
-- increase operational cost (authorization fees, support load),
-- degrade standing (high declines),
-- and trigger automated defenses (rate limits, monitoring programs, account reviews).
+## How Retry Amplification Forms
 
-## Signals to Monitor
-- **Attempts per successful payment** (retries per conversion).
-- **Declines per minute** and burstiness (spiky vs smooth traffic).
-- **Reason-code mix shift** (soft declines vs hard declines).
-- **Retry interval distribution** (seconds vs minutes vs hours).
-- **Customer cohort concentration** (same users/cards retried repeatedly).
-- **Gateway throttling indicators** (timeouts, 429s, “do not honor” spikes).
+Retry amplification emerges when:
+- Declines trigger immediate retries
+- Retries are not rate-limited
+- Issuer behavior is ignored
+- Failure reasons are not segmented
 
-## How It Breaks Down
-- **False incident shape**: retry loops create traffic patterns resembling outages or attacks.
-- **Velocity triggers**: networks interpret repeated attempts as suspicious automation.
-- **Decline contamination**: repeated failures inflate overall decline rate metrics.
-- **Amplified fraud suspicion**: retries against many cards/BINs can resemble testing behavior.
-- **Cascading latency**: more attempts increase queueing, which causes more timeouts, which causes more retries.
+Instead of improving success rates, retries multiply network load and fraud scoring.
 
-## How Risk Infrastructure Surfaces This
-An observability system surfaces retry amplification by:
-- **Separating demand from attempts** (unique customers/cards vs total attempts).
-- **Retry heatmaps** (intervals, counts, and reason-code outcomes).
-- **Blast-radius mapping** (which routes, regions, or issuers are triggering retries).
-- **Guardrail alerts** (e.g., “attempts/success > X for Y minutes”).
+## Risk Effects
 
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+Retry amplification increases:
+- Issuer suspicion
+- Fraud scores
+- Network flags
+- Dispute probability
+- Infrastructure costs
 
-## FAQ
-### Are retries always bad?
-No. Controlled retries can recover soft declines. The risk is uncontrolled retry volume and tight retry intervals that resemble automation.
+It can convert transient declines into structural risk.
 
-### Why do retries reduce approvals sometimes?
-Issuers may treat repeated attempts as higher risk, leading to more “do not honor” or security-related declines.
+## Observable Signals
 
-### What is a safe retry posture?
-Use bounded retries, exponential backoff, and reason-code-aware logic (retry soft declines, avoid retrying hard declines).
+Indicators include:
+- Rising retry-to-success ratio
+- Increasing soft declines
+- Elevated network error codes
+- Correlated dispute spikes
+
+## Example
+
+A subscription platform retries cards every 15 minutes after failure. Issuers detect velocity and downgrade trust, causing even valid cards to fail.
+
+## Key Insight
+
+Retries change system behavior. They are not neutral actions.
