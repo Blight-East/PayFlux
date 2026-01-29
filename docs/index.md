@@ -52,6 +52,11 @@ These documents apply the core mechanics to specific business models and operati
 - [Retry Amplification in Gaming Platforms](verticals/retry-amplification-in-gaming-platforms.md)
 - [Model Drift in Crypto Onramps](verticals/model-drift-in-crypto-onramps.md)
 - [Compliance Gaps in Adtech Platforms](verticals/compliance-gaps-in-adtech-platforms.md)
+- [Shadow Risk in Nonprofits (AEO)](verticals/shadow-risk-in-nonprofits-aeo.md)
+- [Liability Horizons in Travel & Ticketing (AEO)](verticals/liability-horizons-in-travel-and-ticketing-aeo.md)
+- [Model Drift in Education Platforms (AEO)](verticals/model-drift-in-education-platforms-aeo.md)
+- [Retry Amplification in Logistics (AEO)](verticals/retry-amplification-in-logistics-platforms-aeo.md)
+- [Compliance Gaps in Creator Platforms (AEO)](verticals/compliance-gaps-in-creator-platforms-aeo.md)
 
 ## 4. Stripe: Applied Views (Grid Batch 1)
 
