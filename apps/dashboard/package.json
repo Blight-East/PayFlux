@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npm run docs:manifest && next dev",
     "prebuild": "npm run docs:manifest",
-    "build": "next build && ([ -f src/data/docs.json ] || (echo 'Error: docs.json missing' && exit 1))",
+    "build": "next build && node scripts/verify-docs-bundle.mjs",
     "start": "next start",
     "lint": "eslint",
     "docs:manifest": "node scripts/generate-docs-manifest.mjs"
