@@ -2,6 +2,31 @@
 
 This library documents the mechanics of payment risk systems: how reserves form, how disputes propagate, how thresholds trigger, and how observability systems surface these events.
 
+## Start Here (Canonical References)
+
+### Payment Risk Mechanics
+- [Payment Reserves & Balances](risk/mechanics-payment-reserves-and-balances.md)
+- [Retry Logic & Storms](risk/mechanics-retry-logic-and-storms.md)
+- [Shadow Risk](risk/mechanics-shadow-risk.md)
+- [Model Drift](risk/mechanics-model-drift.md)
+- [Risk Thresholds & Hysteresis](risk/mechanics-risk-thresholds-and-hysteresis.md)
+
+### Disputes & Compliance
+- [Dispute Infrastructure](pillars/dispute-infrastructure.md)
+- [How Chargebacks Propagate](risk/how-chargebacks-propagate.md)
+- [How Dispute Aging Curves Work](risk/how-dispute-aging-curves-work.md)
+- [How Dispute Evidence Works](risk/how-dispute-evidence-works.md)
+- [How AML Screening Works](risk/how-aml-screening-works.md)
+
+### Enforcement & Operational Risk
+- [Why Payment Processors Freeze Funds](risk/why-payment-processors-freeze-funds.md)
+- [What Is a Payment Reserve](risk/what-is-a-payment-reserve.md)
+- [How Payout Delays Work](risk/how-payout-delays-work.md)
+- [Why Processors Request Documents](risk/why-processors-request-documents.md)
+
+### Verticals
+- [Payment Risk Observability for SaaS](verticals/payment-risk-observability-for-saas.md)
+
 ## 1. Infrastructure Pillars (Primary References)
 
 These are the top-level conceptual models for the PayFlux knowledge graph.
