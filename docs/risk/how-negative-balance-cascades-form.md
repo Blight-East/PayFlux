@@ -5,46 +5,58 @@ See also:
 - [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
 - [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
 - [Why Payment Processors Freeze Funds](why-payment-processors-freeze-funds.md)
-
+- [Monitoring Negative Balances](../use-cases/monitoring-negative-balances.md)
 
 ## Definition
-A Negative Balance Cascade is a financial chain reaction.
-Step 1: Returns exceed Sales -> Negative Balance.
-Step 2: Processor debits Bank Account -> Debit Fails (NSF).
-Step 3: Processor freezes processing -> No new Sales to fill hole.
-The merchant is trapped: they need sales to fix the balance, but can't process sales *because* of the balance.
+A Negative Balance Cascade is a financial chain reaction that occurs when returns, disputes, or fees exceed current sales. If a processor fails to debit a merchant's bank account to cover the hole, they often freeze processing entirely. The merchant is then trapped: they need new sales to clear the negative balance, but cannot process new sales *because* of the negative balance.
 
 ## Why it matters
-Existential Risk. This state kills startups. It converts an operational problem (high returns) into a terminal infrastructure problem (Loss of Ability to Transact).
+Existential Survival. This state can kill a business in days. It converts a temporary operational issue (e.g., a batch of faulty goods) into a permanent infrastructure failure where the merchant loses the ability to transact globally.
 
 ## Signals to monitor
-- **Daily Net**: (Sales - Refunds - Disputes - Fees). If < 0, danger.
-- **Bank Balance**: Ensuring operational accounts always cover at least 3 days of peak refund volume.
-- **Recovery Status**: `debit_failed` events from the processor.
+- **Daily Net Liquidity**: (Total Sales - Total Outflows). If this is consistently negative, a cascade is imminent.
+- **Settlement Availability**: Funds currently "Waiting for Payout" vs "Needed for Refunds."
+- **Processor Debit Status**: Monitoring for `debit_failed` (NSF) events from the processor's bank calls.
+- **Float Depth**: The amount of collateral or "Reserved" funds held to buffer against sudden refund surges.
 
 ## Breakdown modes
-- **The Weekend Gap**: Refunds process 24/7. Settlements (Deposits) only happen Mon-Fri. You can go massively negative on Saturday and recover on Monday, but the "Low Point" might trigger a risk freeze on Sunday.
-- **Fee Shock**: Processor debiting monthly fees ($5k) from a low-volume account, pushing it negative.
+- **The Weekend Gap**: Refunds process 24/7, but bank settlements only happen on business days. A merchant can go negative on Saturday and recover on Monday, but the "Low Point" may trigger an automated risk freeze.
+- **Fee Shock**: A processor debiting substantial monthly or annual fees from an account with low recent volume, pushing the balance into the red.
+- **Collection Trap**: A processor halting all new processing and demanding a wire transfer to clear a balance, while the merchant's only source of capital is new sales.
 
 ## Where observability fits
-- **Liquidity Monitoring**: Real-time ticker of "Available Processor Balance."
-- **Debit Prediction**: "Warning: Large negative batch closing in 2 hours. Ensure bank funds are available."
-- **Collection Tracking**: Monitoring the processor's attempts to recover funds.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
+Observability provides "Liquidity Prediction." By projecting refund volume against upcoming sales, the system can alert management to "Top-up" the processor account before the balance hits zero, avoiding an automated infrastructure freeze.
 
 ## FAQ
-
-### Can I wire money to fix it?
-Yes. Most processors allow a "Wire Top-up" to clear a negative balance.
-
-### Will they sue me?
-If the amount is large and you go silent, yes. It is a debt.
-
-### How do I prevent it?
-Keep a "Float" in your processor account (don't pay out 100% of sales daily).
-
-## See also
-- [Monitoring Negative Balances](../use-cases/monitoring-negative-balances.md)
-- [Payment Reserves](./what-is-a-payment-reserve.md)
-- [Settlement Failures](../use-cases/monitoring-settlement-failures.md)
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Can I wire money to fix a negative balance?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Most processors provide a 'Wire Top-up' instruction to clear a balance and resume processing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is 'The Weekend Gap'?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The disparity between 24/7 refund activity and the Monday-Friday schedule of the banking system that moves settlement funds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I prevent a cascade?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "By maintaining a 'Float' (a buffer of funds) in your processor account rather than paying out 100% of sales daily."
+      }
+    }
+  ]
+}
+</script>

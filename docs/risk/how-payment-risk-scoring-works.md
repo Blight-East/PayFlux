@@ -1,20 +1,31 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Payment Risk Scoring",
-  "description": "Payment Risk Scoring is the automated evaluation of merchants or transactions to estimate the probability of financial loss. These scores are composites of multiple signals and determine whether processing should be allowed, paused, or reserved.",
-  "about": "Payment Risk Scoring",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# How Payment Risk Scoring Works
+
+Up: [Risk Detection Infrastructure](./mechanics-risk-detection-infrastructure.md)
+See also:
+- [Multi-Signal Correlation](./how-multi-signal-correlation-affects-risk.md)
+- [Transaction Monitoring](./how-transaction-monitoring-works.md)
+
+## Definition
+Payment Risk Scoring is the mathematical process of assigning a "Probability of Fraud" to every transaction. By analyzing hundreds of data points (IP, Device ID, Card History), risk engines produce a numerical score (e.g., 0-100) that dictates whether to Approve, Challenge (3DS), or Decline a payment in real-time.
+
+## Why it matters
+Precision and Conversion. A crude "Block all foreign IPs" rule blocks good sales. A refined "Risk Score" allows a merchant to set specific thresholds for risk appetite—accepting a 10% risk on a $5 coffee, but requiring 100% certainty for a $5,000 laptop. It turns a binary "Yes/No" into a nuanced "Maybe."
+
+## Signals to monitor
+- **Score Distribution**: Visualizing how many transactions fall into "Low," "Medium," and "High" risk buckets.
+- **Precision vs. Recall**: Measuring how many blocked transactions were actually fraud vs. how much fraud was missed.
+- **Feature Importance**: Identifying which signals (e.g., Email Age, AVS Match) are currently driving the highest scores.
+- **Latency**: The time taken (in milliseconds) for the score to be calculated.
+
+## Breakdown modes
+- **Model Drift**: A fraud model becoming less accurate over time as fraudster tactics evolve.
+- **Cold Start Problem**: Having zero historical data for a new user, leading to "Average" scores that might be too high or too low.
+- **Over-fitting**: A model becoming so specific to past attacks that it blocks legitimate new users with similar (but valid) profiles.
+
+## Where observability fits
+Observability provides "Score Explainability." Instead of a generic "Declined by Risk," the system can tell you: "This transaction hit a score of 85 because of a 3-way mismatch between IP, BIN, and Shipping Address." This allows support teams to override false positives with confidence.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -22,65 +33,28 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is Payment Risk Scoring?",
+      "name": "What is a good risk score?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Payment Risk Scoring is the automated evaluation of merchants or transactions to estimate the probability of financial loss. These scores are composites of multiple signals (velocity, disputes, credit history) and determine whether processing should be allowed, paused, or reserved."
+        "text": "It depends on the provider (e.g., Stripe Radar uses 0-100). Generally, lower is safer. Every merchant defines their own 'Cut-off' based on their margins."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does Payment Risk Scoring matter?",
+      "name": "Can I see the reason for a score?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Scoring systems replace human intuition with statistical probability. They enable processors to manage millions of merchants at scale. However, because they are automated, they can produce \"false positives\" where legitimate businesses are penalized for anomalous but benign behavior."
+        "text": "Yes, high-end risk engines provide 'Reason Codes' (e.g., 'Velocity Violation') that explain the contributing factors."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the score ever change?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The score is fixed at the moment of Transaction, but the *Model* that produces it is updated frequently based on new data."
       }
     }
   ]
 }
 </script>
-
-Up: [Payment System Observability](../pillars/payment-system-observability.md)
-See also: [Transaction Monitoring](./how-transaction-monitoring-works.md), [Fraud Model Drift](./how-fraud-model-drift-occurs.md)
-
-# Payment Risk Scoring
-
-## Definition
-Payment Risk Scoring is the automated evaluation of merchants or transactions to estimate the probability of financial loss. These scores are composites of multiple signals (velocity, disputes, credit history) and determine whether processing should be allowed, paused, or reserved.
-
-## Why it matters
-Scoring systems replace human intuition with statistical probability. They enable processors to manage millions of merchants at scale. However, because they are automated, they can produce "false positives" where legitimate businesses are penalized for anomalous but benign behavior.
-
-## Signals to monitor
-- **Score Changes**: Shifts in proprietary risk levels (if exposed via API).
-- **Velocity Limit Trips**: Hitting daily/weekly transaction count ceilings.
-- **Gateway Alerts**: Warnings about "High Risk" transactions.
-- **Degraded States**: Slow degradation in approval rates (often a proxy for internal risk downgrades).
-
-## Breakdown modes
-- **Concept Drift**: The model's training data becoming outdated, leading to wrong classification.
-- **Feedback Loops**: A lower score causing restricted processing, which causes weird volume patterns, which lowers the score further.
-- **Signal Outage**: A missing input (e.g., credit bureau down) causing the model to default to a "Safe" (restrictive) mode.
-
-## Where observability fits
-- **Factor Isolation**: Identifying which specific metric (e.g., refund rate) is dragging the score down.
-- **Trend Analysis**: Visualizing the risk trajectory *before* it hits a penalty threshold.
-- **Model Comparison**: Benchmarking performance across different payment processors.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### Can I see my risk score?
-Rarely. Most processors keep the exact score hidden to prevent gaming. You must infer it from the actions they take (reserves, limits).
-
-### How do I improve my score?
-Consistency is key. Smooth volume, low disputes, and quick responses to information requests build "trust" in the model variables.
-
-### Is the score fair?
-It is "statistically rational" for the processor, but not always "fair" to the individual. Automated models optimize for portfolio protection, not individual merchant growth.
-
-## See also
-- [Fraud Model Drift](./how-fraud-model-drift-occurs.md)
-- [Rolling Risk Windows](./how-rolling-risk-windows-work.md)
-- [Multi-Signal Correlation](./how-multi-signal-correlation-affects-risk.md)

@@ -1,20 +1,31 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Network Monitoring Programs",
-  "description": "Network Monitoring Programs (such as Visa's VFMP or Mastercard's ECP) are enforcement frameworks operated by Card Networks to police merchant behavior. They set strict thresholds for disputes and fraud.",
-  "about": "Network Monitoring Programs",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# Network Monitoring Programs
+
+Up: [Payment Risk Events](../pillars/payment-risk-events.md)
+See also:
+- [Monitoring Dispute Ratios](../use-cases/monitoring-dispute-ratios.md)
+- [How Card Networks Handle Disputes](./how-card-networks-handle-disputes.md)
+
+## Definition
+Network Monitoring Programs (e.g., Visa VFMP, Mastercard ECP) are mandatory enforcement cycles triggered when a merchant's monthly dispute or fraud ratio exceeds network-defined thresholds (usually 0.9% and $75,000). Once "qualified," a merchant enters a multi-month period of increased scrutiny, fines, and potential loss of processing privileges.
+
+## Why it matters
+Financial and Operational Penalties. Entering a program is not just a warning; it often results in immediate "Fine per Dispute" (e.g., $50-$100 extra per chargeback) and a loss of the right to fight (represent) certain disputes. Failure to "exit" the program within a set timeframe (often 12 months) leads to permanent termination of the merchant account.
+
+## Signals to monitor
+- **Dispute Ratio (Count)**: Number of disputes divided by the number of transactions in the previous month.
+- **Fraud Ratio (Value)**: Total dollar volume of fraud-coded disputes divided by total processed volume.
+- **Threshold Proximity**: Warnings when metrics approach 0.6% (Visa's Warning level).
+- **Hysteresis Counters**: Tracking consecutive "clean" months required to exit the program.
+
+## Breakdown modes
+- **The "Month 3" Spike**: Having two clean months and then spiking in month 3, resetting the 12-month exit clock back to zero.
+- **Late reporting**: Discovering you were qualified for a program weeks after the fact because the processor's reporting lag.
+- **Threshold Crashing**: High volumes of small sales causing a count-based ratio to breach even when dollar volume remains low.
+
+## Where observability fits
+Observability provides early warning and recovery forecasting. By tracking your ratios in real-time, the system can predict program qualification before the networks send a notification, allowing you to dilute the ratio with "clean" sales or pause risky traffic immediately.
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -22,70 +33,28 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What are Network Monitoring Programs?",
+      "name": "What are Visa VFMP and Mastercard VMP?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Network Monitoring Programs (such as Visa's **VFMP** or Mastercard's **ECP**) are enforcement frameworks operated by Card Networks to police merchant behavior. They set strict thresholds for disputes and fraud. Exceeding these thresholds places a merchant in a \"program\" involving fines, remediation plans, and potential termination."
+        "text": "These are monitoring programs that enforce strict limits on fraud and dispute ratios. Breach of these limits leads to fines and account termination."
       }
     },
     {
       "@type": "Question",
-      "name": "Why do Network Monitoring Programs matter?",
+      "name": "How long does it take to exit a program?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "These programs are the \"Supreme Court\" mandates of payments. While a processor might tolerate risk, they *cannot* tolerate a network violation. Entering a program is an existential threat to a merchant account, often leading to immediate reserves or closure to protect the processor."
+        "text": "Typically 3 to 12 consecutive months of performance below the limit, depending on the severity level (Standard vs. Excessive)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the penalty for being in a program?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Penalties include monthly fines (starting at $1k-$5k), per-dispute surcharges, and the potential loss of ability to process certain cards."
       }
     }
   ]
 }
 </script>
-
-Up: [Card Network Rules](./mechanics-card-network-rules.md)
-See also: [Risk Thresholds and Hysteresis](./mechanics-risk-thresholds-and-hysteresis.md)
-
-# Network Monitoring Programs
-
-Up: [How Transaction Monitoring Works](how-transaction-monitoring-works.md)
-See also:
-- [Risk Thresholds & Hysteresis](mechanics-risk-thresholds-and-hysteresis.md)
-
-
-## Definition
-Network Monitoring Programs (such as Visa's **VFMP** or Mastercard's **ECP**) are enforcement frameworks operated by Card Networks to police merchant behavior. They set strict thresholds for disputes and fraud. Exceeding these thresholds places a merchant in a "program" involving fines, remediation plans, and potential termination.
-
-## Why it matters
-These programs are the "Supreme Court" mandates of payments. While a processor might tolerate risk, they *cannot* tolerate a network violation. Entering a program is an existential threat to a merchant account, often leading to immediate reserves or closure to protect the processor.
-
-## Signals to monitor
-- **Dispute-to-Sales Ratio**: The key metric (typically monitored against 0.9% or 1.8%).
-- **Fraud-to-Sales Ratio**: Calculated using TC40/SAFE data (reported fraud) vs sales.
-- **Program Identification**: Specific flags in processor reports indicating `VDMP` or `ECP` status.
-- **Remediation Timelines**: Countdown clocks for exiting the program (usually requiring 3 clean months).
-
-## Breakdown modes
-- **The Denominator Effect**: Sales volume drops (seasonality), but dispute counts stay flat (lagging), causing the *ratio* to spike above 0.9%.
-- **Program Graduation**: Moving from "Standard" (warnings) to "Excessive" (heavy fines) programs.
-- **Fine Allocation**: Unexpected large debits appearing on the settlement statement.
-
-## Where observability fits
-- **Forecasting**: Predicting month-end ratios based on real-time data to warn of breaches *before* they happen.
-- **Fine Liability**: Calculating potential fines based on current tiering.
-- **Root Cause Isolation**: determining *which* bin or geo is driving the program breach.
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### Can I just pay the fine?
-For a while, yes. But eventually (usually after 12 months), the networks will force the acquirer to close your account. You cannot "pay to play" indefinitely.
-
-### Who pays the fine?
-The Network fines the Acquirer. The Acquirer passes the fine (plus a markup) to You.
-
-### How do I exit?
-You typically need 3 consecutive months below the threshold (e.g., < 0.9%) to "graduate" out of the program. One bad month resets the clock.
-
-## See also
-- [Network vs Processor Authority](./how-network-vs-processor-authority-works.md)
-- [Decline Reason Codes](./understanding-decline-reason-codes.md)
-- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)

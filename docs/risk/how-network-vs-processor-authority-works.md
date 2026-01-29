@@ -1,20 +1,30 @@
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "Network vs Processor Authority",
-  "description": "The Authority Hierarchy defines who has the final say in a risk decision. Network (Lawmakers) -> Issuing Bank (Judges) -> Processor (Enforcers).",
-  "about": "Network vs Processor Authority",
-  "author": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "PayFlux"
-  }
-}
-</script>
+# Network vs. Processor Authority
+
+Up: [Risk Thresholds](./how-risk-threshold-events-work.md)
+See also:
+- [How Card Networks Handle Disputes](./how-card-networks-handle-disputes.md)
+- [How Network Monitoring Programs Work](./how-network-monitoring-programs-work.md)
+
+## Definition
+Network vs. Processor Authority refers to the hierarchy of rules and enforcement in the payment ecosystem. **Network Authority** (Visa/Mastercard) sets global mandates and liability rules, while **Processor Authority** (Stripe/Adyen) implements those rules and adds their own risk layers to protect their banking licenses.
+
+## Why it matters
+The "Silent Conflict." Sometimes a transaction is valid according to the Network but blocked by the Processor (or vice-versa). Understanding who made the "Decline" decision is critical for troubleshooting—you cannot fix a Network-level mandate issue by changing Processor-level settings.
+
+## Signals to monitor
+- **Response Source**: Identifying which layer generated an error code (Gateway, Processor, or Network).
+- **Mandate Drift**: Discrepancies between what the Network requires (e.g., 3DS) and what the Processor enforces.
+- **Decline Reason codes**: Mapping generic "Declined" messages to specific Network-level reason bits (e.g., "NSF" vs "Do Not Honor").
+
+## Breakdown modes
+- **Over-zealous Processors**: A processor blocking a valid sale because their internal model is more conservative than the card issuer's.
+- **Network Mandate Violations**: A processor failing to pass a required 3DS signal, leading to an automatic Network-level fine for the merchant.
+- **Lapsed Authority**: A processor's certificate or credential expiring, causing all Network requests to fail globally.
+
+## Where observability fits
+Observability provides "Identity Attribution" for declines. By decoding the response codes and tracing the request path, the system can tell you: "This wasn't a bank decline; your processor's risk model blocked this before it ever reached the Network."
+
+## FAQ
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -22,72 +32,28 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is the Network vs Processor Authority hierarchy?",
+      "name": "Who has the final say on a payment?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The Authority Hierarchy defines who has the final say in a risk decision.\nLevel 1: **Card Network** (Visa/MC) - The Lawmakers.\nLevel 2: **Issuing Bank** (Chase/Citi) - The Judges (Decide disputes).\nLevel 3: **Acquirer/Processor** (Stripe/Adyen) - The Enforcers (Manage the merchant)."
+        "text": "The Issuing Bank (the user's bank) has the final 'Yes/No,' but the Network and Processor can both block it before it reaches the bank."
       }
     },
     {
       "@type": "Question",
-      "name": "Why does the Authority Hierarchy matter?",
+      "name": "Can my processor ignore network rules?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Appeals. You can appeal a Processor decision (e.g., a Reserve). You typically *cannot* appeal a Network decision (e.g., MATCH list placement) without a lawyer. Knowing who made the call tells you if it's worth fighting."
+        "text": "No. Processors must follow network mandates or face multi-million dollar fines and loss of license."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why did my processor block a sale the bank approved?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Processors often have 'Pre-processing' risk filters designed to prevent fraud from reaching the network, which helps maintain the processor's own standing with banks."
       }
     }
   ]
 }
 </script>
-
-Up: [Card Network Rules](./mechanics-card-network-rules.md)
-See also: [Network Monitoring Programs](./how-network-monitoring-programs-work.md)
-
-# Network vs. Processor Authority
-
-Up: [How Transaction Monitoring Works](how-transaction-monitoring-works.md)
-See also:
-- [Network Monitoring Programs](how-network-monitoring-programs-work.md)
-
-
-## Definition
-The Authority Hierarchy defines who has the final say in a risk decision.
-Level 1: **Card Network** (Visa/MC) - The Lawmakers.
-Level 2: **Issuing Bank** (Chase/Citi) - The Judges (Decide disputes).
-Level 3: **Acquirer/Processor** (Stripe/Adyen) - The Enforcers (Manage the merchant).
-
-## Why it matters
-Appeals. You can appeal a Processor decision (e.g., a Reserve). You typically *cannot* appeal a Network decision (e.g., MATCH list placement) without a lawyer. Knowing who made the call tells you if it's worth fighting.
-
-## Signals to monitor
-- **Source of Action**: Did the email cite "Network Compliance" or "Terms of Service"?
-- **Program Name**: "VFMP" = Visa (Network). "High Risk Monitoring" = Processor.
-- **Scope**: Is the action specific to one card brand (Network) or the whole account (Processor)?
-
-## Breakdown modes
-- **The Squeeze**: The Network fines the Processor for your behavior. The Processor passes the fine to you + adds a markup.
-- **The Firewall**: The Processor suspends you preemptively to *prevent* the Network from noticing you.
-- **The Conflict**: Processor wants to keep you (Revenue), Network wants to ban you (Risk). Network wins.
-
-## Where observability fits
-- **Policy Tracing**: Tagging every incident with its Source Authority.
-- **Rule alignment**: Ensuring your internal controls match the *strictest* authority (usually the Network).
-- **Communication**: "This 25% reserve is a Processor decision, not a Visa one. We can negotiate."
-
-> Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
-
-## FAQ
-
-### Can a processor ignore Visa?
-No. They will lose their license to process.
-
-### Who is "The Scheme?"
-"The Scheme" is European terminology for "Card Network" (Visa/Mastercard schemes).
-
-### Why is the processor so strict?
-They are liable. If you go bust, they pay your fines. They are protecting their own balance sheet.
-
-## See also
-- [Card Network Rules](../how-it-works/how-card-network-rule-changes-affect-merchants.md)
-- [Network Monitoring Programs](./how-network-monitoring-programs-work.md)
-- [Merchant Underwriting](./how-merchant-underwriting-works.md)
