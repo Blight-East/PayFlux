@@ -45,6 +45,13 @@ See also: [Document Requests](./why-processors-request-documents.md)
 
 # KYC and Underwriting Reviews
 
+Up: [Why Processors Request Documents](why-processors-request-documents.md)
+See also:
+- [Merchant Underwriting](how-merchant-underwriting-works.md)
+- [How AML Screening Works](how-aml-screening-works.md)
+- [Why Payment Processors Freeze Funds](why-payment-processors-freeze-funds.md)
+
+
 Up: [How AML Screening Works](how-aml-screening-works.md)
 See also:
 - [Merchant Underwriting](how-merchant-underwriting-works.md)

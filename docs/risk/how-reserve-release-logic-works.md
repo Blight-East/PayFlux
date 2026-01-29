@@ -1,5 +1,12 @@
 # Reserve Release Logic
 
+Up: [What Is a Payment Reserve](what-is-a-payment-reserve.md)
+See also:
+- [What is Reserve Formation?](what-is-reserve-formation.md)
+- [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+- [How Payout Delays Work](how-payout-delays-work.md)
+
+
 Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
 See also:
 - [What is a Payment Reserve?](what-is-a-payment-reserve.md)

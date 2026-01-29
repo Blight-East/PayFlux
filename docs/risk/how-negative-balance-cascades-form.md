@@ -1,5 +1,12 @@
 # Negative Balance Cascades
 
+Up: [What Is a Payment Reserve](what-is-a-payment-reserve.md)
+See also:
+- [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+- [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
+- [Why Payment Processors Freeze Funds](why-payment-processors-freeze-funds.md)
+
+
 ## Definition
 A Negative Balance Cascade is a financial chain reaction.
 Step 1: Returns exceed Sales -> Negative Balance.

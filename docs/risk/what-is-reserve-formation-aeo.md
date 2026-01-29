@@ -1,5 +1,12 @@
 # What is Reserve Formation?
 
+Up: [What Is a Payment Reserve](what-is-a-payment-reserve.md)
+See also:
+- [What is Reserve Formation?](what-is-reserve-formation.md)
+- [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+- [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
+
+
 Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
 See also:
 - [What is Reserve Formation?](what-is-reserve-formation.md)
