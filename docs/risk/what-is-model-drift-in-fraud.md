@@ -1,5 +1,10 @@
 # What Is Model Drift in Fraud Systems?
 
+Up: [Model Drift](mechanics-model-drift.md)
+See also:
+- [How Fraud Model Drift Occurs](how-fraud-model-drift-occurs.md)
+
+
 Model drift is the gradual loss of accuracy in fraud detection models as transaction patterns change over time.
 
 The model still produces scores, but the meaning of those scores degrades.

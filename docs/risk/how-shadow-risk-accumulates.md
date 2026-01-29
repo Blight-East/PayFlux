@@ -45,6 +45,11 @@ See also: [Risk Growth Correlation](./mechanics-risk-growth-correlation.md)
 
 # Shadow Risk
 
+Up: [Shadow Risk](mechanics-shadow-risk.md)
+See also:
+- [What is Shadow Risk?](what-is-shadow-risk.md)
+
+
 ## Definition
 Shadow Risk is the accumulation of exposure that has not yet appeared on a dashboard. It includes "Authorized but not Settled" transactions, "In-Transit" refunds, and "Pre-Dispute" inquiries. It is the invisible liability that causes sudden account freezes.
 

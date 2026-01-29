@@ -1,5 +1,11 @@
 # Payment Reserves
 
+Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+See also:
+- [What is Reserve Formation?](what-is-reserve-formation.md)
+- [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
+
+
 ## Definition
 A Payment Reserve is a capital protection mechanism where a processor temporarily withholds a portion of a merchant's settled funds. This capital acts as collateral covering potential future liabilities, such as refunds, disputes, or fines, which may occur after the original transaction date.
 

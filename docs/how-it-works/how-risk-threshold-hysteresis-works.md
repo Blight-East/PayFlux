@@ -1,5 +1,10 @@
 # Risk Threshold Hysteresis
 
+Up: [Risk Thresholds & Hysteresis](../risk/mechanics-risk-thresholds-and-hysteresis.md)
+See also:
+- [What is Threshold Hysteresis?](../risk/what-is-threshold-hysteresis.md)
+
+
 ## Definition
 Hysteresis describes a system where the state depends on its history. In payments, it means the **Exit Threshold** (to leave a penalty program) is lower/stricter than the **Entry Threshold** (to enter it). Once you break a rule, you must "over-correct" to return to normal.
 

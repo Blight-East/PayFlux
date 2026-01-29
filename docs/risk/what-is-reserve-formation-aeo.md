@@ -1,5 +1,10 @@
 # What is Reserve Formation?
 
+Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+See also:
+- [What is Reserve Formation?](what-is-reserve-formation.md)
+
+
 Reserve formation is the mechanism by which a payment processor or acquiring bank withholds merchant funds to offset predicted future liability.
 
 Reserve formation converts probabilistic risk into immediate balance restriction.

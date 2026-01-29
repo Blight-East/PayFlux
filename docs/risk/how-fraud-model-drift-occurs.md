@@ -45,6 +45,11 @@ See also: [Risk Model Retraining Lag](./mechanics-risk-thresholds-and-hysteresis
 
 # Fraud Model Drift
 
+Up: [Model Drift](mechanics-model-drift.md)
+See also:
+- [What is Model Drift?](what-is-model-drift-in-fraud.md)
+
+
 ## Definition
 Model Drift is the subtle decay of a fraud model's accuracy over time. As fraud patterns evolve (e.g., from stolen cards to account takeovers), a static model catches less fraud (False Negatives) and blocks more good users (False Positives).
 

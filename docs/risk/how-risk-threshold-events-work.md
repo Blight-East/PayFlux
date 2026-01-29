@@ -1,5 +1,10 @@
 # Risk Threshold Events
 
+Up: [Risk Thresholds & Hysteresis](mechanics-risk-thresholds-and-hysteresis.md)
+See also:
+- [What is Threshold Hysteresis?](what-is-threshold-hysteresis.md)
+
+
 ## Definition
 A Risk Threshold Event is a programmatic trigger that fires when a merchant's metrics breach a pre-defined safety limit. Unlike a "Review," which is investigative, a Threshold Event is executive: it applies an immediate consequence (Reserve, Freeze, Fee).
 

@@ -1,5 +1,10 @@
 # Retry Amplification
 
+Up: [Retry Logic & Storms](mechanics-retry-logic-and-storms.md)
+See also:
+- [What is Retry Amplification?](what-is-retry-amplification.md)
+
+
 ## Definition
 Retry Amplification is the multiplier effect where a single failed transaction spawns multiple additional attempts. If a merchant retries a decline 5 times, the network sees 6 total attempts. This amplifies the "error signal" the merchant is broadcasting to the ecosystem.
 

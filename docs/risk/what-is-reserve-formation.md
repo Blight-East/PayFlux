@@ -1,5 +1,11 @@
 # What is Reserve Formation?
 
+Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+See also:
+- [What is a Payment Reserve?](what-is-a-payment-reserve.md)
+- [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
+
+
 Reserve formation is the process by which a payment processor withholds a portion of merchant funds to cover anticipated future losses.
 
 Reserves are not triggered by a single event. They form when accumulated risk indicators exceed internal thresholds related to disputes, refunds, fraud rates, or policy violations.

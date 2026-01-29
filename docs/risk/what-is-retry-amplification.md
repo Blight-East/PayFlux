@@ -1,5 +1,10 @@
 # What Is Retry Amplification?
 
+Up: [Retry Logic & Storms](mechanics-retry-logic-and-storms.md)
+See also:
+- [How Retry Amplification Increases Exposure](how-retry-amplification-increases-exposure.md)
+
+
 Retry amplification occurs when a payment failure causes multiple follow-on attempts that multiply system exposure rather than resolving it.
 
 It is not a single retry. It is the growth of transaction volume caused by retries.

@@ -1,5 +1,10 @@
 # What Is Shadow Risk in Payments?
 
+Up: [Shadow Risk](mechanics-shadow-risk.md)
+See also:
+- [How Shadow Risk Accumulates](how-shadow-risk-accumulates.md)
+
+
 Shadow risk is exposure that exists inside a payment system but is not visible in primary risk metrics. It accumulates through secondary effects such as retries, partial authorizations, delayed disputes, and processor-side heuristics that are not directly observable by the merchant.
 
 Shadow risk is not fraudulent activity itself. It is risk that forms indirectly through system behavior.

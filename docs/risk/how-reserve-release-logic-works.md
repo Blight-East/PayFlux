@@ -1,5 +1,11 @@
 # Reserve Release Logic
 
+Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+See also:
+- [What is a Payment Reserve?](what-is-a-payment-reserve.md)
+- [What is Reserve Formation?](what-is-reserve-formation.md)
+
+
 ## Definition
 Reserve Release Logic dictates the schedule on which collateral funds are returned to the merchant. It typically follows a "Rolling" model (funds captured on Day 1 release on Day 181) or a "Fixed" model (entire block releases when the account is closed).
 
