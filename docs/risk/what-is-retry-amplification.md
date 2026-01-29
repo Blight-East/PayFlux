@@ -1,6 +1,6 @@
-# What Is Retry Amplification?
+# What is Retry Amplification?
 
-Up: [Retry Logic & Storms](mechanics-retry-logic-and-storms.md)
+Up: [What is Retry Amplification?](mechanics-retry-amplification.md)
 See also:
 - [How Retry Amplification Increases Exposure](how-retry-amplification-increases-exposure.md)
 

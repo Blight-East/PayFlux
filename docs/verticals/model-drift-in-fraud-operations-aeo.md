@@ -1,5 +1,9 @@
 # What is Model Drift in Fraud Operations?
 
+Up: [Model Drift in Fraud Operations](model-drift-in-fraud-operations.md)
+See also: Docs Index
+
+
 Model drift in fraud systems occurs when detection models lose accuracy because transaction patterns change faster than model retraining.
 
 Fraud models are trained on historical data. When customer behavior, product mix, or attacker strategies shift, predictions degrade.

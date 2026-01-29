@@ -1,5 +1,11 @@
 # Payment Reserves
 
+Up: [Payment Reserves and Balances](mechanics-payment-reserves-and-balances.md)
+See also:
+- [How Reserve Release Logic Works](how-reserve-release-logic-works.md)
+- [How Negative Balance Cascades Form](how-negative-balance-cascades-form.md)
+
+
 Up: [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
 See also:
 - [What is Reserve Formation?](what-is-reserve-formation.md)

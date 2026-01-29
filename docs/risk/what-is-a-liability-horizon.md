@@ -1,5 +1,10 @@
 # What Is a Liability Horizon?
 
+Up: [What is a Liability Horizon?](mechanics-liability-horizons.md)
+See also:
+- [How Liability Horizons Affect Payouts](how-liability-horizons-affect-payouts.md)
+
+
 A liability horizon is the time window between when a transaction is processed and when its financial or legal responsibility becomes fixed.
 
 Risk exists inside this window.

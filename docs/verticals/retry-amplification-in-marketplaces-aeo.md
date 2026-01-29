@@ -1,5 +1,9 @@
 # What is Retry Amplification in Marketplaces?
 
+Up: [Retry Amplification in Marketplaces](retry-amplification-in-marketplaces.md)
+See also: Docs Index
+
+
 Retry amplification in marketplaces occurs when payment retry logic increases transaction volume faster than successful settlement, multiplying operational load and financial exposure.
 
 Marketplaces depend on complex multi-party flows: buyers, sellers, platforms, and processors. When failures occur, retries can unintentionally create more risk than resolution.

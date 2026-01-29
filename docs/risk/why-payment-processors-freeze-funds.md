@@ -35,6 +35,7 @@ Yes. It is in the Terms of Service. It looks like "Theft," but it is "Collateral
 Until the risk is resolved, or the Liability Horizon expires (120 days).
 
 ## See also
-- [Why Major Processors Freeze Funds](./why-major-processors-freeze-funds.md)
+Up: Operational Risk
+See also: [Why Major Processors Freeze Funds](./why-major-processors-freeze-funds.md)
 - [Payment Reserves](./what-is-a-payment-reserve.md)
 - [Merchant Underwriting](./how-merchant-underwriting-works.md)

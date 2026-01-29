@@ -1,5 +1,9 @@
 # What is a Liability Horizon for Aggregators?
 
+Up: [Liability Horizons for Aggregators](liability-horizons-for-aggregators.md)
+See also: Docs Index
+
+
 A liability horizon is the maximum time window during which a transaction can still generate financial loss after initial settlement.
 
 For aggregators, liability persists beyond payout because:

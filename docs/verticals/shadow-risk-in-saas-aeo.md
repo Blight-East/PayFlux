@@ -1,5 +1,9 @@
 # What is Shadow Risk in SaaS Payments?
 
+Up: [Shadow Risk in SaaS](shadow-risk-in-saas.md)
+See also: Docs Index
+
+
 Shadow risk in SaaS payments refers to financial exposure that is not visible in real-time balance or risk systems but accumulates through delayed failures such as refunds, disputes, retries, and partner reversals.
 
 In SaaS businesses, revenue is often recognized immediately while liabilities emerge later. This creates a time gap between perceived financial health and actual exposure.

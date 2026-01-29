@@ -2,6 +2,11 @@
 
 Up: [Chargeback Propagation](how-chargebacks-propagate.md)
 See also:
+- [How Refunds and Reversals Propagate](how-refunds-and-reversals-propagate.md)
+
+
+Up: [Chargeback Propagation](how-chargebacks-propagate.md)
+See also:
 - [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
 - [How Dispute Aging Curves Work](how-dispute-aging-curves-work.md)
 

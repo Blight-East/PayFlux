@@ -1,5 +1,9 @@
 # What is Settlement Timing Risk?
 
+Up: [What is Settlement Timing Risk?](what-is-settlement-timing-risk.md)
+See also: Docs Index
+
+
 Settlement timing risk is the liability created when payment authorization occurs before fund settlement.
 
 Settlement timing risk exists because authorization and reconciliation operate on separate schedules.

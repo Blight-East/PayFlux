@@ -1,6 +1,6 @@
-# What Is Shadow Risk in Payments?
+# What is Shadow Risk?
 
-Up: [Shadow Risk](mechanics-shadow-risk.md)
+Up: [What is Shadow Risk in Payments?](mechanics-shadow-risk.md)
 See also:
 - [How Shadow Risk Accumulates](how-shadow-risk-accumulates.md)
 

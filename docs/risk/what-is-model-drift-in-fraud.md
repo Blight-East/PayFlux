@@ -1,6 +1,6 @@
-# What Is Model Drift in Fraud Systems?
+# What is Model Drift in Fraud?
 
-Up: [Model Drift](mechanics-model-drift.md)
+Up: [What is Model Drift in Fraud Systems?](mechanics-model-drift.md)
 See also:
 - [How Fraud Model Drift Occurs](how-fraud-model-drift-occurs.md)
 

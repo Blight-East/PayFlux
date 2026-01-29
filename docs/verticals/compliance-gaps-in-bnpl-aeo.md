@@ -1,5 +1,9 @@
 # What are Compliance Gaps in BNPL?
 
+Up: [Compliance Gaps in BNPL](compliance-gaps-in-bnpl.md)
+See also: Docs Index
+
+
 Compliance gaps in Buy-Now-Pay-Later (BNPL) systems are mismatches between operational flows and regulatory reporting requirements.
 
 BNPL platforms combine:

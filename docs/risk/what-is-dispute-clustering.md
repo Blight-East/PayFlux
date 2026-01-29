@@ -1,5 +1,10 @@
 # What is Dispute Clustering?
 
+Up: [Dispute Aging Curves](how-dispute-aging-curves-work.md)
+See also:
+- [How Dispute Reserve Feedback Loops Work](how-dispute-reserve-feedback-loops-work.md)
+
+
 Up: [Chargeback Propagation](how-chargebacks-propagate.md)
 See also:
 - [How Chargebacks Propagate](how-chargebacks-propagate.md)

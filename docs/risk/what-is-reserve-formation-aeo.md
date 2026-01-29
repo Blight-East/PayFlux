@@ -1,5 +1,9 @@
 # What is Reserve Formation?
 
+Up: [What is Reserve Formation?](what-is-reserve-formation.md)
+See also: Docs Index
+
+
 Up: [What Is a Payment Reserve](what-is-a-payment-reserve.md)
 See also:
 - [What is Reserve Formation?](what-is-reserve-formation.md)
