@@ -1,0 +1,27 @@
+[build]
+  base = "payflux-site"
+  command = "npm run build"
+  publish = "payflux-site/dist"
+
+[[redirects]]
+  from = "/docs/*"
+  to = "https://app.payflux.dev/docs/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sitemap-docs.xml"
+  to = "https://app.payflux.dev/sitemap-docs.xml"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "https://app.payflux.dev/robots.txt"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
