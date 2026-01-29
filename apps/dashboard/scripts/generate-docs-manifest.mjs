@@ -60,6 +60,10 @@ try {
     const docsData = getAllDocs(DOCS_DIR);
     const fileCount = Object.keys(docsData).length;
 
+    if (fileCount === 0) {
+        throw new Error(`No markdown files found in ${DOCS_DIR}. Check path resolution.`);
+    }
+
     // Sort keys
     const sortedData = {};
     const fileList = [];
