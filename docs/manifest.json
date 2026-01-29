@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-29T18:33:09.965Z",
+  "generatedAt": "2026-01-29T18:39:55.123Z",
   "basePath": "docs",
   "files": [
     "AUTH_DENIAL_METRICS.md",
@@ -89,8 +89,11 @@
     "use-cases/stripe-monitoring-payment-reserves.md",
     "use-cases/stripe-monitoring-payout-delays.md",
     "use-cases/stripe-understanding-decline-reason-codes.md",
+    "verticals/compliance-gaps-in-bnpl-aeo.md",
     "verticals/compliance-gaps-in-bnpl.md",
+    "verticals/liability-horizons-for-aggregators-aeo.md",
     "verticals/liability-horizons-for-aggregators.md",
+    "verticals/model-drift-in-fraud-operations-aeo.md",
     "verticals/model-drift-in-fraud-operations.md",
     "verticals/payment-risk-observability-for-aggregators.md",
     "verticals/payment-risk-observability-for-bnpl.md",
@@ -100,7 +103,9 @@
     "verticals/payment-risk-observability-for-psps.md",
     "verticals/payment-risk-observability-for-saas.md",
     "verticals/payment-risk-observability-for-subscription-businesses.md",
+    "verticals/retry-amplification-in-marketplaces-aeo.md",
     "verticals/retry-amplification-in-marketplaces.md",
+    "verticals/shadow-risk-in-saas-aeo.md",
     "verticals/shadow-risk-in-saas.md",
     "verticals/stripe-risk-observability-for-aggregators.md",
     "verticals/stripe-risk-observability-for-bnpl.md",
