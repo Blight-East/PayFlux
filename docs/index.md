@@ -20,6 +20,11 @@ These documents explain how payment systems behave under risk, load, and network
 - [Risk Thresholds & Hysteresis](risk/mechanics-risk-thresholds-and-hysteresis.md)
 - [Chargeback Propagation](risk/how-chargebacks-propagate.md)
 - [Payment Settlements](risk/mechanics-payment-settlements.md)
+- [Shadow Risk](risk/mechanics-shadow-risk.md)
+- [Retry Amplification](risk/mechanics-retry-amplification.md)
+- [Risk Model Drift](risk/mechanics-model-drift.md)
+- [Compliance Gaps](risk/mechanics-compliance-gaps.md)
+- [Liability Horizons](risk/mechanics-liability-horizons.md)
 
 ## 3. Applied Views (Verticals & Use Cases)
 
