@@ -8,22 +8,22 @@ See also:
 Fraud Model Drift is the subtle decay of a fraud model's accuracy over time. As fraud patterns evolve (e.g., from stolen cards to account takeovers), a static model catches less fraud (False Negatives) and blocks more good users (False Positives).
 
 ## Why it matters
-Drift is a silent failure. Unlike a server crash, it does not trigger an immediate alert. It manifests as a slow increase in chargebacks or a gradual decline in conversion rates over months.
+Drift is a silent failure. Unlike a server crash, it does not trigger an immediate alert. It manifests as a slow increase in chargebacks or a gradual decline in conversion rates over months. Decisions become based on stale assumptions, making the system unreliable.
 
 ## Signals to monitor
-- Score Distribution (average score shifting over time)  
-- Approval Rate Erosion (steady drop without policy changes)  
-- Top Feature Shift (primary block reasons changing)  
-- Precision/Recall decay on high-risk rules  
+- **Score Distribution Shift**: The average risk score shifting over time without changes in traffic quality.
+- **Approval Rate Erosion**: A steady drop in successful transactions without policy changes.
+- **Top Feature Shift**: Changes in which signals (e.g., location, device) are primary block drivers.
+- **Precision/Recall Decay**: The model becoming less accurate at predicting which transactions are actually fraud.
 
 ## Breakdown modes
-- Concept Drift (definition of "Fraud" changes)  
-- Data Drift (input data characteristics change, e.g., mobile vs desktop)  
-- Adversarial Adaptation (fraudsters bypassing static rules)  
-- Seasonality (temporary drift during holidays)  
+- **Concept Drift**: The fundamental definition of what constitutes "Fraud" changes in the marketplace.
+- **Data Drift**: Baseline characteristics of incoming data change (e.g., a sudden shift from desktop to mobile users).
+- **Adversarial Adaptation**: Fraudsters identifying and intentionally bypassing static rules or model features.
+- **Seasonality**: Temporary drift during holidays where shopper behavior differs from the training baseline.
 
-## Implementation notes
-Observability involves baseline comparison (overlaying current vs past score curves) and shadow modeling (running new models in listen mode).
+## Where observability fits
+Observability involves baseline comparison—overlaying current vs. past score curves—and "Shadow Modeling" to run new models in listen mode before deployment. It ensures that model decay is detected before it leads to significant revenue loss or dispute spikes.
 
 ## FAQ
 <script type="application/ld+json">
@@ -36,7 +36,7 @@ Observability involves baseline comparison (overlaying current vs past score cur
       "name": "How often should models retrain?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Ideally continuously. Practically, most payment systems retrain weekly or bi-weekly."
+        "text": "Ideally continuously. Practically, most payment systems retrain weekly or bi-weekly to incorporate new fraud patterns."
       }
     },
     {
@@ -44,7 +44,7 @@ Observability involves baseline comparison (overlaying current vs past score cur
       "name": "Can I detect drift manually?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. If manual review queues fill with obvious approvals, the model has likely drifted (became too strict)."
+        "text": "Yes. If manual review queues fill with obvious approvals, the model has likely drifted and become too strict."
       }
     },
     {

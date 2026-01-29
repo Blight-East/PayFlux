@@ -3,27 +3,28 @@
 Up: [Retry Amplification](mechanics-retry-amplification.md)
 See also:
 - [What is Retry Amplification?](what-is-retry-amplification.md)
+- [How Retry Logic Affects Risk](./how-retry-logic-affects-risk.md)
 
 ## Definition
-Retry Amplification Increases Exposure through a multiplier effect where a single failed transaction spawns multiple additional attempts. If a merchant retries a decline 5 times, the network sees 6 total attempts, amplifying the "error signal" the merchant is broadcasting to the ecosystem.
+Retry Amplification increases exposure through a multiplier effect where a single failed transaction spawns multiple additional attempts. It is the transition from a single failure to a "flood" of transaction volume that increases the surface area for disputes and network penalties.
 
 ## Why it matters
-Networks equate high retry rates with bot attacks. A valid merchant with a buggy retry loop looks exactly like a brute-force attacker, leading to MID blocking, fines, and reputation damage.
+Reputation and Fines. Card networks equate high retry rates with bot attacks or card testing. A merchant with a buggy retry loop looks exactly like a brute-force attacker to an upstream algorithm, leading to blocked Merchant IDs (MIDs), heavy fines, and permanent reputation damage with issuing banks.
 
 ## Signals to monitor
-- Amplification Factor (Total Attempts / Unique Orders)  
-- Retry Compliance (% of retries on hard vs soft declines)  
-- Error Cascades (gateway outages triggering retry spikes)  
-- Gateway-specific error rates  
+- **Amplification Factor**: The ratio of total transaction attempts divided by the number of unique orders.
+- **Retry Compliance**: The percentage of retries performed on "Soft" vs. "Hard" declines.
+- **Error Cascades**: Gateway or processor outages triggering automated retry spikes across a user base.
+- **PSP Specificity**: Tracking whether specific processors are more prone to amplifying failures.
 
 ## Breakdown modes
-- "The Hammer" (rapid-fire retries in seconds)  
-- "The Zombie" (retrying stale transactions from days ago)  
-- Cross-PSP Leaks (retrying blocked cards across multiple providers)  
-- Infinite loops due to unhandled error codes  
+- **The Hammer**: Rapid-fire retries occurring within seconds of each other, triggering anti-DDOS and velocity blocks.
+- **The Zombie**: An automated system retrying stale or already-cancelled transactions from days or weeks ago.
+- **Cross-PSP Leaks**: Retrying a blocked or fraudulent card across multiple different payment providers, broadcasting risk to the entire ecosystem.
+- **Infinite Loops**: Code failures that cause a system to retry indefinitely due to unhandled or misinterpreted error codes.
 
-## Implementation notes
-Circuit breakers should auto-kill retry workers when the Amplification Factor spikes. Root cause analysis must identify *which* decline code is triggering the loop.
+## Where observability fits
+Observability acts as a "Circuit Breaker." By monitoring the Amplification Factor in real-time, the system can automatically kill retry workers if a spike is detected, preventing a localized error from becoming a network-level reputation disaster.
 
 ## FAQ
 <script type="application/ld+json">
@@ -36,7 +37,7 @@ Circuit breakers should auto-kill retry workers when the Amplification Factor sp
       "name": "Why do networks care about retries?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Useless retries clog global payment capacity (TPS) and look like potential DDoS or card testing attacks."
+        "text": "Useless retries clog global banking capacity and are a primary indicator of card testing and automated fraud attacks."
       }
     },
     {
@@ -44,7 +45,7 @@ Circuit breakers should auto-kill retry workers when the Amplification Factor sp
       "name": "Is there a safe retry limit?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "General rule: Max 4 retries over 15 days. Never retry a hard decline (e.g., Stolen Card)."
+        "text": "The general network guideline is max 4 retries over 15 days. You should never retry a permanent 'Hard Decline'."
       }
     },
     {
@@ -52,7 +53,7 @@ Circuit breakers should auto-kill retry workers when the Amplification Factor sp
       "name": "What is a Hard Decline?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "A permanent rejection (e.g., Account Closed). No amount of retrying will fix it."
+        "text": "A permanent rejection (e.g., Account Closed or Stolen Card) that can never result in a successful authorization via retry."
       }
     }
   ]

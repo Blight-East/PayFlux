@@ -6,24 +6,25 @@ See also:
 - [What is a Payment Reserve?](what-is-a-payment-reserve.md)
 
 ## Definition
-Reserve formation is the process by which a payment processor withholds a portion of merchant funds to cover anticipated future losses. It is not triggered by a single event but forms when accumulated risk indicators exceed internal tolerances.
+Reserve formation is the process by which a payment processor withholds a portion of a merchant's processed revenue to cover anticipated future losses from disputes or fraud. While it is often seen as a sudden event, it is actually the culmination of a processor's risk engine identifying that accumulated exposure has exceeded a "Safe" tolerance.
 
 ## Why it matters
-Reserve formation creates sudden liquidity constraints. Merchants experience it as abrupt fund withholding, often without clear warning, because the causal signals (disputes, refunds) formed over long periods.
+Liquidity Constraints. Reserve formation is the primary cause of sudden cash flow shortages for growing merchants. Because the causal signals (like a slow rise in disputes) often form over long periods, the resulting "Formation Event" can feel abrupt and catastrophic to operational planning.
 
 ## Signals to monitor
-- Risk accumulation (dispute ratios, refund velocity)  
-- Policy thresholds (internal processor limits)  
-- Liquidity protection triggers  
-- Loss projection deltas  
-- Rolling exposure estimates  
+- **Aggregate Risk Accumulation**: Sustained high dispute ratios or large volumes of unproven delivery.
+- **Internal Processor Limits**: Approaching the "Exposure Cap" assigned to a merchant account during underwriting.
+- **Liquidity Protection Triggers**: Automated rules that fire during high-velocity growth periods.
+- **Loss Projection Deltas**: The difference between what the processor *expected* to lose vs. what they are *actually* losing.
 
 ## Breakdown modes
-- Step-function increases  
-- Delayed visibility to merchants  
-- Triggering on false positives  
-- Portfolio-wide application  
-- Reserve stacking  
+- **Step-Function Increases**: A reserve jumping from 0% to 10% overnight due to a single high-risk alert.
+- **Silent Formation**: Processors beginning to withhold a "Rolling Reserve" without sending an explicit email notification or dashboard alert.
+- **Triggering on False Positives**: A sudden, legitimate marketing success being flagged as "Suspicious Growth," leading to unnecessary fund withholding.
+- **Reserve Stacking**: Multiple types of reserves (Rolling + Minimum + Fixed) being applied simultaneously, completely halting payouts.
+
+## Where observability fits
+Observability provides early detection of the signals that lead to formation. By tracking "Exposure-at-Risk" using the same internal metrics as the processor, merchants can negotiate lower reserves or provide collateral proofs before the automatic withholding begins.
 
 ## FAQ
 <script type="application/ld+json">
@@ -36,7 +37,7 @@ Reserve formation creates sudden liquidity constraints. Merchants experience it 
       "name": "What is reserve formation?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Reserve formation is when a payment processor withholds funds from a merchant account to cover projected future losses from disputes or fraud."
+        "text": "Reserve formation is when a payment processor begins withholding funds from your payouts to cover projected losses from future disputes or fraud."
       }
     },
     {
@@ -44,7 +45,7 @@ Reserve formation creates sudden liquidity constraints. Merchants experience it 
       "name": "What causes a reserve to be applied?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Reserves are triggered when accumulated risk metrics such as dispute rates or refund volumes exceed internal thresholds."
+        "text": "It is triggered when risk metrics—such as dispute rates, refund volumes, or sudden growth spikes—exceed the processor's internal thresholds."
       }
     },
     {
@@ -52,7 +53,7 @@ Reserve formation creates sudden liquidity constraints. Merchants experience it 
       "name": "Are reserves applied instantly?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. They result from cumulative risk signals evaluated over time."
+        "text": "The enforcement is often instant, but the decision is usually based on cumulative risk signals evaluated over an extended period."
       }
     }
   ]
