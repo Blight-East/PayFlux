@@ -43,7 +43,12 @@
 Up: [Card Network Rules](./mechanics-card-network-rules.md)
 See also: [Network Monitoring Programs](./how-network-monitoring-programs-work.md)
 
-# Network vs Processor Authority
+# Network vs. Processor Authority
+
+Up: [How Transaction Monitoring Works](how-transaction-monitoring-works.md)
+See also:
+- [Network Monitoring Programs](how-network-monitoring-programs-work.md)
+
 
 ## Definition
 The Authority Hierarchy defines who has the final say in a risk decision.

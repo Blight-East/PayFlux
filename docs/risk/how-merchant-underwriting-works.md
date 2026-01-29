@@ -45,6 +45,11 @@ See also: [KYC and Underwriting](./how-kyc-and-underwriting-reviews-work.md)
 
 # Merchant Underwriting
 
+Up: [How AML Screening Works](how-aml-screening-works.md)
+See also:
+- [KYC and Underwriting Reviews](how-kyc-and-underwriting-reviews-work.md)
+
+
 ## Definition
 Merchant Underwriting is the risk assessment process performed by processors and acquiring banks to evaluate a business's eligibility for payment accounts. It analyzes creditworthiness, business model risk, and fraud exposure both at onboarding and continuously throughout the relationship.
 

@@ -45,6 +45,11 @@ See also: [Document Requests](./why-processors-request-documents.md)
 
 # KYC and Underwriting Reviews
 
+Up: [How AML Screening Works](how-aml-screening-works.md)
+See also:
+- [Merchant Underwriting](how-merchant-underwriting-works.md)
+
+
 ## Definition
 KYC (Know Your Customer) Reviews are operational checkpoints where a human or system audits a user's identity and business model. Unlike the initial *Underwriting Model*, this refers to the ongoing *Recertification* or *Audit* process triggered by risk alerts.
 

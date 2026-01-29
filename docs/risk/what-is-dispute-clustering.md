@@ -1,5 +1,11 @@
 # What is Dispute Clustering?
 
+Up: [Chargeback Propagation](how-chargebacks-propagate.md)
+See also:
+- [How Chargebacks Propagate](how-chargebacks-propagate.md)
+- [How Dispute Evidence Works](how-dispute-evidence-works.md)
+
+
 Dispute clustering is the grouping of chargebacks around shared attributes.
 
 Dispute clustering occurs across time, product, geography, or user cohort.

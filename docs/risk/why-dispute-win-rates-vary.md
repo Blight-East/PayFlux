@@ -45,6 +45,11 @@ See also: [Dispute Evidence](./how-dispute-evidence-works.md)
 
 # Dispute Win Rates
 
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also:
+- [How Dispute Evidence Works](how-dispute-evidence-works.md)
+
+
 ## Definition
 The Dispute Win Rate is the percentage of chargebacks fully overturned in the merchant's favor. `(Won / Total Disputes)`. It measures the effectiveness of the evidence submission process.
 

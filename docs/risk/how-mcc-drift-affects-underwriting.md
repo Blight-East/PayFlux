@@ -45,6 +45,11 @@ See also: [Card Network Rules](./mechanics-card-network-rules.md)
 
 # MCC Drift
 
+Up: [How Transaction Monitoring Works](how-transaction-monitoring-works.md)
+See also:
+- [Merchant Underwriting](how-merchant-underwriting-works.md)
+
+
 ## Definition
 MCC (Merchant Category Code) Drift occurs when a business evolves (or pivots) away from its original classification. A bookstore (MCC 5942, Low Risk) that starts selling Crypto (MCC 6051, High Risk) has "Drifted."
 

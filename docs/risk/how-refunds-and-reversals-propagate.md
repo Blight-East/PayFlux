@@ -45,6 +45,11 @@ See also: [Refund Abuse Patterns](./how-refund-abuse-patterns-work.md)
 
 # Refunds and Reversals
 
+Up: [Chargeback Propagation](how-chargebacks-propagate.md)
+See also:
+- [How Chargebacks Propagate](how-chargebacks-propagate.md)
+
+
 ## Definition
 Refunds and Reversals are the mechanisms for returning funds to a cardholder. A **Reversal** (or Void) cancels an authorized transaction *before* it settles. A **Refund** returns funds *after* settlement via a new credit transaction.
 

@@ -45,6 +45,11 @@ See also: [Risk Thresholds and Hysteresis](./mechanics-risk-thresholds-and-hyste
 
 # Network Monitoring Programs
 
+Up: [How Transaction Monitoring Works](how-transaction-monitoring-works.md)
+See also:
+- [Risk Thresholds & Hysteresis](mechanics-risk-thresholds-and-hysteresis.md)
+
+
 ## Definition
 Network Monitoring Programs (such as Visa's **VFMP** or Mastercard's **ECP**) are enforcement frameworks operated by Card Networks to police merchant behavior. They set strict thresholds for disputes and fraud. Exceeding these thresholds places a merchant in a "program" involving fines, remediation plans, and potential termination.
 

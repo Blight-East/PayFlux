@@ -45,6 +45,11 @@ See also: [Network Monitoring Programs](./how-network-monitoring-programs-work.m
 
 # Card Network Dispute Handling
 
+Up: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+See also:
+- [How Dispute Evidence Works](how-dispute-evidence-works.md)
+
+
 ## Definition
 Network Dispute Handling is the "Court System" operated by Visa/Mastercard. It defines the rules of engagement for a chargeback: what evidence is admissible, who has the burden of proof, and who wins in a tie.
 

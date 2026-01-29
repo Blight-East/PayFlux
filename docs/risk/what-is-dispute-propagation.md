@@ -1,5 +1,11 @@
 # What is Dispute Propagation?
 
+Up: [Chargeback Propagation](how-chargebacks-propagate.md)
+See also:
+- [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
+- [How Dispute Aging Curves Work](how-dispute-aging-curves-work.md)
+
+
 Dispute propagation is the process by which a single disputed transaction causes downstream risk effects across an account, merchant portfolio, or payment network.
 
 In modern payment systems, disputes are not isolated events. They are signals that trigger automated responses in fraud models, risk scoring systems, and enforcement engines. These responses can affect unrelated transactions and future payment activity.

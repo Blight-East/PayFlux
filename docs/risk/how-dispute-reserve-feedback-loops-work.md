@@ -45,6 +45,11 @@ See also: [Dispute Infrastructure](../pillars/dispute-infrastructure.md)
 
 # Dispute-Reserve Feedback Loops
 
+Up: [Chargeback Propagation](how-chargebacks-propagate.md)
+See also:
+- [Payment Reserves & Balances](mechanics-payment-reserves-and-balances.md)
+
+
 ## Definition
 A Feedback Loop is a dangerous "Death Spiral" where a Risk action (Reserve) worsens the very metric it monitors (Disputes).
 Reserve -> Cash Flow Crunch -> Service Failure -> Customer Anger -> More Disputes -> Higher Reserve.
