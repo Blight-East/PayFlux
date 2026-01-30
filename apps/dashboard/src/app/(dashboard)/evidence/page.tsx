@@ -24,6 +24,12 @@ interface EvidenceData {
     };
 }
 
+function getStatusColor(status: 'OK' | 'DEGRADED' | 'VIOLATION') {
+    if (status === 'OK') return 'bg-green-500';
+    if (status === 'DEGRADED') return 'bg-amber-500';
+    return 'bg-red-500 pulse';
+}
+
 function EvidenceContent() {
     const searchParams = useSearchParams();
     const fixture = searchParams.get('fixture');
@@ -88,7 +94,7 @@ function EvidenceContent() {
                         <div className="text-sm font-mono text-zinc-300">{lastSync}</div>
                     </div>
                     <div className="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${status === 'OK' ? 'bg-green-500' : status === 'DEGRADED' ? 'bg-amber-500' : 'bg-red-500 pulse'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${getStatusColor(status)}`}></div>
                         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{fixture ? `Fixture: ${fixture}` : 'Live'}</span>
                     </div>
                 </div>
