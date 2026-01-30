@@ -234,7 +234,7 @@ const Home = () => {
                             <p className="text-[14px] text-slate-400 mb-10 flex-grow text-center leading-relaxed font-medium">Designed to prove value and earn trust. Surface early signals without commitment.</p>
                             <div className="pt-10 border-t border-white/5 text-center">
                                 <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-8">Pilot fee: $5,000 / 90 days</div>
-                                <button className="w-full py-5 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-slate-200 transition-all">Start Pilot</button>
+                                <button onClick={() => document.getElementById('start-pilot').scrollIntoView({ behavior: 'smooth' })} className="w-full py-5 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-slate-200 transition-all">Start Pilot</button>
                             </div>
                         </div>
                         <div className="flex flex-col bg-[#0d1117] border border-indigo-500/40 p-10 rounded-sm relative shadow-2xl z-10">
