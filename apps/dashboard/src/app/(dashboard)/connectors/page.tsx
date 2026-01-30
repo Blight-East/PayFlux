@@ -107,10 +107,11 @@ export default function ConnectorsPage() {
 
                     <form onSubmit={handleSave} className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                            <label htmlFor="signing-secret" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
                                 Stripe Signing Secret (whsec_...)
                             </label>
                             <input
+                                id="signing-secret"
                                 type="password"
                                 className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                                 placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -123,10 +124,11 @@ export default function ConnectorsPage() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                            <label htmlFor="account-label" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
                                 Account Label
                             </label>
                             <input
+                                id="account-label"
                                 type="text"
                                 className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                                 placeholder="e.g. Primary Production Account"

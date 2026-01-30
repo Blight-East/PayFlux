@@ -60,10 +60,11 @@ export default function ConnectProcessorPage() {
 
             {/* Processor Selection Dropdown */}
             <div className="mb-6">
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
+                <label htmlFor="processor-select" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
                     Processor
                 </label>
                 <select
+                    id="processor-select"
                     value={processor}
                     onChange={(e) => setProcessor(e.target.value as ProcessorType)}
                     className="w-full bg-black border border-zinc-800 rounded px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
@@ -125,10 +126,11 @@ export default function ConnectProcessorPage() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                            <label htmlFor="webhook-secret" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
                                 Webhook Signing Secret <span className="text-red-500">*</span>
                             </label>
                             <input
+                                id="webhook-secret"
                                 type="password"
                                 className={`w-full bg-black border rounded px-3 py-2 text-white text-sm focus:outline-none transition-colors ${errors.webhook ? 'border-red-500' : 'border-zinc-800 focus:border-blue-500'
                                     }`}
@@ -143,10 +145,11 @@ export default function ConnectProcessorPage() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                            <label htmlFor="api-key" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
                                 API Key <span className="text-zinc-600">(optional)</span>
                             </label>
                             <input
+                                id="api-key"
                                 type="password"
                                 className={`w-full bg-black border rounded px-3 py-2 text-white text-sm focus:outline-none transition-colors ${errors.api ? 'border-red-500' : 'border-zinc-800 focus:border-blue-500'
                                     }`}
