@@ -25,6 +25,52 @@ Reserves cause delayed business failure by limiting access to earned revenue aft
 Reserves must be modeled as balance transformations, not transaction flags.  
 Exposure windows determine reserve size and duration.
 
+## Upstream Causes
+Reserve formation is driven by:
+- threshold breaches
+- dispute accumulation
+- fraud probability growth
+- negative balance projections
+- settlement delays
+- portfolio risk reclassification
+
+Reserves are calculated from:
+- rolling exposure windows
+- projected loss curves
+- delayed chargeback timing
+- payout instability
+
+These inputs convert probabilistic loss into balance restriction.
+
+
+## Downstream Effects
+Reserve imposition causes:
+- liquidity compression
+- payout suppression
+- merchant cash-flow disruption
+- delayed vendor payments
+- forced volume reduction
+
+Reserves also:
+- mask true balance state
+- delay loss realization
+- amplify downstream enforcement triggers
+
+This shifts risk from the processor to the merchant balance layer.
+
+
+## Common Failure Chains
+**Threshold Breach → Reserve Formation → Liquidity Freeze**
+
+**Dispute Propagation → Reserve Growth → Payout Delay**
+
+**Settlement Lag → Negative Balance → Reserve Lock**
+
+**Model Drift → Reserve Trigger → Volume Contraction**
+
+These chains explain why reserves appear suddenly after earlier invisible failures.
+
+
 ## FAQ
 <script type="application/ld+json">
 {
