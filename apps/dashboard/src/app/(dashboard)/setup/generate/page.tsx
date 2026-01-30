@@ -12,6 +12,86 @@ interface SetupConfig {
     processor: string;
 }
 
+// Helper: Get TPV limit in cents by tier
+const getTierLimitCents = (tier: string): number => {
+    switch (tier) {
+        case 'tier1': return 100000000;   // $1M
+        case 'tier2': return 1000000000;  // $10M
+        default: return 100000000;
+    }
+};
+
+// Helper: Get coverage tier name for display
+const getCoverageTierName = (tier: string): string => {
+    switch (tier) {
+        case 'tier1': return 'pilot';
+        case 'tier2': return 'growth';
+        default: return 'pilot';
+    }
+};
+
+// Helper: Fallback clipboard copy using textarea
+const copyViaTextareaFallback = (text: string): boolean => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        return document.execCommand('copy');
+    } catch {
+        return false;
+    } finally {
+        document.body.removeChild(textarea);
+    }
+};
+
+// Helper: Smart clipboard copy with fallback
+const copyTextSmart = async (text: string): Promise<boolean> => {
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch {
+        // fall through to textarea fallback
+    }
+    return copyViaTextareaFallback(text);
+};
+
+// Helper: Read setup config from storage
+const readSetupConfigFromStorage = (router: ReturnType<typeof useRouter>): SetupConfig | null => {
+    try {
+        const webhookSecret = sessionStorage.getItem('setup_webhook_secret');
+        const apiKey = sessionStorage.getItem('setup_api_key') || '';
+
+        const tier =
+            sessionStorage.getItem('setup_tier') ||
+            localStorage.getItem('setup_tier') ||
+            'tier1';
+
+        const pilotMode =
+            (sessionStorage.getItem('setup_pilot_mode') ||
+                localStorage.getItem('setup_pilot_mode')) === 'true';
+
+        const processor =
+            sessionStorage.getItem('payflux_setup_processor') ||
+            localStorage.getItem('payflux_setup_processor') ||
+            'stripe';
+
+        if (!webhookSecret) {
+            router.push('/setup/connect');
+            return null;
+        }
+
+        return { webhookSecret, apiKey, tier, pilotMode, processor };
+    } catch {
+        router.push('/setup/connect');
+        return null;
+    }
+};
+
 export default function GenerateSetupPage() {
     const [config, setConfig] = useState<SetupConfig | null>(null);
     const [generated, setGenerated] = useState(false);
@@ -23,33 +103,9 @@ export default function GenerateSetupPage() {
     const router = useRouter();
 
     useEffect(() => {
-        // Set hydrated first to indicate client render
         setHydrated(true);
-
-        try {
-            const webhookSecret = sessionStorage.getItem('setup_webhook_secret');
-            const apiKey = sessionStorage.getItem('setup_api_key') || '';
-
-            // Non-sensitive state: try sessionStorage first, fallback to localStorage
-            const tier = sessionStorage.getItem('setup_tier') ||
-                localStorage.getItem('setup_tier') ||
-                'tier1';
-            const pilotMode = (sessionStorage.getItem('setup_pilot_mode') ||
-                localStorage.getItem('setup_pilot_mode')) === 'true';
-            const processor = sessionStorage.getItem('payflux_setup_processor') ||
-                localStorage.getItem('payflux_setup_processor') ||
-                'stripe';
-
-            if (!webhookSecret) {
-                router.push('/setup/connect');
-                return;
-            }
-
-            setConfig({ webhookSecret, apiKey, tier, pilotMode, processor });
-        } catch (error) {
-            // SessionStorage/localStorage blocked or unavailable (Safari private mode, etc.)
-            router.push('/setup/connect');
-        }
+        const nextConfig = readSetupConfigFromStorage(router);
+        if (nextConfig) setConfig(nextConfig);
     }, [router]);
 
     useEffect(() => {
@@ -66,24 +122,6 @@ export default function GenerateSetupPage() {
 
         const isGenericWebhook = config.processor === 'generic_webhook';
 
-        // TPV coverage limits by tier (in cents)
-        const getTierLimit = (tier: string): number => {
-            switch (tier) {
-                case 'tier1': return 100000000; // $1M
-                case 'tier2': return 1000000000; // $10M
-                default: return 100000000;
-            }
-        };
-
-        // Map tier names for coverage display
-        const getCoverageTier = (tier: string): string => {
-            switch (tier) {
-                case 'tier1': return 'pilot';
-                case 'tier2': return 'growth';
-                default: return 'pilot';
-            }
-        };
-
         return `# Generated by PayFlux Dashboard
 # Store securely. Do not commit.
 # Generated: ${new Date().toISOString()}
@@ -94,8 +132,8 @@ PAYFLUX_TIER=${config.tier}
 PAYFLUX_PILOT_MODE=${config.pilotMode}
 
 # TPV Coverage (Observability Only - Soft Limits)
-PAYFLUX_COVERAGE_TIER=${getCoverageTier(config.tier)}
-PAYFLUX_MONTHLY_TPV_LIMIT_CENTS=${getTierLimit(config.tier)}
+PAYFLUX_COVERAGE_TIER=${getCoverageTierName(config.tier)}
+PAYFLUX_MONTHLY_TPV_LIMIT_CENTS=${getTierLimitCents(config.tier)}
 
 ${isGenericWebhook ? `# Processor Configuration
 # Note: Core currently reads STRIPE_WEBHOOK_SECRET for webhook auth (all processors).
@@ -230,49 +268,12 @@ See full documentation at https://payflux.dev/docs
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleCopyInstallCommands = () => {
+    const handleCopyInstallCommands = async () => {
         const commands = 'unzip payflux-setup.zip -d payflux-setup && cd payflux-setup && docker compose up -d';
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(commands).then(
-                () => {
-                    setCopiedInstall(true);
-                    setTimeout(() => setCopiedInstall(false), 2000);
-                },
-                () => {
-                    // Fallback for clipboard write failure
-                    const textarea = document.createElement('textarea');
-                    textarea.value = commands;
-                    textarea.style.position = 'fixed';
-                    textarea.style.opacity = '0';
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    try {
-                        document.execCommand('copy');
-                        setCopiedInstall(true);
-                        setTimeout(() => setCopiedInstall(false), 2000);
-                    } catch (err) {
-                        // Silent failure
-                    }
-                    document.body.removeChild(textarea);
-                }
-            );
-        } else {
-            // Fallback for browsers without clipboard API
-            const textarea = document.createElement('textarea');
-            textarea.value = commands;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                setCopiedInstall(true);
-                setTimeout(() => setCopiedInstall(false), 2000);
-            } catch (err) {
-                // Silent failure
-            }
-            document.body.removeChild(textarea);
+        const ok = await copyTextSmart(commands);
+        if (ok) {
+            setCopiedInstall(true);
+            setTimeout(() => setCopiedInstall(false), 2000);
         }
     };
 
@@ -286,26 +287,22 @@ See full documentation at https://payflux.dev/docs
     };
 
     if (!hydrated || !config) {
-        if (showFallback) {
-            return (
-                <div className="p-8 max-w-3xl mx-auto">
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-white tracking-tight">Setup State Missing</h2>
-                        <p className="text-zinc-500 text-sm mt-2">
-                            Your setup configuration could not be loaded. This may happen if your session expired or browser storage was cleared.
-                        </p>
-                        <button
-                            onClick={() => router.push('/setup/connect')}
-                            className="mt-6 px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-zinc-200 transition-colors"
-                        >
-                            Back to Connect
-                        </button>
-                    </div>
+        return showFallback ? (
+            <div className="p-8 max-w-3xl mx-auto">
+                <div className="mb-8">
+                    <h2 className="text-2xl font-bold text-white tracking-tight">Setup State Missing</h2>
+                    <p className="text-zinc-500 text-sm mt-2">
+                        Your setup configuration could not be loaded. This may happen if your session expired or browser storage was cleared.
+                    </p>
+                    <button
+                        onClick={() => router.push('/setup/connect')}
+                        className="mt-6 px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-zinc-200 transition-colors"
+                    >
+                        Back to Connect
+                    </button>
                 </div>
-            );
-        }
-
-        return (
+            </div>
+        ) : (
             <div className="p-8 max-w-3xl mx-auto">
                 <div className="mb-8">
                     <div className="flex items-center space-x-2 text-[10px] text-zinc-500 uppercase tracking-widest mb-4">
