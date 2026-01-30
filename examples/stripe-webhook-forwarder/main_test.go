@@ -7,6 +7,8 @@ import (
 	"github.com/stripe/stripe-go/v74"
 )
 
+const stripeEventPaymentIntentFailed = "payment_intent.payment_failed"
+
 func TestNormalizeStripeEvent_PaymentIntentFailed(t *testing.T) {
 	pi := stripe.PaymentIntent{
 		ID:       "pi_123",
@@ -20,7 +22,7 @@ func TestNormalizeStripeEvent_PaymentIntentFailed(t *testing.T) {
 
 	event := stripe.Event{
 		ID:      "evt_123",
-		Type:    "payment_intent.payment_failed",
+		Type:    stripeEventPaymentIntentFailed,
 		Created: 1609459200, // 2021-01-01T00:00:00Z
 		Account: "acct_123",
 		Data: &stripe.EventData{
@@ -30,8 +32,8 @@ func TestNormalizeStripeEvent_PaymentIntentFailed(t *testing.T) {
 
 	pfEvent := normalizeStripeEvent(event)
 
-	if pfEvent.EventType != "payment_intent.payment_failed" {
-		t.Errorf("Expected event_type payment_intent.payment_failed, got %s", pfEvent.EventType)
+	if pfEvent.EventType != stripeEventPaymentIntentFailed {
+		t.Errorf("Expected event_type %s, got %s", stripeEventPaymentIntentFailed, pfEvent.EventType)
 	}
 	if pfEvent.EventID != "evt_123" {
 		t.Errorf("Expected event_id evt_123, got %s", pfEvent.EventID)
@@ -79,7 +81,7 @@ func TestProcessEvent_Idempotency(t *testing.T) {
 	piRaw, _ := json.Marshal(pi)
 	event := stripe.Event{
 		ID:   "evt_dedupe_test",
-		Type: "payment_intent.payment_failed",
+		Type: stripeEventPaymentIntentFailed,
 		Data: &stripe.EventData{Raw: piRaw},
 	}
 
