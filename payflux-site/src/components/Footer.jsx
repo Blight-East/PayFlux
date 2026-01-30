@@ -18,6 +18,7 @@ const Footer = () => {
                     <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
                     <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
                     <Link to="/refunds" className="hover:text-white transition-colors">Refunds</Link>
+                    <Link to="/tools/retry-storm-analyzer" className="hover:text-white transition-colors">Retry Storm Analyzer</Link>
                 </div>
             </div>
         </footer>

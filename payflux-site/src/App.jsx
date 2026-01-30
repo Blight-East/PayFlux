@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Refunds from './pages/Refunds';
+import RetryStormAnalyzer from './pages/RetryStormAnalyzer';
 
 const App = () => {
     return (
@@ -13,6 +14,7 @@ const App = () => {
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/refunds" element={<Refunds />} />
+                <Route path="/tools/retry-storm-analyzer" element={<RetryStormAnalyzer />} />
             </Routes>
         </BrowserRouter>
     );
