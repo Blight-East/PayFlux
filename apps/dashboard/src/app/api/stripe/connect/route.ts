@@ -1,12 +1,14 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { generateStateToken } from '@/lib/oauth-state';
+import { STRIPE_OAUTH_URL } from '@/lib/urls';
 
 export async function GET() {
     // 1) Require authenticated Clerk user
-    const { auth, clerkClient, currentUser } = await import('@clerk/nextjs/server');
+    const { currentUser } = await import('@clerk/nextjs/server');
     const { userId, orgId } = await auth();
     if (!userId) {
         return new NextResponse('Unauthorized', { status: 401 });
@@ -51,7 +53,7 @@ export async function GET() {
     // Redirect to Stripe OAuth
     const redirectUri = `${baseUrl}/api/stripe/callback`;
 
-    const stripeUrl = new URL('https://connect.stripe.com/oauth/authorize');
+    const stripeUrl = new URL(STRIPE_OAUTH_URL);
     stripeUrl.searchParams.append('response_type', 'code');
     stripeUrl.searchParams.append('client_id', clientId);
     stripeUrl.searchParams.append('scope', 'read_only');
