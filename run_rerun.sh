@@ -72,7 +72,7 @@ go run cmd/test-runner/main.go \
 
 TEST_EXIT=$?
 
-if [ $TEST_EXIT -ne 0 ]; then
+if [[ $TEST_EXIT -ne 0 ]]; then
     echo "❌ Test harness failed with exit code $TEST_EXIT"
     kill $PAYFLUX_PID 2>/dev/null
     exit 1
@@ -98,20 +98,20 @@ echo ""
 # Step 5: Verify outputs
 echo "--- Step 5: Verifying Outputs ---"
 
-if [ ! -f payflux_rerun.log ]; then
+if [[ ! -f payflux_rerun.log ]]; then
     echo "❌ Missing: payflux_rerun.log"
     exit 1
 fi
 echo "✓ payflux_rerun.log ($(wc -l < payflux_rerun.log) lines)"
 
-if [ ! -f payflux_export.jsonl ]; then
+if [[ ! -f payflux_export.jsonl ]]; then
     echo "❌ Missing: payflux_export.jsonl"
     exit 1
 fi
 EXPORT_LINES=$(wc -l < payflux_export.jsonl)
 echo "✓ payflux_export.jsonl ($EXPORT_LINES events)"
 
-if [ ! -f test-outputs-rerun/ingestion_stats.json ]; then
+if [[ ! -f test-outputs-rerun/ingestion_stats.json ]]; then
     echo "❌ Missing: test-outputs-rerun/ingestion_stats.json"
     exit 1
 fi
