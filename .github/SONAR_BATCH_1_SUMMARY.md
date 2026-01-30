@@ -31,46 +31,40 @@ This batch contains 2 mechanical Sonar fixes that reduce code noise without chan
 - ✅ Docs bundle verified (3 tripwires rendered correctly)
 - ✅ Zero behavior change - all extraction logic identical
 
-### 2. Duplicate String Literals Extraction
+### 2. Duplicate String Literals Extraction (with Hygiene)
 **Sonar Issue**: Duplicate string literals  
-**Files Modified**: 8 files
+**Files Modified**: 2 files
 
 **Changes**:
-- Created `apps/dashboard/src/lib/constants.ts` with 4 constants:
-  - `DEFAULT_BASE_URL = 'http://localhost:3000'`
-  - `DEFAULT_PROMETHEUS_URL = 'http://localhost:19090'`
+- Created `apps/dashboard/src/lib/urls.ts` with 2 focused constants:
   - `STRIPE_OAUTH_URL = 'https://connect.stripe.com/oauth/authorize'`
   - `CANONICAL_SITE_URL = 'https://payflux.dev'`
+- Localhost defaults (`http://localhost:3000`, `http://localhost:19090`) remain inline to avoid constant dumping ground
 
 **Replaced in**:
-- `app/api/stripe/callback/route.ts` (2 occurrences)
-- `app/api/stripe/connect/route.ts` (2 occurrences)
-- `app/api/dev/stripe/mock-connect/route.ts` (1 occurrence)
-- `app/api/dev/stripe/mock-disconnect/route.ts` (2 occurrences)
-- `app/api/metrics/auth-denials/route.ts` (1 occurrence)
-- `app/docs/[[...slug]]/page.tsx` (1 occurrence)
+- `app/api/stripe/connect/route.ts` (STRIPE_OAUTH_URL)
+- `app/docs/[[...slug]]/page.tsx` (CANONICAL_SITE_URL)
 
-**Result**: 10+ hardcoded literals replaced with named constants
+**Result**: 2 external service URLs extracted to focused `urls.ts` file
 
 **Verification**:
 - ✅ Build passed
 - ✅ All URLs remain functionally identical
 - ✅ Zero behavior change
+- ✅ Constants file remains focused and maintainable
+
 
 ## Files Changed
 
 | File | Lines Changed | Type |
 |:-----|:--------------|:-----|
 | `apps/dashboard/src/lib/docs.ts` | +70, -55 | Refactor |
-| `apps/dashboard/src/lib/constants.ts` | +8 | New file |
-| `apps/dashboard/src/app/api/stripe/callback/route.ts` | +3, -2 | Refactor |
-| `apps/dashboard/src/app/api/stripe/connect/route.ts` | +5, -3 | Refactor |
-| `apps/dashboard/src/app/api/dev/stripe/mock-connect/route.ts` | +2, -1 | Refactor |
-| `apps/dashboard/src/app/api/dev/stripe/mock-disconnect/route.ts` | +3, -2 | Refactor |
-| `apps/dashboard/src/app/api/metrics/auth-denials/route.ts` | +2, -1 | Refactor |
-| `apps/dashboard/src/app/docs/[[...slug]]/page.tsx` | +2, -1 | Refactor |
+| `apps/dashboard/src/lib/urls.ts` | +6 | New file |
+| `apps/dashboard/src/app/api/stripe/connect/route.ts` | +2, -2 | Refactor |
+| `apps/dashboard/src/app/docs/[[...slug]]/page.tsx` | +1, -1 | Refactor |
 
-**Total**: 11 files, +186 insertions, -66 deletions
+**Total**: 4 files, +79 insertions, -58 deletions
+
 
 ## Verification Commands Run
 
@@ -110,4 +104,17 @@ npm run build
 ## Sonar Issues Resolved
 
 - ✅ Cognitive complexity in `getDocBySlug` (20 → ~8)
-- ✅ Duplicate string literals (10+ occurrences → 4 named constants)
+- ✅ Duplicate string literals for external service URLs (2 constants in focused `urls.ts`)
+
+## Safety Validation
+
+### docs.ts Behavior Equivalence - ✅ VERIFIED
+- **Path resolution**: `resolveRelativePath` identical to old logic (undefined/[], .md suffix, nested paths)
+- **Description extraction**: Skip rules and 160-char truncation unchanged
+- **Markdown pipeline**: Plugin order and options identical (remarkParse → remarkRehype → rehypeRaw → rehypeSlug → rehypeStringify)
+
+### Constants Hygiene - ✅ APPLIED
+- Renamed `constants.ts` → `urls.ts`
+- Kept only external service URLs (STRIPE_OAUTH_URL, CANONICAL_SITE_URL)
+- Localhost defaults remain inline to prevent dumping ground pattern
+
