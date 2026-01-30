@@ -75,6 +75,39 @@ An observability system would surface these mechanics by:
 
 > Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
+## Upstream Causes
+Risk detection infrastructure is driven by:
+- transaction monitoring systems
+- fraud scoring pipelines
+- compliance screening engines
+- network rule enforcement
+- webhook and event ingestion
+- retry and reconciliation logic
+
+It reflects how raw payment signals are converted into risk classifications.
+
+
+## Downstream Effects
+Failures in detection infrastructure lead to:
+- delayed enforcement actions
+- misclassified risk events
+- blind spots in exposure tracking
+- incorrect threshold evaluations
+- inconsistent reserve formation
+
+They determine whether upstream risk becomes visible or remains latent.
+
+
+## Common Failure Chains
+**Retry Storm → Event Flood → Missed Risk Signal**
+
+**Model Drift → Misclassification → Threshold Blind Spot**
+
+**Webhook Lag → Enforcement Delay → Exposure Growth**
+
+These chains explain how infrastructure limits amplify systemic risk.
+
+
 ## FAQ
 
 ### Is detecting manual or automated?

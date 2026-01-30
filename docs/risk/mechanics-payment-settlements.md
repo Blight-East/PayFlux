@@ -75,6 +75,39 @@ An observability system would surface these mechanics by:
 
 > Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
+## Upstream Causes
+Settlement behavior is influenced by:
+- batch processing schedules
+- issuer clearing timelines
+- reserve and hold logic
+- reconciliation systems
+- dispute offsets
+- compliance interventions
+
+It governs how authorized funds become available balances.
+
+
+## Downstream Effects
+Settlement failures result in:
+- payout delays
+- negative balances
+- merchant cash flow volatility
+- reconciliation errors
+- increased reserve requirements
+
+They convert timing mismatches into financial stress.
+
+
+## Common Failure Chains
+**Reserve Increase → Settlement Offset → Delayed Availability**
+
+**Dispute Adjustment → Net Settlement Drop → Balance Deficit**
+
+**Batch Failure → Clearing Delay → Payout Lag**
+
+These chains explain how settlement mechanics produce liquidity risk.
+
+
 ## FAQ
 
 ### Why does it take 2 days (T+2)?
