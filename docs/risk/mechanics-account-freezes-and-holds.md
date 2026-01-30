@@ -81,6 +81,39 @@ An observability system would surface these mechanics by:
 
 > Note: observability does not override processor or network controls; it provides operational clarity to navigate them.
 
+## Upstream Causes
+Account freezes and holds are triggered by:
+- threshold breaches
+- reserve formation
+- dispute spikes
+- compliance review backlogs
+- sudden traffic pattern changes
+- model reclassification events
+
+They represent the convergence of multiple upstream risk signals into a single enforcement action.
+
+
+## Downstream Effects
+Freezes and holds result in:
+- blocked payouts
+- rejected transactions
+- delayed settlements
+- merchant liquidity constraints
+- escalated compliance scrutiny
+
+They convert risk detection into immediate financial restriction.
+
+
+## Common Failure Chains
+**Dispute Surge → Threshold Trigger → Account Freeze**
+
+**Model Drift → Risk Reclassification → Hold Applied**
+
+**Compliance Gap → Review Queue → Funds Frozen**
+
+These chains explain why freezes appear suddenly after silent risk accumulation.
+
+
 ## FAQ
 
 ### Is a delay a ban?

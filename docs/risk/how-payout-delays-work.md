@@ -27,6 +27,39 @@ Cash Flow. Most merchants operate on tight cycles where received funds pay for c
 ## Implementation notes
 Observability allows for cash forecasting adjustments. By tracking "Processor Promise" vs "Actual Performance," merchants can identify when a delay is occurring before it impacts payroll.
 
+## Upstream Causes
+Payout delays are caused by:
+- reserve growth
+- settlement batching failures
+- compliance reviews
+- negative balance protection
+- delayed issuer settlements
+- manual intervention queues
+
+They occur when payout execution lags behind transaction authorization.
+
+
+## Downstream Effects
+Payout delays lead to:
+- cash flow disruption
+- reconciliation mismatches
+- merchant support escalations
+- increased refund pressure
+- higher dispute likelihood
+
+They transform processing latency into business instability.
+
+
+## Common Failure Chains
+**Reserve Formation → Settlement Delay → Payout Hold**
+
+**Chargeback Spike → Balance Protection → Delayed Payout**
+
+**Compliance Review → Manual Queue → Settlement Lag**
+
+These chains explain how technical delays become operational crises.
+
+
 ## FAQ
 <script type="application/ld+json">
 {
