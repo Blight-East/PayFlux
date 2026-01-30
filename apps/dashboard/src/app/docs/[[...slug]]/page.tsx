@@ -3,7 +3,7 @@ import { getDocBySlug } from '@/lib/docs';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { getBaseUrl } from '@/lib/seo';
+
 
 interface DocsPageProps {
     params: Promise<{

@@ -1,5 +1,6 @@
 
-import { MetadataRoute } from 'next';
+
+
 import { getBaseUrl } from '@/lib/seo';
 import docsBundle from '../../data/docs.json';
 

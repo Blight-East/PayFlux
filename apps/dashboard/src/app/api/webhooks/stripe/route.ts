@@ -104,7 +104,7 @@ export async function POST(request: Request) {
                 });
                 await updateStatus();
             }
-        } catch (err) {
+        } catch {
             console.error('payflux_forward_failed');
         }
     }

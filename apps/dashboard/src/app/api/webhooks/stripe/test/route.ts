@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         }
         const err = await res.json();
         return NextResponse.json({ error: err.error || 'Failed to trigger test webhook' }, { status: res.status });
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: 'Connection failed' }, { status: 502 });
     }
 }
