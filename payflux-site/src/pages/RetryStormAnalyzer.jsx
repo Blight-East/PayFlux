@@ -151,7 +151,10 @@ const processEvents = (events) => {
 
     events.forEach(ev => {
         const tid = ev.transaction_id || ev.payment_intent_id || ev.charge_id || ev.id;
-        const timestamp = new Date(ev.timestamp || (ev.created ? ev.created * 1000 : null) || new Date());
+        const rawTs = ev.timestamp || (ev.created ? ev.created * 1000 : null);
+        const timestamp = rawTs ? new Date(rawTs) : new Date();
+
+        if (isNaN(timestamp.getTime())) return;
 
         if (!transactionMap[tid]) {
             transactionMap[tid] = { attempts: 0, firstSeen: timestamp, errorCode: ev.error_code || 'unknown' };
@@ -159,6 +162,8 @@ const processEvents = (events) => {
         transactionMap[tid].attempts++;
         timestampMap.push({ timestamp: timestamp.getTime(), transactionId: tid });
     });
+
+    if (timestampMap.length === 0) throw new Error("No valid timestamps found.");
 
     const uniqueTransactions = Object.keys(transactionMap).length;
     const totalAttempts = events.length;
@@ -222,8 +227,8 @@ const downloadJSONReport = (results) => {
 const MetricCard = ({ label, value, caption, highlight }) => (
     <div
         className={`rounded-xl p-4 border ${highlight
-                ? "bg-red-50 border-red-400 text-red-900 shadow-sm"
-                : "bg-white border-gray-200 text-gray-900 hover:shadow-md"
+            ? "bg-red-50 border-red-400 text-red-900 shadow-sm"
+            : "bg-white border-gray-200 text-gray-900 hover:shadow-md"
             } transition-all`}
     >
         <div className="text-sm font-medium uppercase tracking-wide opacity-70">
