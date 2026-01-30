@@ -1,6 +1,7 @@
 
 import { getDocBySlug } from '@/lib/docs';
 import { notFound } from 'next/navigation';
+import { CANONICAL_SITE_URL } from '@/lib/urls';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import { getBaseUrl } from '@/lib/seo';
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: DocsPageProps): Promise<Metad
 
 
     // Enforce canonical base domain = https://payflux.dev for ALL docs pages
-    const canonicalBase = 'https://payflux.dev';
+    const canonicalBase = CANONICAL_SITE_URL;
     // Handle root /docs vs sub-pages to avoid trailing slash on root if doc.slug is empty
     const suffix = doc.slug ? `/${doc.slug}` : '';
     const canonicalUrl = `${canonicalBase}/docs${suffix}`;
