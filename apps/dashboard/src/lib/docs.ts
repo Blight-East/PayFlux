@@ -23,73 +23,88 @@ export interface DocPage {
     fullPath: string; // virtual path
 }
 
+// Helper: Resolve slug array to relative path
+function resolveRelativePath(slug: string[]): string {
+    if (!slug || slug.length === 0) {
+        return 'index.md';
+    }
+
+    let relativePath = slug.join('/');
+    if (!relativePath.endsWith('.md')) {
+        relativePath += '.md';
+    }
+
+    return relativePath;
+}
+
+// Helper: Check for directory traversal attempts
+function isTraversalAttempt(relativePath: string): boolean {
+    return relativePath.includes('..');
+}
+
+// Helper: Extract title from markdown content
+function extractTitle(content: string, relativePath: string): string {
+    const titleMatch = content.match(/^# (.*$)/m);
+    return titleMatch ? titleMatch[1] : path.basename(relativePath, '.md');
+}
+
+// Helper: Extract description from markdown content
+function extractDescription(content: string): string {
+    const paragraphs = content.split(/\n\n+/);
+
+    for (const p of paragraphs) {
+        const trimmed = p.trim();
+        if (!trimmed) continue;
+        if (trimmed.startsWith('#')) continue; // Header
+        if (trimmed.startsWith('<script')) continue; // Script block
+        if (trimmed.startsWith('Up:')) continue; // Nav links
+
+        let description = trimmed.replace(/\r?\n|\r/g, ' ').slice(0, 160);
+        if (description.length >= 160) description += '...';
+        return description;
+    }
+
+    return '';
+}
+
+// Helper: Render markdown to HTML
+async function renderMarkdownToHtml(content: string): Promise<string> {
+    const processedContent = await unified()
+        .use(remarkParse)
+        .use(remarkRehype, { allowDangerousHtml: true })
+        .use(rehypeRaw)
+        .use(rehypeSlug)
+        .use(rehypeStringify)
+        .process(content);
+
+    let contentHtml = processedContent.toString();
+
+    // Normalize Links
+    contentHtml = contentHtml.replace(/href="([^"]+)\.md"/g, (match, p1) => {
+        if (p1.startsWith('http')) return match;
+        return `href="${p1}"`;
+    });
+
+    return contentHtml;
+}
+
 export async function getDocBySlug(slug: string[]): Promise<DocPage | null> {
     try {
-        // 1. Resolve path
-        let relativePath = '';
+        const relativePath = resolveRelativePath(slug);
 
-        if (!slug || slug.length === 0) {
-            relativePath = 'index.md';
-        } else {
-            relativePath = slug.join('/');
-            if (!relativePath.endsWith('.md')) {
-                relativePath += '.md';
-            }
-        }
-
-        // Prevent directory traversal (though less risky with map lookup)
-        if (relativePath.includes('..')) {
+        if (isTraversalAttempt(relativePath)) {
             return null;
         }
 
-        // 2. Lookup content
-        // The keys in data/docs.json are normalized relative paths (risk/foo.md)
         const fileContent = docsData[relativePath];
-
         if (!fileContent) {
             return null;
         }
 
-        // 4. Parse content
-        // We use gray-matter to strip frontmatter
         const { content } = matter(fileContent);
-
-        // 5. Extract metadata (Title & Description) from markdown content manually
-        // Title: First H1
-        const titleMatch = content.match(/^# (.*$)/m);
-        const title = titleMatch ? titleMatch[1] : path.basename(relativePath, '.md');
-
-        // Description: First non-empty paragraph after Title
-        const paragraphs = content.split(/\n\n+/);
-        let description = '';
-        for (const p of paragraphs) {
-            const trimmed = p.trim();
-            if (!trimmed) continue;
-            if (trimmed.startsWith('#')) continue; // Header
-            if (trimmed.startsWith('<script')) continue; // Script block
-            if (trimmed.startsWith('Up:')) continue; // Nav links
-
-            description = trimmed.replace(/\r?\n|\r/g, ' ').slice(0, 160);
-            if (description.length >= 160) description += '...';
-            break;
-        }
-
-        // 6. Convert Markdown to HTML
-        const processedContent = await unified()
-            .use(remarkParse)
-            .use(remarkRehype, { allowDangerousHtml: true })
-            .use(rehypeRaw)
-            .use(rehypeSlug)
-            .use(rehypeStringify)
-            .process(content);
-
-        let contentHtml = processedContent.toString();
-
-        // 7. Normalize Links
-        contentHtml = contentHtml.replace(/href="([^"]+)\.md"/g, (match, p1) => {
-            if (p1.startsWith('http')) return match;
-            return `href="${p1}"`;
-        });
+        const title = extractTitle(content, relativePath);
+        const description = extractDescription(content);
+        const contentHtml = await renderMarkdownToHtml(content);
 
         return {
             title,
