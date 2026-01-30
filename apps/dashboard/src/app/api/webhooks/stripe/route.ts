@@ -88,11 +88,12 @@ export async function POST(request: Request) {
         };
     }
 
-    if (payfluxEvent) {
-        try {
-            const ingestUrl = process.env.PAYFLUX_INGEST_URL;
-            const apiKey = process.env.PAYFLUX_API_KEY;
 
+    if (payfluxEvent) {
+        const ingestUrl = process.env.PAYFLUX_INGEST_URL;
+        const apiKey = process.env.PAYFLUX_API_KEY;
+
+        try {
             if (ingestUrl && apiKey) {
                 await fetch(ingestUrl, {
                     method: 'POST',
@@ -104,10 +105,21 @@ export async function POST(request: Request) {
                 });
                 await updateStatus();
             }
-        } catch (err) {
-            console.error('payflux_forward_failed');
+        } catch (err: unknown) {
+            const e = err as { name?: string; message?: string; stack?: string };
+            console.error('payflux_forward_failed', {
+                stripe_event_id: event.id,
+                stripe_event_type: event.type,
+                stripe_event_created: event.created,
+                attempted_forward: Boolean(ingestUrl && apiKey),
+                error_name: e?.name,
+                error_message: e?.message,
+                // optional: include first line only to avoid log spam
+                error_stack: e?.stack ? e.stack.split('\n').slice(0, 2).join('\n') : undefined,
+            });
         }
     }
+
 
     return NextResponse.json({ received: true });
 }
