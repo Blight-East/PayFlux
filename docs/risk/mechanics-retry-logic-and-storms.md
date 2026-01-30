@@ -25,6 +25,52 @@ Retry storms convert localized failures into systemic load and risk events. They
 Retry behavior should be observable as a flow graph, not isolated events.  
 Propagation paths and amplification ratios are required to distinguish noise from storms.
 
+## Upstream Causes
+Retry storms are usually triggered by:
+- issuer timeout responses
+- processor network latency
+- misconfigured retry policies
+- partial outages in authorization services
+- gateway fallback loops
+- idempotency failures
+
+Retry storms originate from:
+- localized infrastructure faults
+- inconsistent error classification
+- client libraries retrying independently of server retry logic
+- webhook replays combined with payment retries
+
+
+## Downstream Effects
+Retry storms amplify risk signals and can lead to:
+- artificial transaction volume spikes
+- threshold breaches in fraud and risk systems
+- elevated dispute probability
+- reserve formation
+- account-level enforcement actions
+- settlement batching distortion
+
+Because retries multiply transaction attempts without multiplying real demand, they distort:
+- risk models
+- dispute ratios
+- traffic velocity metrics
+- balance projections
+
+
+## Common Failure Chains
+Example chains include:
+
+**Retry Storm → Threshold Breach → Reserve Formation → Liquidity Freeze**
+
+**Retry Storm → Model Drift → Higher Declines → Revenue Suppression**
+
+**Retry Storm → Dispute Propagation → Portfolio Enforcement**
+
+**Retry Storm → Settlement Delay → Negative Balance Cascades**
+
+These chains explain why retry storms produce delayed business failures rather than immediate technical outages.
+
+
 ## FAQ
 <script type="application/ld+json">
 {
