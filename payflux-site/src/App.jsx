@@ -15,6 +15,7 @@ const App = () => {
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/refunds" element={<Refunds />} />
                 <Route path="/tools/retry-storm-analyzer" element={<RetryStormAnalyzer />} />
+                <Route path="*" element={<Home />} />
             </Routes>
         </BrowserRouter>
     );

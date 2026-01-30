@@ -76,7 +76,7 @@ const Home = () => {
                         <a href="#levels" className="hover:text-white transition-colors">Pricing</a>
                         <a href="#safety" className="hover:text-white transition-colors">Safety</a>
                     </div>
-                    <button onClick={() => document.getElementById('levels').scrollIntoView({ behavior: 'smooth' })} className="text-[10px] uppercase tracking-[0.2em] font-bold text-white border border-white/10 px-5 py-2 hover:bg-white hover:text-black transition-all">Start Pilot</button>
+                    <button onClick={() => document.getElementById('start-pilot').scrollIntoView({ behavior: 'smooth' })} className="text-[10px] uppercase tracking-[0.2em] font-bold text-white border border-white/10 px-5 py-2 hover:bg-white hover:text-black transition-all">Start Pilot</button>
                 </div>
             </nav>
 
@@ -284,6 +284,108 @@ const Home = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
+            {/* START PILOT FORM (NETLIFY BOTS) */}
+            <section id="start-pilot" className="py-32 border-t border-white/5">
+                <div className="max-w-3xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-[11px] uppercase tracking-[0.3em] text-indigo-500 font-bold mb-6">Access Request</h2>
+                        <h3 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-8">
+                            Request Pilot Coverage
+                        </h3>
+                        <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
+                            Submit your contact details. We'll follow up with next steps and technical requirements.
+                        </p>
+                    </div>
+
+                    <form
+                        name="pilot"
+                        method="POST"
+                        action="/"
+                        data-netlify="true"
+                        data-netlify-honeypot="bot-field"
+                        className="bg-white/[0.02] infra-border p-10 rounded-sm space-y-8 shadow-2xl"
+                    >
+                        {/* Netlify required hidden input */}
+                        <input type="hidden" name="form-name" value="pilot" />
+                        {/* Honeypot */}
+                        <p className="hidden">
+                            <label>
+                                Don't fill this out: <input name="bot-field" />
+                            </label>
+                        </p>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Work Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    required
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
+                                    placeholder="name@company.com"
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Company</label>
+                                <input
+                                    type="text"
+                                    name="company"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
+                                    placeholder="Company name"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Monthly Volume</label>
+                                <select
+                                    name="volume"
+                                    className="w-full bg-[#0a0c10] border border-white/10 rounded-sm px-5 py-4 text-slate-400 text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Select volume</option>
+                                    <option value="<100k">&lt; $100k</option>
+                                    <option value="100k-1m">$100k–$1M</option>
+                                    <option value="1m-10m">$1M–$10M</option>
+                                    <option value="10m+">$10M+</option>
+                                </select>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Role</label>
+                                <input
+                                    type="text"
+                                    name="role"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
+                                    placeholder="Payments / Risk / Ops"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Analysis Goal</label>
+                            <textarea
+                                name="message"
+                                rows="4"
+                                className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
+                                placeholder="What are you trying to validate with Pilot Coverage?"
+                            />
+                        </div>
+
+                        <div className="pt-4">
+                            <button
+                                type="submit"
+                                className="w-full py-5 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.25em] hover:bg-slate-200 transition-all"
+                            >
+                                Request Pilot Access
+                            </button>
+                            <p className="mt-6 text-center text-[10px] uppercase tracking-[0.3em] text-slate-600 font-bold">
+                                Submissions preserved in Netlify Control Plane.
+                            </p>
+                        </div>
+                    </form>
                 </div>
             </section>
 
