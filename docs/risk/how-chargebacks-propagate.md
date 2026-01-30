@@ -27,6 +27,38 @@ Latency and Forecasting. You might receive a chargeback notification 45 days aft
 ## Implementation notes
 Observability should track win rates by reason code and correlate representment efforts with financial outcomes to ensure the system reflects the true state of disputes.
 
+## Upstream Causes
+Chargeback propagation is driven by:
+- clustered dispute events
+- delayed issuer responses
+- shared traffic patterns
+- model generalization
+- threshold-based enforcement
+
+Propagation begins when localized disputes are treated as global signals.
+
+
+## Downstream Effects
+Propagation leads to:
+- elevated fraud scores
+- reserve growth
+- account-level penalties
+- traffic suppression
+- portfolio-wide risk reclassification
+
+It transforms individual disputes into systemic risk.
+
+
+## Common Failure Chains
+**Dispute Cluster → Model Shift → Threshold Trigger**
+
+**Issuer Spike → Portfolio Risk Increase**
+
+**Refund Delay → Chargeback Wave → Enforcement Escalation**
+
+These chains explain how disputes scale beyond their original transactions.
+
+
 ## FAQ
 <script type="application/ld+json">
 {
