@@ -23,6 +23,32 @@ Shadow risk grows silently and manifests later as enforcement, reserves, or acco
 ## Implementation notes
 Shadow risk requires correlation tracing rather than event alerting.
 
+## Upstream Causes
+Shadow risk is usually triggered by:
+- Authorized but not captured transaction volume
+- High retrieval request frequency (soft inquiries)
+- Excessive pending refund liability
+- Chronological gaps between settlement and dispute maturity
+- Use of unmapped high-risk merchant categories
+
+## Downstream Effects
+Shadow risk leads to invisible liability accumulation which causes:
+- Sudden account freezes triggered by unrealized liability
+- Abrupt reserve formation events
+- Liquidity suppression without immediate visible failures
+- Portfolio-level network rule enforcement
+- Balance withholding during merchant review cycles
+
+## Common Failure Chains
+Example chains include:
+
+**Shadow Risk Accumulation → Liability Horizon Breach → Partial Freeze → Liquidity Strain**
+
+**Shadow Risk Spike → Processor Risk Re-evaluation → Reserve Formation → Capital Lock**
+
+**Shadow Risk Growth → Network Audit → Merchant ID (MID) Termination**
+
+
 ## FAQ
 <script type="application/ld+json">
 {
