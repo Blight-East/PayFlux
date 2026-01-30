@@ -8,7 +8,7 @@ echo "Running smoke tests against $URL"
 # 1. Health check (via proxy)
 echo "Testing PayFlux health proxy..."
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/api/proxy/health")
-if [ "$STATUS" == "200" ]; then
+if [[ "$STATUS" == "200" ]]; then
     echo "✅ Health proxy OK"
 else
     echo "❌ Health proxy FAILED (HTTP $STATUS)"
@@ -21,7 +21,7 @@ LOGIN_STATUS=$(curl -s -X POST "$URL/api/login" \
     -d "{\"token\":\"payflux-admin-token\"}" \
     -o /dev/null -w "%{http_code}")
 
-if [ "$LOGIN_STATUS" == "200" ]; then
+if [[ "$LOGIN_STATUS" == "200" ]]; then
     echo "✅ Admin login OK"
 else
     echo "❌ Admin login FAILED (HTTP $LOGIN_STATUS)"
@@ -30,7 +30,7 @@ fi
 # 3. Webhook forwarding
 echo "Testing Webhook forwarding..."
 WEBHOOK_STATUS=$(curl -s -X POST "$URL/api/webhooks/stripe/test" -o /dev/null -w "%{http_code}")
-if [ "$WEBHOOK_STATUS" == "200" ]; then
+if [[ "$WEBHOOK_STATUS" == "200" ]]; then
     echo "✅ Webhook test trigger OK"
 else
     echo "❌ Webhook test trigger FAILED (HTTP $WEBHOOK_STATUS)"

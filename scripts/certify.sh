@@ -13,7 +13,7 @@ echo ""
 
 # --- GATE A: Acceptance/Capacity ---
 echo "--- GATE A: Acceptance & Capacity ---"
-if [ -f "$HARNESS_LOG" ]; then
+if [[ -f "$HARNESS_LOG" ]]; then
     SENT=$(grep "Total events sent:" "$HARNESS_LOG" | awk '{print $NF}' | tail -n 1)
     ERRS=$(grep "Total errors:" "$HARNESS_LOG" | awk '{print $NF}' | tail -n 1)
 else
@@ -21,13 +21,13 @@ else
     ERRS=0
 fi
 
-[ -z "$SENT" ] && SENT=0
-[ -z "$ERRS" ] && ERRS=0
+[[ -z "$SENT" ]] && SENT=0
+[[ -z "$ERRS" ]] && ERRS=0
 
-if [ "$SENT" -gt 0 ]; then
+if [[ "$SENT" -gt 0 ]]; then
     ACCEPTED=$((SENT - ERRS))
     PERC=$((ACCEPTED * 100 / SENT))
-    if [ "$PERC" -ge 95 ]; then
+    if [[ "$PERC" -ge 95 ]]; then
         echo "Harness Metric: $ACCEPTED/$SENT accepted ($PERC%) [PASS]"
         A_PASS=true
     else
@@ -86,7 +86,7 @@ echo ""
 echo "===================================================="
 echo "    PILOT READINESS DECISION                        "
 echo "===================================================="
-if [ "$BANNED_COUNT" -eq 0 ] && [ "$A_PASS" = "true" ] && [ "$ENRICHED" -gt 0 ]; then
+if [[ "$BANNED_COUNT" -eq 0 ]] && [[ "$A_PASS" = "true" ]] && [[ "$ENRICHED" -gt 0 ]]; then
     echo "RESULT: GO (PASS)"
 else
     echo "RESULT: NO-GO (Manual review required)"

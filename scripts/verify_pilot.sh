@@ -119,7 +119,7 @@ start_payflux() {
     local payflux_status
     payflux_status=$(docker compose ps --format "{{.State}}" payflux 2>/dev/null || echo "missing")
     
-    if [ "$payflux_status" != "running" ]; then
+    if [[ "$payflux_status" != "running" ]]; then
         echo "  ✗ PayFlux container not running (state: $payflux_status)"
         dump_compose_diagnostics
         cd ..
@@ -136,13 +136,13 @@ start_payflux() {
         local status
         status=$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8080/health" 2>/dev/null)
         
-        if [ "$status" = "200" ]; then
+        if [[ "$status" = "200" ]]; then
             echo "  ✓ PayFlux healthy after ${attempt}s"
             return 0
         fi
         
         # Only print status every 5 seconds to reduce noise
-        if [ $((attempt % 5)) -eq 0 ] && [ $attempt -gt 0 ]; then
+        if [[ $((attempt % 5)) -eq 0 ]] && [[ $attempt -gt 0 ]]; then
             echo "  ... still waiting (attempt $attempt, last status: $status)"
         fi
         
@@ -178,7 +178,7 @@ send_event() {
 # Check if HTTP code indicates infra failure
 is_infra_failure() {
     local code=$1
-    [ "$code" = "000" ] || [ -z "$code" ]
+    [[ "$code" = "000" ]] || [[ -z "$code" ]]
 }
 
 # Fetch metrics and validate non-empty
@@ -187,7 +187,7 @@ fetch_metrics() {
     local output
     output=$(curl -s "http://localhost:8080/metrics" 2>/dev/null)
     
-    if [ -z "$output" ]; then
+    if [[ -z "$output" ]]; then
         return 1
     fi
     
@@ -224,7 +224,7 @@ test_checkpoint_a() {
             CHECKPOINT_A="infra_fail"
             stop_payflux
             return
-        elif [ "$http_code" = "202" ]; then
+        elif [[ "$http_code" = "202" ]]; then
             success_count=$((success_count + 1))
         fi
         sleep 0.3
@@ -232,7 +232,7 @@ test_checkpoint_a() {
     
     echo "  Events ingested: $success_count/10"
     
-    if [ "$success_count" -eq 0 ]; then
+    if [[ "$success_count" -eq 0 ]]; then
         infra_fail "Checkpoint A: No events ingested (0/10) - check auth or endpoint"
         CHECKPOINT_A="infra_fail"
         stop_payflux
@@ -243,13 +243,13 @@ test_checkpoint_a() {
     local warning_count=0
     for attempt in {1..20}; do
         warning_count=$(docker logs deploy-payflux-1 2>&1 | grep -E "processor_risk_band.*(elevated|high|critical)" | wc -l | tr -d ' ')
-        if [ "$warning_count" -ge 1 ]; then
+        if [[ "$warning_count" -ge 1 ]]; then
             break
         fi
         sleep 1
     done
     
-    if [ "$warning_count" -ge 1 ]; then
+    if [[ "$warning_count" -ge 1 ]]; then
         pass "Checkpoint A: $warning_count warnings emitted for bad pattern"
         CHECKPOINT_A="pass"
     else
@@ -284,13 +284,13 @@ test_checkpoint_b() {
             CHECKPOINT_B="infra_fail"
             stop_payflux
             return
-        elif [ "$http_code" = "202" ]; then
+        elif [[ "$http_code" = "202" ]]; then
             success_count=$((success_count + 1))
         fi
         sleep 0.2
     done
     
-    if [ "$success_count" -eq 0 ]; then
+    if [[ "$success_count" -eq 0 ]]; then
         infra_fail "Checkpoint B: No events ingested (0/10)"
         CHECKPOINT_B="infra_fail"
         stop_payflux
@@ -306,21 +306,21 @@ test_checkpoint_b() {
     
     local checkpoint_pass=true
     
-    if [ "$context_count" -eq 0 ]; then
+    if [[ "$context_count" -eq 0 ]]; then
         pass "Checkpoint B: No processor_playbook_context found"
     else
         fail "Checkpoint B: processor_playbook_context found $context_count times"
         checkpoint_pass=false
     fi
     
-    if [ "$trajectory_count" -eq 0 ]; then
+    if [[ "$trajectory_count" -eq 0 ]]; then
         pass "Checkpoint B: No risk_trajectory found"
     else
         fail "Checkpoint B: risk_trajectory found $trajectory_count times"
         checkpoint_pass=false
     fi
     
-    if [ "$checkpoint_pass" = true ]; then
+    if [[ "$checkpoint_pass" = true ]]; then
         CHECKPOINT_B="pass"
     else
         CHECKPOINT_B="fail"
@@ -359,7 +359,7 @@ test_checkpoint_c() {
     local metrics_before
     metrics_before=$(fetch_metrics)
     
-    if [ -z "$metrics_before" ]; then
+    if [[ -z "$metrics_before" ]]; then
         infra_fail "Checkpoint C: Metrics endpoint unreachable or empty before restart"
         CHECKPOINT_C="infra_fail"
         stop_payflux
@@ -370,7 +370,7 @@ test_checkpoint_c() {
     local before_count
     before_count=$(wc -l < /tmp/metrics_before.txt | tr -d ' ')
     
-    if [ "$before_count" -eq 0 ]; then
+    if [[ "$before_count" -eq 0 ]]; then
         infra_fail "Checkpoint C: No payflux_ metrics found before restart"
         CHECKPOINT_C="infra_fail"
         stop_payflux
@@ -389,7 +389,7 @@ test_checkpoint_c() {
     local metrics_after
     metrics_after=$(fetch_metrics)
     
-    if [ -z "$metrics_after" ]; then
+    if [[ -z "$metrics_after" ]]; then
         infra_fail "Checkpoint C: Metrics endpoint unreachable after restart"
         CHECKPOINT_C="infra_fail"
         stop_payflux
@@ -440,14 +440,14 @@ test_checkpoint_d() {
         return
     fi
     
-    if [ "$status_warnings" = "404" ]; then
+    if [[ "$status_warnings" = "404" ]]; then
         pass "Checkpoint D: /pilot/warnings returns 404 when pilot mode OFF"
     else
         fail "Checkpoint D: /pilot/warnings returns $status_warnings (expected 404)"
         checkpoint_pass=false
     fi
     
-    if [ "$status_dashboard" = "404" ]; then
+    if [[ "$status_dashboard" = "404" ]]; then
         pass "Checkpoint D: /pilot/dashboard returns 404 when pilot mode OFF"
     else
         fail "Checkpoint D: /pilot/dashboard returns $status_dashboard (expected 404)"
@@ -476,21 +476,21 @@ test_checkpoint_d() {
         return
     fi
     
-    if [ "$status_warnings_on" = "200" ]; then
+    if [[ "$status_warnings_on" = "200" ]]; then
         pass "Checkpoint D: /pilot/warnings accessible when pilot mode ON"
     else
         fail "Checkpoint D: /pilot/warnings returns $status_warnings_on when ON (expected 200)"
         checkpoint_pass=false
     fi
     
-    if [ "$status_dashboard_on" = "200" ]; then
+    if [[ "$status_dashboard_on" = "200" ]]; then
         pass "Checkpoint D: /pilot/dashboard accessible when pilot mode ON"
     else
         fail "Checkpoint D: /pilot/dashboard returns $status_dashboard_on when ON (expected 200)"
         checkpoint_pass=false
     fi
     
-    if [ "$checkpoint_pass" = true ]; then
+    if [[ "$checkpoint_pass" = true ]]; then
         CHECKPOINT_D="pass"
     else
         CHECKPOINT_D="fail"
@@ -518,12 +518,12 @@ test_checkpoint_e() {
         local http_code
         http_code=$(send_event "$payload")
         
-        if [ "$http_code" = "202" ]; then
+        if [[ "$http_code" = "202" ]]; then
             success_count=$((success_count + 1))
         fi
     done
     
-    if [ "$success_count" -eq 0 ]; then
+    if [[ "$success_count" -eq 0 ]]; then
         infra_fail "Checkpoint E: No events ingested for redaction test"
         CHECKPOINT_E="infra_fail"
         stop_payflux
@@ -553,11 +553,11 @@ test_checkpoint_e() {
     
     local long_json
     long_json=$(echo "$logs" | grep -E '^\{.*\}$' | awk 'length > 1000' | wc -l | tr -d ' ')
-    if [ "$long_json" -gt 0 ]; then
+    if [[ "$long_json" -gt 0 ]]; then
         warn "Checkpoint E: Found $long_json log lines > 1000 chars (potential raw payloads)"
     fi
     
-    if [ "$redaction_pass" = true ]; then
+    if [[ "$redaction_pass" = true ]]; then
         pass "Checkpoint E: No sensitive patterns found in logs"
         CHECKPOINT_E="pass"
     else
@@ -591,10 +591,10 @@ test_checkpoint_f() {
     
     for term in "${banned_terms[@]}"; do
         for path in "${scan_paths[@]}"; do
-            if [ -e "$path" ]; then
+            if [[ -e "$path" ]]; then
                 local matches
                 matches=$(grep -ri "$term" "$path" --include="*.md" 2>/dev/null | wc -l | tr -d ' ')
-                if [ "$matches" -gt 0 ]; then
+                if [[ "$matches" -gt 0 ]]; then
                     fail "Checkpoint F: Found '$term' in $path ($matches occurrences)"
                     grep -ri "$term" "$path" --include="*.md" 2>/dev/null | head -2
                     audit_pass=false
@@ -603,7 +603,7 @@ test_checkpoint_f() {
         done
     done
     
-    if [ "$audit_pass" = true ]; then
+    if [[ "$audit_pass" = true ]]; then
         pass "Checkpoint F: No banned terms found in documentation"
     fi
     
@@ -613,7 +613,7 @@ test_checkpoint_f() {
         warn "Checkpoint F: Consider adding more probabilistic qualifiers"
     fi
     
-    if [ "$audit_pass" = true ]; then
+    if [[ "$audit_pass" = true ]]; then
         CHECKPOINT_F="pass"
     else
         CHECKPOINT_F="fail"
@@ -650,7 +650,7 @@ test_checkpoint_g() {
             CHECKPOINT_G="infra_fail"
             stop_payflux
             return
-        elif [ "$http_code" = "202" ]; then
+        elif [[ "$http_code" = "202" ]]; then
             success_count=$((success_count + 1))
         fi
         sleep 0.1
@@ -658,7 +658,7 @@ test_checkpoint_g() {
     
     echo "  Events ingested: $success_count/20"
     
-    if [ "$success_count" -eq 0 ]; then
+    if [[ "$success_count" -eq 0 ]]; then
         infra_fail "Checkpoint G: No events ingested for false positive test"
         CHECKPOINT_G="infra_fail"
         stop_payflux
@@ -676,7 +676,7 @@ test_checkpoint_g() {
     
     echo "  Final warning count: $final_warning_count (new: $new_warnings)"
     
-    if [ "$new_warnings" -eq 0 ]; then
+    if [[ "$new_warnings" -eq 0 ]]; then
         pass "Checkpoint G: No warnings generated for normal traffic ($new_warnings new)"
         CHECKPOINT_G="pass"
     else
@@ -705,7 +705,7 @@ generate_report() {
     "total_warn": $WARN_COUNT,
     "total_fail": $FAIL_COUNT,
     "infra_issues": $INFRA_FAIL,
-    "result": "$([ "$FAIL_COUNT" -eq 0 ] && echo "PASS" || echo "FAIL")"
+    "result": "$([[ "$FAIL_COUNT" -eq 0 ]] && echo "PASS" || echo "FAIL")"
   },
   "checkpoints": {
     "A_false_negative": "$CHECKPOINT_A",
@@ -748,7 +748,7 @@ main() {
     echo -e "  ${YELLOW}WARN${NC}: $WARN_COUNT"
     echo -e "  ${RED}FAIL${NC}: $FAIL_COUNT"
     
-    if [ "$INFRA_FAIL" = true ]; then
+    if [[ "$INFRA_FAIL" = true ]]; then
         echo ""
         echo -e "  ${CYAN}Note: Some failures were infrastructure-related (HTTP 000, startup issues)${NC}"
         echo -e "  ${CYAN}      These indicate test environment issues, not product bugs.${NC}"
@@ -757,7 +757,7 @@ main() {
     echo ""
     
     # Generate report on success
-    if [ "$FAIL_COUNT" -eq 0 ]; then
+    if [[ "$FAIL_COUNT" -eq 0 ]]; then
         generate_report
         echo ""
         echo -e "${GREEN}════════════════════════════════════════════════════════════════${NC}"
