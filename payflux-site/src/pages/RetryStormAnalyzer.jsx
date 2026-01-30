@@ -301,14 +301,25 @@ const RetryStormAnalyzer = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] p-6 md:p-12 selection:bg-blue-100">
-            <header className="max-w-6xl mx-auto text-center mb-12">
-                <h1 className="text-3xl font-bold tracking-tight mb-2">Retry Storm Analyzer</h1>
-                <p className="text-slate-600">Technical diagnostic instrument for payment infrastructure health.</p>
-            </header>
+        <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-blue-100">
+            {/* HERO / AUTHORITY STRIP */}
+            <div className="border-b border-slate-200 bg-gradient-to-b from-white to-slate-50">
+                <header className="max-w-6xl mx-auto px-6 md:px-12 py-10">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        PayFlux Diagnostic Tools
+                    </div>
+                    <h1 className="mt-4 text-3xl md:text-4xl font-black tracking-tight">Retry Storm Analyzer</h1>
+                    <p className="mt-2 text-slate-600 max-w-2xl">
+                        Detect retry amplification, wasted attempts, and processor exposure in minutes.
+                        <span className="font-semibold text-slate-700"> Runs locally.</span> No uploads. No data storage.
+                    </p>
+                </header>
+            </div>
 
-            <main className="max-w-6xl mx-auto space-y-8">
-                <section className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden max-w-4xl mx-auto">
+            <main className="max-w-6xl mx-auto px-6 md:px-12 py-10 space-y-10">
+                {/* INPUT */}
+                <section className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden max-w-5xl mx-auto">
                     <div className="bg-slate-50/50 px-5 py-3 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <FileJson size={14} /> JSON Event Input
                     </div>
@@ -316,19 +327,32 @@ const RetryStormAnalyzer = () => {
                         <textarea
                             value={inputData}
                             onChange={(e) => setInputData(e.target.value)}
-                            className="w-full h-64 p-4 bg-slate-50 border border-slate-200 rounded font-mono text-sm outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                            className="w-full h-64 p-4 bg-slate-50 border border-slate-200 rounded-lg font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all"
                             placeholder='{ "events": [...] }'
                         />
                         {error && <div className="mt-3 p-3 bg-red-50 text-red-600 text-sm rounded border border-red-100">{error}</div>}
-                        <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-6">
-                            <span className="text-xs text-slate-400 flex items-center gap-2">
-                                <Info size={14} /> Analysis happens locally in-browser. No data storage.
-                            </span>
-                            <div className="flex gap-4">
-                                <button onClick={() => setInputData(JSON.stringify(SAMPLE_JSON, null, 2))} className="text-xs font-bold text-blue-600 uppercase tracking-wider hover:underline">
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-6">
+                            <div className="text-xs text-slate-500 flex items-start gap-2">
+                                <Info size={14} className="mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <div className="font-bold uppercase tracking-widest text-[10px] text-slate-400">Privacy</div>
+                                    <div className="mt-1">
+                                        Analysis happens locally in-browser. <span className="font-semibold">No data storage</span>.
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                                <button
+                                    onClick={() => setInputData(JSON.stringify(SAMPLE_JSON, null, 2))}
+                                    className="text-xs font-black text-blue-700 uppercase tracking-wider hover:underline self-start sm:self-auto"
+                                >
                                     Load Storm Sample
                                 </button>
-                                <button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-slate-900 text-white px-8 py-3 rounded font-bold text-sm flex items-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50">
+                                <button
+                                    onClick={handleAnalyze}
+                                    disabled={isAnalyzing}
+                                    className="bg-slate-900 text-white px-6 py-3 rounded-lg font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50"
+                                >
                                     {isAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
                                     Run Diagnostic
                                 </button>
@@ -338,43 +362,115 @@ const RetryStormAnalyzer = () => {
                 </section>
 
                 {results && (
-                    <div className="space-y-8">
-                        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                            <BarChart3 size={16} /> Analysis Dashboard
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                            <MetricCard label="Amp Ratio" value={`${results.ratio}x`} caption="Attempts generated per failure" />
-                            <MetricCard label="Redundant Calls" value={results.redundantCalls.toLocaleString()} caption="Wasted attempts in sample" />
-                            <MetricCard
-                                label="Observed Window Waste"
-                                value={`$${results.windowWasteUsd.toFixed(2)}`}
-                                caption="Redundant attempts × infrastructure and processor risk cost"
-                            />
-                            <MetricCard
-                                label="Theoretical 30-Day Exposure"
-                                value={`$${results.monthlyProjectionUsd.toLocaleString()}`}
-                                caption="Projected exposure if this retry behavior persists for 30 days"
-                                highlight={results.monthlyProjectionUsd > 5000}
-                            />
-                            <MetricCard label="Peak Burst" value={results.clusterSize} caption="Events in 30s window" />
-                        </div>
-
-                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px] text-slate-500 flex items-start gap-2 max-w-4xl mx-auto">
-                            <Info size={14} className="mt-0.5 flex-shrink-0" />
-                            <p>
-                                <strong>Projection logic:</strong> extrapolated from {results.windowDurationMinutes}m sample to 30 days ({results.scaleFactor.toLocaleString()}x scale) at ${results.costPerAttemptUsd.toFixed(2)} unit cost.
+                    <div className="space-y-10">
+                        {/* RESULTS HEADER */}
+                        <div className="max-w-5xl mx-auto">
+                            <div className="flex items-center justify-between gap-4">
+                                <h3 className="text-xs font-black uppercase tracking-[0.22em] text-slate-400 flex items-center gap-2">
+                                    <BarChart3 size={16} /> Analysis Dashboard
+                                </h3>
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${results.risk === 'HIGH'
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : results.risk === 'MEDIUM'
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    }`}>
+                                    Risk: {results.risk}
+                                </span>
+                            </div>
+                            <p className="mt-2 text-sm text-slate-600">
+                                This dashboard separates <span className="font-semibold text-slate-700">Observed Window Waste</span> from{" "}
+                                <span className="font-semibold text-slate-700">Theoretical 30-Day Exposure</span> to show both the immediate burn and the systemic risk.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* METRICS GROUP 1: OBSERVED */}
+                        <div className="max-w-5xl mx-auto space-y-4">
+                            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+                                Observed in sample window
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <MetricCard label="Amp Ratio" value={`${results.ratio}x`} caption="Attempts generated per failure" />
+                                <MetricCard label="Redundant Calls" value={results.redundantCalls.toLocaleString()} caption="Wasted attempts in sample" />
+                                <MetricCard
+                                    label="Observed Window Waste"
+                                    value={`$${results.windowWasteUsd.toFixed(2)}`}
+                                    caption="Redundant attempts × infrastructure + processor risk cost"
+                                />
+                            </div>
+                        </div>
+
+                        {/* EXPOSURE CALLOUT (FULL WIDTH) */}
+                        <div className="max-w-5xl mx-auto">
+                            <div className={`rounded-2xl border p-6 md:p-7 shadow-sm bg-gradient-to-b ${results.monthlyProjectionUsd > 5000
+                                ? 'from-red-50 to-white border-red-200'
+                                : 'from-slate-50 to-white border-slate-200'
+                                }`}>
+                                <div className="flex items-start justify-between gap-6 flex-col md:flex-row">
+                                    <div className="min-w-0">
+                                        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500 flex items-center gap-2">
+                                            <span className={`inline-block h-2 w-2 rounded-full ${results.monthlyProjectionUsd > 5000 ? 'bg-red-500' : 'bg-slate-400'}`} />
+                                            Systemic exposure (if unchecked)
+                                        </div>
+                                        <div className={`mt-2 text-4xl md:text-5xl font-black tracking-tight ${results.monthlyProjectionUsd > 5000 ? 'text-red-700' : 'text-slate-900'
+                                            }`}>
+                                            ${results.monthlyProjectionUsd.toLocaleString()}
+                                        </div>
+                                        <div className="mt-2 text-sm text-slate-600 max-w-2xl">
+                                            Projected exposure if this retry behavior persists for{" "}
+                                            <span className="font-semibold text-slate-700">30 days</span> at ${results.costPerAttemptUsd.toFixed(2)} per redundant attempt.
+                                        </div>
+                                        {results.monthlyProjectionUsd > 5000 && (
+                                            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-100 text-red-800 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                                                HIGH RISK — sustained retry behavior can trigger processor controls
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* SECONDARY METRIC */}
+                                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+                                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Projection model</div>
+                                        <div className="mt-2">
+                                            Extrapolated from <span className="font-semibold">{results.windowDurationMinutes}m</span> sample to 30 days
+                                        </div>
+                                        <div className="mt-1">
+                                            Scale factor: <span className="font-semibold">{results.scaleFactor.toLocaleString()}×</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* METRICS GROUP 2: BURST */}
+                        <div className="max-w-5xl mx-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <MetricCard label="Peak Burst" value={results.clusterSize} caption="Events in 30s window" />
+                            </div>
+                        </div>
+
+                        {/* (kept) Small disclosure block for auditors */}
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 text-[11px] text-slate-500 flex items-start gap-2 max-w-5xl mx-auto">
+                            <Info size={14} className="mt-0.5 flex-shrink-0" />
+                            <p>
+                                <strong>Disclosure:</strong> Exposure is a linear extrapolation from the sample window (no seasonality, no counter-measures). Use it as a
+                                directional risk indicator, not a forecast.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">Retry Density Timeline</h4>
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${results.risk === 'HIGH' ? 'bg-red-100 text-red-700' : results.risk === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                                        }`}>
-                                        Risk: {results.risk}
-                                    </span>
+                                    <div>
+                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">Retry Density Timeline</h4>
+                                        <div className="mt-2 flex items-center gap-3 text-[10px] font-bold text-slate-500">
+                                            <span className="inline-flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-red-500" /> Storm behavior (burst)
+                                            </span>
+                                            <span className="inline-flex items-center gap-2">
+                                                <span className="h-2 w-2 rounded-full bg-blue-500" /> Background retries
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="h-[240px] flex flex-col">
                                     <TimelineChart data={results.timeline} />
@@ -386,21 +482,24 @@ const RetryStormAnalyzer = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900 text-slate-300 rounded-lg p-6 shadow-lg text-xs leading-relaxed space-y-4">
-                                <h4 className="text-white font-bold uppercase tracking-widest">Interpretation</h4>
+                            <div className="bg-gradient-to-b from-slate-900 to-slate-950 text-slate-300 rounded-xl p-6 shadow-lg text-xs leading-relaxed space-y-4 border border-slate-800">
+                                <div className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+                                    Automated risk interpretation
+                                </div>
+                                <h4 className="text-white font-black uppercase tracking-widest">Interpretation</h4>
                                 <p className="text-white font-medium">{results.interpretation.summary}</p>
                                 <div className="pt-3 border-t border-slate-700">
                                     <span className="text-white font-bold block mb-1 uppercase tracking-tighter">Why {results.risk}?</span>
                                     <p className="opacity-80">{results.interpretation.riskExplanation}</p>
                                 </div>
                                 <div>
-                                    <span className="text-white font-bold block mb-1 uppercase tracking-tighter text-[10px]">Likely Causes</span>
+                                    <span className="text-white font-black block mb-1 uppercase tracking-tighter text-[10px]">Likely Causes</span>
                                     <ul className="list-disc list-inside opacity-70 space-y-1">
                                         {results.interpretation.causes.map((c, i) => <li key={i}>{c}</li>)}
                                     </ul>
                                 </div>
                                 <div>
-                                    <span className="text-white font-bold block mb-1 uppercase tracking-tighter text-[10px]">Systemic Impact</span>
+                                    <span className="text-white font-black block mb-1 uppercase tracking-tighter text-[10px]">Systemic Impact</span>
                                     <ul className="list-disc list-inside opacity-70 space-y-1">
                                         {results.interpretation.impacts.map((imp, i) => <li key={i}>{imp}</li>)}
                                     </ul>
@@ -408,16 +507,35 @@ const RetryStormAnalyzer = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-col items-center gap-6 pt-12 border-t border-slate-200">
-                            <div className="flex gap-4">
-                                <button onClick={() => downloadJSONReport(results)} className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded font-bold text-xs uppercase tracking-widest hover:border-slate-300 shadow-sm transition-all">
-                                    <Download size={14} /> Download JSON Report
-                                </button>
-                                <button className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-blue-700 shadow-sm transition-all">
-                                    <Mail size={14} /> Get Weekly Health Alerts
-                                </button>
+                        {/* CTA PANEL */}
+                        <div className="max-w-5xl mx-auto">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-7 shadow-sm">
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                    <div>
+                                        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Next step</div>
+                                        <div className="mt-2 text-lg font-black text-slate-900">Monitor retry amplification before processors do.</div>
+                                        <div className="mt-1 text-sm text-slate-600">
+                                            Export results for stakeholders or get weekly health alerts to catch storms early.
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <button
+                                            className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-black text-xs uppercase tracking-widest hover:bg-blue-700 shadow-sm transition-all"
+                                        >
+                                            <Mail size={14} /> Get Weekly Health Alerts
+                                        </button>
+                                        <button
+                                            onClick={() => downloadJSONReport(results)}
+                                            className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-lg font-black text-xs uppercase tracking-widest hover:border-slate-300 shadow-sm transition-all"
+                                        >
+                                            <Download size={14} /> Download JSON Report
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]">PayFlux Infrastructure Diagnostics</p>
+                            <p className="mt-6 text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">
+                                PayFlux Infrastructure Diagnostics
+                            </p>
                         </div>
                     </div>
                 )}
