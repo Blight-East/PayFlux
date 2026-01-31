@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+const (
+	msgMethodNotAllowed = "method not allowed"
+	hdrContentType      = "Content-Type"
+	hdrCacheControl     = "Cache-Control"
+	valApplicationJSON  = "application/json"
+	valNoStore          = "no-store"
+)
+
 var appStartTime = time.Now()
 
 func mapSeverity(band string) string {
@@ -68,7 +76,7 @@ func gatherMerchants() []evidence.Merchant {
 
 func handleEvidence(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -125,14 +133,14 @@ func handleEvidence(w http.ResponseWriter, r *http.Request) {
 	env := evidence.GenerateEnvelope(merchants, artifacts, narratives, sys, meta)
 
 	// 5. Emit
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set(hdrContentType, valApplicationJSON)
+	w.Header().Set(hdrCacheControl, valNoStore)
 	json.NewEncoder(w).Encode(env)
 }
 
 func handleEvidenceFixture(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -162,14 +170,14 @@ func handleEvidenceFixture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set(hdrContentType, valApplicationJSON)
+	w.Header().Set(hdrCacheControl, valNoStore)
 	w.Write(data)
 }
 
 func handleEvidenceHealth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -195,7 +203,7 @@ func handleEvidenceHealth(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set(hdrContentType, valApplicationJSON)
+	w.Header().Set(hdrCacheControl, valNoStore)
 	json.NewEncoder(w).Encode(health)
 }
