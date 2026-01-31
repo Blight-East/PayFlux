@@ -336,6 +336,66 @@ func testArtifactQuality(events []*ExportedEvent) []string {
 	return issues
 }
 
+// Helper: Check if event has elevated or higher risk
+func isElevatedOrHigherRisk(event *ExportedEvent) bool {
+	return event.ProcessorRiskBand == "elevated" ||
+		event.ProcessorRiskBand == "high" ||
+		event.ProcessorRiskBand == "critical"
+}
+
+// Helper: Check if context contains historical memory keywords
+func containsHistoricalMemoryKeywords(context string) bool {
+	lowerContext := strings.ToLower(context)
+	return strings.Contains(lowerContext, "earlier") ||
+		strings.Contains(lowerContext, "previous") ||
+		strings.Contains(lowerContext, "prior") ||
+		strings.Contains(lowerContext, "history") ||
+		strings.Contains(lowerContext, "recurring")
+}
+
+// Helper: Process event for historical memory test
+func processEventForHistoricalMemory(event *ExportedEvent, test *HistoricalMemoryTest) {
+	// Skip if not the target merchant
+	if event.MerchantIDHash != test.MerchantID {
+		return
+	}
+
+	// Parse event time
+	eventTime, err := time.Parse(time.RFC3339, event.EventTimestamp)
+	if err != nil {
+		return
+	}
+
+	// Only process elevated+ risk events
+	if !isElevatedOrHigherRisk(event) {
+		return
+	}
+
+	// Categorize as Day 3 or Day 9 event
+	if test.Day3Event == nil {
+		test.Day3Event = event
+	} else if test.Day9Event == nil && eventTime.After(mustParse(test.Day3Event.EventTimestamp).Add(5*24*time.Hour)) {
+		test.Day9Event = event
+	}
+}
+
+// Helper: Validate historical memory detection
+func validateHistoricalMemory(test *HistoricalMemoryTest) {
+	if test.Day9Event == nil || test.Day9Event.ProcessorPlaybookContext == "" {
+		test.MemoryDetected = false
+		test.FailureReason = "Insufficient data (need elevated+ events on both Day 3 and Day 9)"
+		return
+	}
+
+	// Check if Day 9 event references earlier context
+	if containsHistoricalMemoryKeywords(test.Day9Event.ProcessorPlaybookContext) {
+		test.MemoryDetected = true
+	} else {
+		test.MemoryDetected = false
+		test.FailureReason = "Day 9 interpretation does not reference earlier context"
+	}
+}
+
 func testHistoricalMemory(events []*ExportedEvent) []*HistoricalMemoryTest {
 	// Test: merchant_growth_003 has anomalies on Day 3 and Day 9
 	test := &HistoricalMemoryTest{
@@ -344,46 +404,11 @@ func testHistoricalMemory(events []*ExportedEvent) []*HistoricalMemoryTest {
 
 	// Find events from Day 3 and Day 9
 	for _, event := range events {
-		if event.MerchantIDHash != test.MerchantID {
-			continue
-		}
-
-		eventTime, err := time.Parse(time.RFC3339, event.EventTimestamp)
-		if err != nil {
-			continue
-		}
-
-		// Day 3: hours 72-95
-		// Day 9: hours 216-239
-		// (Simplified: just check if we have elevated+ events from both periods)
-
-		if event.ProcessorRiskBand == "elevated" || event.ProcessorRiskBand == "high" || event.ProcessorRiskBand == "critical" {
-			if test.Day3Event == nil {
-				test.Day3Event = event
-			} else if test.Day9Event == nil && eventTime.After(mustParse(test.Day3Event.EventTimestamp).Add(5*24*time.Hour)) {
-				test.Day9Event = event
-			}
-		}
+		processEventForHistoricalMemory(event, test)
 	}
 
-	// Check if Day 9 event references earlier context
-	if test.Day9Event != nil && test.Day9Event.ProcessorPlaybookContext != "" {
-		// Simple heuristic: does it mention "earlier", "previous", "prior", "history"?
-		context := strings.ToLower(test.Day9Event.ProcessorPlaybookContext)
-		if strings.Contains(context, "earlier") ||
-			strings.Contains(context, "previous") ||
-			strings.Contains(context, "prior") ||
-			strings.Contains(context, "history") ||
-			strings.Contains(context, "recurring") {
-			test.MemoryDetected = true
-		} else {
-			test.MemoryDetected = false
-			test.FailureReason = "Day 9 interpretation does not reference earlier context"
-		}
-	} else {
-		test.MemoryDetected = false
-		test.FailureReason = "Insufficient data (need elevated+ events on both Day 3 and Day 9)"
-	}
+	// Validate memory detection
+	validateHistoricalMemory(test)
 
 	return []*HistoricalMemoryTest{test}
 }
