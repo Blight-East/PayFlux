@@ -22,9 +22,8 @@ var (
 	dryRun          = flag.Bool("dry-run", false, "Generate events but don't send to PayFlux")
 )
 
-func main() {
-	flag.Parse()
-
+// Helper: Validate flags and create output directory
+func setupAndValidate() {
 	if *apiKey == "" {
 		log.Fatal("API key required: --key=your-api-key")
 	}
@@ -39,8 +38,10 @@ func main() {
 	log.Printf("Speed multiplier: %dx (1 hour = %.1f seconds)", *speedMultiplier, 3600.0/float64(*speedMultiplier))
 	log.Printf("Output directory: %s", *outputDir)
 	log.Printf("Dry run: %v", *dryRun)
+}
 
-	// Generate merchant portfolio
+// Helper: Generate and save merchant portfolio
+func generateMerchantPortfolio() []*testharness.Merchant {
 	log.Println("\n--- Phase 1: Generating Merchant Portfolio ---")
 	config := testharness.MerchantConfig{
 		NumStable: 8,
@@ -59,7 +60,11 @@ func main() {
 		log.Fatalf("Failed to save merchant profiles: %v", err)
 	}
 
-	// Create anomaly schedule
+	return merchants
+}
+
+// Helper: Create and save anomaly schedule
+func createAnomalySchedule() *testharness.AnomalySchedule {
 	log.Println("\n--- Phase 2: Anomaly Injection Schedule ---")
 	schedule := testharness.NewAnomalySchedule()
 	schedule.PrintSchedule()
@@ -69,7 +74,11 @@ func main() {
 		log.Fatalf("Failed to save anomaly schedule: %v", err)
 	}
 
-	// Generate telemetry
+	return schedule
+}
+
+// Helper: Generate telemetry for all merchants
+func generateTelemetry(merchants []*testharness.Merchant, schedule *testharness.AnomalySchedule) [][]*testharness.PaymentEvent {
 	log.Println("\n--- Phase 3: Generating Telemetry (14 days) ---")
 	baseTime := time.Now().Add(-14 * 24 * time.Hour) // Start 14 days ago
 	generator := testharness.NewTelemetryGenerator(baseTime)
@@ -85,21 +94,11 @@ func main() {
 		log.Fatalf("Failed to save sample telemetry: %v", err)
 	}
 
-	if *dryRun {
-		log.Println("\n=== DRY RUN COMPLETE ===")
-		log.Printf("Telemetry generated but not sent to PayFlux")
-		log.Printf("Check %s for outputs", *outputDir)
-		return
-	}
+	return allEvents
+}
 
-	// Verify PayFlux is running
-	log.Println("\n--- Phase 4: Verifying PayFlux Connection ---")
-	if err := verifyPayFlux(); err != nil {
-		log.Fatalf("PayFlux health check failed: %v", err)
-	}
-	log.Println("✓ PayFlux is healthy")
-
-	// Send events to PayFlux
+// Helper: Send events to PayFlux with progress tracking
+func ingestEvents(allEvents [][]*testharness.PaymentEvent) *IngestionStats {
 	log.Println("\n--- Phase 5: Sending Events to PayFlux ---")
 	log.Printf("Starting event ingestion (compressed time)...")
 
@@ -107,6 +106,7 @@ func main() {
 		StartTime: time.Now(),
 	}
 
+	totalHours := len(allEvents)
 	for hourOffset := 0; hourOffset < totalHours; hourOffset++ {
 		hourStart := time.Now()
 		events := allEvents[hourOffset]
@@ -149,6 +149,11 @@ func main() {
 	stats.EndTime = time.Now()
 	stats.Duration = stats.EndTime.Sub(stats.StartTime)
 
+	return stats
+}
+
+// Helper: Print completion summary
+func printCompletionSummary(stats *IngestionStats) {
 	log.Println("\n=== INGESTION COMPLETE ===")
 	log.Printf("Total events sent: %d", stats.Sent)
 	log.Printf("Total errors: %d", stats.Errors)
@@ -169,6 +174,43 @@ func main() {
 	log.Printf("1. Check PayFlux export output for Tier 1 and Tier 2 enrichment")
 	log.Printf("2. Run analysis tool: go run cmd/test-analysis/main.go")
 	log.Printf("3. Review outputs in %s", *outputDir)
+}
+
+func main() {
+	flag.Parse()
+
+	// Phase 0: Setup and validation
+	setupAndValidate()
+
+	// Phase 1: Generate merchant portfolio
+	merchants := generateMerchantPortfolio()
+
+	// Phase 2: Create anomaly schedule
+	schedule := createAnomalySchedule()
+
+	// Phase 3: Generate telemetry
+	allEvents := generateTelemetry(merchants, schedule)
+
+	// Early exit for dry run
+	if *dryRun {
+		log.Println("\n=== DRY RUN COMPLETE ===")
+		log.Printf("Telemetry generated but not sent to PayFlux")
+		log.Printf("Check %s for outputs", *outputDir)
+		return
+	}
+
+	// Phase 4: Verify PayFlux connection
+	log.Println("\n--- Phase 4: Verifying PayFlux Connection ---")
+	if err := verifyPayFlux(); err != nil {
+		log.Fatalf("PayFlux health check failed: %v", err)
+	}
+	log.Println("✓ PayFlux is healthy")
+
+	// Phase 5: Ingest events
+	stats := ingestEvents(allEvents)
+
+	// Phase 6: Completion and summary
+	printCompletionSummary(stats)
 }
 
 type IngestionStats struct {
