@@ -240,17 +240,18 @@ var (
 	})
 )
 
-func main() {
-	// Load env (optional)
+// Helper: Setup logging
+func setupLogging() {
 	_ = godotenv.Load()
-
-	// Initialize structured logging (JSON handler)
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})))
+}
 
-	redisAddr := env("REDIS_ADDR", "localhost:6379")
-	httpAddr := env("HTTP_ADDR", ":8080")
+// Helper: Load all configuration from environment
+func loadConfiguration() (redisAddr, httpAddr string) {
+	redisAddr = env("REDIS_ADDR", "localhost:6379")
+	httpAddr = env("HTTP_ADDR", ":8080")
 
 	// Load API keys (multi-key support)
 	validAPIKeys = loadAPIKeys()
@@ -264,8 +265,6 @@ func main() {
 	if len(revokedAPIKeys) > 0 {
 		slog.Warn("revoked_keys_loaded", "count", len(revokedAPIKeys))
 	}
-
-	// Note: prod mode validation happens after guardrails config is loaded (below)
 
 	// Load rate limit config (legacy vars, still supported)
 	rateLimitRPS = float64(envInt("PAYFLUX_RATELIMIT_RPS", 100))
@@ -295,7 +294,16 @@ func main() {
 	}
 	slog.Info("panic_mode", "mode", panicMode)
 
-	// Load Risk Score config (v0.2.1+)
+	loadRiskScoringConfig()
+	loadTierConfig()
+	loadPilotModeConfig()
+	loadGuardrailsConfig()
+
+	return redisAddr, httpAddr
+}
+
+// Helper: Load risk scoring configuration
+func loadRiskScoringConfig() {
 	riskScoreEnabled = env("PAYFLUX_RISK_SCORE_ENABLED", "true") == "true"
 	riskScoreWindow = envInt("PAYFLUX_RISK_SCORE_WINDOW_SEC", 300)
 	thresholdsStr := env("PAYFLUX_RISK_SCORE_THRESHOLDS", "0.3,0.6,0.8")
@@ -312,8 +320,10 @@ func main() {
 		riskScorer = NewRiskScorer(riskScoreWindow, riskThresholds)
 		slog.Info("risk_scorer_initialized", "window_sec", riskScoreWindow, "thresholds", thresholdsStr)
 	}
+}
 
-	// Load Tier config (v0.2.2+)
+// Helper: Load tier configuration
+func loadTierConfig() {
 	exportTier = env("PAYFLUX_TIER", "tier1")
 	if exportTier != "tier1" && exportTier != "tier2" {
 		log.Fatalf("PAYFLUX_TIER must be 'tier1' or 'tier2', got: %s", exportTier)
@@ -322,15 +332,19 @@ func main() {
 	if exportTier == "tier1" {
 		slog.Info("tier_hint", "msg", "Set PAYFLUX_TIER=tier2 to include playbook context and risk trajectory in exports")
 	}
+}
 
-	// Load Pilot mode config (v0.2.3+)
+// Helper: Load pilot mode configuration
+func loadPilotModeConfig() {
 	pilotModeEnabled = env("PAYFLUX_PILOT_MODE", "false") == "true"
 	if pilotModeEnabled {
 		warningStore = NewWarningStore(1000)
 		slog.Info("pilot_mode_enabled", "warning_store_capacity", 1000)
 	}
+}
 
-	// Load Operational Guardrails config (v0.2.4+)
+// Helper: Load operational guardrails configuration
+func loadGuardrailsConfig() {
 	payfluxEnv = env("PAYFLUX_ENV", "dev")
 	if payfluxEnv != "dev" && payfluxEnv != "prod" {
 		log.Fatalf("PAYFLUX_ENV must be 'dev' or 'prod', got: %s", payfluxEnv)
@@ -370,8 +384,10 @@ func main() {
 	if !tier2Enabled {
 		slog.Warn("TIER2_DISABLED", "msg", "Tier 2 enrichment is disabled via PAYFLUX_TIER2_ENABLED=false")
 	}
+}
 
-	// Prod mode API key validation (after guardrails config loaded)
+// Helper: Validate production requirements
+func validateProduction() {
 	if payfluxEnv == "prod" {
 		if err := validateAPIKeysForProd(validAPIKeys); err != nil {
 			log.Fatalf("API key validation failed in prod mode: %v", err)
@@ -379,14 +395,16 @@ func main() {
 		slog.Info("api_keys_validated_for_prod")
 	}
 
-	// Stripe key validation
 	stripeKey := os.Getenv("STRIPE_API_KEY")
 	if stripeKey == "" || !strings.HasPrefix(stripeKey, "sk_") {
 		log.Fatal("STRIPE_API_KEY missing or invalid format (must start with sk_)")
 	}
 	stripe.Key = stripeKey
 	slog.Info("stripe_configured")
+}
 
+// Helper: Initialize Prometheus metrics
+func initializePrometheus() {
 	prometheus.MustRegister(
 		ingestAccepted, ingestRejected, consumerProcessed, consumerDlq, ingestDuplicate,
 		streamLength, pendingCount, ingestLatency, eventsByProcessor, eventsExported,
@@ -396,8 +414,10 @@ func main() {
 		ingestRateLimited, warningsSuppressed, consumerLagMessages,
 		authDenied, warningLatency,
 	)
+}
 
-	// Redis connection pool
+// Helper: Setup Redis connection and consumer group
+func setupRedis(redisAddr string) {
 	rdb = redis.NewClient(&redis.Options{
 		Addr:         redisAddr,
 		PoolSize:     100,
@@ -413,30 +433,28 @@ func main() {
 	}
 	slog.Info("redis_connected", "addr", redisAddr)
 
-	// Create consumer group safely
 	if err := ensureConsumerGroup(streamKey, groupName); err != nil {
 		log.Fatalf("consumer_group_failed stream=%s group=%s err=%v", streamKey, groupName, err)
 	}
 	slog.Info("consumer_group_ready", "stream", streamKey, "group", groupName)
+}
 
-	// Setup export
+// Helper: Setup export and start background workers
+func setupExportAndConsumer() {
 	if err := setupExport(); err != nil {
 		log.Fatalf("export_setup_failed err=%v", err)
 	}
-	defer cleanupExport()
 
-	// Start consumer
 	go consumeEvents()
-
-	// Start metrics updater
 	go updateStreamMetrics()
 
-	// Start raw event retention purge (time-based)
 	if rawEventTTLDays > 0 {
 		go runStreamRetention()
 	}
+}
 
-	// Routes
+// Helper: Setup HTTP server and routes
+func setupHTTPServer(httpAddr string) *http.Server {
 	mux := http.NewServeMux()
 
 	// Apply auth and rate limit middleware
@@ -450,16 +468,25 @@ func main() {
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/export/health", handleExportHealth)
 
-	// Pilot routes (only when PAYFLUX_PILOT_MODE=true)
+	registerPilotRoutes(mux)
+	registerEvidenceRoutes(mux)
+
+	return &http.Server{
+		Addr:         httpAddr,
+		Handler:      mux,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+}
+
+// Helper: Register pilot mode routes
+func registerPilotRoutes(mux *http.ServeMux) {
 	if pilotModeEnabled && warningStore != nil {
-		// Dashboard (auth required)
 		mux.HandleFunc("/pilot/dashboard", authMiddleware(pilotDashboardHandler(warningStore)))
-		// Warnings list (auth required)
 		mux.HandleFunc("/pilot/warnings", authMiddleware(pilotWarningsListHandler(warningStore)))
-		// Outcome endpoint and single warning (auth required, outcome uses stricter rate limit)
 		mux.HandleFunc("/pilot/warnings/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasSuffix(r.URL.Path, "/outcome") {
-				// Apply stricter outcome rate limiter
 				outcomeRateLimitMiddleware(func(w http.ResponseWriter, r *http.Request) {
 					pilotOutcomeHandler(warningStore,
 						func(outcomeType, source string) {
@@ -475,41 +502,34 @@ func main() {
 		}))
 		slog.Info("pilot_routes_registered", "endpoints", []string{"/pilot/dashboard", "/pilot/warnings", "/pilot/warnings/{id}/outcome"})
 	}
+}
 
-	// Evidence Console endpoint (auth required, CORS enabled)
+// Helper: Register evidence console routes
+func registerEvidenceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/evidence", corsMiddleware(authMiddleware(handleEvidence)))
 	mux.HandleFunc("/api/evidence/health", corsMiddleware(authMiddleware(handleEvidenceHealth)))
 
-	// Dev-only: Serve fixtures for UI testing
 	if payfluxEnv == "dev" {
 		mux.HandleFunc("/api/evidence/fixtures/", corsMiddleware(authMiddleware(handleEvidenceFixture)))
 		slog.Info("dev_route_registered", "path", "/api/evidence/fixtures/")
 	}
+}
 
-	// Graceful shutdown
-	srv := &http.Server{
-		Addr:         httpAddr,
-		Handler:      mux,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
-	}
-
+// Helper: Run server with graceful shutdown
+func runServer(srv *http.Server) {
 	go func() {
-		slog.Info("server_listening", "addr", httpAddr)
+		slog.Info("server_listening", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server_failed err=%v", err)
 		}
 	}()
 
-	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	log.Println("shutdown_initiated")
 
-	// Graceful shutdown with 30s timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -518,6 +538,21 @@ func main() {
 	}
 
 	log.Println("shutdown_complete")
+}
+
+func main() {
+	setupLogging()
+
+	redisAddr, httpAddr := loadConfiguration()
+	validateProduction()
+
+	initializePrometheus()
+	setupRedis(redisAddr)
+	setupExportAndConsumer()
+	defer cleanupExport()
+
+	srv := setupHTTPServer(httpAddr)
+	runServer(srv)
 }
 
 // loadAPIKeys loads API keys from env vars (multi-key support)
