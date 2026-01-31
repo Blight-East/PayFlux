@@ -28,6 +28,44 @@ func mapSeverity(band string) string {
 	}
 }
 
+func gatherMerchants() []evidence.Merchant {
+	var merchants []evidence.Merchant
+	if rdb == nil {
+		return merchants
+	}
+
+	iter := rdb.Scan(ctx, 0, "mctx:*", 1000).Iterator()
+	for iter.Next(ctx) {
+		key := iter.Val()
+		if len(key) <= 5 {
+			continue
+		}
+		merchantID := key[5:]
+		mctx := getMerchantContext(merchantID)
+		if mctx == nil {
+			continue
+		}
+
+		status := "healthy"
+		sev := "neutral"
+		if mctx.AnomalyType != "" {
+			status = "degraded"
+			sev = "warning"
+		}
+		merchants = append(merchants, evidence.Merchant{
+			ID:       merchantID,
+			Name:     fmt.Sprintf("Merchant %s", merchantID[:8]),
+			Vol:      strconv.Itoa(mctx.RecurrenceCount),
+			Status:   status,
+			Severity: sev,
+			Region:   "US",
+			Baseline: fmt.Sprintf("%.4f", mctx.BaselineApproval),
+			Segment:  "Enterprise", // Default for core
+		})
+	}
+	return merchants
+}
+
 func handleEvidence(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -35,36 +73,7 @@ func handleEvidence(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 1. Gather Merchants
-	var merchants []evidence.Merchant
-	if rdb != nil {
-		iter := rdb.Scan(ctx, 0, "mctx:*", 1000).Iterator()
-		for iter.Next(ctx) {
-			key := iter.Val()
-			if len(key) <= 5 {
-				continue
-			}
-			merchantID := key[5:]
-			mctx := getMerchantContext(merchantID)
-			if mctx != nil {
-				status := "healthy"
-				sev := "neutral"
-				if mctx.AnomalyType != "" {
-					status = "degraded"
-					sev = "warning"
-				}
-				merchants = append(merchants, evidence.Merchant{
-					ID:       merchantID,
-					Name:     fmt.Sprintf("Merchant %s", merchantID[:8]),
-					Vol:      strconv.Itoa(mctx.RecurrenceCount),
-					Status:   status,
-					Severity: sev,
-					Region:   "US",
-					Baseline: fmt.Sprintf("%.4f", mctx.BaselineApproval),
-					Segment:  "Enterprise", // Default for core
-				})
-			}
-		}
-	}
+	merchants := gatherMerchants()
 
 	// 2. Gather Artifacts & Narratives
 	var artifacts []evidence.ArtifactSource
