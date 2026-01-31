@@ -5,7 +5,7 @@ WORKDIR /app
 COPY go.mod ./
 RUN go mod download 2>/dev/null || true
 
-COPY . .
+COPY main.go .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o alert-router .
 
