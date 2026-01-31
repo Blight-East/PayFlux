@@ -22,6 +22,10 @@ var (
 	dryRun          = flag.Bool("dry-run", false, "Generate events but don't send to PayFlux")
 )
 
+var sendBatchFunc = sendBatch
+
+const batchSize = 500
+
 // Helper: Validate flags and create output directory
 func setupAndValidate() {
 	if *apiKey == "" {
@@ -111,45 +115,51 @@ func ingestEvents(allEvents [][]*testharness.PaymentEvent) *IngestionStats {
 		hourStart := time.Now()
 		events := allEvents[hourOffset]
 
-		// Send all events for this hour in batches
-		const batchSize = 500
-		for i := 0; i < len(events); i += batchSize {
-			end := i + batchSize
-			if end > len(events) {
-				end = len(events)
-			}
-			batch := events[i:end]
-
-			if err := sendBatch(batch); err != nil {
-				stats.Errors += len(batch)
-				if stats.Errors < 100 { // Log first 100 errors
-					log.Printf("Error sending batch: %v", err)
-				}
-			} else {
-				stats.Sent += len(batch)
-			}
-		}
-
-		// Progress update every 24 hours (1 day)
-		if (hourOffset+1)%24 == 0 {
-			day := (hourOffset + 1) / 24
-			elapsed := time.Since(stats.StartTime)
-			log.Printf("Day %d complete: %d events sent, %d errors (%.1fs elapsed)",
-				day, stats.Sent, stats.Errors, elapsed.Seconds())
-		}
-
-		// Sleep to maintain time compression
-		hourDuration := time.Duration(3600.0 / float64(*speedMultiplier) * float64(time.Second))
-		elapsed := time.Since(hourStart)
-		if elapsed < hourDuration {
-			time.Sleep(hourDuration - elapsed)
-		}
+		processHourEvents(events, stats)
+		logIngestionProgress(hourOffset, stats)
+		throttleIngestion(hourStart)
 	}
 
 	stats.EndTime = time.Now()
 	stats.Duration = stats.EndTime.Sub(stats.StartTime)
 
 	return stats
+}
+
+func processHourEvents(events []*testharness.PaymentEvent, stats *IngestionStats) {
+	for i := 0; i < len(events); i += batchSize {
+		end := i + batchSize
+		if end > len(events) {
+			end = len(events)
+		}
+		batch := events[i:end]
+
+		if err := sendBatchFunc(batch); err != nil {
+			stats.Errors += len(batch)
+			if stats.Errors < 100 { // Log first 100 errors
+				log.Printf("Error sending batch: %v", err)
+			}
+		} else {
+			stats.Sent += len(batch)
+		}
+	}
+}
+
+func logIngestionProgress(hourOffset int, stats *IngestionStats) {
+	if (hourOffset+1)%24 == 0 {
+		day := (hourOffset + 1) / 24
+		elapsed := time.Since(stats.StartTime)
+		log.Printf("Day %d complete: %d events sent, %d errors (%.1fs elapsed)",
+			day, stats.Sent, stats.Errors, elapsed.Seconds())
+	}
+}
+
+func throttleIngestion(hourStart time.Time) {
+	hourDuration := time.Duration(3600.0 / float64(*speedMultiplier) * float64(time.Second))
+	elapsed := time.Since(hourStart)
+	if elapsed < hourDuration {
+		time.Sleep(hourDuration - elapsed)
+	}
 }
 
 // Helper: Print completion summary
