@@ -161,6 +161,14 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
+        # Mount writable /tmp for Go runtime and TLS stacks (preserves readOnlyRootFilesystem security)
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      # Provide writable /tmp without making entire filesystem writable
+      volumes:
+      - name: tmp
+        emptyDir: {}
 
 ---
 apiVersion: v1
