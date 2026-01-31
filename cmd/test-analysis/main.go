@@ -214,6 +214,59 @@ func parseExportFile(path string) ([]*ExportedEvent, error) {
 	return events, scanner.Err()
 }
 
+// Helper: Check if merchant is in the test set
+func isMerchantInTestSet(merchantID string, merchants []string) bool {
+	for _, m := range merchants {
+		if merchantID == m {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper: Check if interpretations are differentiated
+func validateInterpretations(interpretations map[string]string) (bool, string) {
+	if len(interpretations) < 2 {
+		return false, "Insufficient data (need at least 2 merchants with Tier 2 output)"
+	}
+
+	// Check if all interpretations are identical
+	unique := make(map[string]bool)
+	for _, interp := range interpretations {
+		unique[interp] = true
+	}
+
+	if len(unique) == 1 {
+		return false, "All interpretations are identical (templated output)"
+	}
+
+	return true, ""
+}
+
+// Helper: Process event and extract interpretation if applicable
+func processEventForInterpretation(event *ExportedEvent, test *InterpretationTest) {
+	// Skip Tier 1 events
+	if event.ProcessorPlaybookContext == "" {
+		return
+	}
+
+	// Skip if merchant not in test set
+	if !isMerchantInTestSet(event.MerchantIDHash, test.Merchants) {
+		return
+	}
+
+	// Validate timestamp (skip if invalid)
+	_, err := time.Parse(time.RFC3339, event.EventTimestamp)
+	if err != nil {
+		return
+	}
+
+	// Store interpretation if not already present
+	if _, exists := test.Interpretations[event.MerchantIDHash]; !exists {
+		test.Interpretations[event.MerchantIDHash] = event.ProcessorPlaybookContext
+	}
+}
+
 func testInterpretationConsistency(events []*ExportedEvent) []*InterpretationTest {
 	// Test: Day 3 retry spike across merchant_stable_001, merchant_growth_003, merchant_messy_001
 	test := &InterpretationTest{
@@ -224,52 +277,13 @@ func testInterpretationConsistency(events []*ExportedEvent) []*InterpretationTes
 
 	// Find events from Day 3 for these merchants
 	for _, event := range events {
-		if event.ProcessorPlaybookContext == "" {
-			continue // Skip Tier 1
-		}
-
-		// Check if merchant is in test set
-		found := false
-		for _, m := range test.Merchants {
-			if event.MerchantIDHash == m {
-				found = true
-				break
-			}
-		}
-		if !found {
-			continue
-		}
-
-		// Check if event is from Day 3 (hours 72-95)
-		_, err := time.Parse(time.RFC3339, event.EventTimestamp)
-		if err != nil {
-			continue
-		}
-
-		// Store interpretation
-		if _, exists := test.Interpretations[event.MerchantIDHash]; !exists {
-			test.Interpretations[event.MerchantIDHash] = event.ProcessorPlaybookContext
-		}
+		processEventForInterpretation(event, test)
 	}
 
-	// Check if interpretations are differentiated
-	if len(test.Interpretations) < 2 {
-		test.Differentiated = false
-		test.FailureReason = "Insufficient data (need at least 2 merchants with Tier 2 output)"
-	} else {
-		// Simple check: are all interpretations identical?
-		unique := make(map[string]bool)
-		for _, interp := range test.Interpretations {
-			unique[interp] = true
-		}
-
-		if len(unique) == 1 {
-			test.Differentiated = false
-			test.FailureReason = "All interpretations are identical (templated output)"
-		} else {
-			test.Differentiated = true
-		}
-	}
+	// Validate interpretations
+	differentiated, failureReason := validateInterpretations(test.Interpretations)
+	test.Differentiated = differentiated
+	test.FailureReason = failureReason
 
 	return []*InterpretationTest{test}
 }
