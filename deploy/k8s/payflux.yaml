@@ -32,6 +32,14 @@ stringData:
   STRIPE_API_KEY: "sk_live_your_stripe_key_here"
 
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payflux
+  namespace: default
+automountServiceAccountToken: false
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,6 +57,7 @@ spec:
       labels:
         app: payflux
     spec:
+      serviceAccountName: payflux
       automountServiceAccountToken: false
       containers:
       - name: payflux
