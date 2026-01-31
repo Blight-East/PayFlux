@@ -49,6 +49,7 @@ spec:
       labels:
         app: payflux
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: payflux
         image: payflux:latest  # Replace with your registry/image
