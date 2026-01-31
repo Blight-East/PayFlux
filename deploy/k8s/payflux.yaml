@@ -59,6 +59,12 @@ spec:
     spec:
       serviceAccountName: payflux
       automountServiceAccountToken: false
+      # Enforce non-root execution (aligns with Dockerfile USER directive)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
       - name: payflux
         image: payflux:latest  # Replace with your registry/image
