@@ -71,33 +71,8 @@ type HistoricalMemoryTest struct {
 	FailureReason  string
 }
 
-func main() {
-	flag.Parse()
-
-	if *exportFile == "" {
-		log.Fatal("Export file required: --export=/path/to/export.jsonl")
-	}
-
-	log.Println("=== PayFlux Export Analysis ===")
-	log.Printf("Export file: %s", *exportFile)
-	log.Printf("Output directory: %s", *outputDir)
-
-	// Parse export file
-	log.Println("\n--- Parsing Export File ---")
-	events, err := parseExportFile(*exportFile)
-	if err != nil {
-		log.Fatalf("Failed to parse export file: %v", err)
-	}
-	log.Printf("Parsed %d exported events", len(events))
-
-	// Initialize report
-	report := &AnalysisReport{
-		TotalEvents:          len(events),
-		RiskBandDistribution: make(map[string]int),
-		MerchantStats:        make(map[string]*MerchantAnalysis),
-	}
-
-	// Analyze events
+// Helper: Analyze events and build report statistics
+func analyzeEvents(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Analyzing Events ---")
 	for _, event := range events {
 		// Count tier
@@ -136,8 +111,10 @@ func main() {
 	log.Printf("Tier 1 events: %d", report.Tier1Events)
 	log.Printf("Tier 2 events: %d", report.Tier2Events)
 	log.Printf("Risk band distribution: %v", report.RiskBandDistribution)
+}
 
-	// Phase 4: Interpretation Consistency Test
+// Helper: Run interpretation consistency tests
+func runInterpretationTests(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Phase 4: Interpretation Consistency Test ---")
 	report.InterpretationTests = testInterpretationConsistency(events)
 	for _, test := range report.InterpretationTests {
@@ -147,8 +124,10 @@ func main() {
 			log.Printf("✗ FAIL: %s - %s", test.Anomaly, test.FailureReason)
 		}
 	}
+}
 
-	// Phase 5: Artifact Quality Test
+// Helper: Run artifact quality tests
+func runArtifactQualityTests(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Phase 5: Artifact Quality Test ---")
 	report.ArtifactQualityIssues = testArtifactQuality(events)
 	if len(report.ArtifactQualityIssues) == 0 {
@@ -159,8 +138,10 @@ func main() {
 			log.Printf("  - %s", issue)
 		}
 	}
+}
 
-	// Phase 6: Historical Memory Test
+// Helper: Run historical memory tests
+func runHistoricalMemoryTests(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Phase 6: Historical Memory Test ---")
 	report.HistoricalMemoryTests = testHistoricalMemory(events)
 	for _, test := range report.HistoricalMemoryTests {
@@ -170,6 +151,41 @@ func main() {
 			log.Printf("✗ FAIL: %s - %s", test.MerchantID, test.FailureReason)
 		}
 	}
+}
+
+func main() {
+	flag.Parse()
+
+	if *exportFile == "" {
+		log.Fatal("Export file required: --export=/path/to/export.jsonl")
+	}
+
+	log.Println("=== PayFlux Export Analysis ===")
+	log.Printf("Export file: %s", *exportFile)
+	log.Printf("Output directory: %s", *outputDir)
+
+	// Parse export file
+	log.Println("\n--- Parsing Export File ---")
+	events, err := parseExportFile(*exportFile)
+	if err != nil {
+		log.Fatalf("Failed to parse export file: %v", err)
+	}
+	log.Printf("Parsed %d exported events", len(events))
+
+	// Initialize report
+	report := &AnalysisReport{
+		TotalEvents:          len(events),
+		RiskBandDistribution: make(map[string]int),
+		MerchantStats:        make(map[string]*MerchantAnalysis),
+	}
+
+	// Analyze events
+	analyzeEvents(events, report)
+
+	// Run tests
+	runInterpretationTests(events, report)
+	runArtifactQualityTests(events, report)
+	runHistoricalMemoryTests(events, report)
 
 	// Generate summary
 	report.Summary = generateSummary(report)
@@ -214,6 +230,59 @@ func parseExportFile(path string) ([]*ExportedEvent, error) {
 	return events, scanner.Err()
 }
 
+// Helper: Check if merchant is in the test set
+func isMerchantInTestSet(merchantID string, merchants []string) bool {
+	for _, m := range merchants {
+		if merchantID == m {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper: Check if interpretations are differentiated
+func validateInterpretations(interpretations map[string]string) (bool, string) {
+	if len(interpretations) < 2 {
+		return false, "Insufficient data (need at least 2 merchants with Tier 2 output)"
+	}
+
+	// Check if all interpretations are identical
+	unique := make(map[string]bool)
+	for _, interp := range interpretations {
+		unique[interp] = true
+	}
+
+	if len(unique) == 1 {
+		return false, "All interpretations are identical (templated output)"
+	}
+
+	return true, ""
+}
+
+// Helper: Process event and extract interpretation if applicable
+func processEventForInterpretation(event *ExportedEvent, test *InterpretationTest) {
+	// Skip Tier 1 events
+	if event.ProcessorPlaybookContext == "" {
+		return
+	}
+
+	// Skip if merchant not in test set
+	if !isMerchantInTestSet(event.MerchantIDHash, test.Merchants) {
+		return
+	}
+
+	// Validate timestamp (skip if invalid)
+	_, err := time.Parse(time.RFC3339, event.EventTimestamp)
+	if err != nil {
+		return
+	}
+
+	// Store interpretation if not already present
+	if _, exists := test.Interpretations[event.MerchantIDHash]; !exists {
+		test.Interpretations[event.MerchantIDHash] = event.ProcessorPlaybookContext
+	}
+}
+
 func testInterpretationConsistency(events []*ExportedEvent) []*InterpretationTest {
 	// Test: Day 3 retry spike across merchant_stable_001, merchant_growth_003, merchant_messy_001
 	test := &InterpretationTest{
@@ -224,52 +293,13 @@ func testInterpretationConsistency(events []*ExportedEvent) []*InterpretationTes
 
 	// Find events from Day 3 for these merchants
 	for _, event := range events {
-		if event.ProcessorPlaybookContext == "" {
-			continue // Skip Tier 1
-		}
-
-		// Check if merchant is in test set
-		found := false
-		for _, m := range test.Merchants {
-			if event.MerchantIDHash == m {
-				found = true
-				break
-			}
-		}
-		if !found {
-			continue
-		}
-
-		// Check if event is from Day 3 (hours 72-95)
-		_, err := time.Parse(time.RFC3339, event.EventTimestamp)
-		if err != nil {
-			continue
-		}
-
-		// Store interpretation
-		if _, exists := test.Interpretations[event.MerchantIDHash]; !exists {
-			test.Interpretations[event.MerchantIDHash] = event.ProcessorPlaybookContext
-		}
+		processEventForInterpretation(event, test)
 	}
 
-	// Check if interpretations are differentiated
-	if len(test.Interpretations) < 2 {
-		test.Differentiated = false
-		test.FailureReason = "Insufficient data (need at least 2 merchants with Tier 2 output)"
-	} else {
-		// Simple check: are all interpretations identical?
-		unique := make(map[string]bool)
-		for _, interp := range test.Interpretations {
-			unique[interp] = true
-		}
-
-		if len(unique) == 1 {
-			test.Differentiated = false
-			test.FailureReason = "All interpretations are identical (templated output)"
-		} else {
-			test.Differentiated = true
-		}
-	}
+	// Validate interpretations
+	differentiated, failureReason := validateInterpretations(test.Interpretations)
+	test.Differentiated = differentiated
+	test.FailureReason = failureReason
 
 	return []*InterpretationTest{test}
 }
@@ -322,6 +352,66 @@ func testArtifactQuality(events []*ExportedEvent) []string {
 	return issues
 }
 
+// Helper: Check if event has elevated or higher risk
+func isElevatedOrHigherRisk(event *ExportedEvent) bool {
+	return event.ProcessorRiskBand == "elevated" ||
+		event.ProcessorRiskBand == "high" ||
+		event.ProcessorRiskBand == "critical"
+}
+
+// Helper: Check if context contains historical memory keywords
+func containsHistoricalMemoryKeywords(context string) bool {
+	lowerContext := strings.ToLower(context)
+	return strings.Contains(lowerContext, "earlier") ||
+		strings.Contains(lowerContext, "previous") ||
+		strings.Contains(lowerContext, "prior") ||
+		strings.Contains(lowerContext, "history") ||
+		strings.Contains(lowerContext, "recurring")
+}
+
+// Helper: Process event for historical memory test
+func processEventForHistoricalMemory(event *ExportedEvent, test *HistoricalMemoryTest) {
+	// Skip if not the target merchant
+	if event.MerchantIDHash != test.MerchantID {
+		return
+	}
+
+	// Parse event time
+	eventTime, err := time.Parse(time.RFC3339, event.EventTimestamp)
+	if err != nil {
+		return
+	}
+
+	// Only process elevated+ risk events
+	if !isElevatedOrHigherRisk(event) {
+		return
+	}
+
+	// Categorize as Day 3 or Day 9 event
+	if test.Day3Event == nil {
+		test.Day3Event = event
+	} else if test.Day9Event == nil && eventTime.After(mustParse(test.Day3Event.EventTimestamp).Add(5*24*time.Hour)) {
+		test.Day9Event = event
+	}
+}
+
+// Helper: Validate historical memory detection
+func validateHistoricalMemory(test *HistoricalMemoryTest) {
+	if test.Day9Event == nil || test.Day9Event.ProcessorPlaybookContext == "" {
+		test.MemoryDetected = false
+		test.FailureReason = "Insufficient data (need elevated+ events on both Day 3 and Day 9)"
+		return
+	}
+
+	// Check if Day 9 event references earlier context
+	if containsHistoricalMemoryKeywords(test.Day9Event.ProcessorPlaybookContext) {
+		test.MemoryDetected = true
+	} else {
+		test.MemoryDetected = false
+		test.FailureReason = "Day 9 interpretation does not reference earlier context"
+	}
+}
+
 func testHistoricalMemory(events []*ExportedEvent) []*HistoricalMemoryTest {
 	// Test: merchant_growth_003 has anomalies on Day 3 and Day 9
 	test := &HistoricalMemoryTest{
@@ -330,46 +420,11 @@ func testHistoricalMemory(events []*ExportedEvent) []*HistoricalMemoryTest {
 
 	// Find events from Day 3 and Day 9
 	for _, event := range events {
-		if event.MerchantIDHash != test.MerchantID {
-			continue
-		}
-
-		eventTime, err := time.Parse(time.RFC3339, event.EventTimestamp)
-		if err != nil {
-			continue
-		}
-
-		// Day 3: hours 72-95
-		// Day 9: hours 216-239
-		// (Simplified: just check if we have elevated+ events from both periods)
-
-		if event.ProcessorRiskBand == "elevated" || event.ProcessorRiskBand == "high" || event.ProcessorRiskBand == "critical" {
-			if test.Day3Event == nil {
-				test.Day3Event = event
-			} else if test.Day9Event == nil && eventTime.After(mustParse(test.Day3Event.EventTimestamp).Add(5*24*time.Hour)) {
-				test.Day9Event = event
-			}
-		}
+		processEventForHistoricalMemory(event, test)
 	}
 
-	// Check if Day 9 event references earlier context
-	if test.Day9Event != nil && test.Day9Event.ProcessorPlaybookContext != "" {
-		// Simple heuristic: does it mention "earlier", "previous", "prior", "history"?
-		context := strings.ToLower(test.Day9Event.ProcessorPlaybookContext)
-		if strings.Contains(context, "earlier") ||
-			strings.Contains(context, "previous") ||
-			strings.Contains(context, "prior") ||
-			strings.Contains(context, "history") ||
-			strings.Contains(context, "recurring") {
-			test.MemoryDetected = true
-		} else {
-			test.MemoryDetected = false
-			test.FailureReason = "Day 9 interpretation does not reference earlier context"
-		}
-	} else {
-		test.MemoryDetected = false
-		test.FailureReason = "Insufficient data (need elevated+ events on both Day 3 and Day 9)"
-	}
+	// Validate memory detection
+	validateHistoricalMemory(test)
 
 	return []*HistoricalMemoryTest{test}
 }
