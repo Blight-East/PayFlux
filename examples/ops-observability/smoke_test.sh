@@ -71,12 +71,12 @@ echo "Waiting for Prometheus to become healthy..."
 PROM_HEALTHY=false
 for i in {1..60}; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q prometheus 2>/dev/null)" 2>/dev/null || echo "unknown")
-    if [ "$STATUS" = "healthy" ]; then
+    if [[ "$STATUS" = "healthy" ]]; then
         pass "Prometheus healthy (took ${i}s)"
         PROM_HEALTHY=true
         break
     fi
-    if [ "$STATUS" = "unhealthy" ]; then
+    if [[ "$STATUS" = "unhealthy" ]]; then
         fail "Prometheus unhealthy"
         echo "  Container logs:"
         docker compose logs --tail=20 prometheus 2>&1 | sed 's/^/    /'
@@ -85,7 +85,7 @@ for i in {1..60}; do
     sleep 1
 done
 
-if [ "$PROM_HEALTHY" = false ]; then
+if [[ "$PROM_HEALTHY" = false ]]; then
     fail "Prometheus did not become healthy within 60s (status: $STATUS)"
     echo "  Container logs:"
     docker compose logs --tail=30 prometheus 2>&1 | sed 's/^/    /'
@@ -99,12 +99,12 @@ echo "Waiting for Grafana to become healthy..."
 GRAF_HEALTHY=false
 for i in {1..60}; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q grafana 2>/dev/null)" 2>/dev/null || echo "unknown")
-    if [ "$STATUS" = "healthy" ]; then
+    if [[ "$STATUS" = "healthy" ]]; then
         pass "Grafana healthy (took ${i}s)"
         GRAF_HEALTHY=true
         break
     fi
-    if [ "$STATUS" = "unhealthy" ]; then
+    if [[ "$STATUS" = "unhealthy" ]]; then
         fail "Grafana unhealthy"
         echo "  Container logs:"
         docker compose logs --tail=20 grafana 2>&1 | sed 's/^/    /'
@@ -113,7 +113,7 @@ for i in {1..60}; do
     sleep 1
 done
 
-if [ "$GRAF_HEALTHY" = false ]; then
+if [[ "$GRAF_HEALTHY" = false ]]; then
     fail "Grafana did not become healthy within 60s (status: $STATUS)"
     echo "  Container logs:"
     docker compose logs --tail=30 grafana 2>&1 | sed 's/^/    /'
@@ -141,7 +141,7 @@ for attempt in {1..15}; do
             break
         elif echo "$TARGETS_RESPONSE" | grep -q '"job":"payflux".*"health":"down"'; then
             # Wait and retry - target might be transitioning
-            if [ $attempt -eq 15 ]; then
+            if [[ $attempt -eq 15 ]]; then
                 fail "PayFlux target DOWN"
                 PAYFLUX_STATUS="FAIL"
                 echo ""
@@ -154,7 +154,7 @@ for attempt in {1..15}; do
         fi
     else
         # Job not found yet
-        if [ $attempt -eq 15 ]; then
+        if [[ $attempt -eq 15 ]]; then
             fail "PayFlux target MISSING"
             PAYFLUX_STATUS="FAIL"
             echo "  No 'payflux' job found in Prometheus targets"
@@ -169,7 +169,7 @@ done
 # ============================================================================
 echo ""
 echo "═════════════════════════════════════════════════════════"
-if [ "$PAYFLUX_STATUS" = "PASS" ]; then
+if [[ "$PAYFLUX_STATUS" = "PASS" ]]; then
     pass "Smoke test: PASS"
     echo "═════════════════════════════════════════════════════════"
     echo ""
