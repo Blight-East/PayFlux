@@ -9,6 +9,7 @@ export async function GET() {
         const data = await fs.readFile(STATUS_PATH, 'utf-8');
         return NextResponse.json(JSON.parse(data));
     } catch (err) {
+        console.error('Failed to read status file', err);
         return NextResponse.json({ lastEventAt: null });
     }
 }

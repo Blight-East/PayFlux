@@ -30,6 +30,7 @@ async function getConfig() {
         const data = await fs.readFile(CONFIG_PATH, 'utf-8');
         return JSON.parse(data);
     } catch (err) {
+        console.error('Failed to read config file', err);
         return {};
     }
 }

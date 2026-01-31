@@ -98,13 +98,17 @@ export async function GET(request: Request) {
     const baseUrl = process.env.CORE_BASE_URL || process.env.PAYFLUX_API_URL;
     const apiKey = process.env.CORE_AUTH_TOKEN || process.env.PAYFLUX_API_KEY;
 
+    const setCommonHeaders = (res: NextResponse) => {
+        res.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+        res.headers.set('X-PF-BFF', 'evidence-route-v1-canary');
+        return res;
+    };
+
     if (!baseUrl || !apiKey) {
-        const response = NextResponse.json(
+        return setCommonHeaders(NextResponse.json(
             createDegradedEnvelope('BFF Configuration Error: Missing CORE_BASE_URL or CORE_AUTH_TOKEN'),
             { status: 200 }
-        );
-        response.headers.set('X-PF-BFF', 'evidence-route-v1-canary');
-        return response;
+        ));
     }
 
     const url = new URL(request.url);
@@ -125,10 +129,10 @@ export async function GET(request: Request) {
 
         // 1. Handle Upstream Non-OK Responses
         if (!res.ok) {
-            return NextResponse.json(
+            return setCommonHeaders(NextResponse.json(
                 createDegradedEnvelope(`Core Upstream Error: ${res.status} ${res.statusText}`),
                 { status: 200 }
-            );
+            ));
         }
 
         const rawData = await res.json();
@@ -137,11 +141,9 @@ export async function GET(request: Request) {
         const result = EnvelopeSchema.safeParse(rawData);
         if (!result.success) {
             const diags = result.error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`);
-            const response = NextResponse.json(
+            return setCommonHeaders(NextResponse.json(
                 createDegradedEnvelope('CONTRACT_MISMATCH', ['Core Contract Violation: Schema Mismatch', ...diags], 'DEGRADED')
-            );
-            response.headers.set('X-PF-BFF', 'evidence-route-v1-canary');
-            return response;
+            ));
         }
 
         // 3. Post-Process: Deep strip forbidden keys & ensure meta.diagnostics
@@ -151,17 +153,13 @@ export async function GET(request: Request) {
 
         const cleanData = stripForbiddenKeys(data);
 
-        const response = NextResponse.json(cleanData);
-        response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
-        response.headers.set('X-PF-BFF', 'evidence-route-v1-canary');
-        return response;
+        return setCommonHeaders(NextResponse.json(cleanData));
 
     } catch (err) {
         // 4. Handle Network/Connection Failures
-        const response = NextResponse.json(
+        console.error('Evidence V1 fetch failed', err);
+        return setCommonHeaders(NextResponse.json(
             createDegradedEnvelope('Core Connection Failed', [(err as Error).message])
-        );
-        response.headers.set('X-PF-BFF', 'evidence-route-v1-canary');
-        return response;
+        ));
     }
 }

@@ -31,14 +31,17 @@ export async function GET() {
         diagnostics: [] as string[]
     };
 
+    const setNoCacheHeaders = (res: NextResponse) => {
+        res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.headers.set('Pragma', 'no-cache');
+        return res;
+    };
+
     if (!payfluxUrl || !apiKey) {
-        const response = NextResponse.json({
+        return setNoCacheHeaders(NextResponse.json({
             ...degradedResponse,
             diagnostics: ['BFF_NOT_CONFIGURED'],
-        }, { status: 200 });
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-        response.headers.set('Pragma', 'no-cache');
-        return response;
+        }, { status: 200 }));
     }
 
     try {
@@ -51,13 +54,10 @@ export async function GET() {
         });
 
         if (!res.ok) {
-            const response = NextResponse.json({
+            return setNoCacheHeaders(NextResponse.json({
                 ...degradedResponse,
                 diagnostics: [`UPSTREAM_ERROR_${res.status}`],
-            }, { status: 200 });
-            response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-            response.headers.set('Pragma', 'no-cache');
-            return response;
+            }, { status: 200 }));
         }
 
         const rawData = await res.json();
@@ -65,29 +65,21 @@ export async function GET() {
         // 2. Strict Shape Guard
         const validation = HealthSchema.safeParse(rawData);
         if (!validation.success) {
-            const response = NextResponse.json({
+            return setNoCacheHeaders(NextResponse.json({
                 ...degradedResponse,
                 diagnostics: ['UPSTREAM_SHAPE_VIOLATION'],
-            }, { status: 200 });
-            response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-            response.headers.set('Pragma', 'no-cache');
-            return response;
+            }, { status: 200 }));
         }
 
         // 3. Pass-through Validated JSON + Enforce Cache Invariants
-        const response = NextResponse.json(validation.data);
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-        response.headers.set('Pragma', 'no-cache');
-        return response;
+        return setNoCacheHeaders(NextResponse.json(validation.data));
 
     } catch (err) {
         // Core Down Case
-        const response = NextResponse.json({
+        console.error('Evidence health check failed', err);
+        return setNoCacheHeaders(NextResponse.json({
             ...degradedResponse,
             diagnostics: ['UPSTREAM_OFFLINE'],
-        }, { status: 200 });
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-        response.headers.set('Pragma', 'no-cache');
-        return response;
+        }, { status: 200 }));
     }
 }

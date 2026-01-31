@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 // Pilot endpoints that require explicit enablement
 const PILOT_PATHS = ['pilot/warnings', 'pilot/dashboard'];
 
+const JSON_TYPE = 'application/json';
+
 function isPilotEndpoint(targetPath: string): boolean {
     return PILOT_PATHS.some(p => targetPath.startsWith(p));
 }
@@ -40,7 +42,7 @@ export async function GET(
         const res = await fetch(targetUrl, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
+                'Content-Type': JSON_TYPE,
             },
         });
 
@@ -107,7 +109,7 @@ export async function POST(
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
+                'Content-Type': JSON_TYPE,
             },
             body: JSON.stringify(body),
         });
@@ -115,6 +117,7 @@ export async function POST(
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });
     } catch (err) {
+        console.error('Proxy POST forward failed', err);
         return NextResponse.json({ error: 'Connection failed' }, { status: 502 });
     }
 }

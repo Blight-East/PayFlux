@@ -57,7 +57,8 @@ export default function DashboardPage() {
                 } else {
                     setPrometheusAvailable(false);
                 }
-            } catch {
+            } catch (err) {
+                console.error('Failed to fetch auth denials', err);
                 setPrometheusAvailable(false);
             }
         }

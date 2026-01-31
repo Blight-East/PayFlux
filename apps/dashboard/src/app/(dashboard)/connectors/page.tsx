@@ -33,7 +33,9 @@ export default function ConnectorsPage() {
                     const data = await res.json();
                     setLastEvent(data.lastEventAt || null);
                 }
-            } catch (err) { }
+            } catch (err) {
+                console.error('Failed to fetch status', err);
+            }
         }
 
         fetchConfig();

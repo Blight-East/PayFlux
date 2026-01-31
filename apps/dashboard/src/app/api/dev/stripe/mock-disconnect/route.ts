@@ -12,6 +12,7 @@ export async function GET() {
     }
 
     const client = await clerkClient();
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     // Resolve active orgId
     let activeOrgId = orgId;
@@ -21,7 +22,6 @@ export async function GET() {
             activeOrgId = memberships.data[0].organization.id;
         } else {
             // If No org exists, nothing to disconnect
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
             return NextResponse.redirect(new URL("/onboarding", baseUrl));
         }
     }
@@ -38,6 +38,5 @@ export async function GET() {
 
     console.log(`[DEV] Mock Stripe Account disconnected for Org: ${activeOrgId}`);
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     return NextResponse.redirect(new URL("/onboarding", baseUrl));
 }

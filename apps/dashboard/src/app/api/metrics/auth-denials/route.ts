@@ -47,6 +47,7 @@ export async function GET() {
         });
 
     } catch (error) {
+        console.error('Failed to query Prometheus for auth denials', error);
         return NextResponse.json(
             { error: 'prometheus_unreachable', available: false },
             { status: 503 }
