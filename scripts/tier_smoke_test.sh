@@ -120,7 +120,7 @@ echo ""
 echo "Checking Tier 2 exported JSON..."
 TIER2_EXPORT=$(docker logs deploy-payflux-1 2>&1 | grep "processor_playbook_context" | tail -1)
 
-if [ -z "$TIER2_EXPORT" ]; then
+if [[ -z "$TIER2_EXPORT" ]]; then
     echo "WARN: No processor_playbook_context found (may require higher risk band)"
 else
     echo "PASS: Tier 2 export contains processor_playbook_context"
