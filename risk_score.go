@@ -125,159 +125,185 @@ func (s *RiskScorer) RecordEvent(event Event) RiskResult {
 	return s.computeScore(processor)
 }
 
-func (s *RiskScorer) computeScore(processor string) RiskResult {
-	hist := s.history[processor]
+type riskStats struct {
+	TotalEvents int
+	Failures    int
+	Timeouts    int
+	AuthFails   int
+	RetrySum    int
+	GeoCount    int
+	Geos        map[string]struct{}
+}
 
-	var totalEvents, failures, timeouts, authFails, retrySum int
-	geos := make(map[string]struct{})
+type riskComponents struct {
+	FailRate      float64
+	RetryPressure float64
+	TimeoutMix    float64
+	AuthFailMix   float64
+	TrafficSpike  float64
+	GeoEntropy    float64
+}
 
-	// Aggregate across all buckets in window
+func aggregateHistory(hist []ProcessorMetrics) riskStats {
+	var stats riskStats
+	stats.Geos = make(map[string]struct{})
 	for _, b := range hist {
-		totalEvents += b.TotalEvents
-		failures += b.Failures
-		timeouts += b.Timeouts
-		authFails += b.AuthFails
-		retrySum += b.RetrySum
+		stats.TotalEvents += b.TotalEvents
+		stats.Failures += b.Failures
+		stats.Timeouts += b.Timeouts
+		stats.AuthFails += b.AuthFails
+		stats.RetrySum += b.RetrySum
 		for k := range b.GeoBuckets {
-			geos[k] = struct{}{}
+			stats.Geos[k] = struct{}{}
 		}
 	}
+	stats.GeoCount = len(stats.Geos)
+	return stats
+}
 
-	if totalEvents < 5 {
-		return RiskResult{Score: 0, Band: "low", Drivers: []string{"insufficient_data"}}
-	}
+func (s *RiskScorer) computeComponentScores(stats riskStats, currentBucket ProcessorMetrics) riskComponents {
+	var c riskComponents
 
 	// 1. Failure Rate
-	failRate := float64(failures) / float64(totalEvents)
+	c.FailRate = float64(stats.Failures) / float64(stats.TotalEvents)
 
-	// 2. Retry Pressure (clamped at 3.0 avg retries being "max risk")
-	retryPressure := (float64(retrySum) / float64(totalEvents)) / 3.0
+	// 2. Retry Pressure
+	c.RetryPressure = (float64(stats.RetrySum) / float64(stats.TotalEvents)) / 3.0
 
-	// 3. Timeout Mix (percentage of failures that are timeouts)
-	timeoutMix := 0.0
-	if failures > 0 {
-		timeoutMix = float64(timeouts) / float64(failures)
+	// 3. Timeout Mix
+	if stats.Failures > 0 {
+		c.TimeoutMix = float64(stats.Timeouts) / float64(stats.Failures)
 	}
 
-	// 4. Auth Fail Mix (percentage of failures that are auth)
-	authFailMix := 0.0
-	if failures > 0 {
-		authFailMix = float64(authFails) / float64(failures)
+	// 4. Auth Fail Mix
+	if stats.Failures > 0 {
+		c.AuthFailMix = float64(stats.AuthFails) / float64(stats.Failures)
 	}
 
 	// 5. Traffic Spike
-	// Compare current bucket to average of others
-	currentIdx := int((time.Now().Unix() / int64(s.bucketSizeSec)) % int64(s.numBuckets))
-	currentRate := float64(hist[currentIdx].TotalEvents)
-	otherSum := 0
-	for i, b := range hist {
-		if i != currentIdx {
-			otherSum += b.TotalEvents
-		}
+	currentRate := float64(currentBucket.TotalEvents)
+	avgOtherRate := 1.0
+	otherSum := stats.TotalEvents - currentBucket.TotalEvents
+	if s.numBuckets > 1 {
+		avgOtherRate = float64(otherSum) / float64(s.numBuckets-1)
 	}
-	avgOtherRate := float64(otherSum) / float64(s.numBuckets-1)
 	if avgOtherRate < 1 {
 		avgOtherRate = 1
 	}
-	trafficSpike := (currentRate / avgOtherRate / 2.0) // 2x normal is 1.0 risk component
+	c.TrafficSpike = currentRate / avgOtherRate / 2.0
 
-	// 6. Geo Entropy (unique geo buckets relative to volume)
-	geoEntropy := float64(len(geos)) / 10.0 // 10 unique geos is high entropy
+	// 6. Geo Entropy
+	c.GeoEntropy = float64(stats.GeoCount) / 10.0
 
-	// Weighted Sum
-	score := (0.25 * failRate) +
-		(0.20 * clamp(retryPressure)) +
-		(0.15 * clamp(timeoutMix)) +
-		(0.15 * clamp(trafficSpike)) +
-		(0.10 * clamp(authFailMix)) +
-		(0.15 * clamp(geoEntropy))
+	return c
+}
 
-	score = clamp(score)
+func calculateWeightedScore(c riskComponents) float64 {
+	score := (0.25 * c.FailRate) +
+		(0.20 * clamp(c.RetryPressure)) +
+		(0.15 * clamp(c.TimeoutMix)) +
+		(0.15 * clamp(c.TrafficSpike)) +
+		(0.10 * clamp(c.AuthFailMix)) +
+		(0.15 * clamp(c.GeoEntropy))
+	return clamp(score)
+}
 
-	// Band mapping
-	band := "low"
+func (s *RiskScorer) mapScoreToBand(score float64) string {
 	if score >= s.critical {
-		band = "critical"
+		return "critical"
 	} else if score >= s.high {
-		band = "high"
+		return "high"
 	} else if score >= s.elevated {
-		band = "elevated"
+		return "elevated"
 	}
+	return "low"
+}
 
-	// Drivers (any component > 0.5)
+func identifyRiskDrivers(c riskComponents) []string {
 	drivers := []string{}
-	if failRate > 0.4 {
+	if c.FailRate > 0.4 {
 		drivers = append(drivers, "high_failure_rate")
 	}
-	if retryPressure > 0.5 {
+	if c.RetryPressure > 0.5 {
 		drivers = append(drivers, "retry_pressure_spike")
 	}
-	if timeoutMix > 0.5 {
+	if c.TimeoutMix > 0.5 {
 		drivers = append(drivers, "timeout_clustering")
 	}
-	if trafficSpike > 0.5 {
+	if c.TrafficSpike > 0.5 {
 		drivers = append(drivers, "traffic_volatility")
 	}
-	if authFailMix > 0.5 {
+	if c.AuthFailMix > 0.5 {
 		drivers = append(drivers, "auth_failure_cluster")
 	}
-	if geoEntropy > 0.5 {
+	if c.GeoEntropy > 0.5 {
 		drivers = append(drivers, "geo_entropy_increase")
 	}
-
 	if len(drivers) == 0 {
 		drivers = append(drivers, "nominal_behavior")
 	}
+	return drivers
+}
 
-	// Compute trajectory data for Tier 2 exports
-	// Compare current bucket failure rate to baseline (other buckets)
+func (s *RiskScorer) calculateTrajectory(hist []ProcessorMetrics, currentIdx int) (multiplier float64, direction string, curFR, baseFR float64) {
 	currentBucket := hist[currentIdx]
-	currentFailRate := 0.0
 	if currentBucket.TotalEvents > 0 {
-		currentFailRate = float64(currentBucket.Failures) / float64(currentBucket.TotalEvents)
+		curFR = float64(currentBucket.Failures) / float64(currentBucket.TotalEvents)
 	}
 
-	// Baseline = average failure rate of other buckets
-	otherFailures := 0
-	otherEvents := 0
+	otherFailures, otherEvents := 0, 0
 	for i, b := range hist {
 		if i != currentIdx {
 			otherFailures += b.Failures
 			otherEvents += b.TotalEvents
 		}
 	}
-	baselineFailRate := 0.0
+
 	if otherEvents > 0 {
-		baselineFailRate = float64(otherFailures) / float64(otherEvents)
+		baseFR = float64(otherFailures) / float64(otherEvents)
 	}
 
-	// Multiplier: how many times above baseline
-	multiplier := 1.0
-	if baselineFailRate > 0.01 { // Only compute if baseline is meaningful
-		multiplier = currentFailRate / baselineFailRate
-	} else if currentFailRate > 0.1 {
-		// No baseline but current is high = spike from zero
-		multiplier = 10.0 // Cap at 10×
+	multiplier = 1.0
+	if baseFR > 0.01 {
+		multiplier = curFR / baseFR
+	} else if curFR > 0.1 {
+		multiplier = 10.0
 	}
-	multiplier = math.Round(multiplier*10) / 10 // Round to 1 decimal
+	multiplier = math.Round(multiplier*10) / 10
 
-	// Direction: based on multiplier
-	direction := "stable"
+	direction = "stable"
 	if multiplier >= 2.0 {
 		direction = "accelerating"
-	} else if multiplier <= 0.5 && baselineFailRate > 0.05 {
+	} else if multiplier <= 0.5 && baseFR > 0.05 {
 		direction = "decelerating"
 	}
 
+	return multiplier, direction, curFR, baseFR
+}
+
+func (s *RiskScorer) computeScore(processor string) RiskResult {
+	hist := s.history[processor]
+	stats := aggregateHistory(hist)
+
+	if stats.TotalEvents < 5 {
+		return RiskResult{Score: 0, Band: "low", Drivers: []string{"insufficient_data"}}
+	}
+
+	// Calculate scores and metadata
+	currentIdx := int((time.Now().Unix() / int64(s.bucketSizeSec)) % int64(s.numBuckets))
+	components := s.computeComponentScores(stats, hist[currentIdx])
+	score := calculateWeightedScore(components)
+	multiplier, direction, curFR, baseFR := s.calculateTrajectory(hist, currentIdx)
+
 	return RiskResult{
 		Score:                math.Round(score*100) / 100,
-		Band:                 band,
-		Drivers:              drivers,
+		Band:                 s.mapScoreToBand(score),
+		Drivers:              identifyRiskDrivers(components),
 		TrajectoryMultiplier: multiplier,
 		TrajectoryDirection:  direction,
 		TrajectoryWindowSec:  s.windowSec,
-		CurrentFailureRate:   math.Round(currentFailRate*1000) / 1000,
-		BaselineFailureRate:  math.Round(baselineFailRate*1000) / 1000,
+		CurrentFailureRate:   math.Round(curFR*1000) / 1000,
+		BaselineFailureRate:  math.Round(baseFR*1000) / 1000,
 	}
 }
 
