@@ -71,33 +71,8 @@ type HistoricalMemoryTest struct {
 	FailureReason  string
 }
 
-func main() {
-	flag.Parse()
-
-	if *exportFile == "" {
-		log.Fatal("Export file required: --export=/path/to/export.jsonl")
-	}
-
-	log.Println("=== PayFlux Export Analysis ===")
-	log.Printf("Export file: %s", *exportFile)
-	log.Printf("Output directory: %s", *outputDir)
-
-	// Parse export file
-	log.Println("\n--- Parsing Export File ---")
-	events, err := parseExportFile(*exportFile)
-	if err != nil {
-		log.Fatalf("Failed to parse export file: %v", err)
-	}
-	log.Printf("Parsed %d exported events", len(events))
-
-	// Initialize report
-	report := &AnalysisReport{
-		TotalEvents:          len(events),
-		RiskBandDistribution: make(map[string]int),
-		MerchantStats:        make(map[string]*MerchantAnalysis),
-	}
-
-	// Analyze events
+// Helper: Analyze events and build report statistics
+func analyzeEvents(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Analyzing Events ---")
 	for _, event := range events {
 		// Count tier
@@ -136,8 +111,10 @@ func main() {
 	log.Printf("Tier 1 events: %d", report.Tier1Events)
 	log.Printf("Tier 2 events: %d", report.Tier2Events)
 	log.Printf("Risk band distribution: %v", report.RiskBandDistribution)
+}
 
-	// Phase 4: Interpretation Consistency Test
+// Helper: Run interpretation consistency tests
+func runInterpretationTests(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Phase 4: Interpretation Consistency Test ---")
 	report.InterpretationTests = testInterpretationConsistency(events)
 	for _, test := range report.InterpretationTests {
@@ -147,8 +124,10 @@ func main() {
 			log.Printf("✗ FAIL: %s - %s", test.Anomaly, test.FailureReason)
 		}
 	}
+}
 
-	// Phase 5: Artifact Quality Test
+// Helper: Run artifact quality tests
+func runArtifactQualityTests(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Phase 5: Artifact Quality Test ---")
 	report.ArtifactQualityIssues = testArtifactQuality(events)
 	if len(report.ArtifactQualityIssues) == 0 {
@@ -159,8 +138,10 @@ func main() {
 			log.Printf("  - %s", issue)
 		}
 	}
+}
 
-	// Phase 6: Historical Memory Test
+// Helper: Run historical memory tests
+func runHistoricalMemoryTests(events []*ExportedEvent, report *AnalysisReport) {
 	log.Println("\n--- Phase 6: Historical Memory Test ---")
 	report.HistoricalMemoryTests = testHistoricalMemory(events)
 	for _, test := range report.HistoricalMemoryTests {
@@ -170,6 +151,41 @@ func main() {
 			log.Printf("✗ FAIL: %s - %s", test.MerchantID, test.FailureReason)
 		}
 	}
+}
+
+func main() {
+	flag.Parse()
+
+	if *exportFile == "" {
+		log.Fatal("Export file required: --export=/path/to/export.jsonl")
+	}
+
+	log.Println("=== PayFlux Export Analysis ===")
+	log.Printf("Export file: %s", *exportFile)
+	log.Printf("Output directory: %s", *outputDir)
+
+	// Parse export file
+	log.Println("\n--- Parsing Export File ---")
+	events, err := parseExportFile(*exportFile)
+	if err != nil {
+		log.Fatalf("Failed to parse export file: %v", err)
+	}
+	log.Printf("Parsed %d exported events", len(events))
+
+	// Initialize report
+	report := &AnalysisReport{
+		TotalEvents:          len(events),
+		RiskBandDistribution: make(map[string]int),
+		MerchantStats:        make(map[string]*MerchantAnalysis),
+	}
+
+	// Analyze events
+	analyzeEvents(events, report)
+
+	// Run tests
+	runInterpretationTests(events, report)
+	runArtifactQualityTests(events, report)
+	runHistoricalMemoryTests(events, report)
 
 	// Generate summary
 	report.Summary = generateSummary(report)
