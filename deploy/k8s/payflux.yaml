@@ -64,11 +64,17 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
-        fsGroup: 1000
       containers:
       - name: payflux
         image: payflux:latest  # Replace with your registry/image
         imagePullPolicy: IfNotPresent
+        # Enterprise-grade security: read-only filesystem, no privilege escalation, drop all capabilities
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         ports:
         - name: http
           containerPort: 8080
