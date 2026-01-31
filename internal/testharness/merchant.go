@@ -54,8 +54,9 @@ func GenerateMerchants(cfg MerchantConfig) []*Merchant {
 	// Stable merchants
 	for i := 0; i < cfg.NumStable; i++ {
 		m := &Merchant{
-			ID:               fmt.Sprintf("merchant_stable_%03d", i+1),
-			Archetype:        ArchetypeStable,
+			ID:        fmt.Sprintf("merchant_stable_%03d", i+1),
+			Archetype: ArchetypeStable,
+			// #nosec G404 - math/rand is intentional for test data generation (reproducible simulations)
 			BaselineVolumeHr: 100 + rand.Intn(100),       // 100-200/hr
 			ApprovalRate:     0.92 + rand.Float64()*0.03, // 92-95%
 			RetryIntensity:   0.1 + rand.Float64()*0.2,   // 0.1-0.3
