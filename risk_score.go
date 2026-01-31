@@ -46,6 +46,9 @@ type RiskScorer struct {
 	elevated float64
 	high     float64
 	critical float64
+
+	// nowFunc returns current unix timestamp (useful for testing)
+	nowFunc func() int64
 }
 
 func NewRiskScorer(windowSec int, thresholds [3]float64) *RiskScorer {
@@ -63,6 +66,7 @@ func NewRiskScorer(windowSec int, thresholds [3]float64) *RiskScorer {
 		elevated:      thresholds[0],
 		high:          thresholds[1],
 		critical:      thresholds[2],
+		nowFunc:       func() int64 { return time.Now().Unix() },
 	}
 }
 
@@ -85,7 +89,7 @@ func (s *RiskScorer) RecordEvent(event Event) RiskResult {
 	}
 
 	// Update current bucket
-	now := time.Now().Unix()
+	now := s.nowFunc()
 	bucketIdx := int((now / int64(s.bucketSizeSec)) % int64(s.numBuckets))
 
 	bucket := &s.history[processor][bucketIdx]
@@ -290,7 +294,8 @@ func (s *RiskScorer) computeScore(processor string) RiskResult {
 	}
 
 	// Calculate scores and metadata
-	currentIdx := int((time.Now().Unix() / int64(s.bucketSizeSec)) % int64(s.numBuckets))
+	now := s.nowFunc()
+	currentIdx := int((now / int64(s.bucketSizeSec)) % int64(s.numBuckets))
 	components := s.computeComponentScores(stats, hist[currentIdx])
 	score := calculateWeightedScore(components)
 	multiplier, direction, curFR, baseFR := s.calculateTrajectory(hist, currentIdx)
