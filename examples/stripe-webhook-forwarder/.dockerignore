@@ -1,0 +1,68 @@
+# Sensitive files
+.env
+.env.*
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+**/.ssh/
+**/.gnupg/
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# Build artifacts
+dist/
+build/
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+stripe-webhook-forwarder
+
+# Dependencies
+node_modules/
+vendor/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing and coverage
+coverage/
+*.test
+*.out
+test-results/
+main_test.go
+*_test.go
+
+# Scripts and docs
+README.md
+*.md
+docs/
+smoke_test.sh
+*.sh
+
+# CI/CD
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
