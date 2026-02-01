@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 import net from 'node:net';
-import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics, QuotaManager } from '../../../../lib/risk-infra';
+import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics, QuotaManager, RiskIntelligence } from '../../../../lib/risk-infra';
 
 export const runtime = "nodejs";
 
@@ -352,6 +352,9 @@ export async function POST(request: Request) {
                 traceId, ip, keyId, url: normalizedUrl, host: hostname,
                 status, durationMs: performance.now() - startTime, aiProvider: 'cached', cache: 'hit'
             });
+            // Persistence Hook (Cache Hit)
+            await RiskIntelligence.record(traceId, data, 'cache');
+
             return NextResponse.json(data, {
                 status,
                 headers: { ...rlHeaders, 'x-cache': 'hit', 'x-risk-inflight': 'deduped', 'x-trace-id': traceId }
@@ -386,6 +389,12 @@ export async function POST(request: Request) {
         }
     }
 
+    // 7. Persistence Hook (Fresh / Deduped)
+    if (result.status === 200 && result.data) {
+        await RiskIntelligence.record(traceId, result.data, deduped ? 'cache' : 'fresh');
+    }
+
+    // 8. Response
     return NextResponse.json(result.data || { error: result.error }, {
         status: result.status,
         headers: {

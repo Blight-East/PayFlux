@@ -35,7 +35,6 @@ export class RiskMetrics {
         return Object.fromEntries(this.counters);
     }
 
-    // For debugging/tests
     static clear() {
         this.counters.clear();
     }
@@ -85,10 +84,119 @@ class MemoryStore implements RiskStore {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Risk Intelligence (History & Trends) - PR #12
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface StoredRiskReport {
+    id: string;
+    merchantId: string;
+    createdAt: string;
+    traceId: string;
+    payload: any; // The exact ResponseSchema
+    source: 'fresh' | 'cache';
+}
+
+export interface MerchantSnapshot {
+    merchantId: string;
+    normalizedHost: string;
+    scanCount: number;
+    lastScanAt: string;
+    currentRiskTier: number;
+    tierDeltaLast: number;
+    trend: 'IMPROVING' | 'STABLE' | 'DEGRADING';
+    policySurface: {
+        present: number;
+        weak: number;
+        missing: number;
+    };
+}
+
+export class RiskIntelligence {
+    private static reports: StoredRiskReport[] = [];
+    private static snapshots = new Map<string, MerchantSnapshot>();
+
+    static async record(traceId: string, payload: any, source: 'fresh' | 'cache' = 'fresh'): Promise<void> {
+        const url = payload.url;
+        let hostname = 'unknown';
+        try { hostname = new URL(url).hostname.toLowerCase(); } catch { }
+        const normalizedHost = hostname;
+        const merchantId = Buffer.from(normalizedHost).toString('base64').replace(/=/g, '').slice(-12);
+
+        const report: StoredRiskReport = {
+            id: crypto.randomUUID(),
+            merchantId,
+            createdAt: new Date().toISOString(),
+            traceId,
+            payload,
+            source,
+        };
+
+        this.reports.push(report);
+        RiskMetrics.inc('risk_history_writes_total');
+
+        // Update Snapshot
+        const existing = this.snapshots.get(merchantId);
+        const currentTier = payload.riskTier;
+
+        let trend: MerchantSnapshot['trend'] = 'STABLE';
+        let tierDeltaLast = 0;
+
+        if (existing) {
+            tierDeltaLast = currentTier - existing.currentRiskTier;
+
+            // Trend Logic: 
+            // - DEGRADING if last 2 scans show strictly increasing riskTier (current > previous)
+            // - IMPROVING if last 2 scans show strictly decreasing riskTier (current < previous)
+            // Note: Simplification - we only check the shift from the immediate previous.
+            if (tierDeltaLast > 0) trend = 'DEGRADING';
+            else if (tierDeltaLast < 0) trend = 'IMPROVING';
+            else trend = 'STABLE';
+        }
+
+        const policySurface = { present: 0, weak: 0, missing: 0 };
+        Object.values(payload.policies || {}).forEach((p: any) => {
+            if (p.status === 'Present') policySurface.present++;
+            else if (p.status === 'Weak') policySurface.weak++;
+            else policySurface.missing++;
+        });
+
+        this.snapshots.set(merchantId, {
+            merchantId,
+            normalizedHost,
+            scanCount: (existing?.scanCount || 0) + 1,
+            lastScanAt: report.createdAt,
+            currentRiskTier: currentTier,
+            tierDeltaLast,
+            trend,
+            policySurface,
+        });
+    }
+
+    static async getHistory(url: string): Promise<{ merchantId: string; normalizedHost: string; scans: StoredRiskReport[] }> {
+        let hostname = 'unknown';
+        try { hostname = new URL(url).hostname.toLowerCase(); } catch { }
+        const normalizedHost = hostname;
+        const merchantId = Buffer.from(normalizedHost).toString('base64').replace(/=/g, '').slice(-12);
+        const scans = this.reports.filter(r => r.merchantId === merchantId);
+        RiskMetrics.inc('risk_history_reads_total');
+        return { merchantId, normalizedHost, scans };
+    }
+
+    static async getTrend(url: string): Promise<MerchantSnapshot | null> {
+        let hostname = 'unknown';
+        try { hostname = new URL(url).hostname.toLowerCase(); } catch { }
+        const normalizedHost = hostname;
+        const merchantId = Buffer.from(normalizedHost).toString('base64').replace(/=/g, '').slice(-12);
+        RiskMetrics.inc('risk_trend_reads_total');
+        return this.snapshots.get(merchantId) || null;
+    }
+}
+
 const store: RiskStore = new MemoryStore();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Quota & Tiers
+// Logic Engines
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Tier = 'FREE' | 'PRO' | 'ENTERPRISE' | 'ANONYMOUS';
