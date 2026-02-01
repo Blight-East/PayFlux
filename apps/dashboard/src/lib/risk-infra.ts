@@ -6,6 +6,7 @@
  * 2. Token Bucket Rate Limiter
  * 3. Risk Caching (URL, Policy, DNS, Negative)
  * 4. Concurrency Deduplication
+ * 5. Observability (Metrics & Logging)
  */
 
 interface RiskStore {
@@ -14,6 +15,39 @@ interface RiskStore {
 }
 
 const REDIS_URL = process.env.RISK_REDIS_URL;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Observability (Metrics & Logs) - PR #10
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class RiskMetrics {
+    private static counters = new Map<string, number>();
+
+    static inc(metric: string, tags: Record<string, string> = {}) {
+        // Simple in-memory counter key generation
+        // In reality, this would be Prometheus/StatsD
+        const tagStr = Object.entries(tags).sort().map(([k, v]) => `${k}=${v}`).join(',');
+        const key = `${metric}{${tagStr}}`;
+        const current = this.counters.get(key) || 0;
+        this.counters.set(key, current + 1);
+    }
+
+    // Debug method to dump metrics
+    static dump() {
+        return Object.fromEntries(this.counters);
+    }
+}
+
+export class RiskLogger {
+    static log(event: string, context: Record<string, any>) {
+        if (process.env.NODE_ENV === 'test') return; // Silence in tests if needed
+        console.log(JSON.stringify({
+            timestamp: new Date().toISOString(),
+            event,
+            ...context
+        }));
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage Implementations
@@ -107,12 +141,7 @@ export class RateLimiter {
 
         if (allowed) {
             state.tokens -= 1;
-            // If we still have tokens, reset is 0 (immediate). 
-            // If we dropped below 1 (partially consumed?), technically next token is immediate if tokens > 1.
-            // But if we went from 1.5 -> 0.5, we aren't allowed next.
-            // Wait, "allowed" check was (tokens >= 1).
-            // So if we have 0.5 left, we are NOT allowed next request.
-            // Reset time should be time to reach 1.0 from current.
+            // If drop below 1.0, calculate time to get back to 1.0
             if (state.tokens < 1) {
                 const missing = 1 - state.tokens;
                 reset = Math.ceil(missing / config.refillRate);
@@ -126,7 +155,7 @@ export class RateLimiter {
         // Remaining: Floor of current tokens
         const remaining = Math.floor(state.tokens);
 
-        // Save state (TTL = window ensures we don't lose track, but strictly can be capped at time-to-full)
+        // Save state (TTL = window)
         await store.set(key, JSON.stringify(state), config.window);
 
         return {
@@ -144,14 +173,14 @@ export class RateLimiter {
         const { allowed: ipAllowed, headers: ipHeaders } = await this.consume(`rl:ip:${ip}`, LIMIT_CONFIG.IP);
 
         if (!ipAllowed) {
-            return { allowed: false, headers: ipHeaders };
+            return { allowed: false, headers: ipHeaders, context: { limitType: 'IP', ip } };
         }
 
         // 2. IP + Host Limit (Optional)
         if (targetHost) {
             const { allowed: hostAllowed, headers: hostHeaders } = await this.consume(`rl:host:${ip}:${targetHost}`, LIMIT_CONFIG.HOST);
             if (!hostAllowed) {
-                return { allowed: false, headers: hostHeaders };
+                return { allowed: false, headers: hostHeaders, context: { limitType: 'HOST', ip, host: targetHost } };
             }
         }
 
@@ -204,12 +233,7 @@ export class ConcurrencyManager {
 
         flightMap.set(key, promise);
 
-        // Wait for it
         const result = await promise;
-
-        // NOTE: We don't delete immediately here? Promise logic above deletes on settlement.
-        // It's already deleted by the .then()/.catch() callbacks.
-
         return { result, deduped: false };
     }
 }
