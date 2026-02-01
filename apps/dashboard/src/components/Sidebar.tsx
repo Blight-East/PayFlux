@@ -7,6 +7,7 @@ const menuItems = [
     { name: 'Quick Setup', href: '/setup/connect' },
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Evidence', href: '/evidence' },
+    { name: 'Risk', href: '/risk' },
     { name: 'API Keys', href: '/api-keys' },
     { name: 'Connectors', href: '/connectors' },
     { name: 'Settings', href: '/settings' },
