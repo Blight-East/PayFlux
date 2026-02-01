@@ -3,10 +3,11 @@
  * 
  * Implements:
  * 1. Storage Interface (Memory/Redis)
- * 2. Token Bucket Rate Limiter
+ * 2. Token Bucket Rate Limiter (Keyed & Tiered)
  * 3. Risk Caching (URL, Policy, DNS, Negative)
  * 4. Concurrency Deduplication
  * 5. Observability (Metrics & Logging)
+ * 6. Quota Management
  */
 
 interface RiskStore {
@@ -17,30 +18,32 @@ interface RiskStore {
 const REDIS_URL = process.env.RISK_REDIS_URL;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Observability (Metrics & Logs) - PR #10
+// Observability (Metrics & Logs)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class RiskMetrics {
     private static counters = new Map<string, number>();
 
     static inc(metric: string, tags: Record<string, string> = {}) {
-        // Simple in-memory counter key generation
-        // In reality, this would be Prometheus/StatsD
         const tagStr = Object.entries(tags).sort().map(([k, v]) => `${k}=${v}`).join(',');
         const key = `${metric}{${tagStr}}`;
         const current = this.counters.get(key) || 0;
         this.counters.set(key, current + 1);
     }
 
-    // Debug method to dump metrics
-    static dump() {
+    static snapshot() {
         return Object.fromEntries(this.counters);
+    }
+
+    // For debugging/tests
+    static clear() {
+        this.counters.clear();
     }
 }
 
 export class RiskLogger {
     static log(event: string, context: Record<string, any>) {
-        if (process.env.NODE_ENV === 'test') return; // Silence in tests if needed
+        if (process.env.NODE_ENV === 'test') return;
         console.log(JSON.stringify({
             timestamp: new Date().toISOString(),
             event,
@@ -53,7 +56,6 @@ export class RiskLogger {
 // Storage Implementations
 // ─────────────────────────────────────────────────────────────────────────────
 
-// In-Memory Store (Map) - Default / Dev
 class MemoryStore implements RiskStore {
     private store = new Map<string, { val: string; exp: number }>();
 
@@ -72,7 +74,6 @@ class MemoryStore implements RiskStore {
             val: value,
             exp: Date.now() + ttlSeconds * 1000,
         });
-        // Cleanup periodically
         if (Math.random() < 0.01) this.cleanup();
     }
 
@@ -84,51 +85,83 @@ class MemoryStore implements RiskStore {
     }
 }
 
+const store: RiskStore = new MemoryStore();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quota & Tiers
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type Tier = 'FREE' | 'PRO' | 'ENTERPRISE' | 'ANONYMOUS';
+
+export interface QuotaConfig {
+    capacity: number;
+    refillRate: number; // tokens per second
+    window: number; // TTL in storage
+}
+
+export const TIER_CONFIG: Record<Tier, QuotaConfig> = {
+    ANONYMOUS: {
+        capacity: 3,
+        refillRate: 1 / 60, // 1 req / min
+        window: 600,
+    },
+    FREE: {
+        capacity: 10,
+        refillRate: 5 / 60, // 5 req / min
+        window: 600,
+    },
+    PRO: {
+        capacity: 100,
+        refillRate: 1, // 1 req / sec
+        window: 3600,
+    },
+    ENTERPRISE: {
+        capacity: 1000,
+        refillRate: 10, // 10 req / sec
+        window: 3600,
+    }
+};
+
+export class QuotaManager {
+    /**
+     * Resolves an API key to a Tier.
+     * In prod, this should use a fast cache (Redis) or local bloom filter.
+     */
+    static async resolve(key?: string | null): Promise<{ tier: Tier; keyId: string }> {
+        if (!key) return { tier: 'ANONYMOUS', keyId: 'anon' };
+
+        // Mocking resolution logic:
+        // pf_live_... -> PRO
+        // pf_test_... -> FREE
+        if (key.startsWith('pf_live_')) return { tier: 'PRO', keyId: key.slice(0, 12) };
+        if (key.startsWith('pf_test_')) return { tier: 'FREE', keyId: key.slice(0, 12) };
+
+        return { tier: 'FREE', keyId: key.slice(0, 12) };
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Logic Engines
 // ─────────────────────────────────────────────────────────────────────────────
 
-const store: RiskStore = new MemoryStore(); // Default to Memory
-
 export const CACHE_TTL = {
-    URL_CRAWL: 600,  // 10 min
-    POLICY_PAGE: 3600, // 60 min
-    DNS_SAFE: 21600, // 6 hours
-    NEGATIVE: 120,   // 2 min (errors)
+    URL_CRAWL: 600,
+    POLICY_PAGE: 3600,
+    DNS_SAFE: 21600,
+    NEGATIVE: 120,
 };
 
 interface BucketState {
     tokens: number;
-    lastRefill: number; // Unix timestamp in ms
+    lastRefill: number;
 }
 
-// Token Bucket Config: 
-// IP: 10 requests per 10 minutes (0.01666/sec), Cap 3.
-const LIMIT_CONFIG = {
-    IP: {
-        capacity: 3,
-        refillRate: 10 / 600, // ~0.0166 tokens/sec (1 token every 60s)
-        window: 600,
-    },
-    HOST: {
-        capacity: 5,
-        refillRate: 5 / 600,
-        window: 600,
-    }
-};
-
 export class RateLimiter {
-    /**
-     * Consumes tokens from the bucket.
-     * Returns allowed status and standard rate limit headers.
-     * x-rate-limit-reset is SECONDS until the next token is available (or 0 if full/allowed).
-     */
-    private static async consume(key: string, config: typeof LIMIT_CONFIG.IP): Promise<{ allowed: boolean; headers: Record<string, string> }> {
+    private static async consume(key: string, config: QuotaConfig): Promise<{ allowed: boolean; headers: Record<string, string> }> {
         const now = Date.now();
         const stateStr = await store.get(key);
         let state: BucketState = stateStr ? JSON.parse(stateStr) : { tokens: config.capacity, lastRefill: now };
 
-        // Refill
         const elapsedSeconds = (now - state.lastRefill) / 1000;
         const refillTokens = elapsedSeconds * config.refillRate;
 
@@ -136,26 +169,18 @@ export class RateLimiter {
         state.lastRefill = now;
 
         const allowed = state.tokens >= 1;
-
-        let reset = 0; // Seconds until next token
+        let reset = 0;
 
         if (allowed) {
             state.tokens -= 1;
-            // If drop below 1.0, calculate time to get back to 1.0
             if (state.tokens < 1) {
-                const missing = 1 - state.tokens;
-                reset = Math.ceil(missing / config.refillRate);
+                reset = Math.ceil((1 - state.tokens) / config.refillRate);
             }
         } else {
-            // Not allowed. Calculate time to reach 1 token.
-            const missing = 1 - state.tokens;
-            reset = Math.ceil(missing / config.refillRate);
+            reset = Math.ceil((1 - state.tokens) / config.refillRate);
         }
 
-        // Remaining: Floor of current tokens
         const remaining = Math.floor(state.tokens);
-
-        // Save state (TTL = window)
         await store.set(key, JSON.stringify(state), config.window);
 
         return {
@@ -168,60 +193,40 @@ export class RateLimiter {
         };
     }
 
-    static async check(ip: string, targetHost?: string) {
-        // 1. IP Limit
-        const { allowed: ipAllowed, headers: ipHeaders } = await this.consume(`rl:ip:${ip}`, LIMIT_CONFIG.IP);
+    /**
+     * Checks rate limit for a given identifier (IP or KeyId) and tier.
+     */
+    static async check(identifier: string, tier: Tier = 'ANONYMOUS') {
+        const config = TIER_CONFIG[tier];
+        const key = `rl:${tier.toLowerCase()}:${identifier}`;
 
-        if (!ipAllowed) {
-            return { allowed: false, headers: ipHeaders, context: { limitType: 'IP', ip } };
+        const { allowed, headers } = await this.consume(key, config);
+
+        if (!allowed) {
+            return { allowed: false, headers, context: { limitType: 'TIER', identifier, tier } };
         }
 
-        // 2. IP + Host Limit (Optional)
-        if (targetHost) {
-            const { allowed: hostAllowed, headers: hostHeaders } = await this.consume(`rl:host:${ip}:${targetHost}`, LIMIT_CONFIG.HOST);
-            if (!hostAllowed) {
-                return { allowed: false, headers: hostHeaders, context: { limitType: 'HOST', ip, host: targetHost } };
-            }
-        }
-
-        return { allowed: true, headers: ipHeaders };
+        return { allowed: true, headers };
     }
 }
 
 export class RiskCache {
-    static async get(key: string) {
-        return await store.get(key);
-    }
+    static async get(key: string) { return await store.get(key); }
+    static async set(key: string, value: any, ttl: number) { await store.set(key, JSON.stringify(value), ttl); }
 
-    static async set(key: string, value: any, ttl: number) {
-        await store.set(key, JSON.stringify(value), ttl);
-    }
-
-    /**
-     * Normalize URL for caching:
-     * - Lowercase hostname
-     * - Preserve path ordering
-     * - Strip fragments
-     */
     static normalizeUrl(urlStr: string): string {
         try {
             const u = new URL(urlStr);
-            // Protocol + Hostname (lower) + Path + Search
             return u.protocol + '//' + u.hostname.toLowerCase() + u.pathname + u.search;
-        } catch {
-            return urlStr;
-        }
+        } catch { return urlStr; }
     }
 }
 
-// In-Process deduplication
 const flightMap = new Map<string, Promise<any>>();
 
 export class ConcurrencyManager {
     static async dedupe(key: string, fn: () => Promise<any>): Promise<{ result: any; deduped: boolean }> {
-        if (flightMap.has(key)) {
-            return { result: await flightMap.get(key), deduped: true };
-        }
+        if (flightMap.has(key)) return { result: await flightMap.get(key), deduped: true };
 
         const promise = fn().catch(err => {
             flightMap.delete(key);
@@ -232,8 +237,6 @@ export class ConcurrencyManager {
         });
 
         flightMap.set(key, promise);
-
-        const result = await promise;
-        return { result, deduped: false };
+        return { result: await promise, deduped: false };
     }
 }
