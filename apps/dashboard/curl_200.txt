@@ -1,0 +1,18 @@
+HTTP/1.1 200 OK
+x-clerk-auth-reason: dev-browser-missing
+x-clerk-auth-status: signed-out
+x-middleware-rewrite: /api/v1/risk
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+x-cache: miss
+x-rate-limit-limit: 3
+x-rate-limit-remaining: 2
+x-rate-limit-reset: 0
+x-risk-inflight: new
+x-trace-id: 6620b5f0-a4f3-4864-ad34-2e611aaac552
+Date: Sun, 01 Feb 2026 18:35:08 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"url":"https://example.com","analyzedAt":"2026-02-01T18:35:08.456Z","industry":"SaaS","processor":"Stripe","scoreBreakdown":[{"name":"Policy Compliance","stabilityPoints":0,"score":0,"max":40},{"name":"Content Depth","stabilityPoints":0,"score":0,"max":20},{"name":"Industry Risk","stabilityPoints":20,"score":20,"max":20},{"name":"Processor Trust","stabilityPoints":20,"score":20,"max":20}],"policies":{"terms":{"status":"Missing","matches":0},"privacy":{"status":"Missing","matches":0},"refund":{"status":"Missing","matches":0},"contact":{"status":"Missing","matches":0}},"narrative":{"summary":"This merchant has a ELEVATED risk profile (Score: 40).","drivers":[{"factor":"Terms of Service","impact":"negative","evidence":"Example Domain Example Domain This domain is for use in documentation examples without needing permission","weight":8},{"factor":"Privacy Policy","impact":"negative","evidence":"Avoid use in operations","weight":8},{"factor":"Website Content","impact":"negative","evidence":"Content analysis","weight":5}],"recommendations":["Maintain compliance","Regular review"]},"riskTier":3,"riskLabel":"ELEVATED","stabilityScore":40,"meta":{"aiProvider":"fallback","processingTimeMs":124.96225000000004}}

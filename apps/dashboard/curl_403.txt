@@ -1,0 +1,13 @@
+HTTP/1.1 403 Forbidden
+x-clerk-auth-reason: dev-browser-missing
+x-clerk-auth-status: signed-out
+x-middleware-rewrite: /api/v1/risk
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+x-trace-id: 64a5febb-ca14-475c-bfb5-ac5ad1104b93
+Date: Sun, 01 Feb 2026 18:35:08 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"error":"Blocked hostname: 127.0.0.1"}

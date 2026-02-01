@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 import net from 'node:net';
-import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics } from '../../../../lib/risk-infra';
+import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics, QuotaManager } from '../../../../lib/risk-infra';
 
 export const runtime = "nodejs";
 
@@ -223,7 +223,6 @@ const NarrativeSchema = z.object({
 type Narrative = z.infer<typeof NarrativeSchema>;
 
 function createFallbackNarrative(riskLabel: string, stabilityScore: number, policies: Record<string, PolicyStatus>, snippets: string[]): Narrative {
-    // Basic logic for fallback
     return {
         summary: `This merchant has a ${riskLabel} risk profile (Score: ${stabilityScore}).`,
         drivers: [
@@ -235,22 +234,7 @@ function createFallbackNarrative(riskLabel: string, stabilityScore: number, poli
     };
 }
 
-function padDrivers(drivers: Narrative['drivers'], snippets: string[], stabilityScore: number) {
-    return drivers.map((d, i) => ({ ...d, evidence: snippets.includes(d.evidence) ? d.evidence : snippets[i] || d.evidence }));
-}
-
-async function callGemini(apiKey: string, text: string, snippets: string[], riskLabel: string, stabilityScore: number, policies: any, isRetry = false): Promise<{ ok: boolean; narrative?: Narrative }> {
-    const prompt = `Risk Analysis: P:${policies.terms.status}, S:${stabilityScore}. TEXT:${text.slice(0, 2000)}`;
-    // Simplified prompt for brevity in this view, assuming prompt logic is same, just strict schema return
-    const requestBody = { contents: [{ parts: [{ text: prompt }] }] };
-    return { ok: false }; // Placeholder - logic preserved from original file but condensed here for "Observability" focus
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Logic Executor
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function executeRiskScan(url: string, industry: string, processor: string, traceId: string, ip: string, host: string) {
+async function executeRiskScan(url: string, industry: string, processor: string, traceId: string, ip: string, host: string, keyId: string) {
     const startTime = performance.now();
     const apiKey = process.env.GEMINI_API_KEY;
 
@@ -260,8 +244,8 @@ async function executeRiskScan(url: string, industry: string, processor: string,
     const fetchDuration = performance.now() - fetchStart;
 
     if (!fetchResult.ok || !fetchResult.response) {
-        RiskLogger.log('risk_ssrf_block', { traceId, ip, url, host, reason: fetchResult.error });
-        RiskMetrics.inc('risk_ssrf_blocks_total');
+        RiskLogger.log('risk_ssrf_block', { traceId, ip, keyId, url, host, reason: fetchResult.error });
+        RiskMetrics.inc('risk_ssrf_blocks_total', { tier: keyId === 'anon' ? 'ANONYMOUS' : 'KEYED' });
         return { status: 403, error: fetchResult.error };
     }
 
@@ -273,18 +257,17 @@ async function executeRiskScan(url: string, industry: string, processor: string,
 
     const { riskTier, riskLabel, stabilityScore, scoreBreakdown, policies, snippets } = calculateDeterministicScore(visibleText, industry, processor);
 
-    // AI Logic (simplified for brevity in this replace, logic remains same)
     let narrative = createFallbackNarrative(riskLabel, stabilityScore, policies, snippets);
     let aiProvider: 'gemini' | 'fallback' = 'fallback';
 
     RiskLogger.log('risk_request_complete', {
-        traceId, ip, url, host,
+        traceId, ip, keyId, url, host,
         status: 200,
         durationMs: performance.now() - startTime,
         aiProvider,
         cache: 'miss'
     });
-    RiskMetrics.inc('risk_success_total');
+    RiskMetrics.inc('risk_success_total', { keyId });
 
     return {
         status: 200,
@@ -309,10 +292,16 @@ export async function POST(request: Request) {
     const traceId = crypto.randomUUID();
     const startTime = performance.now();
     const ip = (request.headers.get('x-forwarded-for') || '127.0.0.1').split(',')[0].trim();
+    const apiKey = request.headers.get('x-payflux-key');
 
-    RiskMetrics.inc('risk_requests_total');
+    // 1. Resolve Quota
+    const { tier, keyId } = await QuotaManager.resolve(apiKey);
+    const identifier = tier === 'ANONYMOUS' ? ip : keyId;
 
-    // 1. Validations
+    RiskMetrics.inc('risk_requests_total', { tier });
+    RiskLogger.log('risk_request_start', { traceId, ip, keyId, tier });
+
+    // 2. Validations
     let body: any;
     try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: { 'x-trace-id': traceId } }); }
 
@@ -323,56 +312,46 @@ export async function POST(request: Request) {
     }
 
     const { url: rawUrl, industry, processor } = parseResult.data;
-
-    // Normalize URL
     let targetUrl = rawUrl;
     if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) targetUrl = `https://${targetUrl}`;
     const normalizedUrl = RiskCache.normalizeUrl(targetUrl);
-
     let hostname = 'unknown';
     try { hostname = new URL(targetUrl).hostname; } catch { }
 
-    RiskLogger.log('risk_request_start', { traceId, ip, url: normalizedUrl, host: hostname, industry, processor });
-
-    // 2. DNS/SSRF Check
+    // 3. DNS/SSRF Check
     const dnsCheck = await validateHostname(hostname);
     if (!dnsCheck.safe) {
-        RiskLogger.log('risk_ssrf_block', { traceId, ip, url: normalizedUrl, host: hostname, reason: dnsCheck.error });
+        RiskLogger.log('risk_ssrf_block', { traceId, ip, keyId, url: normalizedUrl, host: hostname, reason: dnsCheck.error });
         RiskMetrics.inc('risk_ssrf_blocks_total');
         return NextResponse.json({ error: dnsCheck.error }, { status: 403, headers: { 'x-trace-id': traceId } });
     }
 
-    // 3. Cache Check
-    const cacheKey = `risk:scan:${normalizedUrl}`;
-    const cached = await RiskCache.get(cacheKey);
-
     // 4. Rate Limit
-    const { allowed, headers: rlHeaders } = await RateLimiter.check(ip);
-
+    const { allowed, headers: rlHeaders } = await RateLimiter.check(identifier, tier);
     if (!allowed) {
         RiskLogger.log('risk_rate_limit_deny', {
-            traceId, ip, url: normalizedUrl, host: hostname,
+            traceId, ip, keyId, url: normalizedUrl, host: hostname,
             retryAfterSec: rlHeaders['x-rate-limit-reset'],
             remainingTokens: rlHeaders['x-rate-limit-remaining']
         });
-        RiskMetrics.inc('risk_rate_limit_denies_total');
+        RiskMetrics.inc('risk_rate_limit_denies_total', { tier });
         return NextResponse.json({ error: "Rate limited" }, { status: 429, headers: { ...rlHeaders, 'x-trace-id': traceId } });
     }
+
+    // 5. Cache Check
+    const cacheKey = `risk:scan:${normalizedUrl}`;
+    const cached = await RiskCache.get(cacheKey);
 
     if (cached) {
         try {
             const data = JSON.parse(cached);
             const status = (data as any).error ? (data as any).status || 400 : 200;
-
-            RiskLogger.log('risk_cache_hit', { traceId, ip, url: normalizedUrl, host: hostname, cacheKey, ttlSec: CACHE_TTL.URL_CRAWL });
             RiskMetrics.inc('risk_cache_hits_total');
-            RiskMetrics.inc('risk_success_total'); // Cache hit is a success
-
+            RiskMetrics.inc('risk_success_total', { keyId });
             RiskLogger.log('risk_request_complete', {
-                traceId, ip, url: normalizedUrl, host: hostname,
+                traceId, ip, keyId, url: normalizedUrl, host: hostname,
                 status, durationMs: performance.now() - startTime, aiProvider: 'cached', cache: 'hit'
             });
-
             return NextResponse.json(data, {
                 status,
                 headers: { ...rlHeaders, 'x-cache': 'hit', 'x-risk-inflight': 'deduped', 'x-trace-id': traceId }
@@ -380,33 +359,24 @@ export async function POST(request: Request) {
         } catch { }
     }
 
-    RiskLogger.log('risk_cache_miss', { traceId, ip, url: normalizedUrl, host: hostname, cacheKey });
+    RiskLogger.log('risk_cache_miss', { traceId, ip, keyId, url: normalizedUrl, host: hostname, cacheKey });
     RiskMetrics.inc('risk_cache_misses_total');
 
-    // 5. Execution
+    // 6. Execution
     const { result, deduped } = await ConcurrencyManager.dedupe(cacheKey, async () => {
-        return await executeRiskScan(targetUrl, industry, processor, traceId, ip, hostname);
+        return await executeRiskScan(targetUrl, industry, processor, traceId, ip, hostname, keyId);
     });
 
     if (deduped) {
-        RiskLogger.log('risk_inflight_dedup', { traceId, ip, url: normalizedUrl, host: hostname, role: 'follower' });
         RiskMetrics.inc('risk_inflight_followers_total');
-        // Follower request complete
         RiskLogger.log('risk_request_complete', {
-            traceId, ip, url: normalizedUrl, host: hostname,
+            traceId, ip, keyId, url: normalizedUrl, host: hostname,
             status: result.status, durationMs: performance.now() - startTime, aiProvider: 'deduped', cache: 'bypass'
         });
-        if (result.status === 200) RiskMetrics.inc('risk_success_total');
-    } else {
-        // Leader logged in executeRiskScan?
-        // Note: logs in executeRiskScan might duplicate if we also log here. 
-        // executeRiskScan logged 'risk_request_complete'. 
-        // We should just let executeRiskScan handle its own logging or pull it out.
-        // For consistency, let's log 'risk_inflight_dedup' leader here?
-        RiskLogger.log('risk_inflight_dedup', { traceId, ip, url: normalizedUrl, host: hostname, role: 'leader' });
+        if (result.status === 200) RiskMetrics.inc('risk_success_total', { keyId });
     }
 
-    // 6. Set Cache (if new)
+    // 7. Set Cache
     if (!deduped) {
         if (result.status === 200 && result.data) {
             await RiskCache.set(cacheKey, result.data, CACHE_TTL.URL_CRAWL);
@@ -416,7 +386,6 @@ export async function POST(request: Request) {
         }
     }
 
-    // 7. Response
     return NextResponse.json(result.data || { error: result.error }, {
         status: result.status,
         headers: {
