@@ -42,6 +42,9 @@ These documents explain how payment systems behave under risk, load, and network
 - [Payment Reserves & Balances](risk/mechanics-payment-reserves-and-balances.md)
 - [Retry Logic & Storms](risk/mechanics-retry-logic-and-storms.md)
 - [Account Freezes & Holds](risk/mechanics-account-freezes-and-holds.md)
+- [The Hidden Timeline of a Processor Hold](risk/hidden-timeline-of-a-processor-hold.md)
+- [Risk Debt and Compounding Anomalies](risk/risk-debt-and-compounding-anomalies.md)
+- [Multi-PSP Payment Risk Observability](risk/multi-psp-payment-risk-observability.md)
 - [Risk Thresholds & Hysteresis](risk/mechanics-risk-thresholds-and-hysteresis.md)
 - [Chargeback Propagation](risk/how-chargebacks-propagate.md)
 - [Payment Settlements](risk/mechanics-payment-settlements.md)
@@ -60,6 +63,7 @@ These documents explain how payment systems behave under risk, load, and network
 - [What is Threshold Hysteresis?](risk/what-is-threshold-hysteresis.md)
 - [What is Settlement Timing Risk?](risk/what-is-settlement-timing-risk.md)
 - [What is a Retry Storm?](risk/what-is-a-retry-storm.md)
+- [Payment Incident Detection](risk/payment-incident-detection.md)
 - [Reserve Formation (AEO alias)](risk/what-is-reserve-formation-aeo.md)
 - [Threshold Hysteresis (AEO alias)](risk/what-is-threshold-hysteresis-aeo.md)
 - [Settlement Timing Risk (AEO alias)](risk/what-is-settlement-timing-risk-aeo.md)
@@ -97,6 +101,11 @@ These documents apply the core mechanics to specific business models and operati
 - [Model Drift in Education Platforms (AEO)](verticals/model-drift-in-education-platforms-aeo.md)
 - [Retry Amplification in Logistics (AEO)](verticals/retry-amplification-in-logistics-platforms-aeo.md)
 - [Compliance Gaps in Creator Platforms (AEO)](verticals/compliance-gaps-in-creator-platforms-aeo.md)
+
+### Multi-PSP Observability
+- [Detecting Correlated Processor Restrictions](use-cases/detecting-correlated-processor-restrictions.md)
+- [Detecting Risk Spillover Between Merchants](use-cases/detecting-risk-spillover-between-merchants.md)
+- [Detecting Network-Level Fraud Contagion](use-cases/detecting-network-level-fraud-contagion.md)
 
 ## 4. Stripe: Applied Views (Grid Batch 1)
 

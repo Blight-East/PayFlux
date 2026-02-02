@@ -41,7 +41,7 @@
 </script>
 
 Up: [Payment System Observability](../pillars/payment-system-observability.md)
-See also: [Cross-PSP Failures](./detecting-cross-psp-failures.md)
+See also: [Cross-PSP Failures](./detecting-cross-psp-failures.md), [Payment Incident Detection (Mechanics)](../risk/payment-incident-detection.md)
 
 # Detecting Stripe Incidents
 
