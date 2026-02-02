@@ -66,7 +66,7 @@ export async function GET() {
     const stripeUrl = new URL(STRIPE_OAUTH_URL);
     stripeUrl.searchParams.append('response_type', 'code');
     stripeUrl.searchParams.append('client_id', clientId);
-    stripeUrl.searchParams.append('scope', 'read_only');
+    stripeUrl.searchParams.append('scope', 'read_write');
     stripeUrl.searchParams.append('redirect_uri', redirectUri);
     stripeUrl.searchParams.append('state', state);
 
