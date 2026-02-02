@@ -42,6 +42,16 @@ export async function GET() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const stateSecret = process.env.OAUTH_STATE_SECRET;
 
+    // Log configuration for debugging (Sanitized)
+    const isTestMode = clientId?.startsWith('ca_'); // Legacy "ca_" prefix often implies specific connect app type, but "pk_test" is API key. Client ID usually starts with ca_.
+    // Actually, Stripe Client IDs usually start with 'ca_' for both test and live, but vary by value. 
+    // Let's just log the prefix or 'Unknown'. 
+    console.log('[Stripe Connect] Initializing OAuth flow', {
+        mode: process.env.NODE_ENV,
+        clientIdTruncated: clientId ? `${clientId.substring(0, 8)}...` : 'MISSING',
+        baseUrl,
+    });
+
     if (!clientId || !stateSecret) {
         console.error('Missing required environment variables for Stripe Connect');
         return NextResponse.redirect(new URL('/onboarding?err=stripe_connect_failed', baseUrl));

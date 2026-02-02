@@ -3,6 +3,7 @@
   
 [context.production.environment]
   CANONICAL_SITE_URL = "https://payflux.dev"
+  STRIPE_CONNECT_CLIENT_ID = "ca_TtG6exiePKpsyPwJpwMcUHb5EWDlN1rX"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
