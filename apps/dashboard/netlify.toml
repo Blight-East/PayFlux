@@ -3,6 +3,7 @@
   
 [context.production.environment]
   CANONICAL_SITE_URL = "https://payflux.dev"
+  NEXT_PUBLIC_APP_URL = "https://payflux.dev"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
