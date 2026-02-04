@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run docs:manifest && next dev",
-    "prebuild": "npm run docs:manifest",
+    "prebuild": "node scripts/guard-fixtures.cjs && node scripts/check-dev-fixtures.mjs",
     "build": "next build && node scripts/verify-docs-bundle.mjs",
     "start": "next start",
     "lint": "eslint",
