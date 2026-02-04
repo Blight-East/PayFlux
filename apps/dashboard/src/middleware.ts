@@ -10,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
   '/privacy',
   '/docs(.*)',
   '/sitemap-docs.xml',
+  '/api/debug(.*)',
   '/',
   '/googlec9febe29141cc19f.html',
 ]);
