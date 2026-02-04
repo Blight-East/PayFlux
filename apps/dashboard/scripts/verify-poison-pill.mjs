@@ -15,7 +15,7 @@ try {
     console.error("verify-poison-pill: FAIL - Import succeeded in production environment!");
     process.exit(1);
 } catch (error) {
-    if (error.message === 'FIXTURE_PATH_VIOLATION') {
+    if (error.code === 'FIXTURE_PATH_VIOLATION') {
         console.log("verify-poison-pill: PASS (Caught expected FIXTURE_PATH_VIOLATION)");
         process.exit(0);
     } else {

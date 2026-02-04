@@ -39,7 +39,7 @@ export async function GET() {
                 return NextResponse.json(EVIDENCE_HEALTH);
             } catch (err: any) {
                 // Runtime Poison Pill: If we hit the protection, fail loudly
-                if (err.message === 'FIXTURE_PATH_VIOLATION') {
+                if (err?.code === 'FIXTURE_PATH_VIOLATION') {
                     return NextResponse.json({
                         ...degradedResponse,
                         diagnostics: ['FIXTURE_PATH_VIOLATION'],
