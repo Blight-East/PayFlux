@@ -412,6 +412,7 @@ export default function RiskSnapshotPage() {
 
     return (
         <div className="min-h-screen bg-zinc-950 p-8">
+            <div data-fingerprint="risk-snapshot" style={{ display: 'none' }}>ROUTE_FINGERPRINT: RISK_SNAPSHOT</div>
             <div className="max-w-3xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="space-y-2">

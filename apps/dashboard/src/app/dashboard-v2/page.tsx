@@ -1,12 +1,18 @@
-import { notFound } from "next/navigation";
-import RiskSnapshotPage from "../risk/page";
+import { notFound } from 'next/navigation';
+import DashboardV2 from './DashboardV2';
 
-export const dynamic = 'force-dynamic';
+// Server Component Gate
+export const dynamic = 'force-dynamic'; // Force runtime evaluation of env var
 
-export default function DashboardV2Page() {
-    // Server-side Gate
+export default function Page() {
     if (process.env.DASHBOARD_V2_ENABLED !== 'true') {
         notFound();
     }
-    return <RiskSnapshotPage />;
+
+    return (
+        <>
+            <div data-fingerprint="dashboard-v2" style={{ display: 'none' }}>ROUTE_FINGERPRINT: DASHBOARD_V2</div>
+            <DashboardV2 />
+        </>
+    );
 }
