@@ -1,4 +1,5 @@
-import { PROCESSORS } from '../../../fixtures/mockData'; // DEV_ONLY: Fixture until API wired
+// STUB: Real implementation would fetch or use a hook.
+const PROCESSORS = [];
 
 export function ProcessorList() {
     return (
@@ -17,6 +18,9 @@ export function ProcessorList() {
                         </div>
                     </div>
                 ))}
+                {PROCESSORS.length === 0 && (
+                    <div className="text-[10px] text-void-dim font-mono italic py-4 text-center">No processors connected.</div>
+                )}
             </div>
         </div>
     );

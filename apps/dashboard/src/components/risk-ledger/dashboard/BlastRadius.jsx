@@ -1,5 +1,9 @@
-import { BLAST_RADIUS } from '../../../fixtures/mockData'; // DEV_ONLY: Fixture until API wired
-import { Badge } from '../ui/Badge';
+// STUB: Real implementation would fetch or use a hook.
+const BLAST_RADIUS = {
+    regions: [],
+    volume_at_risk: "$0.00",
+    merchants: []
+};
 
 export function BlastRadius() {
     return (
@@ -30,6 +34,9 @@ export function BlastRadius() {
                             </div>
                         </div>
                     ))}
+                    {BLAST_RADIUS.regions.length === 0 && (
+                        <div className="text-[10px] text-void-dim font-mono italic">Awaiting telemetry...</div>
+                    )}
                 </div>
             </div>
 
@@ -54,6 +61,9 @@ export function BlastRadius() {
                             </Badge>
                         </div>
                     ))}
+                    {BLAST_RADIUS.merchants.length === 0 && (
+                        <div className="text-center py-8 text-[10px] text-void-dim font-mono italic">No exposure detected.</div>
+                    )}
                 </div>
             </div>
         </div>

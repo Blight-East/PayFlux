@@ -1,5 +1,4 @@
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
-import { KPIS } from '../../../fixtures/mockData'; // DEV_ONLY: Fixture until API wired
 
 function KpiCard({ title, value, subtext, data, color, isCurrency }) {
     return (
@@ -38,16 +37,16 @@ export function SystemHealth() {
             <KpiCard
                 title="Volume at Risk"
                 value="$0.00"
-                subtext="Last 24h: $12.5k"
-                data={[0, 0, 0, 0, 150, 0, 0, 0, 0, 0, 0, 0]}
+                subtext="Last 24h: $0.00"
+                data={[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
                 color="#10B981" // Safe 
                 isCurrency
             />
             <KpiCard
                 title="Approval Rate"
-                value="94.2%"
-                subtext="-0.5% vs avg"
-                data={[92, 93, 94, 94, 94, 92, 91, 93, 94, 95, 94, 94.2]}
+                value="--"
+                subtext="Awaiting signal..."
+                data={[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
                 color="#3B82F6"
             />
         </div>
