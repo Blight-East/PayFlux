@@ -37,8 +37,15 @@ export async function GET() {
             try {
                 const { EVIDENCE_HEALTH } = await import('../../../../lib/dev-fixtures');
                 return NextResponse.json(EVIDENCE_HEALTH);
-            } catch (ignored) {
-                // Fall through to error response if fixture missing/broken
+            } catch (err: any) {
+                // Runtime Poison Pill: If we hit the protection, fail loudly
+                if (err?.code === 'FIXTURE_PATH_VIOLATION') {
+                    return NextResponse.json({
+                        ...degradedResponse,
+                        diagnostics: ['FIXTURE_PATH_VIOLATION'],
+                    }, { status: 500 });
+                }
+                // Otherwise fall through (file missing, syntax error, etc) - treat as missing fixture
             }
         }
 
