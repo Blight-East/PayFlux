@@ -1,4 +1,10 @@
 import { createRequire } from 'module';
+
+// POISON PILL: Fail loudly if this module is loaded in non-development environment
+if (process.env.NODE_ENV !== 'development') {
+    throw new Error('FIXTURE_PATH_VIOLATION');
+}
+
 const require = createRequire(import.meta.url);
 const data = require('../../../../ok_fixture.json');
 
