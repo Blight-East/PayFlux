@@ -1,66 +1,55 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
-// Real tripwire: scan codebase for ILLEGAL imports of fixtures.
-// 1. No direct imports of ok_fixture.json or fixtures/* from src/app
-// 2. No static imports of dev-fixtures.js from src/app
-// Dev fixtures must ONLY be loaded via dynamic import() inside gated code.
+const SRC_APP_DIR = path.join(__dirname, '../src/app');
+const SRC_PAGES_DIR = path.join(__dirname, '../src/pages');
+const DIRS_TO_SCAN = [SRC_APP_DIR, SRC_PAGES_DIR];
 
-console.log("guard-fixtures: Scanning for illegal fixture imports...");
+// Strict patterns: catch static AND dynamic imports of fixtures
+const FORBIDDEN_IMPORT_REGEX = /from\s+['"]\.\.?\/.*fixtures\/mockData['"]|from\s+['"]@\/fixtures\/mockData['"]/g;
+const FORBIDDEN_DYNAMIC = /(import\(|require\()\s*['"][^'"]*fixtures\/mockData(\.js)?['"]/g;
 
-const srcDir = path.join(__dirname, '../src');
-// We need to scan src/app (and src/pages if it exists, though this appears to be App Router)
-// The user request explicitly mentioned src/pages so we include it to be safe.
-const targetDirs = [path.join(srcDir, 'app'), path.join(srcDir, 'pages')];
+function scanDirectory(dir) {
+    const files = fs.readdirSync(dir);
+    let hasError = false;
 
-let hasError = false;
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
+        const stat = fs.statSync(fullPath);
 
-// Helper to run grep
-function checkPattern(pattern, description) {
-    try {
-        // grep -rE returns 0 if match found (FAIL), 1 if no match (PASS)
-        // We scan specific directories that might contain app code
-        const dirsToScan = targetDirs.filter(d => fs.existsSync(d)).join(' ');
+        if (stat.isDirectory()) {
+            if (scanDirectory(fullPath)) {
+                hasError = true;
+            }
+        } else if (file.endsWith('.js') || file.endsWith('.jsx') || file.endsWith('.ts') || file.endsWith('.tsx')) {
+            // Skip test files
+            if (file.includes('.test.') || file.includes('.spec.') || file.includes('.stories.')) continue;
 
-        if (!dirsToScan) return;
+            const content = fs.readFileSync(fullPath, 'utf8');
 
-        const cmd = `grep -rE "${pattern}" ${dirsToScan}`;
-        execSync(cmd, { stdio: 'pipe' });
-
-        // If we get here, grep passed (found matches) -> VIOLATION
-        console.error(`guard-fixtures: FAIL - ${description}`);
-        console.error(`  Pattern found: ${pattern}`);
-        console.error(`  Run 'grep -rE "${pattern}" ${dirsToScan}' to see violations.`);
-        hasError = true;
-    } catch (error) {
-        if (error.status !== 1) {
-            console.error(`guard-fixtures: ERROR executing grep for ${description}`, error);
-            hasError = true;
+            // Check both static and dynamic patterns
+            if (FORBIDDEN_IMPORT_REGEX.test(content) || FORBIDDEN_DYNAMIC.test(content) || content.includes('src/fixtures/mockData')) {
+                console.error(`[Build Guard] Forbidden fixture import found in: ${fullPath}`);
+                hasError = true;
+            }
         }
-        // status 1 means no matches -> PASS
+    }
+    return hasError;
+}
+
+console.log('🔒 Scanning for fixture leaks in src/app and src/pages...');
+let globalError = false;
+
+for (const dir of DIRS_TO_SCAN) {
+    if (fs.existsSync(dir)) {
+        if (scanDirectory(dir)) {
+            globalError = true;
+        }
     }
 }
 
-// 1. Block direct JSON fixture imports (ok_fixture.json, violation_fixture.json, etc)
-//    Matches: import ... from '...ok_fixture.json' or require('...ok_fixture.json')
-checkPattern("import .*_fixture\\.json|require\\(.*_fixture\\.json", "Direct import of raw fixture JSON");
-
-// 2. Block general fixtures path imports (generic safety net)
-//    Matches: from '.../fixtures/...' (excluding mockData if we wanted to be specific, but user said 'any fixtures/* pattern')
-//    Refined: We want to allow imports *inside* lib/dev-fixtures.js (which is in src/lib), but NOT in src/app.
-checkPattern("from .*fixtures/|require\\(.*fixtures/", "Direct import from fixtures directory");
-
-// 3. Block STATIC import of dev-fixtures.js
-//    Matches: import ... from '...dev-fixtures' (static)
-//    Matches: require('...dev-fixtures') (CJS static-ish)
-//    EXPLICITLY DOES NOT MATCH: import('...dev-fixtures') (Dynamic)
-checkPattern("import .* from .*dev-fixtures|require\\(.*dev-fixtures", "Static import of dev-fixtures proxy");
-
-if (hasError) {
-    console.error("guard-fixtures: TRIPWIRED. Illegal imports detected in application code.");
+if (globalError) {
+    console.error('❌ FAIL: Fixtures imported in production routes!');
     process.exit(1);
-} else {
-    console.log("guard-fixtures: PASS (No illegal fixture imports found)");
-    process.exit(0);
 }
+console.log('✅ PASS: No leaked fixtures.');

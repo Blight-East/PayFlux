@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   '/docs(.*)',
   '/sitemap-docs.xml',
   '/api/debug(.*)',
+  '/api/risk(.*)',
   '/dashboard-v2',
   '/',
   '/googlec9febe29141cc19f.html',

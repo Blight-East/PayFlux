@@ -1,26 +1,35 @@
-import { fileURLToPath } from 'url';
-import path from 'path';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// Resolve absolute path to dev-fixtures.js
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const devFixturesPath = path.resolve(__dirname, '../src/lib/dev-fixtures.js');
+
+// Resolve absolute path to dev-fixtures.js relative to this script
+// Assumes structure: apps/dashboard/scripts/check-dev-fixtures.mjs -> apps/dashboard/src/lib/dev-fixtures.js
+const devFixturesPath = path.join(__dirname, '../src/lib/dev-fixtures.js');
+const devFixturesUrl = pathToFileURL(devFixturesPath).href;
+
+console.log(`🔒 Verifying dev-fixtures exports from: ${devFixturesPath}`);
 
 try {
-    // We use dynamic import here, which is allowed.
-    const { EVENTS, EVIDENCE_HEALTH } = await import(devFixturesPath);
+    const mod = await import(devFixturesUrl);
 
-    if (Array.isArray(EVENTS) && typeof EVIDENCE_HEALTH === 'object' && EVIDENCE_HEALTH !== null) {
-        console.log("check-dev-fixtures: PASS");
-        process.exit(0);
-    } else {
-        console.error("check-dev-fixtures: FAIL - Invalid export types");
-        console.error("EVENTS:", typeof EVENTS);
-        console.error("EVIDENCE_HEALTH:", typeof EVIDENCE_HEALTH);
+    if (!mod.EVENTS || !Array.isArray(mod.EVENTS)) {
+        console.error(`❌ EVENTS export missing or invalid (Type: ${typeof mod.EVENTS})`);
+        console.error(`   Loaded module: ${devFixturesPath}`);
         process.exit(1);
     }
+
+    if (!mod.EVIDENCE_HEALTH || typeof mod.EVIDENCE_HEALTH !== 'object') {
+        console.error(`❌ EVIDENCE_HEALTH export missing or invalid (Type: ${typeof mod.EVIDENCE_HEALTH})`);
+        console.error(`   Loaded module: ${devFixturesPath}`);
+        process.exit(1);
+    }
+
+    console.log(`✅ PASS: dev-fixtures exports validated (Events: ${mod.EVENTS.length}).`);
+    process.exit(0);
 } catch (error) {
-    console.error("check-dev-fixtures: FAIL - Import failed");
-    console.error(error);
+    console.error(`❌ Failed to import dev-fixtures from ${devFixturesPath}`);
+    console.error(`   Error: ${error.message}`);
     process.exit(1);
 }
