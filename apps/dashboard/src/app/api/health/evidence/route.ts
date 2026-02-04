@@ -32,6 +32,16 @@ export async function GET() {
     };
 
     if (!payfluxUrl || !apiKey) {
+        // DEV OVERRIDE: If configured for dev mode, return mock data
+        if (process.env.NODE_ENV === 'development' && process.env.PAYFLUX_ENV === 'dev') {
+            try {
+                const { EVIDENCE_HEALTH } = await import('../../../../lib/dev-fixtures');
+                return NextResponse.json(EVIDENCE_HEALTH);
+            } catch (ignored) {
+                // Fall through to error response if fixture missing/broken
+            }
+        }
+
         const response = NextResponse.json({
             ...degradedResponse,
             diagnostics: ['BFF_NOT_CONFIGURED'],
