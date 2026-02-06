@@ -191,6 +191,17 @@ export class RiskIntelligence {
         RiskMetrics.inc('risk_trend_reads_total');
         return this.snapshots.get(merchantId) || null;
     }
+
+    /**
+     * Export Helpers
+     */
+    static getAllReports(): StoredRiskReport[] {
+        return [...this.reports];
+    }
+
+    static getAllSnapshots(): MerchantSnapshot[] {
+        return [...this.snapshots.values()];
+    }
 }
 
 const store: RiskStore = new MemoryStore();

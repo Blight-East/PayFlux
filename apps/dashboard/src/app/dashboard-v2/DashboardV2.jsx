@@ -21,21 +21,46 @@ export default function DashboardPage() {
     const [exportError, setExportError] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
 
+    const [lastExport, setLastExport] = useState(null);
+    const [isUnavailable, setIsUnavailable] = useState(false);
+
     const handleExport = async () => {
+        if (isUnavailable) return;
+
         setIsExporting(true);
         setExportError(false);
         try {
             const res = await fetch('/api/v1/evidence/export');
 
+            // Hard 503 check (Key Missing)
+            if (res.status === 503) {
+                const data = await res.json().catch(() => ({}));
+                if (data.error === "EVIDENCE_EXPORT_SIGNING_KEY_MISSING") {
+                    setIsUnavailable(true);
+                    setExportError(true);
+                    setTimeout(() => setExportError(false), 2000);
+                    return;
+                }
+            }
+
             // Fail-soft for 501 Not Implemented (or other errors)
             if (res.status === 501 || !res.ok) {
                 setExportError(true);
+                setLastExport({ status: 'error', time: new Date() });
                 // Reset error state after 2 seconds
                 setTimeout(() => setExportError(false), 2000);
                 return;
             }
 
             const blob = await res.blob();
+            // Parse for signature status (we need to peek at the JSON)
+            const text = await blob.text();
+            let isSigned = true;
+            try {
+                const data = JSON.parse(text);
+                isSigned = data.payflux_export?.signature?.status !== 'DEGRADED';
+            } catch (e) { }
+
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -43,9 +68,12 @@ export default function DashboardPage() {
             document.body.appendChild(a);
             a.click();
             a.remove();
+
+            setLastExport({ status: 'success', time: new Date(), isSigned });
         } catch (e) {
-            console.error('Export failed:', e);
+            console.error('Export failed:', { type: 'UI_EXPORT_EXCEPTION' });
             setExportError(true);
+            setLastExport({ status: 'error', time: new Date() });
             setTimeout(() => setExportError(false), 2000);
         } finally {
             setIsExporting(false);
@@ -82,15 +110,24 @@ export default function DashboardPage() {
                 {/* Evidence Export Action */}
                 <div
                     className="flex items-center gap-3 cursor-help"
-                    title="Coming soon — signed canonical evidence bundle"
+                    title={
+                        isUnavailable ? "Unavailable — signing key not configured" :
+                            lastExport
+                                ? `Last export: ${lastExport.status === 'success' ? (lastExport.isSigned ? 'Success' : 'Unsigned (dev)') : 'Failed'} at ${lastExport.time.toLocaleTimeString()}`
+                                : "Signed canonical evidence bundle"
+                    }
                 >
                     <button
                         onClick={handleExport}
-                        disabled={true} // Hardcoded disabled state per requirements
-                        className="px-3 py-1.5 text-[10px] font-mono border rounded transition-all duration-200 flex items-center gap-2 border-white/10 text-zinc-600 bg-white/5 cursor-not-allowed opacity-50 pointer-events-none"
+                        disabled={isExporting || isUnavailable}
+                        className={`px-3 py-1.5 text-[10px] font-mono border rounded transition-all duration-200 flex items-center gap-2 border-white/10 ${isExporting || isUnavailable ? 'text-zinc-500 bg-zinc-900/50' : 'text-zinc-400 bg-white/5 hover:bg-white/10 hover:text-white'} ${isExporting ? 'cursor-wait' : isUnavailable ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                        <Download className="w-3 h-3" />
-                        <span>EVIDENCE EXPORT</span>
+                        {isExporting ? (
+                            <Download className="w-3 h-3 animate-pulse" />
+                        ) : (
+                            <Download className="w-3 h-3" />
+                        )}
+                        <span>{isExporting ? 'GENERATING...' : 'EVIDENCE EXPORT'}</span>
                     </button>
                 </div>
             </header>
