@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
     PAYFLUX_GIT_SHA: process.env.COMMIT_REF || process.env.VERCEL_GIT_COMMIT_SHA || 'dev-sha',
     PAYFLUX_BUILD_TIME: new Date().toISOString(),
   },
+  async redirects() {
+    return [
+      {
+        source: '/use-cases/:slug*',
+        destination: 'https://payflux.dev/docs/use-cases/:slug*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -7,3 +7,9 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/use-cases/*"
+  to = "https://payflux.dev/docs/use-cases/:splat"
+  status = 301
+  force = true
