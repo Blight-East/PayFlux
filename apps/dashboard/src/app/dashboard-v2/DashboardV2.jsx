@@ -11,13 +11,46 @@ import { EmptyState } from '../../components/risk-ledger/dashboard/EmptyState';
 import { EventContextPanel } from '../../components/risk-ledger/dashboard/EventContextPanel';
 import { useRiskFeed } from '../../hooks/useRiskFeed';
 import { useState, useEffect } from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Download } from 'lucide-react';
 
 export default function DashboardPage() {
     // Gating is handled by the Server Component wrapper (page.jsx)
 
     const { events, meta, isLoading } = useRiskFeed();
     const [selectedEventId, setSelectedEventId] = useState(null);
+    const [exportError, setExportError] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        setExportError(false);
+        try {
+            const res = await fetch('/api/v1/evidence/export');
+
+            // Fail-soft for 501 Not Implemented (or other errors)
+            if (res.status === 501 || !res.ok) {
+                setExportError(true);
+                // Reset error state after 2 seconds
+                setTimeout(() => setExportError(false), 2000);
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `payflux-evidence-export-${new Date().toISOString().replace(/:/g, '-')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } catch (e) {
+            console.error('Export failed:', e);
+            setExportError(true);
+            setTimeout(() => setExportError(false), 2000);
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     // Default selection to first event
     useEffect(() => {
@@ -45,6 +78,20 @@ export default function DashboardPage() {
                         <Zap className="w-3.5 h-3.5 text-gray-400" />
                         <span>PayFlux</span>
                     </div>
+                </div>
+                {/* Evidence Export Action */}
+                <div
+                    className="flex items-center gap-3 cursor-help"
+                    title="Coming soon — signed canonical evidence bundle"
+                >
+                    <button
+                        onClick={handleExport}
+                        disabled={true} // Hardcoded disabled state per requirements
+                        className="px-3 py-1.5 text-[10px] font-mono border rounded transition-all duration-200 flex items-center gap-2 border-white/10 text-zinc-600 bg-white/5 cursor-not-allowed opacity-50 pointer-events-none"
+                    >
+                        <Download className="w-3 h-3" />
+                        <span>EVIDENCE EXPORT</span>
+                    </button>
                 </div>
             </header>
 

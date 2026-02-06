@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import PayFluxLogo from './PayFluxLogo';
 
 const menuItems = [
     { name: 'Quick Setup', href: '/setup/connect' },
@@ -19,7 +20,9 @@ export default function Sidebar() {
     return (
         <div className="w-64 bg-black border-r border-zinc-800 h-screen flex flex-col">
             <div className="p-6 border-b border-zinc-800">
-                <h1 className="text-xl font-bold text-white tracking-tight">PayFlux <span className="text-zinc-500 text-sm font-normal">app</span></h1>
+                <div className="payflux-mark">
+                    <PayFluxLogo height={32} />
+                </div>
             </div>
             <nav className="flex-1 p-4 space-y-2">
                 {menuItems.map((item) => {

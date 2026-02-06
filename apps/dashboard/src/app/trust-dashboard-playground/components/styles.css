@@ -1,0 +1,55 @@
+/* DEMO ONLY — DELETE BEFORE PROD */
+
+/* Trust Dashboard Custom Styles */
+
+/* CSS Variables for TCS colors - fully self-contained */
+:root {
+    --tcs-high: #10B981;
+    --tcs-medium: #F59E0B;
+    --tcs-low: #EF4444;
+    --td-background: #0D0D0D;
+    --td-surface: #141414;
+    --td-border: #262626;
+}
+
+.mono {
+    font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+    letter-spacing: -0.025em;
+}
+
+.panel {
+    background-color: var(--td-surface);
+    border: 1px solid var(--td-border);
+}
+
+.severity-bullet {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+}
+
+/* Custom scrollbar for industrial feel */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--td-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #27272a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #3f3f46;
+}
