@@ -23,9 +23,54 @@ export default function DashboardPage() {
 
     const [lastExport, setLastExport] = useState(null);
     const [isUnavailable, setIsUnavailable] = useState(false);
+    const [exportCapability, setExportCapability] = useState('checking'); // 'checking' | 'ready' | 'auth_required' | 'key_missing' | 'empty_dataset' | 'unavailable'
+
+    // Capability probe on mount
+    useEffect(() => {
+        const probeExportCapability = async () => {
+            try {
+                const res = await fetch('/api/v1/evidence/export', {
+                    method: 'HEAD',
+                    cache: 'no-store'
+                });
+
+                if (res.status === 401) {
+                    setExportCapability('auth_required');
+                    return;
+                }
+
+                if (res.status === 503) {
+                    // Follow-up GET to check error type
+                    const getRes = await fetch('/api/v1/evidence/export', { cache: 'no-store' });
+                    const data = await getRes.json().catch(() => ({}));
+
+                    if (data.error === 'EVIDENCE_EXPORT_SIGNING_KEY_MISSING') {
+                        setExportCapability('key_missing');
+                        setIsUnavailable(true);
+                    } else if (data.error === 'EVIDENCE_SOURCE_UNAVAILABLE' || data.reason === 'EMPTY_DATASET') {
+                        setExportCapability('empty_dataset');
+                    } else {
+                        setExportCapability('unavailable');
+                    }
+                    return;
+                }
+
+                if (res.status === 200) {
+                    setExportCapability('ready');
+                    return;
+                }
+
+                setExportCapability('unavailable');
+            } catch (e) {
+                setExportCapability('unavailable');
+            }
+        };
+
+        probeExportCapability();
+    }, []);
 
     const handleExport = async () => {
-        if (isUnavailable) return;
+        if (exportCapability !== 'ready') return;
 
         setIsExporting(true);
         setExportError(false);
@@ -36,6 +81,7 @@ export default function DashboardPage() {
             if (res.status === 503) {
                 const data = await res.json().catch(() => ({}));
                 if (data.error === "EVIDENCE_EXPORT_SIGNING_KEY_MISSING") {
+                    setExportCapability('key_missing');
                     setIsUnavailable(true);
                     setExportError(true);
                     setTimeout(() => setExportError(false), 2000);
@@ -47,7 +93,6 @@ export default function DashboardPage() {
             if (res.status === 501 || !res.ok) {
                 setExportError(true);
                 setLastExport({ status: 'error', time: new Date() });
-                // Reset error state after 2 seconds
                 setTimeout(() => setExportError(false), 2000);
                 return;
             }
@@ -61,7 +106,7 @@ export default function DashboardPage() {
                 isSigned = data.payflux_export?.signature?.status !== 'DEGRADED';
             } catch (e) { }
 
-            const url = window.URL.createObjectURL(blob);
+            const url = window.URL.createObjectURL(new Blob([text], { type: 'application/json' }));
             const a = document.createElement('a');
             a.href = url;
             a.download = `payflux-evidence-export-${new Date().toISOString().replace(/:/g, '-')}.json`;
@@ -111,16 +156,20 @@ export default function DashboardPage() {
                 <div
                     className="flex items-center gap-3 cursor-help"
                     title={
-                        isUnavailable ? "Unavailable — signing key not configured" :
-                            lastExport
-                                ? `Last export: ${lastExport.status === 'success' ? (lastExport.isSigned ? 'Success' : 'Unsigned (dev)') : 'Failed'} at ${lastExport.time.toLocaleTimeString()}`
-                                : "Signed canonical evidence bundle"
+                        exportCapability === 'auth_required' ? "Sign in to export evidence" :
+                            exportCapability === 'key_missing' ? "Unavailable — signing key not configured" :
+                                exportCapability === 'empty_dataset' ? "No evidence yet — run first scan" :
+                                    exportCapability === 'checking' ? "Checking export availability..." :
+                                        exportCapability === 'unavailable' ? "Export temporarily unavailable" :
+                                            lastExport
+                                                ? `Last export: ${lastExport.status === 'success' ? (lastExport.isSigned ? 'Success' : 'Unsigned (dev)') : 'Failed'} at ${lastExport.time.toLocaleTimeString()}`
+                                                : "Signed canonical evidence bundle"
                     }
                 >
                     <button
                         onClick={handleExport}
-                        disabled={isExporting || isUnavailable}
-                        className={`px-3 py-1.5 text-[10px] font-mono border rounded transition-all duration-200 flex items-center gap-2 border-white/10 ${isExporting || isUnavailable ? 'text-zinc-500 bg-zinc-900/50' : 'text-zinc-400 bg-white/5 hover:bg-white/10 hover:text-white'} ${isExporting ? 'cursor-wait' : isUnavailable ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        disabled={isExporting || exportCapability !== 'ready'}
+                        className={`px-3 py-1.5 text-[10px] font-mono border rounded transition-all duration-200 flex items-center gap-2 border-white/10 ${isExporting || exportCapability !== 'ready' ? 'text-zinc-500 bg-zinc-900/50' : 'text-zinc-400 bg-white/5 hover:bg-white/10 hover:text-white'} ${isExporting ? 'cursor-wait' : exportCapability !== 'ready' ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                         {isExporting ? (
                             <Download className="w-3 h-3 animate-pulse" />
