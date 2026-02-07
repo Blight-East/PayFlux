@@ -184,7 +184,10 @@ export async function HEAD(request: NextRequest) {
     if (!(await isAuthorized(request))) {
         return new NextResponse(null, {
             status: 401,
-            headers: { 'Cache-Control': 'no-store' }
+            headers: {
+                'Cache-Control': 'no-store',
+                'Content-Length': '0'
+            }
         });
     }
 
@@ -194,7 +197,12 @@ export async function HEAD(request: NextRequest) {
     if (isProduction && !hasSecret) {
         return new NextResponse(null, {
             status: 503,
-            headers: { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' }
+            headers: {
+                'Cache-Control': 'no-store',
+                'Content-Type': 'application/json',
+                'Content-Length': '0',
+                'x-payflux-export-reason': 'key_missing'
+            }
         });
     }
 
@@ -204,7 +212,12 @@ export async function HEAD(request: NextRequest) {
     if (reports.length === 0 && snapshots.length === 0 && isProduction) {
         return new NextResponse(null, {
             status: 503,
-            headers: { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' }
+            headers: {
+                'Cache-Control': 'no-store',
+                'Content-Type': 'application/json',
+                'Content-Length': '0',
+                'x-payflux-export-reason': 'empty_dataset'
+            }
         });
     }
 
@@ -213,6 +226,7 @@ export async function HEAD(request: NextRequest) {
         headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'no-store',
+            'Content-Length': '0',
             'Content-Disposition': 'attachment; filename="payflux-evidence-HEAD.json"'
         }
     });

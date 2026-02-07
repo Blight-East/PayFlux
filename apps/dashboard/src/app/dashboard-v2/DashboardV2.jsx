@@ -40,14 +40,12 @@ export default function DashboardPage() {
                 }
 
                 if (res.status === 503) {
-                    // Follow-up GET to check error type
-                    const getRes = await fetch('/api/v1/evidence/export', { cache: 'no-store' });
-                    const data = await getRes.json().catch(() => ({}));
+                    const reason = res.headers.get('x-payflux-export-reason');
 
-                    if (data.error === 'EVIDENCE_EXPORT_SIGNING_KEY_MISSING') {
+                    if (reason === 'key_missing') {
                         setExportCapability('key_missing');
                         setIsUnavailable(true);
-                    } else if (data.error === 'EVIDENCE_SOURCE_UNAVAILABLE' || data.reason === 'EMPTY_DATASET') {
+                    } else if (reason === 'empty_dataset') {
                         setExportCapability('empty_dataset');
                     } else {
                         setExportCapability('unavailable');
