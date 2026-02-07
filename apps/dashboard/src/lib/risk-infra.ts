@@ -100,27 +100,39 @@ class RedisStore implements RiskStore {
             const res = await fetch(`${this.url}/get/${key}`, {
                 headers: { Authorization: `Bearer ${this.token}` }
             });
-            if (!res.ok) return null;
+            if (!res.ok) {
+                console.error('REDIS_GET_ERROR:', { status: res.status, key });
+                return null;
+            }
             const data = await res.json();
             return data.result;
-        } catch { return null; }
+        } catch (e) {
+            console.error('REDIS_GET_EXCEPTION:', { key, error: (e as Error).message });
+            return null;
+        }
     }
 
     async set(key: string, value: string, ttlSeconds: number): Promise<void> {
         try {
-            await fetch(`${this.url}/set/${key}/${encodeURIComponent(value)}/EX/${ttlSeconds}`, {
+            const res = await fetch(`${this.url}/set/${key}/${encodeURIComponent(value)}/EX/${ttlSeconds}`, {
                 headers: { Authorization: `Bearer ${this.token}` }
             });
-        } catch { }
+            if (!res.ok) console.error('REDIS_SET_ERROR:', { status: res.status, key });
+        } catch (e) {
+            console.error('REDIS_SET_EXCEPTION:', { key, error: (e as Error).message });
+        }
     }
 
     // Special helpers for Evidence Export (Lists and Hashes)
     async listPush(key: string, value: string): Promise<void> {
         try {
-            await fetch(`${this.url}/lpush/${key}/${encodeURIComponent(value)}`, {
+            const res = await fetch(`${this.url}/lpush/${key}/${encodeURIComponent(value)}`, {
                 headers: { Authorization: `Bearer ${this.token}` }
             });
-        } catch { }
+            if (!res.ok) console.error('REDIS_LPUSH_ERROR:', { status: res.status, key });
+        } catch (e) {
+            console.error('REDIS_LPUSH_EXCEPTION:', { key, error: (e as Error).message });
+        }
     }
 
     async listGetAll(key: string): Promise<string[]> {
@@ -128,18 +140,27 @@ class RedisStore implements RiskStore {
             const res = await fetch(`${this.url}/lrange/${key}/0/-1`, {
                 headers: { Authorization: `Bearer ${this.token}` }
             });
-            if (!res.ok) return [];
+            if (!res.ok) {
+                console.error('REDIS_LRANGE_ERROR:', { status: res.status, key });
+                return [];
+            }
             const data = await res.json();
             return data.result || [];
-        } catch { return []; }
+        } catch (e) {
+            console.error('REDIS_LRANGE_EXCEPTION:', { key, error: (e as Error).message });
+            return [];
+        }
     }
 
     async hashSet(key: string, field: string, value: string): Promise<void> {
         try {
-            await fetch(`${this.url}/hset/${key}/${field}/${encodeURIComponent(value)}`, {
+            const res = await fetch(`${this.url}/hset/${key}/${field}/${encodeURIComponent(value)}`, {
                 headers: { Authorization: `Bearer ${this.token}` }
             });
-        } catch { }
+            if (!res.ok) console.error('REDIS_HSET_ERROR:', { status: res.status, key, field });
+        } catch (e) {
+            console.error('REDIS_HSET_EXCEPTION:', { key, field, error: (e as Error).message });
+        }
     }
 
     async hashGetAll(key: string): Promise<Record<string, string>> {
@@ -147,7 +168,10 @@ class RedisStore implements RiskStore {
             const res = await fetch(`${this.url}/hgetall/${key}`, {
                 headers: { Authorization: `Bearer ${this.token}` }
             });
-            if (!res.ok) return {};
+            if (!res.ok) {
+                console.error('REDIS_HGETALL_ERROR:', { status: res.status, key });
+                return {};
+            }
             const data = await res.json();
             // Upstash hgetall returns [key1, val1, key2, val2, ...]
             const result: Record<string, string> = {};
@@ -156,7 +180,10 @@ class RedisStore implements RiskStore {
                 result[arr[i]] = arr[i + 1];
             }
             return result;
-        } catch { return {}; }
+        } catch (e) {
+            console.error('REDIS_HGETALL_EXCEPTION:', { key, error: (e as Error).message });
+            return {};
+        }
     }
 }
 
@@ -193,6 +220,7 @@ export class RiskIntelligence {
     private static snapshots = new Map<string, MerchantSnapshot>();
 
     static async record(traceId: string, payload: any, source: 'fresh' | 'cache' = 'fresh'): Promise<void> {
+        console.log('DEBUG_RECORD_ENTRY:', { traceId, source });
         const url = payload.url;
         let hostname = 'unknown';
         try { hostname = new URL(url).hostname.toLowerCase(); } catch { }
@@ -258,6 +286,7 @@ export class RiskIntelligence {
         } else {
             this.snapshots.set(merchantId, snapshot);
         }
+        console.log('DEBUG_RECORD_COMPLETE:', { merchantId });
     }
 
     static async getHistory(url: string): Promise<{ merchantId: string; normalizedHost: string; scans: StoredRiskReport[] }> {
@@ -285,11 +314,16 @@ export class RiskIntelligence {
         return this.snapshots.get(merchantId) || null;
     }
 
+    static getStoreType(): string {
+        return store instanceof RedisStore ? 'redis' : 'memory';
+    }
+
     static async getAllReports(): Promise<StoredRiskReport[]> {
         if (store instanceof RedisStore) {
             const items = await store.listGetAll('evidence:reports');
             return items.map(i => JSON.parse(i));
         }
+        console.log('DEBUG_GET_ALL_MEMORY:', { count: this.reports.length });
         return [...this.reports];
     }
 

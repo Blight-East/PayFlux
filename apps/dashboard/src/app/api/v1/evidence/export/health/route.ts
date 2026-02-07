@@ -12,9 +12,10 @@ async function isAuthorized(request: NextRequest): Promise<boolean> {
     // 2. Check Bearer Token (PAYFLUX_API_KEY or EVIDENCE_SECRET)
     const authHeader = request.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
-        const validKey = process.env.PAYFLUX_API_KEY || process.env.EVIDENCE_SECRET;
-        if (validKey && token === validKey) return true;
+        const token = authHeader.substring(7).trim();
+        const key1 = process.env.PAYFLUX_API_KEY?.trim();
+        const key2 = process.env.EVIDENCE_SECRET?.trim();
+        if ((key1 && token === key1) || (key2 && token === key2)) return true;
     }
 
     return false;
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
         snapshotsCount: snapshots.length,
         isProduction,
         hasRedis,
+        storeType: RiskIntelligence.getStoreType(),
         sourceMode: (reports.length === 0 && snapshots.length === 0 && !isProduction) ? 'development_mock' : 'persistent_store',
         timestamp: new Date().toISOString()
     });
