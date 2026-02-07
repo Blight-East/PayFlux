@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import crypto from 'node:crypto';
 import { RiskIntelligence } from '../../../../../lib/risk-infra';
+import { auth } from '@clerk/nextjs/server';
 // Dynamic import for dev-fixtures to avoid build issues in prod if we want strictness, 
 // but sticking to standard import with runtime check as per plan.
 // Note: dev-fixtures is valid JS, so import should work if path is correct.
@@ -10,6 +11,22 @@ import { EVIDENCE_HEALTH } from '../../../../../lib/dev-fixtures';
 export const dynamic = 'force-dynamic';
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+    // 1. Check Browser Session (Clerk)
+    const { userId } = await auth();
+    if (userId) return true;
+
+    // 2. Check Bearer Token (PAYFLUX_API_KEY or EVIDENCE_SECRET)
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        const validKey = process.env.PAYFLUX_API_KEY || process.env.EVIDENCE_SECRET;
+        if (validKey && token === validKey) return true;
+    }
+
+    return false;
+}
 
 function deterministicJSON(obj: any): any {
     if (obj === null || typeof obj !== 'object') {
@@ -46,7 +63,15 @@ function deterministicJSON(obj: any): any {
     return result;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // 0. Internal Authorization Gate
+    if (!(await isAuthorized(request))) {
+        return NextResponse.json(
+            { error: 'UNAUTHORIZED' },
+            { status: 401, headers: { 'Cache-Control': 'no-store' } }
+        );
+    }
+
     const isProduction = process.env.NODE_ENV === 'production';
     const secret = process.env.EVIDENCE_SECRET;
     const hasSecret = !!secret;
@@ -153,7 +178,15 @@ export async function GET() {
     }
 }
 
-export async function HEAD() {
+export async function HEAD(request: NextRequest) {
+    // 0. Internal Authorization Gate
+    if (!(await isAuthorized(request))) {
+        return new NextResponse(null, {
+            status: 401,
+            headers: { 'Cache-Control': 'no-store' }
+        });
+    }
+
     const isProduction = process.env.NODE_ENV === 'production';
     const hasSecret = !!process.env.EVIDENCE_SECRET;
 

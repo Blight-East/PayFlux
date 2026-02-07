@@ -15,7 +15,7 @@ const isPublicRoute = createRouteMatcher([
   '/dashboard-v2',
   '/use-cases',
   '/use-cases(.*)',
-  '/use-cases/(.*)',
+  '/api/v1/evidence/export(.*)',
   '/',
   '/googlec9febe29141cc19f.html',
 ]);
