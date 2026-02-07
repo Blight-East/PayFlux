@@ -16,6 +16,7 @@ interface RiskStore {
 }
 
 const REDIS_URL = process.env.RISK_REDIS_URL;
+const REDIS_TOKEN = process.env.RISK_REDIS_TOKEN;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Observability (Metrics & Logs)
@@ -84,6 +85,81 @@ class MemoryStore implements RiskStore {
     }
 }
 
+class RedisStore implements RiskStore {
+    private url: string;
+    private token: string;
+
+    constructor(url: string, token: string) {
+        // Ensure url doesn't have trailing slash for REST API
+        this.url = url.endsWith('/') ? url.slice(0, -1) : url;
+        this.token = token;
+    }
+
+    async get(key: string): Promise<string | null> {
+        try {
+            const res = await fetch(`${this.url}/get/${key}`, {
+                headers: { Authorization: `Bearer ${this.token}` }
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data.result;
+        } catch { return null; }
+    }
+
+    async set(key: string, value: string, ttlSeconds: number): Promise<void> {
+        try {
+            await fetch(`${this.url}/set/${key}/${encodeURIComponent(value)}/EX/${ttlSeconds}`, {
+                headers: { Authorization: `Bearer ${this.token}` }
+            });
+        } catch { }
+    }
+
+    // Special helpers for Evidence Export (Lists and Hashes)
+    async listPush(key: string, value: string): Promise<void> {
+        try {
+            await fetch(`${this.url}/lpush/${key}/${encodeURIComponent(value)}`, {
+                headers: { Authorization: `Bearer ${this.token}` }
+            });
+        } catch { }
+    }
+
+    async listGetAll(key: string): Promise<string[]> {
+        try {
+            const res = await fetch(`${this.url}/lrange/${key}/0/-1`, {
+                headers: { Authorization: `Bearer ${this.token}` }
+            });
+            if (!res.ok) return [];
+            const data = await res.json();
+            return data.result || [];
+        } catch { return []; }
+    }
+
+    async hashSet(key: string, field: string, value: string): Promise<void> {
+        try {
+            await fetch(`${this.url}/hset/${key}/${field}/${encodeURIComponent(value)}`, {
+                headers: { Authorization: `Bearer ${this.token}` }
+            });
+        } catch { }
+    }
+
+    async hashGetAll(key: string): Promise<Record<string, string>> {
+        try {
+            const res = await fetch(`${this.url}/hgetall/${key}`, {
+                headers: { Authorization: `Bearer ${this.token}` }
+            });
+            if (!res.ok) return {};
+            const data = await res.json();
+            // Upstash hgetall returns [key1, val1, key2, val2, ...]
+            const result: Record<string, string> = {};
+            const arr = data.result || [];
+            for (let i = 0; i < arr.length; i += 2) {
+                result[arr[i]] = arr[i + 1];
+            }
+            return result;
+        } catch { return {}; }
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Risk Intelligence (History & Trends) - PR #12
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,11 +208,19 @@ export class RiskIntelligence {
             source,
         };
 
-        this.reports.push(report);
+        if (store instanceof RedisStore) {
+            await store.listPush('evidence:reports', JSON.stringify(report));
+        } else {
+            this.reports.push(report);
+        }
+
         RiskMetrics.inc('risk_history_writes_total');
 
         // Update Snapshot
-        const existing = this.snapshots.get(merchantId);
+        const existing = store instanceof RedisStore
+            ? JSON.parse(await store.get(`snap:${merchantId}`) || 'null')
+            : this.snapshots.get(merchantId);
+
         const currentTier = payload.riskTier;
 
         let trend: MerchantSnapshot['trend'] = 'STABLE';
@@ -144,11 +228,6 @@ export class RiskIntelligence {
 
         if (existing) {
             tierDeltaLast = currentTier - existing.currentRiskTier;
-
-            // Trend Logic: 
-            // - DEGRADING if last 2 scans show strictly increasing riskTier (current > previous)
-            // - IMPROVING if last 2 scans show strictly decreasing riskTier (current < previous)
-            // Note: Simplification - we only check the shift from the immediate previous.
             if (tierDeltaLast > 0) trend = 'DEGRADING';
             else if (tierDeltaLast < 0) trend = 'IMPROVING';
             else trend = 'STABLE';
@@ -161,7 +240,7 @@ export class RiskIntelligence {
             else policySurface.missing++;
         });
 
-        this.snapshots.set(merchantId, {
+        const snapshot: MerchantSnapshot = {
             merchantId,
             normalizedHost,
             scanCount: (existing?.scanCount || 0) + 1,
@@ -170,7 +249,15 @@ export class RiskIntelligence {
             tierDeltaLast,
             trend,
             policySurface,
-        });
+        };
+
+        if (store instanceof RedisStore) {
+            await store.hashSet('evidence:snapshots', merchantId, JSON.stringify(snapshot));
+            // Also store individual snapshot for faster trend lookup
+            await store.set(`snap:${merchantId}`, JSON.stringify(snapshot), 86400 * 30);
+        } else {
+            this.snapshots.set(merchantId, snapshot);
+        }
     }
 
     static async getHistory(url: string): Promise<{ merchantId: string; normalizedHost: string; scans: StoredRiskReport[] }> {
@@ -178,7 +265,8 @@ export class RiskIntelligence {
         try { hostname = new URL(url).hostname.toLowerCase(); } catch { }
         const normalizedHost = hostname;
         const merchantId = Buffer.from(normalizedHost).toString('base64').replace(/=/g, '').slice(-12);
-        const scans = this.reports.filter(r => r.merchantId === merchantId);
+        const allReports = await this.getAllReports();
+        const scans = allReports.filter(r => r.merchantId === merchantId);
         RiskMetrics.inc('risk_history_reads_total');
         return { merchantId, normalizedHost, scans };
     }
@@ -189,22 +277,34 @@ export class RiskIntelligence {
         const normalizedHost = hostname;
         const merchantId = Buffer.from(normalizedHost).toString('base64').replace(/=/g, '').slice(-12);
         RiskMetrics.inc('risk_trend_reads_total');
+
+        if (store instanceof RedisStore) {
+            const snap = await store.get(`snap:${merchantId}`);
+            return snap ? JSON.parse(snap) : null;
+        }
         return this.snapshots.get(merchantId) || null;
     }
 
-    /**
-     * Export Helpers
-     */
-    static getAllReports(): StoredRiskReport[] {
+    static async getAllReports(): Promise<StoredRiskReport[]> {
+        if (store instanceof RedisStore) {
+            const items = await store.listGetAll('evidence:reports');
+            return items.map(i => JSON.parse(i));
+        }
         return [...this.reports];
     }
 
-    static getAllSnapshots(): MerchantSnapshot[] {
+    static async getAllSnapshots(): Promise<MerchantSnapshot[]> {
+        if (store instanceof RedisStore) {
+            const items = await store.hashGetAll('evidence:snapshots');
+            return Object.values(items).map(i => JSON.parse(i));
+        }
         return [...this.snapshots.values()];
     }
 }
 
-const store: RiskStore = new MemoryStore();
+const store: RiskStore = (REDIS_URL && REDIS_TOKEN)
+    ? new RedisStore(REDIS_URL, REDIS_TOKEN)
+    : new MemoryStore();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Logic Engines

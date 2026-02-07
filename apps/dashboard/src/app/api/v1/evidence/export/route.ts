@@ -86,8 +86,8 @@ export async function GET(request: NextRequest) {
 
     try {
         // 1. Source Data
-        let reports = RiskIntelligence.getAllReports();
-        let snapshots = RiskIntelligence.getAllSnapshots();
+        let reports = await RiskIntelligence.getAllReports();
+        let snapshots = await RiskIntelligence.getAllSnapshots();
         let sourceMode = 'production';
 
         // Fallback for Dev Verification (Strictly Dev Only)
@@ -197,8 +197,8 @@ export async function HEAD(request: NextRequest) {
         });
     }
 
-    const reports = RiskIntelligence.getAllReports();
-    const snapshots = RiskIntelligence.getAllSnapshots();
+    const reports = await RiskIntelligence.getAllReports();
+    const snapshots = await RiskIntelligence.getAllSnapshots();
 
     if (reports.length === 0 && snapshots.length === 0 && isProduction) {
         return new NextResponse(null, {
