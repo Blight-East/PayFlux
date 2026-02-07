@@ -23,14 +23,13 @@ export default function DashboardPage() {
 
     const [lastExport, setLastExport] = useState(null);
     const [isUnavailable, setIsUnavailable] = useState(false);
-    const [exportCapability, setExportCapability] = useState('checking'); // 'checking' | 'ready' | 'auth_required' | 'key_missing' | 'empty_dataset' | 'unavailable'
+    const [exportCapability, setExportCapability] = useState('checking'); // 'checking' | 'ready' | 'auth_required' | 'needs_redis' | 'empty_dataset' | 'unavailable'
 
-    // Capability probe on mount
+    // Capability probe on mount - use health endpoint
     useEffect(() => {
         const probeExportCapability = async () => {
             try {
-                const res = await fetch('/api/v1/evidence/export', {
-                    method: 'HEAD',
+                const res = await fetch('/api/v1/evidence/export/health', {
                     cache: 'no-store'
                 });
 
@@ -39,21 +38,22 @@ export default function DashboardPage() {
                     return;
                 }
 
-                if (res.status === 503) {
-                    const reason = res.headers.get('x-payflux-export-reason');
-
-                    if (reason === 'key_missing') {
-                        setExportCapability('key_missing');
-                        setIsUnavailable(true);
-                    } else if (reason === 'empty_dataset') {
-                        setExportCapability('empty_dataset');
-                    } else {
-                        setExportCapability('unavailable');
-                    }
-                    return;
-                }
-
                 if (res.status === 200) {
+                    const data = await res.json();
+
+                    // Check Redis configuration
+                    if (data.hasRedis === false) {
+                        setExportCapability('needs_redis');
+                        return;
+                    }
+
+                    // Check if dataset is empty
+                    if (data.reportsCount === 0 && data.snapshotsCount === 0) {
+                        setExportCapability('empty_dataset');
+                        return;
+                    }
+
+                    // Data available
                     setExportCapability('ready');
                     return;
                 }
@@ -155,7 +155,7 @@ export default function DashboardPage() {
                     className="flex items-center gap-3 cursor-help"
                     title={
                         exportCapability === 'auth_required' ? "Sign in to export evidence" :
-                            exportCapability === 'key_missing' ? "Unavailable — signing key not configured" :
+                            exportCapability === 'needs_redis' ? "Unavailable — persistence not configured" :
                                 exportCapability === 'empty_dataset' ? "No evidence yet — run first scan" :
                                     exportCapability === 'checking' ? "Checking export availability..." :
                                         exportCapability === 'unavailable' ? "Export temporarily unavailable" :

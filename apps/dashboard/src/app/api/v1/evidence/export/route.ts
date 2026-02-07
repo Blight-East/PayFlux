@@ -182,40 +182,34 @@ export async function GET(request: NextRequest) {
 export async function HEAD(request: NextRequest) {
     // 0. Internal Authorization Gate
     if (!(await isAuthorized(request))) {
-        const headers = new Headers();
-        headers.set('Cache-Control', 'no-store');
-        headers.set('Content-Length', '0');
-        return new NextResponse(null, { status: 401, headers });
+        return new NextResponse(null, {
+            status: 401,
+            headers: { 'Cache-Control': 'no-store' }
+        });
     }
 
     const isProduction = process.env.NODE_ENV === 'production';
     const hasSecret = !!process.env.EVIDENCE_SECRET;
 
     if (isProduction && !hasSecret) {
-        const headers = new Headers();
-        headers.set('Cache-Control', 'no-store');
-        headers.set('Content-Type', 'application/json');
-        headers.set('Content-Length', '0');
-        headers.set('x-payflux-export-reason', 'key_missing');
-        return new NextResponse(null, { status: 503, headers });
+        return new NextResponse(null, {
+            status: 503,
+            headers: { 'Cache-Control': 'no-store' }
+        });
     }
 
     const reports = await RiskIntelligence.getAllReports();
     const snapshots = await RiskIntelligence.getAllSnapshots();
 
     if (reports.length === 0 && snapshots.length === 0 && isProduction) {
-        const headers = new Headers();
-        headers.set('Cache-Control', 'no-store');
-        headers.set('Content-Type', 'application/json');
-        headers.set('Content-Length', '0');
-        headers.set('x-payflux-export-reason', 'empty_dataset');
-        return new NextResponse(null, { status: 503, headers });
+        return new NextResponse(null, {
+            status: 503,
+            headers: { 'Cache-Control': 'no-store' }
+        });
     }
 
-    const headers = new Headers();
-    headers.set('Content-Type', 'application/json');
-    headers.set('Cache-Control', 'no-store');
-    headers.set('Content-Length', '0');
-    headers.set('Content-Disposition', 'attachment; filename="payflux-evidence-HEAD.json"');
-    return new NextResponse(null, { status: 200, headers });
+    return new NextResponse(null, {
+        status: 200,
+        headers: { 'Cache-Control': 'no-store' }
+    });
 }
