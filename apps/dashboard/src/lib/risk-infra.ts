@@ -356,6 +356,12 @@ export const CACHE_TTL = {
     NEGATIVE: 120,
 };
 
+export interface QuotaConfig {
+    capacity: number;
+    refillRate: number;
+    window: number;
+}
+
 interface BucketState {
     tokens: number;
     lastRefill: number;

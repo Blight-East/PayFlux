@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 import net from 'node:net';
-import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics, QuotaManager, RiskIntelligence } from '../../../../lib/risk-infra';
+import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics, RiskIntelligence } from '../../../../lib/risk-infra';
+import { resolveAccountFromAPIKey } from '../../../../lib/account-resolver';
+import { resolveAccountTierConfig } from '../../../../lib/tier-enforcement';
 
 export const runtime = "nodejs";
 
@@ -294,9 +296,11 @@ export async function POST(request: Request) {
     const ip = (request.headers.get('x-forwarded-for') || '127.0.0.1').split(',')[0].trim();
     const apiKey = request.headers.get('x-payflux-key');
 
-    // 1. Resolve Quota
-    const { tier, keyId } = await QuotaManager.resolve(apiKey);
-    const identifier = tier === 'ANONYMOUS' ? ip : keyId;
+    // 1. Resolve Account and Tier
+    const account = apiKey ? await resolveAccountFromAPIKey(apiKey) : null;
+    const tier = account?.billingTier || 'PILOT';
+    const keyId = account?.id || 'anon';
+    const identifier = account ? keyId : ip;
 
     RiskMetrics.inc('risk_requests_total', { tier });
     RiskLogger.log('risk_request_start', { traceId, ip, keyId, tier });
@@ -327,7 +331,19 @@ export async function POST(request: Request) {
     }
 
     // 4. Rate Limit
-    const { allowed, headers: rlHeaders } = await RateLimiter.check(identifier, tier);
+    const tierConfig = await resolveAccountTierConfig(account || {
+        id: 'anon',
+        billingTier: 'PILOT',
+        tierHistory: [],
+    });
+
+    const quotaConfig = {
+        capacity: tierConfig.rateLimits.ingestRPS * 2,
+        refillRate: tierConfig.rateLimits.ingestRPS,
+        window: 3600,
+    };
+
+    const { allowed, headers: rlHeaders } = await RateLimiter.check(identifier, quotaConfig);
     if (!allowed) {
         RiskLogger.log('risk_rate_limit_deny', {
             traceId, ip, keyId, url: normalizedUrl, host: hostname,
