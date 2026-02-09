@@ -344,54 +344,6 @@ const store: RiskStore = (REDIS_URL && REDIS_TOKEN)
 // Logic Engines
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Tier = 'FREE' | 'PRO' | 'ENTERPRISE' | 'ANONYMOUS';
-
-export interface QuotaConfig {
-    capacity: number;
-    refillRate: number; // tokens per second
-    window: number; // TTL in storage
-}
-
-export const TIER_CONFIG: Record<Tier, QuotaConfig> = {
-    ANONYMOUS: {
-        capacity: 3,
-        refillRate: 1 / 60, // 1 req / min
-        window: 600,
-    },
-    FREE: {
-        capacity: 10,
-        refillRate: 5 / 60, // 5 req / min
-        window: 600,
-    },
-    PRO: {
-        capacity: 100,
-        refillRate: 1, // 1 req / sec
-        window: 3600,
-    },
-    ENTERPRISE: {
-        capacity: 1000,
-        refillRate: 10, // 10 req / sec
-        window: 3600,
-    }
-};
-
-export class QuotaManager {
-    /**
-     * Resolves an API key to a Tier.
-     * In prod, this should use a fast cache (Redis) or local bloom filter.
-     */
-    static async resolve(key?: string | null): Promise<{ tier: Tier; keyId: string }> {
-        if (!key) return { tier: 'ANONYMOUS', keyId: 'anon' };
-
-        // Mocking resolution logic:
-        // pf_live_... -> PRO
-        // pf_test_... -> FREE
-        if (key.startsWith('pf_live_')) return { tier: 'PRO', keyId: key.slice(0, 12) };
-        if (key.startsWith('pf_test_')) return { tier: 'FREE', keyId: key.slice(0, 12) };
-
-        return { tier: 'FREE', keyId: key.slice(0, 12) };
-    }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Logic Engines
@@ -447,19 +399,26 @@ export class RateLimiter {
     }
 
     /**
-     * Checks rate limit for a given identifier (IP or KeyId) and tier.
+     * Checks rate limit for a given account with numeric config.
+     * 
+     * BOUNDARY CONTRACT:
+     * - accountId: string (identity, NOT tier-dependent)
+     * - config: numeric config (capacity, refillRate, window)
+     * 
+     * NO TIER LOGIC. Tier resolution happens upstream.
+     * 
+     * @param accountId - Account identifier (stable, not tier-dependent)
+     * @param config - Numeric rate limit configuration
+     * @returns allowed status and rate limit headers
      */
-    static async check(identifier: string, tier: Tier = 'ANONYMOUS') {
-        const config = TIER_CONFIG[tier];
-        const key = `rl:${tier.toLowerCase()}:${identifier}`;
+    static async check(
+        accountId: string,
+        config: QuotaConfig
+    ): Promise<{ allowed: boolean; headers: Record<string, string> }> {
+        // Key by accountId ONLY (not tier, not API key)
+        const key = `rl:account:${accountId}`;
 
-        const { allowed, headers } = await this.consume(key, config);
-
-        if (!allowed) {
-            return { allowed: false, headers, context: { limitType: 'TIER', identifier, tier } };
-        }
-
-        return { allowed: true, headers };
+        return await this.consume(key, config);
     }
 }
 
