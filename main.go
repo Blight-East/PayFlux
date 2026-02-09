@@ -22,6 +22,8 @@ import (
 	"syscall"
 	"time"
 
+	"payment-node/internal/ratelimit"
+
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus"
@@ -94,11 +96,14 @@ var (
 	consumerNameGlobal string // for export metadata
 
 	// Export health tracking (atomic int64 Unix timestamps)
-	exportLastSuccessStdout int64    // atomic
-	exportLastSuccessFile   int64    // atomic
-	exportLastErrorStdout   int64    // atomic
-	exportLastErrorFile     int64    // atomic
-	exportLastErrorReason   sync.Map // destination -> reason string
+	exportLastSuccessStdout int64 // atomic
+	exportLastSuccessFile   int64 // atomic
+	exportLastErrorStdout   int64 // atomic
+	exportLastErrorFile     int64 // atomic
+
+	// Global rate limiter (Phase 3B)
+	globalRateLimiter     *ratelimit.Limiter
+	exportLastErrorReason sync.Map // destination -> reason string
 
 	// Risk Scorer (v0.2.1+)
 	riskScorer       *RiskScorer
@@ -238,6 +243,20 @@ var (
 		Help:    "Time from upstream event to warning creation",
 		Buckets: []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60, 120, 300},
 	})
+
+	// Phase 3B: Per-account rate limiting metrics
+	rateLimitAllowed = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_rate_limit_allowed_total",
+		Help: "Total number of allowed requests (per-account rate limiting)",
+	})
+	rateLimitExceeded = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "payflux_rate_limit_exceeded_total",
+		Help: "Total number of rate limited requests (per-account)",
+	})
+	rateLimitError = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_rate_limit_error_total",
+		Help: "Total number of rate limit errors",
+	}, []string{"reason"})
 )
 
 // Helper: Setup logging
@@ -410,28 +429,35 @@ func initializePrometheus() {
 		streamLength, pendingCount, ingestLatency, eventsByProcessor, eventsExported,
 		exportErrors, exportLastSuccess, riskEventsTotal, riskScoreLast,
 		tier2ContextEmitted, tier2TrajectoryEmitted,
-		warningOutcomeSetTotal, warningOutcomeLeadTime,
-		ingestRateLimited, warningsSuppressed, consumerLagMessages,
-		authDenied, warningLatency,
+		warningOutcomeSetTotal,
+		warningOutcomeLeadTime,
+		ingestRateLimited,
+		warningsSuppressed,
+		consumerLagMessages,
+		authDenied,
+		warningLatency,
+		rateLimitAllowed,
+		rateLimitExceeded,
+		rateLimitError,
 	)
 }
 
-// Helper: Setup Redis connection and consumer group
+// setupRedis initializes Redis client and global rate limiter
 func setupRedis(redisAddr string) {
 	rdb = redis.NewClient(&redis.Options{
-		Addr:         redisAddr,
-		PoolSize:     100,
-		MinIdleConns: 10,
-		MaxRetries:   3,
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
-		PoolTimeout:  4 * time.Second,
+		Addr: redisAddr,
+		DB:   0,
 	})
+
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Fatalf("redis_connect_failed addr=%s err=%v", redisAddr, err)
+		log.Fatalf("Redis connection failed: %v", err)
 	}
+
 	slog.Info("redis_connected", "addr", redisAddr)
+
+	// Initialize global rate limiter (Phase 3B)
+	globalRateLimiter = ratelimit.NewLimiter(rdb)
+	slog.Info("rate_limiter_initialized", "type", "per-account-atomic")
 
 	if err := ensureConsumerGroup(streamKey, groupName); err != nil {
 		log.Fatalf("consumer_group_failed stream=%s group=%s err=%v", streamKey, groupName, err)
@@ -891,25 +917,98 @@ func getOutcomeLimiter(key string) *rate.Limiter {
 	return limiter
 }
 
+// rateLimitMiddleware enforces per-account rate limiting using numeric config from headers
+// Headers are set by Dashboard boundary layer after tier resolution
 func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		auth := r.Header.Get("Authorization")
-		apiKey := strings.TrimPrefix(auth, "Bearer ")
+		// 1. Parse numeric config from headers (set by Dashboard)
+		accountID := r.Header.Get("X-Payflux-Account-Id")
+		capacityStr := r.Header.Get("X-Payflux-Ingest-Capacity")
+		refillStr := r.Header.Get("X-Payflux-Ingest-Refill")
+		windowStr := r.Header.Get("X-Payflux-Ingest-Window")
 
-		limiter := getRateLimiter(apiKey)
-		if !limiter.Allow() {
-			ingestRateLimited.WithLabelValues(r.URL.Path).Inc()
-			slog.Warn("rate_limit_exceeded",
-				"endpoint", r.URL.Path,
-				"api_key_id", safeAPIKeyID(apiKey),
-				"limit_rps", ingestRPS,
-				"burst", ingestBurst,
-			)
-			w.Header().Set("Retry-After", "1")
-			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+		// If headers are missing, fall back to global env-based rate limiting
+		if accountID == "" || capacityStr == "" || refillStr == "" || windowStr == "" {
+			// Legacy path: use global rate limiter (for backward compatibility)
+			auth := r.Header.Get("Authorization")
+			apiKey := strings.TrimPrefix(auth, "Bearer ")
+
+			limiter := getRateLimiter(apiKey)
+			if !limiter.Allow() {
+				ingestRateLimited.WithLabelValues(r.URL.Path).Inc()
+				slog.Warn("rate_limit_exceeded",
+					"endpoint", r.URL.Path,
+					"api_key_id", safeAPIKeyID(apiKey),
+					"limit_rps", rateLimitRPS,
+					"burst", rateLimitBurst,
+				)
+				w.Header().Set("Retry-After", "1")
+				http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+				return
+			}
+
+			next(w, r)
 			return
 		}
 
+		// 2. Parse and validate numeric config
+		capacity, err := strconv.Atoi(capacityStr)
+		if err != nil || capacity <= 0 {
+			slog.Error("invalid_capacity_header", "value", capacityStr, "error", err)
+			http.Error(w, "Invalid capacity header", http.StatusBadRequest)
+			return
+		}
+
+		refillRate, err := strconv.Atoi(refillStr)
+		if err != nil || refillRate <= 0 {
+			slog.Error("invalid_refill_header", "value", refillStr, "error", err)
+			http.Error(w, "Invalid refill header", http.StatusBadRequest)
+			return
+		}
+
+		window, err := strconv.Atoi(windowStr)
+		if err != nil || window <= 0 {
+			slog.Error("invalid_window_header", "value", windowStr, "error", err)
+			http.Error(w, "Invalid window header", http.StatusBadRequest)
+			return
+		}
+
+		// 3. Check rate limit using Redis Lua (atomic, per-account)
+		cfg := ratelimit.Config{
+			Capacity:   capacity,
+			RefillRate: refillRate,
+			Window:     window,
+		}
+
+		result, err := globalRateLimiter.Check(r.Context(), accountID, cfg)
+		if err != nil {
+			// Fail closed on error
+			slog.Error("rate_limit_check_failed",
+				"account_id", accountID,
+				"error", err,
+			)
+			rateLimitError.WithLabelValues("redis_error").Inc()
+			w.Header().Set("Retry-After", "60")
+			http.Error(w, "Rate limit unavailable", http.StatusServiceUnavailable)
+			return
+		}
+
+		// 4. Set rate limit headers
+		w.Header().Set("X-Rate-Limit-Limit", strconv.Itoa(capacity))
+		w.Header().Set("X-Rate-Limit-Remaining", strconv.Itoa(result.Remaining))
+		w.Header().Set("X-Rate-Limit-Reset", strconv.FormatInt(result.Reset, 10))
+
+		if !result.Allowed {
+			slog.Warn("rate_limit_exceeded",
+				"account_id", accountID,
+				"limit", refillRate,
+			)
+			rateLimitExceeded.Inc()
+			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+			return
+		}
+
+		rateLimitAllowed.Inc()
 		next(w, r)
 	}
 }
