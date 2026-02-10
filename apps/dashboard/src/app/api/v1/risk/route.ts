@@ -3,8 +3,8 @@ import { z } from 'zod';
 import dns from 'node:dns/promises';
 import net from 'node:net';
 import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics, RiskIntelligence } from '../../../../lib/risk-infra';
-import { resolveAccountFromAPIKey } from '../../../../lib/account-resolver';
-import { resolveAccountTierConfig } from '../../../../lib/tier-enforcement';
+import { resolveAccountFromAPIKey } from '@/lib/account-resolver';
+import { resolveAccountTierConfig } from '@/lib/tier-enforcement';
 
 export const runtime = "nodejs";
 
