@@ -1,7 +1,7 @@
 [build]
-  base = "payflux-site"
+  base    = "payflux-site"
   command = "npm run build"
-  publish = "payflux-site/dist"
+  publish = "dist"
 
 [[redirects]]
   from = "/docs/*"
