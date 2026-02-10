@@ -9,7 +9,9 @@ import { requireAuth } from '@/lib/require-auth';
 export async function POST(request: NextRequest) {
     // 0. Security Gates
     const authResult = await requireAuth();
-    if (authResult instanceof Response) return authResult;
+    if (!authResult.ok) return authResult.response;
+
+    const { userId, workspace } = authResult;
 
     if (process.env.EVIDENCE_SEED_ENABLED !== 'true') {
         return NextResponse.json({ error: 'SEEDING_DISABLED' }, { status: 403 });

@@ -98,7 +98,9 @@ import { requireAuth } from '@/lib/require-auth';
 
 export async function GET(request: Request) {
     const authResult = await requireAuth();
-    if (authResult instanceof Response) return authResult;
+    if (!authResult.ok) return authResult.response;
+
+    const { userId, workspace } = authResult;
 
     const baseUrl = process.env.CORE_BASE_URL || process.env.PAYFLUX_API_URL;
     const apiKey = process.env.CORE_AUTH_TOKEN || process.env.PAYFLUX_API_KEY;

@@ -10,7 +10,9 @@ export const runtime = "nodejs";
  */
 export async function GET() {
     const authResult = await requireAuth();
-    if (authResult instanceof Response) return authResult;
+    if (!authResult.ok) return authResult.response;
+
+    const { userId, workspace } = authResult;
 
     return NextResponse.json({
         status: 'healthy',

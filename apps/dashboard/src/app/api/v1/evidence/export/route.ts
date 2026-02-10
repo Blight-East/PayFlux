@@ -52,7 +52,9 @@ function deterministicJSON(obj: any): any {
 export async function GET(request: NextRequest) {
     // 0. Internal Authorization Gate
     const authResult = await requireAuth();
-    if (authResult instanceof Response) return authResult;
+    if (!authResult.ok) return authResult.response;
+
+    const { userId, workspace } = authResult;
 
     const isProduction = process.env.NODE_ENV === 'production';
     const secret = process.env.EVIDENCE_SECRET;
@@ -163,7 +165,9 @@ export async function GET(request: NextRequest) {
 export async function HEAD(request: NextRequest) {
     // 0. Internal Authorization Gate
     const authResult = await requireAuth();
-    if (authResult instanceof Response) return authResult;
+    if (!authResult.ok) return authResult.response;
+
+    const { userId, workspace } = authResult;
 
     const isProduction = process.env.NODE_ENV === 'production';
     const hasSecret = !!process.env.EVIDENCE_SECRET;

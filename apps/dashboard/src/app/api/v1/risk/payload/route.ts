@@ -21,9 +21,9 @@ interface PayloadRequest {
 
 export async function POST(request: Request) {
     const authResult = await requireAuth();
-    if (authResult instanceof Response) return authResult;
+    if (!authResult.ok) return authResult.response;
 
-    const userId = authResult;
+    const { userId, workspace } = authResult;
 
     try {
         const payload: PayloadRequest = await request.json();
