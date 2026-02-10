@@ -1,16 +1,15 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
-// import your UI chrome
 import Sidebar from '@/components/Sidebar';
 import WorkspaceHeader from '@/components/WorkspaceHeader';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
         redirect('/sign-in');
