@@ -287,11 +287,16 @@ const RequestSchema = z.object({
     processor: z.string().default('Unknown'),
 });
 
+import { requireAuth } from '@/lib/require-auth';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Route Handler
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+
     const traceId = crypto.randomUUID();
     const startTime = performance.now();
     const ip = (request.headers.get('x-forwarded-for') || '127.0.0.1').split(',')[0].trim();

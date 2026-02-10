@@ -4,23 +4,12 @@ import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
-async function isAuthorized(request: NextRequest): Promise<boolean> {
-    // 2. Check Bearer Token (PAYFLUX_API_KEY or EVIDENCE_SECRET)
-    const authHeader = request.headers.get('Authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.substring(7).trim();
-        const key1 = process.env.PAYFLUX_API_KEY?.trim();
-        const key2 = process.env.EVIDENCE_SECRET?.trim();
-        if ((key1 && token === key1) || (key2 && token === key2)) return true;
-    }
-    return false;
-}
+import { requireAuth } from '@/lib/require-auth';
 
 export async function POST(request: NextRequest) {
     // 0. Security Gates
-    if (!(await isAuthorized(request))) {
-        return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
-    }
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
 
     if (process.env.EVIDENCE_SEED_ENABLED !== 'true') {
         return NextResponse.json({ error: 'SEEDING_DISABLED' }, { status: 403 });

@@ -12,22 +12,7 @@ export const dynamic = 'force-dynamic';
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-async function isAuthorized(request: NextRequest): Promise<boolean> {
-    // 1. Check Browser Session (Clerk)
-    const { userId } = await auth();
-    if (userId) return true;
-
-    // 2. Check Bearer Token (PAYFLUX_API_KEY or EVIDENCE_SECRET)
-    const authHeader = request.headers.get('Authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.substring(7).trim();
-        const key1 = process.env.PAYFLUX_API_KEY?.trim();
-        const key2 = process.env.EVIDENCE_SECRET?.trim();
-        if ((key1 && token === key1) || (key2 && token === key2)) return true;
-    }
-
-    return false;
-}
+import { requireAuth } from '@/lib/require-auth';
 
 function deterministicJSON(obj: any): any {
     if (obj === null || typeof obj !== 'object') {
@@ -66,12 +51,8 @@ function deterministicJSON(obj: any): any {
 
 export async function GET(request: NextRequest) {
     // 0. Internal Authorization Gate
-    if (!(await isAuthorized(request))) {
-        return NextResponse.json(
-            { error: 'UNAUTHORIZED' },
-            { status: 401, headers: { 'Cache-Control': 'no-store' } }
-        );
-    }
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
 
     const isProduction = process.env.NODE_ENV === 'production';
     const secret = process.env.EVIDENCE_SECRET;
@@ -181,12 +162,8 @@ export async function GET(request: NextRequest) {
 
 export async function HEAD(request: NextRequest) {
     // 0. Internal Authorization Gate
-    if (!(await isAuthorized(request))) {
-        return new NextResponse(null, {
-            status: 401,
-            headers: { 'Cache-Control': 'no-store' }
-        });
-    }
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
 
     const isProduction = process.env.NODE_ENV === 'production';
     const hasSecret = !!process.env.EVIDENCE_SECRET;

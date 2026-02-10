@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveAccountTierConfig, type Account } from '@/lib/tier-enforcement';
 import { RateLimiter } from '@/lib/risk-infra';
+import { requireAuth } from '@/lib/require-auth';
 
 /**
  * POST /api/v1/ingest
@@ -14,6 +15,9 @@ import { RateLimiter } from '@/lib/risk-infra';
  * 4. Forward to Go backend with numeric headers
  */
 export async function POST(request: NextRequest) {
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+
     const GO_BACKEND_URL = process.env.PAYFLUX_API_URL;
 
     if (!GO_BACKEND_URL) {
@@ -23,16 +27,9 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // 1. Extract API key from Authorization header
+    // 1. Extract API key from Authorization header for Go backend context only
     const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return NextResponse.json(
-            { error: 'Missing or invalid Authorization header' },
-            { status: 401 }
-        );
-    }
-
-    const apiKey = authHeader.substring(7); // Remove 'Bearer '
+    const apiKey = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : 'anon';
 
     // 2. Resolve account from API key (mock for now - should query DB)
     // TODO: Replace with actual account resolution from database
@@ -129,7 +126,7 @@ export async function POST(request: NextRequest) {
                 'X-Payflux-Ingest-Window': String(quotaConfig.window),
 
                 // Forward original auth for Go's validation
-                'Authorization': authHeader,
+                'Authorization': authHeader || '',
                 'Content-Type': 'application/json',
             },
             body,

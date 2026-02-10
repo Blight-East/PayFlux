@@ -1,22 +1,11 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { requireAuth } from '@/lib/require-auth';
 
 /**
  * POST /api/v1/risk/payload
  * 
  * Analyzes transaction payload for risk signals.
  * Used for "No Site" onboarding path.
- * 
- * Body: {
- *   amount: number,
- *   currency: string,
- *   payment_method: string,
- *   processor: string,
- *   merchant_country: string,
- *   customer_country: string,
- *   descriptor: string,
- *   category: string
- * }
  */
 
 interface PayloadRequest {
@@ -31,14 +20,10 @@ interface PayloadRequest {
 }
 
 export async function POST(request: Request) {
-    const { userId } = await auth();
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
 
-    if (!userId) {
-        return NextResponse.json(
-            { error: 'Unauthorized' },
-            { status: 401 }
-        );
-    }
+    const userId = authResult;
 
     try {
         const payload: PayloadRequest = await request.json();
@@ -67,10 +52,6 @@ export async function POST(request: Request) {
     }
 }
 
-/**
- * Deterministic risk scoring for transaction payloads.
- * This is real PayFlux logic, not a demo.
- */
 function analyzePayloadRisk(payload: PayloadRequest) {
     let riskScore = 0;
     const findings: Array<{ title: string; description: string; severity: string; impact: number }> = [];

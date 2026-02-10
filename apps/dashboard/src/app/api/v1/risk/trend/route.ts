@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { RiskIntelligence, RiskLogger } from '../../../../../lib/risk-infra';
+import { requireAuth } from '@/lib/require-auth';
 
 export const runtime = "nodejs";
 
@@ -7,6 +8,9 @@ export const runtime = "nodejs";
  * GET /api/v1/risk/trend?url=...
  */
 export async function GET(request: Request) {
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+
     const traceId = crypto.randomUUID();
     const { searchParams } = new URL(request.url);
     const url = searchParams.get('url');
