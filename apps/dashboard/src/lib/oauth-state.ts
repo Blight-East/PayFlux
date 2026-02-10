@@ -30,7 +30,8 @@ export function generateStateToken(orgId: string, userId: string): string {
     const expiresAt = ts + 10 * 60 * 1000; // 10 minutes expiry
 
     const payload = `${orgId}:${userId}:${nonce}:${ts}`;
-    const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    const secretBuffer = Buffer.from(secret, 'utf8');
+    const signature = crypto.createHmac('sha256', secretBuffer).update(payload).digest('hex');
 
     // The token includes the payload and signature so we can verify the signature first
     const token = Buffer.from(`${payload}.${signature}`).toString('base64url');
@@ -55,7 +56,8 @@ export function validateAndConsumeState(token: string, userId: string): OAuthSta
     if (!payload || !signature) return null;
 
     // 1. Verify Signature
-    const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    const secretBuffer = Buffer.from(secret, 'utf8');
+    const expectedSignature = crypto.createHmac('sha256', secretBuffer).update(payload).digest('hex');
     if (signature !== expectedSignature) {
         console.error('OAuth state signature mismatch');
         return null;

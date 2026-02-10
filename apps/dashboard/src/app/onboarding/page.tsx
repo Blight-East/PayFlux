@@ -85,7 +85,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
 
                     <div className="space-y-4">
                         <a
-                            href="/api/stripe/connect"
+                            href="/api/stripe/authorize"
                             className="flex items-center justify-center w-full px-4 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98] no-underline"
                         >
                             Connect Stripe

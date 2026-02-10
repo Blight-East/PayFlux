@@ -99,7 +99,7 @@ export default function ConnectProcessorPage() {
 
                         <div className="py-4">
                             <button
-                                onClick={() => window.location.href = '/api/stripe/connect'}
+                                onClick={() => window.location.href = '/api/stripe/authorize'}
                                 className="w-full bg-[#635BFF] hover:bg-[#5851E5] text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors shadow-lg"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
