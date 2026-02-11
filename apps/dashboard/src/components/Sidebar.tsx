@@ -14,7 +14,9 @@ const menuItems = [
     { name: 'Settings', href: '/settings' },
 ];
 
-export default function Sidebar() {
+import type { WorkspaceContext } from '@/lib/resolve-workspace';
+
+export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) {
     const pathname = usePathname();
 
     return (

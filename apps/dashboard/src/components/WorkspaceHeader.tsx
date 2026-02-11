@@ -1,28 +1,38 @@
-import { type WorkspaceContext } from '@/lib/resolve-workspace';
+import type { WorkspaceContext } from '@/lib/resolve-workspace';
 
-interface WorkspaceHeaderProps {
+export default function WorkspaceHeader({
+    workspace,
+}: {
     workspace: WorkspaceContext;
-}
+}) {
+    const { workspaceName, role, tier } = workspace;
 
-export default function WorkspaceHeader({ workspace }: WorkspaceHeaderProps) {
     return (
         <header className="h-16 border-b border-zinc-800 flex items-center justify-between px-8 bg-black">
             <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-zinc-400">Workspace:</span>
-                <span className="text-sm font-bold text-white px-2 py-1 bg-zinc-900 rounded border border-zinc-800">
-                    {workspace.workspaceName}
+                <span className="text-sm text-zinc-500">Workspace</span>
+                <span className="text-sm font-semibold text-white">
+                    {workspaceName}
                 </span>
-                <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest bg-zinc-900/50 px-1.5 py-0.5 rounded border border-zinc-800/50">
-                    {workspace.role}
+                <span className="text-[10px] uppercase px-2 py-0.5 rounded border border-zinc-700 text-zinc-400">
+                    {role}
                 </span>
             </div>
-            <div className="flex items-center space-x-4">
-                <div className={`px-3 py-1 border rounded-full text-[10px] font-bold uppercase tracking-wider ${workspace.tier === 'enterprise' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' :
-                        workspace.tier === 'pro' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                            'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                    }`}>
-                    {workspace.tier}
-                </div>
+
+            <div className="flex items-center space-x-3">
+                <span
+                    className={`
+            text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded
+            ${tier === 'enterprise'
+                            ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                            : tier === 'pro'
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                        }
+          `}
+                >
+                    {tier}
+                </span>
             </div>
         </header>
     );
