@@ -3,21 +3,78 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import PayFluxLogo from './PayFluxLogo';
+import type { WorkspaceContext, WorkspaceRole, WorkspaceTier } from '@/lib/resolve-workspace';
 
-const menuItems = [
-    { name: 'Quick Setup', href: '/setup/connect' },
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Evidence', href: '/evidence' },
-    { name: 'Risk', href: '/risk' },
-    { name: 'API Keys', href: '/api-keys' },
-    { name: 'Connectors', href: '/connectors' },
-    { name: 'Settings', href: '/settings' },
+/**
+ * Sidebar Config Model
+ */
+type SidebarItem = {
+    label: string;
+    href: string;
+    minRole?: WorkspaceRole;
+    minTier?: WorkspaceTier;
+};
+
+const SIDEBAR_ITEMS: SidebarItem[] = [
+    {
+        label: 'Dashboard',
+        href: '/dashboard',
+    },
+    {
+        label: 'Risk',
+        href: '/risk',
+    },
+    {
+        label: 'Evidence',
+        href: '/evidence',
+        minTier: 'pro',
+    },
+    {
+        label: 'Export',
+        href: '/evidence/export',
+        minRole: 'admin',
+        minTier: 'pro',
+    },
+    {
+        label: 'Connectors',
+        href: '/connectors',
+        minRole: 'admin',
+    },
+    {
+        label: 'Settings',
+        href: '/settings',
+        minRole: 'admin',
+    },
 ];
 
-import type { WorkspaceContext } from '@/lib/resolve-workspace';
+/**
+ * Gating Logic
+ */
+function roleAllowed(
+    userRole: WorkspaceRole,
+    minRole?: WorkspaceRole
+) {
+    if (!minRole) return true;
+    if (minRole === 'viewer') return true;
+    return userRole === 'admin';
+}
+
+function tierAllowed(
+    userTier: WorkspaceTier,
+    minTier?: WorkspaceTier
+) {
+    if (!minTier) return true;
+    const order: WorkspaceTier[] = ['free', 'pro', 'enterprise'];
+    return order.indexOf(userTier) >= order.indexOf(minTier);
+}
 
 export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) {
     const pathname = usePathname();
+
+    const visibleItems = SIDEBAR_ITEMS.filter(item =>
+        roleAllowed(workspace.role, item.minRole) &&
+        tierAllowed(workspace.tier, item.minTier)
+    );
 
     return (
         <div className="w-64 bg-black border-r border-zinc-800 h-screen flex flex-col">
@@ -27,7 +84,7 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                 </div>
             </div>
             <nav className="flex-1 p-4 space-y-2">
-                {menuItems.map((item) => {
+                {visibleItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
@@ -38,7 +95,7 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                                 : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                                 }`}
                         >
-                            {item.name}
+                            {item.label}
                         </Link>
                     );
                 })}
