@@ -56,6 +56,22 @@ export async function GET(request: NextRequest) {
 
     const { userId, workspace } = authResult;
 
+    // 1. Role Guard
+    if (workspace.role === 'viewer') {
+        return NextResponse.json(
+            { error: 'Forbidden', code: 'ADMIN_REQUIRED_FOR_EXPORT' },
+            { status: 403 }
+        );
+    }
+
+    // 2. Tier Gate
+    if (workspace.tier === 'free') {
+        return NextResponse.json(
+            { error: 'Payment Required', code: 'UPGRADE_REQUIRED_FOR_EXPORT' },
+            { status: 402 }
+        );
+    }
+
     const isProduction = process.env.NODE_ENV === 'production';
     const secret = process.env.EVIDENCE_SECRET;
     const hasSecret = !!secret;
