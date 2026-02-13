@@ -1,16 +1,33 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import Sidebar from '@/components/Sidebar';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
 
 export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const session = await auth();
+    const { userId } = await auth();
 
-    if (!session?.userId) {
+    if (!userId) {
         redirect('/sign-in');
     }
 
-    return <>{children}</>;
+    const workspace = await resolveWorkspace(userId);
+
+    if (!workspace) {
+        redirect('/onboarding');
+    }
+
+    return (
+        <div className="flex min-h-screen bg-black text-white">
+            <aside className="w-64 border-r border-zinc-800">
+                <Sidebar workspace={workspace} />
+            </aside>
+            <main className="flex-1 p-8">
+                {children}
+            </main>
+        </div>
+    );
 }
