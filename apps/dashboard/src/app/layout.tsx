@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const runtime = 'nodejs';
+
 import { ClerkProvider } from '@clerk/nextjs';
 
 export default function RootLayout({
