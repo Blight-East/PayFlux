@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+export const runtime = 'nodejs';
 import { redirect } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { resolveWorkspace } from '@/lib/resolve-workspace';
