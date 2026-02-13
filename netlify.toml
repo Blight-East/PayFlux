@@ -2,6 +2,10 @@
   command = "cd apps/dashboard && npm install && npm run build"
   publish = "apps/dashboard/.next"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+
 [[redirects]]
   from = "/docs/*"
   to = "https://app.payflux.dev/docs/:splat"
