@@ -1,20 +1,6 @@
 [build]
-  base = "."
-  command = "npm run build"
-  
-[context.production.environment]
-  CANONICAL_SITE_URL = "https://payflux.dev"
-  NEXT_PUBLIC_APP_URL = "https://app.payflux.dev"
-  NEXT_PUBLIC_CLERK_SIGN_IN_URL = "/sign-in"
-  NEXT_PUBLIC_CLERK_SIGN_UP_URL = "/sign-up"
-  NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL = "/dashboard"
-  NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL = "/dashboard"
+base = "apps/dashboard"
+command = "npm run build"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-[[redirects]]
-  from = "/use-cases/*"
-  to = "https://payflux.dev/docs/use-cases/:splat"
-  status = 301
-  force = true
+package = "@netlify/plugin-nextjs"
