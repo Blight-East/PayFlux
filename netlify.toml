@@ -1,3 +1,8 @@
+[build]
+  base = "apps/dashboard"
+  command = "npm run build"
+  publish = ".next"
+
 [[redirects]]
   from = "/docs/*"
   to = "https://app.payflux.dev/docs/:splat"
@@ -21,5 +26,3 @@
   to = "https://app.payflux.dev/robots.txt"
   status = 200
   force = true
-
-
