@@ -28,12 +28,6 @@ publish = "payflux-site/dist"
   status = 200
   force = true
 
-# STATIC FILES (XML, etc.)
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/sitemap.xml"
-  status = 200
-
 # STATIC LEGAL REWRITES NEXT
 [[redirects]]
   from = "/terms"
