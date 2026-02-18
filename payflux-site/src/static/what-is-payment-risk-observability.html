@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is Payment Risk Observability | PayFlux</title>
+    <meta name="description" content="Payment risk observability gives payment teams real-time visibility into how processors evaluate their risk posture.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background-color:#0a0c10;color:#cbd5e1;}</style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 no-underline"><div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-slate-600 rounded-sm"></div><span class="text-white font-bold tracking-tight text-xl">PayFlux</span></a>
+            <a href="/" class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors no-underline">← Back to Home</a>
+        </div>
+    </nav>
+    <main class="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        <div class="mb-12 border-b border-white/5 pb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">What Is Payment Risk Observability?</h1>
+            <p class="text-lg text-slate-400 leading-relaxed">Payment risk observability is a discipline that gives payment teams real-time visibility into how processors evaluate their risk posture — before that evaluation results in reserves, holds, or account actions.</p>
+        </div>
+        <div class="space-y-12 text-slate-400 leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">The Problem</h2>
+                <p class="mb-4">Payment processors continuously evaluate merchant risk using signals that merchants themselves cannot see. When a processor detects elevated risk — whether from chargeback ratios, velocity anomalies, or MCC inconsistencies — the merchant often learns about it only after punitive action has been taken: rolling reserves, settlement delays, or account termination.</p>
+                <p class="mb-4">Traditional payment analytics focus on revenue metrics: approval rates, conversion funnels, and settlement timing. They do not surface how a processor's risk models interpret your transaction patterns. This blind spot creates an asymmetric information problem where processors hold all the risk intelligence and merchants react to consequences rather than causes.</p>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">The Observability Approach</h2>
+                <p class="mb-4">Payment risk observability borrows from infrastructure observability (metrics, logs, traces) and applies it to the payment risk domain. Instead of monitoring servers, you monitor risk signals. Instead of tracing requests, you trace risk decisions.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Telemetry</strong> — Continuous collection of payment event data including decline codes, retry patterns, velocity metrics, and geographic distributions</li><li><strong class="text-white">Signals</strong> — Derived risk indicators that map to how processors evaluate merchant behavior</li><li><strong class="text-white">Evidence Narratives</strong> — Structured explanations that translate raw signals into processor-ready documentation</li><li><strong class="text-white">Alerting</strong> — Proactive notification when risk posture changes before processor action occurs</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Why It Matters</h2>
+                <p class="mb-4">Without risk observability, payment teams operate reactively. A sudden spike in soft declines might be a retry storm, a processor routing change, or an early indicator of fraud — but without the right signals, these scenarios look identical in a standard dashboard.</p>
+                <p class="mb-4">PayFlux provides the instrumentation layer that transforms raw payment data into risk intelligence. By understanding how processors see your traffic before they act on it, you can remediate proactively, document your risk posture, and maintain healthy processor relationships.</p>
+            </section>
+        </div>
+    </main>
+    <footer class="border-t border-white/5 py-12"><div class="max-w-7xl mx-auto px-6 text-center"><p class="text-slate-500 text-sm">© 2026 PayFlux. All rights reserved.</p></div></footer>
+</body>
+</html>

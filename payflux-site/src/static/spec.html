@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Specification | PayFlux</title>
+    <meta name="description" content="PayFlux technical specification: event schema, risk scoring model, API patterns, data formats, and authentication.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background-color:#0a0c10;color:#cbd5e1;}code{background:#1e293b;padding:2px 6px;border-radius:4px;font-size:0.9em;}</style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 no-underline"><div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-slate-600 rounded-sm"></div><span class="text-white font-bold tracking-tight text-xl">PayFlux</span></a>
+            <a href="/" class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors no-underline">← Back to Home</a>
+        </div>
+    </nav>
+    <main class="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        <div class="mb-12 border-b border-white/5 pb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">Technical Specification</h1>
+            <p class="text-lg text-slate-400 leading-relaxed">Detailed technical specification for the PayFlux platform covering event schemas, scoring models, API patterns, and data formats.</p>
+        </div>
+        <div class="space-y-12 text-slate-400 leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Event Schema</h2>
+                <p class="mb-4">PayFlux ingests payment exhaust events via <code>POST /v1/events/payment_exhaust</code>. Each event is a JSON object containing the following fields:</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><code>event_type</code> — Classification of the payment event (authorization, capture, refund, chargeback)</li><li><code>event_timestamp</code> — ISO 8601 timestamp of the original event</li><li><code>event_id</code> — Unique identifier for deduplication</li><li><code>merchant_id_hash</code> — SHA-256 hash of the merchant identifier</li><li><code>processor</code> — Identifier of the payment processor</li><li><code>failure_category</code> — Standardized failure classification (soft_decline, hard_decline, timeout)</li><li><code>retry_count</code> — Number of retry attempts for this payment intent</li><li><code>geo_bucket</code> — Geographic classification (domestic, cross_border, high_risk_region)</li><li><code>amount_bucket</code> — Amount range classification (micro, small, medium, large, high_value)</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Risk Scoring Model</h2>
+                <p class="mb-4">Risk scores are computed deterministically using configurable thresholds. The scoring model evaluates events within a rolling window (default: 300 seconds) and produces a score between 0.0 and 1.0.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Low (0.0–0.3)</strong> — Normal operating parameters, no action required</li><li><strong class="text-white">Elevated (0.3–0.6)</strong> — Patterns warrant monitoring, baseline deviation detected</li><li><strong class="text-white">High (0.6–0.8)</strong> — Active risk indicators, remediation recommended</li><li><strong class="text-white">Critical (0.8–1.0)</strong> — Immediate attention required, processor action likely</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">API Authentication</h2>
+                <p class="mb-4">The PayFlux API supports two authentication methods:</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">API Key</strong> — Bearer token authentication via <code>Authorization: Bearer &lt;key&gt;</code> header. Used for server-to-server integration.</li><li><strong class="text-white">Clerk Session</strong> — Cookie-based authentication for dashboard access with MFA support and tenant isolation.</li></ul>
+                <p class="mb-4">API keys can be scoped, revoked, and rotated without downtime. Key rotation is supported through the <code>PAYFLUX_API_KEYS</code> (comma-separated) and <code>PAYFLUX_REVOKED_KEYS</code> environment variables.</p>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Rate Limiting</h2>
+                <p class="mb-4">The ingest API enforces token-bucket rate limiting with configurable RPS and burst parameters. Default limits: 100 RPS sustained with burst capacity of 500. Backpressure threshold triggers graceful degradation at 10,000 queued events. Rate limit responses use standard <code>429 Too Many Requests</code> with <code>Retry-After</code> header.</p>
+            </section>
+        </div>
+    </main>
+    <footer class="border-t border-white/5 py-12"><div class="max-w-7xl mx-auto px-6 text-center"><p class="text-slate-500 text-sm">© 2026 PayFlux. All rights reserved.</p></div></footer>
+</body>
+</html>

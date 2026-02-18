@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security | PayFlux</title>
+    <meta name="description" content="PayFlux security practices: data handling, encryption, authentication, and infrastructure security for payment risk observability.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background-color:#0a0c10;color:#cbd5e1;}</style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 no-underline"><div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-slate-600 rounded-sm"></div><span class="text-white font-bold tracking-tight text-xl">PayFlux</span></a>
+            <a href="/" class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors no-underline">← Back to Home</a>
+        </div>
+    </nav>
+    <main class="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        <div class="mb-12 border-b border-white/5 pb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">Security</h1>
+            <p class="text-lg text-slate-400 leading-relaxed">How PayFlux protects your data, secures infrastructure, and maintains the trust required for payment risk operations.</p>
+        </div>
+        <div class="space-y-12 text-slate-400 leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Data Handling and Privacy</h2>
+                <p class="mb-4">PayFlux is designed around a principle of data minimization. The platform processes hashed identifiers and bucketed values — never raw PII, card numbers, or account credentials.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Hashed merchant IDs</strong> — SHA-256 hashed before ingestion; original values never stored</li><li><strong class="text-white">No raw PII</strong> — PayFlux does not process cardholder names, addresses, or card numbers</li><li><strong class="text-white">Bucketed amounts</strong> — Transaction amounts classified into ranges, not stored as exact values</li><li><strong class="text-white">Aggregation over extraction</strong> — Risk signals are derived from patterns, not individual transaction details</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Encryption</h2>
+                <p class="mb-4">All data is encrypted in transit and at rest using industry-standard protocols.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">In transit</strong> — TLS 1.3 enforced on all API endpoints and dashboard connections</li><li><strong class="text-white">At rest</strong> — AES-256 encryption for persisted data stores</li><li><strong class="text-white">In processing</strong> — Redis streams use authenticated connections with automatic stream trimming to limit data retention</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Authentication and Access Control</h2>
+                <p class="mb-4">PayFlux enforces strict authentication and tenant isolation at every layer of the stack.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">API authentication</strong> — Bearer token authentication with scoped API keys, rotation support, and revocation</li><li><strong class="text-white">Dashboard authentication</strong> — Clerk-based authentication with multi-factor support</li><li><strong class="text-white">Tenant isolation</strong> — Row-level security ensures merchants can only access their own data</li><li><strong class="text-white">Debug endpoints</strong> — Gated to development environments only; inaccessible in production</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Infrastructure Security</h2>
+                <p class="mb-4">PayFlux infrastructure follows defense-in-depth principles with multiple layers of protection.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Network isolation</strong> — Backend services run in isolated network segments with minimal public exposure</li><li><strong class="text-white">Dependency management</strong> — Automated vulnerability scanning on all dependencies</li><li><strong class="text-white">Secret management</strong> — Environment-based secret injection; no secrets in source code or build artifacts</li><li><strong class="text-white">Monitoring</strong> — Real-time alerting on authentication failures, rate limit breaches, and anomalous access patterns</li></ul>
+            </section>
+        </div>
+    </main>
+    <footer class="border-t border-white/5 py-12"><div class="max-w-7xl mx-auto px-6 text-center"><p class="text-slate-500 text-sm">© 2026 PayFlux. All rights reserved.</p></div></footer>
+</body>
+</html>

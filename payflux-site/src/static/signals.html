@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Registry | PayFlux</title>
+    <meta name="description" content="Real-time risk indicators and detection patterns for payment processors.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background-color:#0a0c10;color:#cbd5e1;}</style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 no-underline"><div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-slate-600 rounded-sm"></div><span class="text-white font-bold tracking-tight text-xl">PayFlux</span></a>
+            <a href="/" class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors no-underline">← Back to Home</a>
+        </div>
+    </nav>
+    <main class="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        <div class="mb-12 border-b border-white/5 pb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">Signal Registry</h1>
+            <p class="text-lg text-slate-400 leading-relaxed">Real-time risk indicators and detection patterns used by PayFlux to surface actionable intelligence from payment processor data.</p>
+        </div>
+        <div class="space-y-12 text-slate-400 leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Velocity Signals</h2>
+                <p class="mb-4">Velocity signals track the rate and frequency of transactions from a single source within defined time windows. Abnormal velocity patterns are among the strongest early indicators of fraud, card testing, or retry storms.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li>Rapid transaction sequences from a single merchant or card hash</li><li>Threshold breaches against rolling 5-minute, 1-hour, and 24-hour windows</li><li>Behavioral baseline deviation calculated from 30-day merchant history</li><li>Retry intensity scoring for soft-decline recovery patterns</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Geographic Signals</h2>
+                <p class="mb-4">Geographic signals monitor location-based risk patterns including cross-border activity, impossible travel scenarios, and concentration in high-risk jurisdictions.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li>Geo-velocity mismatches between transaction locations</li><li>High-risk region concentration exceeding merchant baseline</li><li>IP-to-billing address inconsistency scoring</li><li>Cross-border transaction ratio shifts</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Behavioral Signals</h2>
+                <p class="mb-4">Behavioral signals detect deviations from normal transaction patterns and merchant behavior, comparing current activity against established baselines.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li>Device fingerprint clustering and anomaly detection</li><li>User session behavior changes</li><li>Amount distribution shifts relative to merchant category norms</li><li>Payment method switching patterns</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Network Signals</h2>
+                <p class="mb-4">Network signals identify relationships and connections between transactions, merchants, and actors that individual transaction analysis would miss.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li>Shared infrastructure detection across merchant accounts</li><li>Ring detection through graph analysis of transaction flows</li><li>Relationship scoring between seemingly unrelated entities</li><li>Coordinated timing pattern identification</li></ul>
+            </section>
+        </div>
+    </main>
+    <footer class="border-t border-white/5 py-12"><div class="max-w-7xl mx-auto px-6 text-center"><p class="text-slate-500 text-sm">© 2026 PayFlux. All rights reserved.</p></div></footer>
+</body>
+</html>

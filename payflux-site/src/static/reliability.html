@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reliability | PayFlux</title>
+    <meta name="description" content="PayFlux system reliability: uptime guarantees, Redis stream durability, graceful degradation, and deployment resilience.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background-color:#0a0c10;color:#cbd5e1;}</style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 no-underline"><div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-slate-600 rounded-sm"></div><span class="text-white font-bold tracking-tight text-xl">PayFlux</span></a>
+            <a href="/" class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors no-underline">← Back to Home</a>
+        </div>
+    </nav>
+    <main class="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        <div class="mb-12 border-b border-white/5 pb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">Reliability</h1>
+            <p class="text-lg text-slate-400 leading-relaxed">How PayFlux ensures high availability, data durability, and graceful degradation under adverse conditions.</p>
+        </div>
+        <div class="space-y-12 text-slate-400 leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">System Availability</h2>
+                <p class="mb-4">PayFlux is architected for continuous operation. The ingest API accepts events 24/7 with built-in redundancy. The dashboard is served via CDN with edge caching for static assets, and server-rendered pages use serverless functions that scale automatically.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li>Ingest API designed for high availability with health check endpoints</li><li>Redis Streams provide persistent, ordered event storage surviving process restarts</li><li>Consumer groups enable parallel processing with automatic failover between workers</li><li>Dashboard CDN-backed with serverless compute for dynamic routes</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Data Durability</h2>
+                <p class="mb-4">Payment events written to Redis Streams are durably persisted using AOF (Append Only File) persistence. Consumer groups track processing state, ensuring events are not lost even if a consumer crashes mid-processing.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li>Redis AOF persistence ensures events survive server restarts</li><li>Consumer group acknowledgment semantics guarantee at-least-once processing</li><li>Automatic reclaim of unacknowledged events after configurable timeout</li><li>Idempotency keys on events prevent duplicate processing</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Graceful Degradation</h2>
+                <p class="mb-4">When system components experience issues, PayFlux degrades gracefully rather than failing catastrophically.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Rate limiting</strong> — Token-bucket rate limiting absorbs traffic spikes without dropping events</li><li><strong class="text-white">Backpressure</strong> — Configurable backpressure threshold (default: 10,000 queued events) triggers controlled slowdown</li><li><strong class="text-white">Fallback stores</strong> — OAuth state and risk data fall back to in-memory storage when Redis is unavailable</li><li><strong class="text-white">Circuit breakers</strong> — External service calls (alerts, webhooks) use retry-with-backoff and circuit breaking</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Monitoring and Alerting</h2>
+                <p class="mb-4">PayFlux monitors its own health and alerts operators when intervention is needed. Prometheus metrics are exposed for integration with existing monitoring infrastructure. The alert router supports Slack and webhook destinations with configurable rate limiting and deduplication.</p>
+            </section>
+        </div>
+    </main>
+    <footer class="border-t border-white/5 py-12"><div class="max-w-7xl mx-auto px-6 text-center"><p class="text-slate-500 text-sm">© 2026 PayFlux. All rights reserved.</p></div></footer>
+</body>
+</html>

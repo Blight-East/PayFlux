@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Taxonomy | PayFlux</title>
+    <meta name="description" content="Standardized classification system for payment risk categories and processor types.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background-color:#0a0c10;color:#cbd5e1;}</style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 no-underline"><div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-slate-600 rounded-sm"></div><span class="text-white font-bold tracking-tight text-xl">PayFlux</span></a>
+            <a href="/" class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors no-underline">← Back to Home</a>
+        </div>
+    </nav>
+    <main class="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        <div class="mb-12 border-b border-white/5 pb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">System Taxonomy</h1>
+            <p class="text-lg text-slate-400 leading-relaxed">Standardized classification system for payment risk categories, processor types, and tier structures used across the PayFlux platform.</p>
+        </div>
+        <div class="space-y-12 text-slate-400 leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Risk Tiers</h2>
+                <p class="mb-4">PayFlux organizes merchant accounts into tiers that determine feature access, monitoring intensity, and support levels.</p>
+                <div class="space-y-4 mb-6">
+                    <div class="border border-white/10 rounded-lg p-4"><h3 class="text-white font-semibold mb-2">Pilot</h3><p>Early-stage integration with full monitoring and risk analysis. Includes real-time risk scoring, pattern detection, and alert generation. Ideal for evaluating PayFlux capabilities.</p></div>
+                    <div class="border border-white/10 rounded-lg p-4"><h3 class="text-white font-semibold mb-2">Growth</h3><p>Scaled deployment with advanced automation and optimization. Adds automated responses, custom workflows, and full API integration for programmatic risk management.</p></div>
+                    <div class="border border-white/10 rounded-lg p-4"><h3 class="text-white font-semibold mb-2">Scale</h3><p>Enterprise-grade infrastructure with dedicated support, custom analytics, SLA guarantees, and priority access to new features and integrations.</p></div>
+                </div>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Processor Classifications</h2>
+                <p class="mb-4">PayFlux categorizes payment processors to apply appropriate risk models and signal calibration.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Payment Gateways</strong> — Direct payment processing platforms with risk assessment capabilities (Stripe, Adyen, Braintree)</li><li><strong class="text-white">Acquirers</strong> — Merchant acquirers and payment service providers that underwrite merchant accounts</li><li><strong class="text-white">Networks</strong> — Card networks and payment rails (Visa, Mastercard, Amex)</li><li><strong class="text-white">Alternative Processors</strong> — Non-traditional payment methods and emerging platforms (BNPL, crypto, wallets)</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Risk Categories</h2>
+                <p class="mb-4">Every risk signal detected by PayFlux is classified into one of five primary categories for structured analysis and reporting.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Fraud</strong> — Unauthorized transactions, identity misuse, and card-not-present abuse</li><li><strong class="text-white">Compliance</strong> — Regulatory violations, PCI DSS gaps, and policy breaches</li><li><strong class="text-white">Operational</strong> — System failures, processing errors, and routing degradation</li><li><strong class="text-white">Reputational</strong> — Brand risk, customer impact, and chargeback ratio exposure</li><li><strong class="text-white">Strategic</strong> — Market risk, partnership dependencies, and processor concentration</li></ul>
+            </section>
+        </div>
+    </main>
+    <footer class="border-t border-white/5 py-12"><div class="max-w-7xl mx-auto px-6 text-center"><p class="text-slate-500 text-sm">© 2026 PayFlux. All rights reserved.</p></div></footer>
+</body>
+</html>

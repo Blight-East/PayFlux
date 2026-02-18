@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditability | PayFlux</title>
+    <meta name="description" content="PayFlux audit trail capabilities: evidence narratives, decision transparency, export, and compliance documentation.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background-color:#0a0c10;color:#cbd5e1;}</style>
+</head>
+<body class="selection:bg-indigo-500/30">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 no-underline"><div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-slate-600 rounded-sm"></div><span class="text-white font-bold tracking-tight text-xl">PayFlux</span></a>
+            <a href="/" class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors no-underline">← Back to Home</a>
+        </div>
+    </nav>
+    <main class="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        <div class="mb-12 border-b border-white/5 pb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">Auditability</h1>
+            <p class="text-lg text-slate-400 leading-relaxed">Every decision PayFlux makes is traceable, exportable, and designed for processor conversations and compliance documentation.</p>
+        </div>
+        <div class="space-y-12 text-slate-400 leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Evidence Narratives</h2>
+                <p class="mb-4">When PayFlux detects elevated risk, it generates structured evidence narratives that document what was detected, why it matters from the processor's perspective, and what remediation steps are recommended. These narratives are designed to be shared directly with processor risk teams.</p>
+                <p class="mb-4">Each narrative includes: the triggering signals, their individual weights in the risk score, the processor-specific context for why those signals matter, and recommended remediation actions with expected impact on risk posture.</p>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Decision Transparency</h2>
+                <p class="mb-4">PayFlux uses deterministic scoring specifically to enable full decision transparency. Every risk score includes a complete decision lineage:</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Signal attribution</strong> — Which signals contributed and their individual weights</li><li><strong class="text-white">Threshold documentation</strong> — What thresholds were applied and why</li><li><strong class="text-white">Decision lineage</strong> — Full trace from raw event to final risk band</li><li><strong class="text-white">Configuration versioning</strong> — Which scoring configuration version was active</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Export and Compliance</h2>
+                <p class="mb-4">All risk data, evidence narratives, and tier history are exportable in structured formats for compliance documentation and regulatory reporting.</p>
+                <ul class="list-disc list-inside space-y-2 mb-6"><li><strong class="text-white">Structured exports</strong> — CSV and JSON export of risk events, scores, and evidence</li><li><strong class="text-white">Compliance reports</strong> — Pre-formatted reports aligned with common processor audit requirements</li><li><strong class="text-white">API access</strong> — RESTful audit log API for programmatic integration with compliance tooling</li><li><strong class="text-white">Tier history</strong> — Complete history of account tier changes with timestamps and justifications</li></ul>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Built for Processor Conversations</h2>
+                <p class="mb-4">When a processor initiates a risk review, merchants need to respond quickly with structured evidence. PayFlux pre-generates remediation evidence packages that include: current risk posture summary, trend analysis showing improvement trajectory, specific signal breakdowns addressing processor concerns, and documented remediation actions already taken.</p>
+                <p class="mb-4">This transforms the processor conversation from reactive defense to proactive risk management — demonstrating operational maturity that processors value.</p>
+            </section>
+        </div>
+    </main>
+    <footer class="border-t border-white/5 py-12"><div class="max-w-7xl mx-auto px-6 text-center"><p class="text-slate-500 text-sm">© 2026 PayFlux. All rights reserved.</p></div></footer>
+</body>
+</html>

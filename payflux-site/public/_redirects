@@ -11,18 +11,18 @@
 /pricing  /pricing.html  200
 /refund   /refund.html   200
 
-# SPA ROUTES (handled by React Router)
-/signals                            /index.html   200
-/taxonomy                           /index.html   200
-/glossary                           /index.html   200
-/what-is-payment-risk-observability /index.html   200
-/architecture                       /index.html   200
-/spec                               /index.html   200
-/deterministic-risk-scoring         /index.html   200
-/processor-risk-intelligence        /index.html   200
-/security                           /index.html   200
-/reliability                        /index.html   200
-/auditability                       /index.html   200
+# STATIC AUTHORITY PAGES
+/signals                            /signals.html                           200
+/taxonomy                           /taxonomy.html                          200
+/glossary                           /glossary.html                          200
+/what-is-payment-risk-observability /what-is-payment-risk-observability.html 200
+/architecture                       /architecture.html                      200
+/spec                               /spec.html                              200
+/deterministic-risk-scoring         /deterministic-risk-scoring.html        200
+/processor-risk-intelligence        /processor-risk-intelligence.html       200
+/security                           /security.html                          200
+/reliability                        /reliability.html                       200
+/auditability                       /auditability.html                      200
 
 # SPA CATCH-ALL LAST
 /*  /index.html  200
