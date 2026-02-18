@@ -1,0 +1,8 @@
+# Sitemap should be served as XML
+/sitemap.xml
+  Content-Type: application/xml
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Other files
+/*
+  Content-Type: text/html; charset=utf-8

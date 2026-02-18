@@ -1,5 +1,4 @@
-# STATIC FILES - MUST COME BEFORE CATCH-ALL
-/sitemap.xml  /sitemap.xml  200!
+# PROXIES & STATIC FILES - MUST COME BEFORE CATCH-ALL
 
 # PROXIES FIRST
 /docs/*  https://app.payflux.dev/docs/:splat  200!
