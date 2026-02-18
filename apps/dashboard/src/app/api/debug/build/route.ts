@@ -26,6 +26,10 @@ function withProvenanceHeaders(res: NextResponse) {
 }
 
 export async function GET(req: Request) {
+    if (process.env.NODE_ENV !== 'development') {
+        return new NextResponse('Not Found', { status: 404 });
+    }
+
     const token = getBearer(req);
     const expected = process.env.PAYFLUX_API_KEY || process.env.PAYFLUX_AUTH_TOKEN;
 

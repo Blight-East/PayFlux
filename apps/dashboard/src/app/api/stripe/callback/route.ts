@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 2) Validate state exists, not expired, matches userId, then consume it
-    const oauthState = validateAndConsumeState(state, userId);
+    const oauthState = await validateAndConsumeState(state, userId);
     if (!oauthState) {
         console.error('Hardened State Validation Failed');
         return NextResponse.redirect(`${baseUrl}/onboarding?err=invalid_state`);

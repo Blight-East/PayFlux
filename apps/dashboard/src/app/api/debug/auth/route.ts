@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+    if (process.env.NODE_ENV !== 'development') {
+        return new NextResponse('Not Found', { status: 404 });
+    }
+
     const { userId, sessionId } = await auth();
 
     return NextResponse.json({

@@ -39,7 +39,7 @@ export async function GET() {
 
         // 3. Generate Secure State
         // Note: generateStateToken uses hardened HMAC logic (Buffer.from)
-        const state = generateStateToken(activeOrgId, userId);
+        const state = await generateStateToken(activeOrgId, userId);
 
         // 4. Construct Stripe URL
         const clientId = process.env.NEXT_PUBLIC_STRIPE_CLIENT_ID;
