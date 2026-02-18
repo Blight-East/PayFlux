@@ -11,5 +11,10 @@
 /pricing  /pricing.html  200
 /refund   /refund.html   200
 
+# SPA ROUTES (handled by React Router)
+/signals   /index.html   200
+/taxonomy  /index.html   200
+/glossary  /index.html   200
+
 # SPA CATCH-ALL LAST
 /*  /index.html  200
