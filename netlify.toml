@@ -2,6 +2,11 @@
 base = "payflux-site"
 command = "npm run build"
 publish = "dist"
+ignore = "false"
+
+[build.environment]
+# Force override of site-level settings
+NETLIFY_USE_YARN = "false"
 
 # PROXIES FIRST
 [[redirects]]
