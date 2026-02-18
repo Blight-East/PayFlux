@@ -28,6 +28,12 @@ publish = "payflux-site/dist"
   status = 200
   force = true
 
+# STATIC FILES (XML, etc.)
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+
 # STATIC LEGAL REWRITES NEXT
 [[redirects]]
   from = "/terms"
@@ -54,60 +60,60 @@ publish = "payflux-site/dist"
   to = "/refund.html"
   status = 200
 
-# SPA ROUTES (handled by React Router)
+# STATIC AUTHORITY PAGES
 [[redirects]]
   from = "/signals"
-  to = "/index.html"
+  to = "/signals.html"
   status = 200
 
 [[redirects]]
   from = "/taxonomy"
-  to = "/index.html"
+  to = "/taxonomy.html"
   status = 200
 
 [[redirects]]
   from = "/glossary"
-  to = "/index.html"
+  to = "/glossary.html"
   status = 200
 
 [[redirects]]
   from = "/what-is-payment-risk-observability"
-  to = "/index.html"
+  to = "/what-is-payment-risk-observability.html"
   status = 200
 
 [[redirects]]
   from = "/architecture"
-  to = "/index.html"
+  to = "/architecture.html"
   status = 200
 
 [[redirects]]
   from = "/spec"
-  to = "/index.html"
+  to = "/spec.html"
   status = 200
 
 [[redirects]]
   from = "/deterministic-risk-scoring"
-  to = "/index.html"
+  to = "/deterministic-risk-scoring.html"
   status = 200
 
 [[redirects]]
   from = "/processor-risk-intelligence"
-  to = "/index.html"
+  to = "/processor-risk-intelligence.html"
   status = 200
 
 [[redirects]]
   from = "/security"
-  to = "/index.html"
+  to = "/security.html"
   status = 200
 
 [[redirects]]
   from = "/reliability"
-  to = "/index.html"
+  to = "/reliability.html"
   status = 200
 
 [[redirects]]
   from = "/auditability"
-  to = "/index.html"
+  to = "/auditability.html"
   status = 200
 
 # SPA CATCH-ALL LAST

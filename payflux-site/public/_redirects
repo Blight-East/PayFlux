@@ -4,6 +4,9 @@
 /robots.txt  https://app.payflux.dev/robots.txt  200!
 /googlec9febe29141cc19f.html  https://app.payflux.dev/googlec9febe29141cc19f.html  200!
 
+# STATIC FILES (XML, etc.)
+/sitemap.xml  /sitemap.xml  200
+
 # STATIC LEGAL REWRITES NEXT
 /terms    /terms.html    200
 /privacy  /privacy.html  200
