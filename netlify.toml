@@ -1,11 +1,9 @@
 [build]
-base = "apps/dashboard"
+base = "payflux-site"
 command = "npm run build"
-publish = ".next"
+publish = "dist"
 
-[[plugins]]
-package = "@netlify/plugin-nextjs"
-
+# PROXIES FIRST
 [[redirects]]
   from = "/docs/*"
   to = "https://app.payflux.dev/docs/:splat"
@@ -19,13 +17,61 @@ package = "@netlify/plugin-nextjs"
   force = true
 
 [[redirects]]
+  from = "/robots.txt"
+  to = "https://app.payflux.dev/robots.txt"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/googlec9febe29141cc19f.html"
   to = "https://app.payflux.dev/googlec9febe29141cc19f.html"
   status = 200
   force = true
 
+# STATIC LEGAL REWRITES NEXT
 [[redirects]]
-  from = "/robots.txt"
-  to = "https://app.payflux.dev/robots.txt"
+  from = "/terms"
+  to = "/terms.html"
   status = 200
-  force = true
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200
+
+[[redirects]]
+  from = "/refunds"
+  to = "/refunds.html"
+  status = 200
+
+[[redirects]]
+  from = "/pricing"
+  to = "/pricing.html"
+  status = 200
+
+[[redirects]]
+  from = "/refund"
+  to = "/refund.html"
+  status = 200
+
+# SPA ROUTES (handled by React Router)
+[[redirects]]
+  from = "/signals"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/taxonomy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/glossary"
+  to = "/index.html"
+  status = 200
+
+# SPA CATCH-ALL LAST
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
