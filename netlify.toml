@@ -110,6 +110,13 @@ publish = "payflux-site/dist"
   to = "/auditability.html"
   status = 200
 
+# STATIC FILES - serve without SPA interception
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+  force = true
+
 # SPA CATCH-ALL LAST
 [[redirects]]
   from = "/*"
