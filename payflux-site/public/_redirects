@@ -12,9 +12,17 @@
 /refund   /refund.html   200
 
 # SPA ROUTES (handled by React Router)
-/signals   /index.html   200
-/taxonomy  /index.html   200
-/glossary  /index.html   200
+/signals                            /index.html   200
+/taxonomy                           /index.html   200
+/glossary                           /index.html   200
+/what-is-payment-risk-observability /index.html   200
+/architecture                       /index.html   200
+/spec                               /index.html   200
+/deterministic-risk-scoring         /index.html   200
+/processor-risk-intelligence        /index.html   200
+/security                           /index.html   200
+/reliability                        /index.html   200
+/auditability                       /index.html   200
 
 # SPA CATCH-ALL LAST
 /*  /index.html  200

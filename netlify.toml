@@ -70,6 +70,46 @@ publish = "payflux-site/dist"
   to = "/index.html"
   status = 200
 
+[[redirects]]
+  from = "/what-is-payment-risk-observability"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/architecture"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/spec"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/deterministic-risk-scoring"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/processor-risk-intelligence"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/security"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/reliability"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/auditability"
+  to = "/index.html"
+  status = 200
+
 # SPA CATCH-ALL LAST
 [[redirects]]
   from = "/*"
