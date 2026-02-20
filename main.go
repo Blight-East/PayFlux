@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,7 +23,9 @@ import (
 	"syscall"
 	"time"
 
+	"payment-node/internal/httpmw"
 	"payment-node/internal/ratelimit"
+	"payment-node/internal/startup"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -128,6 +131,9 @@ var (
 	outcomeRPS            float64
 	outcomeBurst          int
 	backpressureThreshold int64 // Stream depth threshold for warning logs
+
+	// Config fingerprint (computed at startup, immutable after)
+	configFingerprint startup.Fingerprint
 )
 
 // Rate limiter maps (per API key)
@@ -497,12 +503,16 @@ func setupHTTPServer(httpAddr string) *http.Server {
 	registerPilotRoutes(mux)
 	registerEvidenceRoutes(mux)
 
+	handler := httpmw.BodyLimit(mux)
+
 	return &http.Server{
-		Addr:         httpAddr,
-		Handler:      mux,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		Addr:              httpAddr,
+		Handler:           handler,
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 2 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1 MB
 	}
 }
 
@@ -543,9 +553,15 @@ func registerEvidenceRoutes(mux *http.ServeMux) {
 
 // Helper: Run server with graceful shutdown
 func runServer(srv *http.Server) {
+	ln, err := net.Listen("tcp", srv.Addr)
+	if err != nil {
+		log.Fatalf("server_failed err=%v", err)
+	}
+	ln = httpmw.LimitListener(ln, httpmw.MaxConns)
+
 	go func() {
-		slog.Info("server_listening", "addr", srv.Addr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		slog.Info("server_listening", "addr", srv.Addr, "max_conns", httpmw.MaxConns)
+		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server_failed err=%v", err)
 		}
 	}()
@@ -568,6 +584,40 @@ func runServer(srv *http.Server) {
 
 func main() {
 	setupLogging()
+
+	// Pre-flight: validate all config before any connections or goroutines.
+	// This catches misconfigurations as immediate, deterministic startup failures
+	// instead of runtime panics, silent data loss, or partial-startup states.
+	if err := startup.ValidateConfig(); err != nil {
+		slog.Error("startup_config_invalid", "error", err.Error())
+		os.Exit(1)
+	}
+
+	// Compute deterministic fingerprint of all config inputs.
+	// hash(env vars + runtime JSON) — changes if ANY config changes.
+	configFingerprint = startup.ComputeFingerprint()
+	slog.Info("config_fingerprint",
+		"fingerprint", configFingerprint.Short,
+		"full_hash", configFingerprint.Hash,
+	)
+
+	// Pre-flight: validate Redis dependency is reachable, writable, compatible.
+	// Runs before loadConfiguration to prevent partial startup with wrong Redis.
+	depAddr := strings.TrimSpace(os.Getenv("REDIS_ADDR"))
+	if depAddr == "" {
+		depAddr = "localhost:6379"
+	}
+	depConn := startup.NewGoRedisConn(depAddr, os.Getenv("REDIS_PASSWORD"), 0)
+	depResult, depErr := startup.ValidateDependencies(depConn, depAddr)
+	depConn.Close()
+	if depErr != nil {
+		slog.Error("startup_dependency_invalid", "error", depErr.Error())
+		os.Exit(1)
+	}
+	slog.Info("dependency_validated",
+		"redis_addr", depResult.RedisAddr,
+		"redis_version", depResult.RedisVersion,
+	)
 
 	redisAddr, httpAddr := loadConfiguration()
 	validateProduction()
@@ -1139,11 +1189,21 @@ func updateStreamMetrics() {
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	// Quick Redis ping so health actually means something
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		http.Error(w, "redis not ok", http.StatusServiceUnavailable)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]any{
+			"status":            "unhealthy",
+			"reason":            "redis not ok",
+			"config_fingerprint": configFingerprint.Short,
+		})
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("ok"))
+	json.NewEncoder(w).Encode(map[string]any{
+		"status":            "ok",
+		"config_fingerprint": configFingerprint.Short,
+	})
 }
 
 func handleEvent(w http.ResponseWriter, r *http.Request) {

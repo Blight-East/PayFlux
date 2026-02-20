@@ -1,0 +1,175 @@
+{
+  "signals": {
+    "sig_001_auth_missing_bearer": {
+      "severity": "missing_key",
+      "deterministic": true,
+      "type": "validation",
+      "enabled": true
+    },
+    "sig_002_auth_revoked_key": {
+      "severity": "revoked_key",
+      "deterministic": true,
+      "type": "rejection",
+      "enabled": true
+    },
+    "sig_003_auth_invalid_key": {
+      "severity": "invalid_key",
+      "deterministic": true,
+      "type": "rejection",
+      "enabled": true
+    },
+    "sig_004_rate_limit_exceeded_atomic": {
+      "deterministic": false,
+      "type": "threshold",
+      "enabled": true
+    },
+    "sig_005_event_uuid_invalid": {
+      "deterministic": true,
+      "type": "validation",
+      "enabled": true
+    },
+    "sig_006_event_timestamp_invalid": {
+      "deterministic": true,
+      "type": "validation",
+      "enabled": true
+    },
+    "sig_007_processor_invalid": {
+      "deterministic": true,
+      "type": "validation",
+      "enabled": true
+    },
+    "sig_008_deduplication_detected": {
+      "deterministic": true,
+      "type": "integrity",
+      "enabled": true
+    },
+    "sig_009_risk_insufficient_data": {
+      "severity": "insufficient_data",
+      "deterministic": true,
+      "type": "threshold",
+      "enabled": true
+    },
+    "sig_010_risk_cardinality_limit": {
+      "severity": "insufficient_data",
+      "deterministic": true,
+      "type": "threshold",
+      "enabled": true
+    },
+    "sig_011_risk_band_elevated": {
+      "severity": "elevated",
+      "deterministic": true,
+      "type": "threshold",
+      "enabled": true
+    },
+    "sig_012_risk_band_high": {
+      "severity": "high",
+      "deterministic": true,
+      "type": "threshold",
+      "enabled": true
+    },
+    "sig_013_risk_band_critical": {
+      "severity": "critical",
+      "deterministic": true,
+      "type": "threshold",
+      "enabled": true
+    },
+    "sig_014_anomaly_high_failure_rate": {
+      "severity": "high_failure_rate",
+      "deterministic": true,
+      "type": "anomaly",
+      "enabled": true
+    },
+    "sig_015_anomaly_retry_pressure": {
+      "severity": "retry_pressure_spike",
+      "deterministic": true,
+      "type": "anomaly",
+      "enabled": true
+    },
+    "sig_016_anomaly_timeout_clustering": {
+      "severity": "timeout_clustering",
+      "deterministic": true,
+      "type": "anomaly",
+      "enabled": true
+    },
+    "sig_017_anomaly_traffic_spike": {
+      "severity": "traffic_volatility",
+      "deterministic": true,
+      "type": "anomaly",
+      "enabled": true
+    },
+    "sig_018_anomaly_geo_entropy": {
+      "severity": "geo_entropy_increase",
+      "deterministic": true,
+      "type": "anomaly",
+      "enabled": true
+    },
+    "sig_019_transform_forbidden_key_strip": {
+      "deterministic": true,
+      "type": "transformation",
+      "enabled": true
+    },
+    "sig_020_transform_key_sort": {
+      "deterministic": true,
+      "type": "transformation",
+      "enabled": true
+    },
+    "sig_021_transform_severity_coerce": {
+      "deterministic": true,
+      "type": "transformation",
+      "enabled": true
+    },
+    "sig_022_transform_merchant_sort": {
+      "deterministic": true,
+      "type": "transformation",
+      "enabled": true
+    },
+    "sig_023_transform_artifact_sort": {
+      "deterministic": true,
+      "type": "transformation",
+      "enabled": true
+    },
+    "sig_024_transform_canonicalize": {
+      "deterministic": true,
+      "type": "transformation",
+      "enabled": true
+    },
+    "sig_025_telemetry_stream_length": {
+      "deterministic": false,
+      "type": "telemetry",
+      "enabled": true
+    },
+    "sig_026_telemetry_pending_count": {
+      "deterministic": false,
+      "type": "telemetry",
+      "enabled": true
+    },
+    "sig_027_telemetry_backpressure_warning": {
+      "severity": "warning",
+      "deterministic": true,
+      "type": "telemetry",
+      "enabled": true
+    },
+    "sig_028_telemetry_export_success": {
+      "deterministic": false,
+      "type": "telemetry",
+      "enabled": true
+    },
+    "sig_029_telemetry_degraded_count": {
+      "deterministic": false,
+      "type": "telemetry",
+      "enabled": true
+    },
+    "sig_030_telemetry_last_good_at": {
+      "deterministic": false,
+      "type": "telemetry",
+      "enabled": true
+    },
+    "sig_031_contract_forbidden_key": {
+      "deterministic": true,
+      "type": "contract",
+      "enabled": true
+    }
+  },
+  "thresholds": {},
+  "tiers": {}
+}

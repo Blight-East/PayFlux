@@ -1,0 +1,46 @@
+{
+    "entitlements": {
+        "baseline": {
+            "retention_days": 7,
+            "alert_routing_enabled": false,
+            "sla_response_time_ms": 5000,
+            "max_concurrent_requests": 10,
+            "export_formats": [
+                "json"
+            ]
+        },
+        "proof": {
+            "retention_days": 30,
+            "alert_routing_enabled": true,
+            "sla_response_time_ms": 2000,
+            "max_concurrent_requests": 100,
+            "export_formats": [
+                "json",
+                "csv"
+            ]
+        },
+        "shield": {
+            "retention_days": 90,
+            "alert_routing_enabled": true,
+            "sla_response_time_ms": 1000,
+            "max_concurrent_requests": 500,
+            "export_formats": [
+                "json",
+                "csv",
+                "parquet"
+            ]
+        },
+        "fortress": {
+            "retention_days": 365,
+            "alert_routing_enabled": true,
+            "sla_response_time_ms": 500,
+            "max_concurrent_requests": 1000,
+            "export_formats": [
+                "json",
+                "csv",
+                "parquet",
+                "avro"
+            ]
+        }
+    }
+}

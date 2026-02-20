@@ -1,0 +1,51 @@
+{
+    "tiers": {
+        "baseline": [
+            "sig_001_auth_missing_bearer",
+            "sig_002_auth_revoked_key"
+        ],
+        "proof": [
+            "sig_001_auth_missing_bearer",
+            "sig_002_auth_revoked_key",
+            "sig_003_auth_invalid_key",
+            "sig_004_rate_limit_exceeded_atomic",
+            "sig_005_event_uuid_invalid",
+            "sig_006_event_timestamp_invalid",
+            "sig_007_processor_invalid",
+            "sig_008_deduplication_detected",
+            "sig_009_risk_insufficient_data",
+            "sig_010_risk_cardinality_limit",
+            "sig_011_risk_band_elevated",
+            "sig_012_risk_band_high",
+            "sig_013_risk_band_critical",
+            "sig_014_anomaly_high_failure_rate",
+            "sig_015_anomaly_retry_pressure",
+            "sig_016_anomaly_timeout_clustering",
+            "sig_017_anomaly_traffic_spike",
+            "sig_018_anomaly_geo_entropy"
+        ],
+        "shield": [
+            "sig_001_auth_missing_bearer",
+            "sig_002_auth_revoked_key",
+            "sig_003_auth_invalid_key",
+            "sig_004_rate_limit_exceeded_atomic",
+            "sig_005_event_uuid_invalid",
+            "sig_006_event_timestamp_invalid",
+            "sig_007_processor_invalid",
+            "sig_008_deduplication_detected",
+            "sig_009_risk_insufficient_data",
+            "sig_010_risk_cardinality_limit",
+            "sig_011_risk_band_elevated",
+            "sig_012_risk_band_high",
+            "sig_013_risk_band_critical",
+            "sig_014_anomaly_high_failure_rate",
+            "sig_015_anomaly_retry_pressure",
+            "sig_016_anomaly_timeout_clustering",
+            "sig_017_anomaly_traffic_spike",
+            "sig_018_anomaly_geo_entropy"
+        ],
+        "fortress": [
+            "*"
+        ]
+    }
+}
