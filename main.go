@@ -61,9 +61,12 @@ type CheckoutRequest struct {
 
 // Constants
 const (
-	dedupTTL    = 24 * time.Hour
-	maxRetries  = 5
-	maxBodySize = 1 * 1024 * 1024 // 1MB
+	dedupTTL       = 24 * time.Hour
+	idempotencyTTL = 24 * time.Hour // consumer-side export latch
+	ackTimeout        = 2 * time.Second
+	redisWriteTimeout = 2 * time.Second
+	maxRetries        = 5
+	maxBodySize    = 1 * 1024 * 1024 // 1MB
 )
 
 var (
@@ -72,7 +75,10 @@ var (
 	rdb       *redis.Client
 	streamKey = "events_stream"
 	groupName = "payment_consumers"
-	dlqKey    = "events_stream_dlq"
+	dlqKey       = "events_stream_dlq"
+	poisonCounts    sync.Map // map[string]int — local poison message guard
+	exportFailStreak atomic.Int32
+	lastConsume      atomic.Int64 // unix seconds of last successful message read
 
 	// XAUTOCLAIM: reclaim stuck messages after this idle time
 	minIdleToClaim = 30 * time.Second
@@ -451,8 +457,11 @@ func initializePrometheus() {
 // setupRedis initializes Redis client and global rate limiter
 func setupRedis(redisAddr string) {
 	rdb = redis.NewClient(&redis.Options{
-		Addr: redisAddr,
-		DB:   0,
+		Addr:         redisAddr,
+		DB:           0,
+		DialTimeout:  2 * time.Second,
+		ReadTimeout:  2 * time.Second,
+		WriteTimeout: 2 * time.Second,
 	})
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
@@ -803,6 +812,16 @@ func consumeEvents() {
 	errorBackoff := 0 // For exponential backoff on errors
 
 	for {
+		if t := lastConsume.Load(); t != 0 && time.Now().Unix()-t > 30 {
+			log.Printf("consumer_watchdog_triggered stall_seconds=%d", time.Now().Unix()-t)
+		}
+
+		if exportFailStreak.Load() >= 5 {
+			log.Printf("consumer_paused reason=export_fail_streak")
+			time.Sleep(2 * time.Second)
+			continue
+		}
+
 		// 1) Crash recovery: reclaim stuck/pending messages
 		for {
 			msgs, next, err := rdb.XAutoClaim(ctx, &redis.XAutoClaimArgs{
@@ -830,8 +849,9 @@ func consumeEvents() {
 				break
 			}
 
+			lastConsume.Store(time.Now().Unix())
 			for _, msg := range msgs {
-				handleMessageWithDlq(msg)
+				safeHandleMessage(msg)
 			}
 		}
 
@@ -858,9 +878,10 @@ func consumeEvents() {
 		// Reset backoff on success
 		errorBackoff = 0
 
+		lastConsume.Store(time.Now().Unix())
 		for _, s := range streams {
 			for _, msg := range s.Messages {
-				handleMessageWithDlq(msg)
+				safeHandleMessage(msg)
 			}
 		}
 	}
@@ -1435,15 +1456,78 @@ func handleMessageWithDlq(msg redis.XMessage) {
 		msg.ID, event.EventType, event.Processor)
 	consumerProcessed.Inc()
 
-	// ACK first - must succeed before export
-	if err := rdb.XAck(ctx, streamKey, groupName, msg.ID).Err(); err != nil {
-		log.Printf("xack_error id=%s err=%v", msg.ID, err)
+	// Idempotency latch — prevent duplicate exports on redelivery
+	latchKey := fmt.Sprintf("processed:%s:%s", streamKey, msg.ID)
+	wctx, wcancel := context.WithTimeout(ctx, redisWriteTimeout)
+	wasSet, setErr := rdb.SetNX(wctx, latchKey, "1", idempotencyTTL).Result()
+	wcancel()
+	if setErr == nil && !wasSet {
+		log.Printf("duplicate_skipped message_id=%s", msg.ID)
+		// Already exported; safe to ACK and return
+		ackCtx, cancel := context.WithTimeout(ctx, ackTimeout)
+		var ackErr error
+		for i := 0; i < 3; i++ {
+			ackErr = rdb.XAck(ackCtx, streamKey, groupName, msg.ID).Err()
+			if ackErr == nil {
+				break
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+		cancel()
+		if ackErr != nil {
+			log.Printf("xack_error id=%s retries=3 err=%v", msg.ID, ackErr)
+		}
+		return
+	}
+	// If SetNX errors (network): fail-open, proceed with export to avoid data loss
+
+	// Export event — must succeed before ACK to prevent silent data loss
+	if err := exportEvent(event, msg.ID); err != nil {
+		log.Printf("export_failed event_id=%s reason=%v", event.EventID, err)
+		exportFailStreak.Add(1)
+		return // do not ACK — message remains pending for retry
+	}
+
+	exportFailStreak.Store(0)
+
+	// ACK only after confirmed export success
+	ackCtx, cancel := context.WithTimeout(ctx, ackTimeout)
+	var ackErr error
+	for i := 0; i < 3; i++ {
+		ackErr = rdb.XAck(ackCtx, streamKey, groupName, msg.ID).Err()
+		if ackErr == nil {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	cancel()
+	if ackErr != nil {
+		log.Printf("xack_error id=%s retries=3 err=%v", msg.ID, ackErr)
 		return
 	}
 
-	// Export event (best-effort after ACK)
-	exportEvent(event, msg.ID)
+}
 
+func safeHandleMessage(msg redis.XMessage) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("consumer_panic_recovered message_id=%s panic=%v", msg.ID, r)
+
+			v, _ := poisonCounts.LoadOrStore(msg.ID, 0)
+			n := v.(int) + 1
+
+			if n >= 5 {
+				log.Printf("poison_message_detected message_id=%s failures=%d", msg.ID, n)
+				_ = sendToDlq(msg, "poison_message_repeated_panics")
+				poisonCounts.Delete(msg.ID)
+				return
+			}
+
+			poisonCounts.Store(msg.ID, n)
+		}
+	}()
+
+	handleMessageWithDlq(msg)
 }
 
 // Updated sendToDlq with reason and timestamp
@@ -1457,7 +1541,8 @@ func sendToDlq(msg redis.XMessage, reason string) error {
 		}
 	}
 
-	err := rdb.XAdd(ctx, &redis.XAddArgs{
+	wctx, wcancel := context.WithTimeout(ctx, redisWriteTimeout)
+	err := rdb.XAdd(wctx, &redis.XAddArgs{
 		Stream: dlqKey,
 		Values: map[string]any{
 			"data":        raw,
@@ -1466,6 +1551,7 @@ func sendToDlq(msg redis.XMessage, reason string) error {
 			"timestamp":   time.Now().Unix(),
 		},
 	}).Err()
+	wcancel()
 
 	if err != nil {
 		log.Printf("dlq_add_error id=%s err=%v", msg.ID, err)
@@ -1473,7 +1559,10 @@ func sendToDlq(msg redis.XMessage, reason string) error {
 	}
 
 	// Must ACK to remove from pending
-	if err := rdb.XAck(ctx, streamKey, groupName, msg.ID).Err(); err != nil {
+	wctx2, wcancel2 := context.WithTimeout(ctx, redisWriteTimeout)
+	err = rdb.XAck(wctx2, streamKey, groupName, msg.ID).Err()
+	wcancel2()
+	if err != nil {
 		log.Printf("dlq_xack_error id=%s err=%v", msg.ID, err)
 		return err
 	}
@@ -1639,8 +1728,9 @@ type ExportedEvent struct {
 	RiskTrajectory           string `json:"risk_trajectory,omitempty"`
 }
 
-// exportEvent writes the processed event to configured destinations
-func exportEvent(event Event, messageID string) {
+// exportEvent writes the processed event to configured destinations.
+// Returns nil on success; non-nil error means at least one destination failed.
+func exportEvent(event Event, messageID string) error {
 	exported := ExportedEvent{
 		EventID:         event.EventID,
 		EventType:       event.EventType,
@@ -1732,11 +1822,13 @@ func exportEvent(event Event, messageID string) {
 	if err != nil {
 		log.Printf("export_marshal_error event_id=%s err=%v", event.EventID, err)
 		exportErrors.WithLabelValues(exportMode, "marshal").Inc()
-		return
+		return fmt.Errorf("marshal: %w", err)
 	}
 
 	// Add newline for line-delimited JSON
 	data = append(data, '\n')
+
+	var exportErr error
 
 	if exportMode == "stdout" || exportMode == "both" {
 		_, err := os.Stdout.Write(data)
@@ -1746,6 +1838,7 @@ func exportEvent(event Event, messageID string) {
 			// Record error timestamp
 			atomic.StoreInt64(&exportLastErrorStdout, time.Now().Unix())
 			exportLastErrorReason.Store("stdout", "write")
+			exportErr = fmt.Errorf("stdout: %w", err)
 		} else {
 			eventsExported.WithLabelValues("stdout").Inc()
 			// Record success timestamp (atomic + Prometheus)
@@ -1763,6 +1856,7 @@ func exportEvent(event Event, messageID string) {
 			// Record error timestamp
 			atomic.StoreInt64(&exportLastErrorFile, time.Now().Unix())
 			exportLastErrorReason.Store("file", "write")
+			exportErr = fmt.Errorf("file: %w", err)
 		} else {
 			// Flush periodically (every write is okay for moderate throughput)
 			err := exportWriter.Flush()
@@ -1772,6 +1866,7 @@ func exportEvent(event Event, messageID string) {
 				// Record error timestamp
 				atomic.StoreInt64(&exportLastErrorFile, time.Now().Unix())
 				exportLastErrorReason.Store("file", "flush")
+				exportErr = fmt.Errorf("file flush: %w", err)
 			} else {
 				eventsExported.WithLabelValues("file").Inc()
 				// Record success timestamp (atomic + Prometheus)
@@ -1781,6 +1876,8 @@ func exportEvent(event Event, messageID string) {
 			}
 		}
 	}
+
+	return exportErr
 }
 
 // calculateBackoff returns exponential backoff duration (100ms doubling, capped at 2s)
