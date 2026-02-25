@@ -1,66 +1,8 @@
-import React, { useState } from 'react';
-import { Shield, Eye, BarChart3, Lock, History, Layers, ChevronRight, Activity, Zap, Sparkles, Terminal, FileText, Loader2 } from 'lucide-react';
+import React from 'react';
+import { Shield } from 'lucide-react';
 import Footer from '../components/Footer';
 
 const Home = () => {
-    // Gemini Simulation State
-    const [selectedAnomaly, setSelectedAnomaly] = useState("");
-    const [aiAnalysis, setAiAnalysis] = useState("");
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [error, setError] = useState(null);
-
-    const anomalies = [
-        { id: "soft_decline_spike", label: "40% Spike in Soft Declines (Insuff. Funds)", context: "May signal a retry storm or shifts in traffic profile." },
-        { id: "auth_latency", label: "Elevated Auth Latency (>3000ms)", context: "Can precede possible routing degradation or approval-rate anomalies." },
-        { id: "velocity_shift", label: "Abnormal Transaction Velocity Shift", context: "May trigger processor risk models and potential volume caps." },
-        { id: "mcc_mismatch", label: "High Volume of MCC-Inconsistent Traffic", context: "May lead to immediate processor scrutiny and possible reserves/holds." }
-    ];
-
-    /**
-     * Simulation fallback for demo purposes
-     * When backend is not available, generates realistic PayFlux analysis
-     */
-    const simulateAnalysis = (label) => {
-        const templates = {
-            "40% Spike in Soft Declines (Insuff. Funds)": `PROBABLE PROCESSOR PERSPECTIVE:\nRisk systems are likely mapping this pattern to a high-velocity retry storm. This triggers "Abnormal Activity" flags, often leading to temporary auth suppression to prevent potential issuer-side blocklisting.\n\nEVIDENCE NARRATIVE:\n"The observed shift in decline rates is a direct result of a localized marketing event targeting existing customers. Telemetry confirms low fraud-intent; retry intensity is being throttled internally to align with standard processor models."`,
-            "Elevated Auth Latency (>3000ms)": `PROBABLE PROCESSOR PERSPECTIVE:\nExtended latency is being interpreted as potential routing degradation. This often leads to silent routing shifts toward more conservative (but expensive) rails to maintain approval stability.\n\nEVIDENCE NARRATIVE:\n"Observed latency spikes have been identified within specific regional routing pathways. Operational controls have been engaged to prioritize approval-rate stability over cost-optimization for the current window."`,
-            "Abnormal Transaction Velocity Shift": `PROBABLE PROCESSOR PERSPECTIVE:\nSudden velocity shifts are commonly associated with card-testing or bot attacks. Processor risk models may engage auto-caps on traffic to protect their downstream banking partners.\n\nEVIDENCE NARRATIVE:\n"A planned volume expansion has shifted baseline transaction velocity. Real-time observability confirms valid user sessions; current risk posture is compliant with historical growth projections."`,
-            "High Volume of MCC-Inconsistent Traffic": `PROBABLE PROCESSOR PERSPECTIVE:\nInconsistent MCC traffic leads to immediate classification as "High Risk Traffic." This is a primary driver for rolling reserves or fund holds to mitigate misclassification liability.\n\nEVIDENCE NARRATIVE:\n"Telemetry signals have captured an increase in cross-category purchases. Historical transaction integrity remains within high-confidence bounds; operational records are available for audit review."`
-        };
-        return templates[label] || "Telemetry signal analyzed. Risk posture stable.";
-    };
-
-    const runAnalysis = async () => {
-        if (!selectedAnomaly) return;
-        setIsAnalyzing(true);
-        setError(null);
-        setAiAnalysis("");
-
-        try {
-            // Try to hit the real backend proxy
-            const response = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ anomaly: selectedAnomaly })
-            });
-
-            if (!response.ok) throw new Error('API Unavailable');
-
-            const data = await response.json();
-            setAiAnalysis(data.analysis);
-            setIsAnalyzing(false);
-        } catch (err) {
-            // FALLBACK: If no server is found, simulate the response so the UI works
-            console.warn("Backend proxy not found. Running in simulation mode.");
-            setTimeout(() => {
-                setAiAnalysis(simulateAnalysis(selectedAnomaly));
-                setIsAnalyzing(false);
-            }, 1500); // Simulate network delay
-        }
-    };
-
-    const pilotMailto = "mailto:pilot@payflux.com?subject=PayFlux%20Pilot%20Request";
-
     return (
         <div className="min-h-screen bg-[#0a0c10] text-slate-300 font-sans selection:bg-indigo-500/30 bg-grid">
             {/* NAVIGATION */}
@@ -71,321 +13,543 @@ const Home = () => {
                         <span className="text-white font-bold tracking-tight text-xl">PayFlux</span>
                     </div>
                     <div className="hidden md:flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                        <a href="#logic" className="hover:text-white transition-colors">Infrastructure</a>
-                        <a href="#intelligence" className="hover:text-white transition-colors">Intelligence</a>
-                        <a href="#levels" className="hover:text-white transition-colors">Pricing</a>
-                        <a href="#safety" className="hover:text-white transition-colors">Safety</a>
+                        <a href="#signals" className="hover:text-white transition-colors">Signals</a>
+                        <a href="#projection" className="hover:text-white transition-colors">Projection</a>
+                        <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+                        <a href="#trust" className="hover:text-white transition-colors">Trust</a>
                     </div>
-                    <button onClick={() => document.getElementById('start-pilot').scrollIntoView({ behavior: 'smooth' })} className="text-[10px] uppercase tracking-[0.2em] font-bold text-white border border-white/10 px-5 py-2 hover:bg-white hover:text-black transition-all">Start Pilot</button>
+                    <button onClick={() => document.getElementById('contact').scrollIntoView({ behavior: 'smooth' })} className="text-[10px] uppercase tracking-[0.2em] font-bold text-white border border-white/10 px-5 py-2 hover:bg-white hover:text-black transition-all">Get Started</button>
                 </div>
             </nav>
 
-            {/* HERO (FOCUS ANCHOR) */}
-            <section className="relative pb-32" style={{ paddingTop: '240px' }}>
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="max-w-4xl mx-auto text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-[11px] font-bold uppercase tracking-widest text-indigo-400 mb-10">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                            </span>
-                            Infrastructure Layer
-                        </div>
-                        <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tighter leading-[1.1] mb-8">
-                            Payment systems<br /><span className="text-slate-500">don’t collapse—they erode.</span>
-                        </h1>
-                        <p className="text-lg md:text-xl text-slate-400 leading-relaxed mb-14 max-w-2xl mx-auto font-medium">
-                            Risk accumulates quietly. Processors see pattern degradation long before merchants do. PayFlux surfaces reality early, so you can document control and prepare for scrutiny if it occurs.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                            <button onClick={() => document.getElementById('intelligence').scrollIntoView({ behavior: 'smooth' })} className="w-full sm:w-auto px-10 py-5 bg-white text-black font-extrabold rounded-sm hover:bg-slate-200 transition-all uppercase tracking-widest text-[11px]">Simulate Intelligence ✨</button>
-                            <button onClick={() => document.getElementById('levels').scrollIntoView({ behavior: 'smooth' })} className="w-full sm:w-auto px-10 py-5 border border-white/20 text-white font-extrabold rounded-sm hover:bg-white/5 transition-all uppercase tracking-widest text-[11px]">View Control Levels</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* PROBLEM FRAMING */}
-            <section className="py-32 border-t border-white/5 bg-[#0a0c10]/50">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="max-w-3xl mb-16">
-                        <h2 className="text-[11px] uppercase tracking-[0.3em] text-indigo-500 font-bold mb-6">Risk Telemetry</h2>
-                        <h3 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-8">
-                            By the time revenue is affected, the decision has already been made.
-                        </h3>
-                        <p className="text-lg text-slate-400 leading-relaxed max-w-2xl">
-                            Individual failures are noise. Patterns are the signal. Retry storms, approval-rate degradation, and soft declines are the primary inputs into your processor's risk model.
-                        </p>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-8">
-                        {[
-                            { title: "Retry Storms", desc: "Unchecked retries that signal elevated intensity to risk systems." },
-                            { title: "Approval degradation", desc: "Unexpected drops reflecting issuer behavior or risk controls." },
-                            { title: "Routing Shifts", desc: "Changes in outcomes that reduce performance over time." },
-                            { title: "Performance Penalties", desc: "Degradation in approval quality hard to see in dashboards." }
-                        ].map((item, i) => (
-                            <div key={i} className="p-10 bg-white/[0.02] infra-border rounded-sm">
-                                <h3 className="text-white font-bold mb-4 tracking-tight text-lg">{item.title}</h3>
-                                <p className="text-[14px] text-slate-500 leading-relaxed">{item.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* SIGNAL INTELLIGENCE (PRIMARY INTERACTION) */}
-            <section id="intelligence" className="py-32">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="max-w-2xl mb-16">
-                        <h2 className="text-[11px] uppercase tracking-[0.3em] text-indigo-500 font-bold mb-6">Signal Intelligence ✨</h2>
-                        <h3 className="text-3xl md:text-4xl font-bold text-white mb-8">See the Risk Team’s Read</h3>
-                        <p className="text-slate-400 leading-relaxed font-medium">
-                            Most operators only see failures. We help you see how patterns are commonly interpreted in risk reviews.
-                        </p>
+            {/* HERO */}
+            <section className="relative pb-32" style={{ paddingTop: '200px' }}>
+                <div className="max-w-6xl mx-auto px-6 text-center">
+                    <div className="mb-6">
+                        <span className="text-[11px] uppercase tracking-[0.3em] text-zinc-400 font-semibold">
+                            Deterministic Reserve Infrastructure
+                        </span>
                     </div>
 
-                    <div className="grid lg:grid-cols-2 gap-16 items-start">
-                        <div className="space-y-6">
-                            <div className="flex flex-col gap-4">
-                                {anomalies.map((a) => (
-                                    <button
-                                        key={a.id}
-                                        onClick={() => setSelectedAnomaly(a.label)}
-                                        className={`w-full text-left p-8 border transition-all rounded-sm min-h-[120px] flex flex-col justify-center ${selectedAnomaly === a.label ? 'border-indigo-500 bg-indigo-500/10' : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.04]'}`}
-                                    >
-                                        <div className="flex justify-between items-center mb-3">
-                                            <span className="text-[12px] font-bold text-white uppercase tracking-wider">{a.label}</span>
-                                            {selectedAnomaly === a.label && <Sparkles size={14} className="text-indigo-400" />}
-                                        </div>
-                                        <p className="text-[12px] text-slate-500 italic leading-relaxed">{a.context}</p>
-                                    </button>
-                                ))}
-                            </div>
-                            <button disabled={!selectedAnomaly || isAnalyzing} onClick={runAnalysis} className="w-full py-5 bg-indigo-600 text-white font-extrabold rounded-sm hover:bg-indigo-500 disabled:opacity-50 transition-all uppercase tracking-[0.2em] text-[11px]">
-                                {isAnalyzing ? "Analyzing Infrastructure..." : "Run Signal Analysis ✨"}
-                            </button>
-                        </div>
-                        <div className="relative border border-white/15 bg-[#0c0e12] rounded-sm h-[560px] flex flex-col shadow-2xl">
-                            <div className="border-b border-white/5 p-5 flex items-center justify-between bg-white/[0.02]">
-                                <div className="flex gap-2.5"><div className="w-2.5 h-2.5 rounded-full bg-slate-800" /><div className="w-2.5 h-2.5 rounded-full bg-slate-800" /><div className="w-2.5 h-2.5 rounded-full bg-slate-800" /></div>
-                                <span className="text-[10px] uppercase tracking-widest text-slate-500 font-mono">Telemetry-v2.5</span>
-                            </div>
-                            <div className="p-10 font-mono text-[13px] overflow-y-auto h-full">
-                                {!aiAnalysis && !isAnalyzing && <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-8"><Terminal size={48} strokeWidth={1} /><p className="uppercase tracking-widest text-[10px] font-bold">Select telemetry to begin process</p></div>}
-                                {isAnalyzing && <div className="space-y-6 pt-4"><div className="h-2 w-3/4 bg-slate-800 animate-pulse rounded" /><div className="h-2 w-1/2 bg-slate-800 animate-pulse rounded" /><div className="h-2 w-5/6 bg-slate-800 animate-pulse rounded" /></div>}
-                                {aiAnalysis && <div className="whitespace-pre-wrap text-slate-300 animate-in leading-relaxed">{aiAnalysis}</div>}
-                            </div>
-                            {aiAnalysis && (
-                                <div className="mt-auto border-t border-white/5 p-5 bg-white/[0.02] flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                                        <FileText size={12} /> Narrative draft ready
-                                    </div>
-                                    <button className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest border border-indigo-500/20 px-4 py-1.5 rounded-sm">
-                                        Preserve (soon)
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </section>
+                    <h1 className="text-4xl md:text-6xl font-semibold text-white leading-tight mb-6">
+                        Rolling reserves don't surprise you.<br />They build.
+                    </h1>
 
-            {/* INFRASTRUCTURE / LOGIC */}
-            <section id="logic" className="py-32 bg-[#0c0e12]/30 border-y border-white/5">
-                <div className="max-w-7xl mx-auto px-6">
+                    <p className="text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto mb-16">
+                        PayFlux projects reserve exposure 30–180 days ahead.<br className="hidden md:block" />
+                        Deterministic. Auditable. Before processors escalate.
+                    </p>
+
+                    {/* Example Output Block */}
                     <div className="mb-16">
-                        <h2 className="text-[10px] uppercase tracking-[0.3em] text-indigo-500 font-bold mb-6">Engineering Logic</h2>
-                        <h3 className="text-3xl font-bold text-white tracking-tight">Built for durable historical records.</h3>
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 mb-4">
+                            Projected Reserve Exposure
+                        </div>
+                        <div className="text-6xl md:text-7xl font-bold text-white mb-4">
+                            $247,843
+                        </div>
+                        <div className="text-sm text-zinc-500">
+                            120-day deterministic window — Example output from a Pro account
+                        </div>
+                        <div className="text-xs text-zinc-600 mt-3">
+                            Based on observed slope, acceleration, and instability metrics.
+                        </div>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-12">
-                        <div className="text-center">
-                            <div className="w-14 h-14 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 mx-auto mb-8 infra-border"><Activity size={24} /></div>
-                            <h3 className="text-white font-bold text-lg mb-4 uppercase tracking-wider">Real-time Metering</h3>
-                            <p className="text-slate-500 text-[14px] leading-relaxed max-w-xs mx-auto">Passive observation of every transaction signal, creating high-resolution maps without interference.</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="w-14 h-14 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 mx-auto mb-8 infra-border"><History size={24} /></div>
-                            <h3 className="text-white font-bold text-lg mb-4 uppercase tracking-wider">Durable Records</h3>
-                            <p className="text-slate-500 text-[14px] leading-relaxed max-w-xs mx-auto">Historical ledgers designed for incident review, governance, and professional partner conversations.</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="w-14 h-14 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 mx-auto mb-8 infra-border"><Layers size={24} /></div>
-                            <h3 className="text-white font-bold text-lg mb-4 uppercase tracking-wider">Snapshot Integrity</h3>
-                            <p className="text-slate-500 text-[14px] leading-relaxed max-w-xs mx-auto">Point-in-time captures of your risk posture, allowing separation between live signals and long-term records.</p>
-                        </div>
+
+                    {/* CTAs */}
+                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <a
+                            href="https://app.payflux.dev/risk"
+                            className="px-8 py-4 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-slate-200 transition-all"
+                        >
+                            Run a Free Risk Scan
+                        </a>
+                        <a
+                            href="#pricing"
+                            className="px-8 py-4 border border-white/20 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-white/5 transition-all"
+                        >
+                            View Pricing
+                        </a>
                     </div>
                 </div>
             </section>
 
-            {/* LEVELS OF CONTROL (PRICING) */}
-            <section id="levels" className="py-32">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="mb-20">
-                        <h2 className="text-[11px] uppercase tracking-[0.3em] text-indigo-500 font-bold mb-6">Progression Model</h2>
-                        <h3 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-8">Choose Your Level of Control</h3>
-                        <p className="text-slate-500 max-w-xl font-medium leading-relaxed">Different stages of payment volume require a different risk posture. Align your infrastructure with maturity.</p>
-                    </div>
-                    <div className="grid lg:grid-cols-3 gap-8 items-stretch pt-8">
-                        <div className="flex flex-col bg-white/[0.02] infra-border p-10 rounded-sm">
-                            <div className="mb-10 text-center border-b border-white/5 pb-10">
-                                <h3 className="text-[11px] uppercase tracking-[0.3em] text-indigo-400 font-black mb-4">Pilot</h3>
-                                <p className="text-white font-bold text-xl mb-2 italic tracking-tight">"Do we have proof of degradation?"</p>
-                            </div>
-                            <p className="text-[14px] text-slate-400 mb-10 flex-grow text-center leading-relaxed font-medium">Designed to prove value and earn trust. Surface early signals without commitment.</p>
-                            <div className="pt-10 border-t border-white/5 text-center">
-                                <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-8">Pilot fee: $5,000 / 90 days</div>
-                                <button onClick={() => document.getElementById('start-pilot').scrollIntoView({ behavior: 'smooth' })} className="w-full py-5 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-slate-200 transition-all">Start Pilot</button>
-                            </div>
-                        </div>
-                        <div className="flex flex-col bg-[#0d1117] border border-indigo-500/40 p-10 rounded-sm relative shadow-2xl z-10">
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-sm">Recommended</div>
-                            <div className="mb-10 text-center border-b border-white/5 pb-10">
-                                <h3 className="text-[11px] uppercase tracking-[0.3em] text-indigo-400 font-black mb-4">Growth</h3>
-                                <p className="text-white font-bold text-xl mb-2 italic tracking-tight">"Are we operating safely?"</p>
-                            </div>
-                            <p className="text-[14px] text-slate-400 mb-10 flex-grow text-center leading-relaxed font-semibold">Gain credibility with processing partners. Move from awareness to control.</p>
-                            <div className="pt-10 border-t border-white/5 text-center">
-                                <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-8">Coverage: $2,500 / month</div>
-                                <button className="w-full py-5 bg-indigo-600 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20">Move to Growth</button>
-                            </div>
-                        </div>
-                        <div className="flex flex-col bg-white/[0.02] infra-border p-10 rounded-sm">
-                            <div className="mb-10 text-center border-b border-white/5 pb-10">
-                                <h3 className="text-[11px] uppercase tracking-[0.3em] text-indigo-400 font-black mb-4">Scale</h3>
-                                <p className="text-white font-bold text-xl mb-2 italic tracking-tight">"Can we withstand scrutiny?"</p>
-                            </div>
-                            <p className="text-[14px] text-slate-400 mb-10 flex-grow text-center leading-relaxed font-medium">Quiet confidence for high-volume environments. Built for institutional leverage.</p>
-                            <div className="pt-10 border-t border-white/5 text-center">
-                                <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-8">Coverage: $7,500 / month</div>
-                                <button className="w-full py-5 border border-white/20 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-white/5 transition-all">Talk to Us</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* SAFETY SECTION (TRUST SEAL) */}
-            <section id="safety" className="py-32 border-t border-white/5">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="max-w-4xl mx-auto bg-[#0c0e12] border border-white/10 p-16 md:p-24 rounded-sm text-center shadow-3xl">
-                        <Shield className="mx-auto text-indigo-500 mb-10" size={48} strokeWidth={1} />
-                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-8 tracking-tight leading-tight">Built for Production Rigor</h2>
-                        <p className="text-indigo-400 text-[11px] font-black uppercase tracking-[0.3em] mb-16 max-w-2xl mx-auto">
-                            PayFlux is observability-only: it does not route payments, approve/decline transactions, or change processor decisions.
-                        </p>
-                        <div className="grid sm:grid-cols-2 gap-16 text-left border-t border-white/5 pt-16">
-                            <div className="space-y-4">
-                                <h4 className="text-white font-bold uppercase tracking-widest text-[11px]">Observability-Only</h4>
-                                <p className="text-[14px] text-slate-500 leading-relaxed font-medium">PayFlux sits outside the critical path and never block payments or introduce latency.</p>
-                            </div>
-                            <div className="space-y-4">
-                                <h4 className="text-white font-bold uppercase tracking-widest text-[11px]">Audit Ready</h4>
-                                <p className="text-[14px] text-slate-500 leading-relaxed font-medium">Architected for regulated environments where internal governance is expected.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            {/* START PILOT FORM (NETLIFY BOTS) */}
-            <section id="start-pilot" className="py-32 border-t border-white/5">
-                <div className="max-w-3xl mx-auto px-6">
+            {/* SIGNAL LAYER */}
+            <section id="signals" className="py-32 border-t border-white/5">
+                <div className="max-w-6xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-[11px] uppercase tracking-[0.3em] text-indigo-500 font-bold mb-6">Access Request</h2>
-                        <h3 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-8">
-                            Request Pilot Coverage
-                        </h3>
-                        <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
-                            Submit your contact details. We'll follow up with next steps and technical requirements.
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
+                            Signal Layer
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                            Reserve exposure begins with degradation signals.
+                        </h2>
+                        <p className="text-lg text-zinc-400 max-w-3xl mx-auto">
+                            Retry intensity. Approval shifts. Routing instability. Velocity constraints.
+                            These patterns precede processor escalation. PayFlux captures them
+                            — and feeds them into a deterministic trajectory model.
                         </p>
                     </div>
 
-                    <form
-                        name="pilot"
-                        method="POST"
-                        action="/"
-                        data-netlify="true"
-                        data-netlify-honeypot="bot-field"
-                        className="bg-white/[0.02] infra-border p-10 rounded-sm space-y-8 shadow-2xl"
-                    >
-                        {/* Netlify required hidden input */}
-                        <input type="hidden" name="form-name" value="pilot" />
-                        {/* Honeypot */}
-                        <p className="hidden">
-                            <label>
-                                Don't fill this out: <input name="bot-field" />
-                            </label>
-                        </p>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Retry Intensity</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Repeated authorization attempts across declining approvals.
+                                Indicates increasing processor scrutiny.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Approval Degradation</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Week-over-week decline in authorization rates.
+                                Signals rising internal risk thresholds.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Routing Shifts</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Changes in gateway behavior or fallback patterns.
+                                Often precede reserve enforcement.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Velocity Constraints</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Sudden throttling of volume or settlement timing.
+                                Early indicator of liquidity pressure.
+                            </p>
+                        </div>
+                    </div>
 
-                        <div className="grid md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Work Email</label>
+                    <div className="text-center mt-16 text-zinc-500 text-sm">
+                        These signals are not the outcome. They are inputs to the trajectory model.
+                    </div>
+                </div>
+            </section>
+
+            {/* TRAJECTORY ANALYSIS */}
+            <section id="trajectory" className="py-32 border-t border-white/5">
+                <div className="max-w-6xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
+                            Trajectory Analysis
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                            Signals tell you what happened.<br />Trajectory tells you what's building.
+                        </h2>
+                        <p className="text-lg text-zinc-400 max-w-3xl mx-auto">
+                            PayFlux converts raw degradation signals into directional metrics
+                            that measure how quickly risk is evolving — and whether escalation pressure is forming.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Slope</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Is risk increasing or decreasing?
+                                Measures the rate of change in signal intensity over time.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Acceleration</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Is risk increasing faster than before?
+                                Measures whether degradation is compounding.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Instability</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Is behavior becoming unpredictable?
+                                Measures variance and sudden directional shifts.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">Trend</h3>
+                            <p className="text-zinc-400 text-sm">
+                                Where is the system heading?
+                                Projects directional bias based on current trajectory.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="text-center mt-16 text-zinc-500 text-sm">
+                        Trajectory converts signal behavior into directional pressure.<br />
+                        Projection converts directional pressure into capital exposure.
+                    </div>
+                </div>
+            </section>
+
+            {/* RESERVE PROJECTION ENGINE */}
+            <section id="projection" className="py-32 border-t border-white/5">
+                <div className="max-w-6xl mx-auto px-6 text-center">
+                    <div className="mb-16">
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
+                            Reserve Projection Engine
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                            Know how much capital is building inside your reserve window.
+                        </h2>
+                        <p className="text-lg text-zinc-400 max-w-3xl mx-auto">
+                            PayFlux converts risk trajectory into deterministic reserve exposure across rolling 30–180 day windows.
+                            No machine learning. No black box scoring. Repeatable math.
+                        </p>
+                    </div>
+
+                    {/* Dominant Projection Block */}
+                    <div className="mb-20">
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 mb-4">
+                            Projected Reserve Exposure
+                        </div>
+                        <div className="text-6xl md:text-7xl font-bold text-white mb-4">
+                            $247,843
+                        </div>
+                        <div className="text-sm text-zinc-500">
+                            120-day deterministic window — Example output from a Pro account
+                        </div>
+                        <div className="text-xs text-zinc-600 mt-3">
+                            Calculated from observed slope, acceleration, and instability metrics.
+                        </div>
+                    </div>
+
+                    {/* Window Grid */}
+                    <div className="grid md:grid-cols-3 gap-6 text-left">
+                        <div className="border border-white/5 p-6">
+                            <div className="text-sm text-zinc-400 mb-2">90-Day Window</div>
+                            <div className="text-white text-sm mb-1">Base Scenario: 8.2%</div>
+                            <div className="text-white text-sm mb-3">Escalation Scenario: 12.5%</div>
+                            <div className="text-white font-semibold">$164,210 projected exposure</div>
+                        </div>
+                        <div className="border border-white/20 p-6">
+                            <div className="text-sm text-zinc-400 mb-2">120-Day Window</div>
+                            <div className="text-white text-sm mb-1">Base Scenario: 10.4%</div>
+                            <div className="text-white text-sm mb-3">Escalation Scenario: 15.1%</div>
+                            <div className="text-white font-semibold">$247,843 projected exposure</div>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <div className="text-sm text-zinc-400 mb-2">180-Day Window</div>
+                            <div className="text-white text-sm mb-1">Base Scenario: 13.7%</div>
+                            <div className="text-white text-sm mb-3">Escalation Scenario: 19.8%</div>
+                            <div className="text-white font-semibold">$392,104 projected exposure</div>
+                        </div>
+                    </div>
+
+                    <div className="text-center mt-16 text-zinc-500 text-sm">
+                        Projection does not change processor behavior.
+                        It quantifies the capital impact of current trajectory.
+                    </div>
+
+                    <div className="mt-16 flex flex-col sm:flex-row justify-center gap-4">
+                        <a
+                            href="https://app.payflux.dev/risk"
+                            className="px-8 py-4 bg-white text-black text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-sm hover:bg-slate-200 transition-all"
+                        >
+                            Run a Free Risk Scan
+                        </a>
+                        <a
+                            href="#pricing"
+                            className="px-8 py-4 border border-white/20 text-white text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-sm hover:bg-white/5 transition-all"
+                        >
+                            Quantify Trapped Capital
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            {/* EXPORT ARTIFACT */}
+            <section id="artifact" className="py-32 border-t border-white/5">
+                <div className="max-w-6xl mx-auto px-6 text-center">
+                    <div className="mb-16">
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
+                            Export Artifact
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                            The document your stakeholders actually need.
+                        </h2>
+                        <p className="text-lg text-zinc-400 max-w-3xl mx-auto">
+                            Projection is useful internally. Exported projection moves decisions.
+                        </p>
+                    </div>
+
+                    {/* PDF Preview — replace with export-preview.png when available */}
+                    <div className="mb-20 flex justify-center">
+                        <div className="bg-white text-black p-10 w-full max-w-3xl shadow-lg text-left">
+                            <div className="text-sm font-semibold mb-4">
+                                Reserve Exposure Forecast
+                            </div>
+                            <div className="text-2xl font-bold mb-6">
+                                $247,843 — 120-Day Window
+                            </div>
+                            <div className="text-sm mb-2">
+                                Base Scenario: 10.4%
+                            </div>
+                            <div className="text-sm mb-6">
+                                Escalation Scenario: 15.1%
+                            </div>
+                            <div className="text-xs text-zinc-500">
+                                Model: reserve-v1.0.0 • Timestamped • Deterministic
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-2">
+                                payflux.dev
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Supporting Strip */}
+                    <div className="grid md:grid-cols-3 gap-6 text-left">
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">
+                                Deterministic Model Stamp
+                            </h3>
+                            <p className="text-zinc-400 text-sm">
+                                Each export includes model version and timestamp.
+                                Repeatable. Verifiable.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">
+                                Auditable Record
+                            </h3>
+                            <p className="text-zinc-400 text-sm">
+                                Point-in-time snapshot of risk trajectory and exposure.
+                                Suitable for internal review.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">
+                                Non-Invasive Posture
+                            </h3>
+                            <p className="text-zinc-400 text-sm">
+                                Does not influence routing, approvals, or settlement.
+                                Quantifies impact without touching payment flow.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* PRICING */}
+            <section id="pricing" className="py-32 border-t border-white/5">
+                <div className="max-w-6xl mx-auto px-6 text-center">
+                    <div className="mb-16">
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
+                            Pricing
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                            Unlock depth, not access.
+                        </h2>
+                        <p className="text-lg text-zinc-400 max-w-3xl mx-auto">
+                            Every account detects risk signals.
+                            Pro accounts quantify trapped capital.
+                            Enterprise accounts operationalize projection at scale.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-6 text-left">
+                        {/* FREE */}
+                        <div className="border border-white/5 p-8">
+                            <div className="text-white font-semibold mb-2">Free</div>
+                            <div className="text-3xl font-bold text-white mb-6">$0</div>
+                            <ul className="space-y-3 text-sm text-zinc-400 mb-8">
+                                <li>Risk scan</li>
+                                <li>Signal detection</li>
+                                <li>Instability classification</li>
+                                <li>Trajectory summary</li>
+                                <li>Projection preview (no USD exposure)</li>
+                            </ul>
+                            <a
+                                href="https://app.payflux.dev/risk"
+                                className="block text-center px-6 py-3 border border-white/20 text-white text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-sm hover:bg-white/5 transition-all"
+                            >
+                                Run Free Scan
+                            </a>
+                        </div>
+
+                        {/* PRO */}
+                        <div className="border border-white/20 p-8">
+                            <div className="text-white font-semibold mb-2">Pro</div>
+                            <div className="text-3xl font-bold text-white mb-6">
+                                $499<span className="text-sm text-zinc-400"> / month</span>
+                            </div>
+                            <ul className="space-y-3 text-sm text-zinc-400 mb-6">
+                                <li>Everything in Free</li>
+                                <li>Deterministic reserve projection (30–180 day windows)</li>
+                                <li>Base + Escalation scenarios</li>
+                                <li>USD exposure modeling</li>
+                                <li>Full export artifact (PDF)</li>
+                                <li>Projection archive</li>
+                            </ul>
+                            <div className="text-xs text-zinc-500 mb-8">
+                                One avoided reserve escalation offsets multiple years of subscription cost.
+                            </div>
+                            <a
+                                href="https://app.payflux.dev/upgrade"
+                                className="block text-center px-6 py-3 bg-white text-black text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-sm hover:bg-slate-200 transition-all"
+                            >
+                                Start Pro
+                            </a>
+                        </div>
+
+                        {/* ENTERPRISE */}
+                        <div className="border border-white/5 p-8">
+                            <div className="text-white font-semibold mb-2">Enterprise</div>
+                            <div className="text-3xl font-bold text-white mb-6">Contact Sales</div>
+                            <ul className="space-y-3 text-sm text-zinc-400 mb-8">
+                                <li>Everything in Pro</li>
+                                <li>Custom reserve windows</li>
+                                <li>API access</li>
+                                <li>Portfolio-level reporting</li>
+                                <li>Dedicated onboarding</li>
+                                <li>SLA support</li>
+                            </ul>
+                            <a
+                                href="#contact"
+                                className="block text-center px-6 py-3 border border-white/20 text-white text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-sm hover:bg-white/5 transition-all"
+                            >
+                                Talk to Sales
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* TRUST */}
+            <section id="trust" className="py-32 border-t border-white/5">
+                <div className="max-w-5xl mx-auto px-6 text-center">
+                    <div className="mb-16">
+                        <div className="flex justify-center mb-6">
+                            <Shield className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
+                            Trust
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                            Non-invasive by design.
+                        </h2>
+                        <p className="text-lg text-zinc-400 max-w-3xl mx-auto">
+                            PayFlux does not route payments, approve transactions, or alter settlement behavior.
+                            It observes degradation signals and projects capital exposure — without touching the payment path.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6 text-left">
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">
+                                Non-Invasive Architecture
+                            </h3>
+                            <p className="text-zinc-400 text-sm">
+                                Runs outside authorization and settlement flow.
+                                No routing changes. No approval logic. No added latency.
+                            </p>
+                        </div>
+                        <div className="border border-white/5 p-6">
+                            <h3 className="text-white font-semibold mb-3">
+                                Audit-Ready Output
+                            </h3>
+                            <p className="text-zinc-400 text-sm">
+                                Each projection includes model version and timestamp.
+                                Deterministic calculations are repeatable and verifiable.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-16 text-zinc-500 text-sm">
+                        Projection quantifies impact.<br />
+                        Your infrastructure remains sovereign.
+                    </div>
+                </div>
+            </section>
+            {/* GET STARTED */}
+            <section id="contact" className="py-32 border-t border-white/5">
+                <div className="max-w-6xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
+                            Get Started
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                            Quantify reserve exposure before processors do.
+                        </h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {/* Self-Serve */}
+                        <div className="border border-white/5 p-8">
+                            <h3 className="text-white font-semibold mb-3">Self-Serve</h3>
+                            <p className="text-zinc-400 text-sm mb-6">
+                                Run a free risk scan or start a Pro subscription.
+                                No sales call required.
+                            </p>
+                            <a
+                                href="https://app.payflux.dev/risk"
+                                className="inline-block px-8 py-4 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-slate-200 transition-all"
+                            >
+                                Open Dashboard
+                            </a>
+                        </div>
+
+                        {/* Enterprise */}
+                        <div className="border border-white/5 p-8">
+                            <h3 className="text-white font-semibold mb-3">Enterprise</h3>
+                            <p className="text-zinc-400 text-sm mb-6">
+                                Custom reserve windows, API access, and portfolio-level reporting.
+                            </p>
+                            <form
+                                name="enterprise-contact"
+                                method="POST"
+                                action="/"
+                                data-netlify="true"
+                                data-netlify-honeypot="bot-field"
+                                className="space-y-4"
+                            >
+                                <input type="hidden" name="form-name" value="enterprise-contact" />
+                                <p className="hidden">
+                                    <label>Don't fill this out: <input name="bot-field" /></label>
+                                </p>
                                 <input
                                     type="email"
                                     name="email"
                                     required
-                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
                                     placeholder="name@company.com"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-4 py-3 text-white text-[13px] outline-none focus:border-white/30 transition-all font-mono"
                                 />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Company</label>
                                 <input
                                     type="text"
                                     name="company"
-                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
-                                    placeholder="Company name"
+                                    placeholder="Company"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-4 py-3 text-white text-[13px] outline-none focus:border-white/30 transition-all font-mono"
                                 />
-                            </div>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Monthly Volume</label>
                                 <select
-                                    name="volume"
-                                    className="w-full bg-[#0a0c10] border border-white/10 rounded-sm px-5 py-4 text-slate-400 text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
+                                    name="monthlyVolume"
                                     defaultValue=""
+                                    className="w-full bg-[#0a0c10] border border-white/10 rounded-sm px-4 py-3 text-zinc-400 text-[13px] outline-none focus:border-white/30 transition-all font-mono"
                                 >
-                                    <option value="" disabled>Select volume</option>
+                                    <option value="" disabled>Monthly volume</option>
                                     <option value="<100k">&lt; $100k</option>
                                     <option value="100k-1m">$100k–$1M</option>
                                     <option value="1m-10m">$1M–$10M</option>
                                     <option value="10m+">$10M+</option>
                                 </select>
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Role</label>
-                                <input
-                                    type="text"
-                                    name="role"
-                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
-                                    placeholder="Payments / Risk / Ops"
+                                <textarea
+                                    name="goal"
+                                    rows="3"
+                                    placeholder="What are you trying to quantify?"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-4 py-3 text-white text-[13px] outline-none focus:border-white/30 transition-all font-mono"
                                 />
-                            </div>
+                                <button
+                                    type="submit"
+                                    className="w-full py-3 border border-white/20 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-white/5 transition-all"
+                                >
+                                    Contact Sales
+                                </button>
+                            </form>
                         </div>
+                    </div>
 
-                        <div className="space-y-3">
-                            <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Analysis Goal</label>
-                            <textarea
-                                name="message"
-                                rows="4"
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-sm px-5 py-4 text-white text-[13px] outline-none focus:border-indigo-500 transition-all font-mono"
-                                placeholder="What are you trying to validate with Pilot Coverage?"
-                            />
-                        </div>
-
-                        <div className="pt-4">
-                            <button
-                                type="submit"
-                                className="w-full py-5 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.25em] hover:bg-slate-200 transition-all"
-                            >
-                                Request Pilot Access
-                            </button>
-                            <p className="mt-6 text-center text-[10px] uppercase tracking-[0.3em] text-slate-600 font-bold">
-                                Submissions preserved in Netlify Control Plane.
-                            </p>
-                        </div>
-                    </form>
+                    <div className="text-center mt-16 text-zinc-500 text-sm">
+                        Rolling reserves build. Projection makes them visible.
+                    </div>
                 </div>
             </section>
 
