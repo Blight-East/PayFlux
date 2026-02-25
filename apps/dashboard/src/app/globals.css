@@ -32,3 +32,26 @@
   --payflux-accent: #2d5f4f;
   /* flow bars */
 }
+
+/* ─── Print styles for forecast export ─── */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide everything except the export modal content */
+  body > *:not(.fixed) {
+    display: none !important;
+  }
+
+  /* Reset the modal for clean printing */
+  .fixed {
+    position: static !important;
+    inset: auto !important;
+  }
+
+  #forecast-export-content {
+    padding: 0 !important;
+  }
+}

@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic';
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 import { requireAuth } from '@/lib/require-auth';
+import { canAccess } from '@/lib/tier/resolver';
 
 function deterministicJSON(obj: any): any {
     if (obj === null || typeof obj !== 'object') {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Tier Gate
-    if (workspace.tier === 'free') {
+    if (!canAccess(workspace.tier, "evidence_export")) {
         return NextResponse.json(
             { error: 'Payment Required', code: 'UPGRADE_REQUIRED_FOR_EXPORT' },
             { status: 402 }

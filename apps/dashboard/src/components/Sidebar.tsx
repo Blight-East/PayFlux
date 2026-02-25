@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import PayFluxLogo from './PayFluxLogo';
-import type { WorkspaceContext, WorkspaceRole, WorkspaceTier } from '@/lib/resolve-workspace';
+import type { WorkspaceContext, WorkspaceRole } from '@/lib/resolve-workspace';
+import type { Feature } from '@/lib/tier/features';
+import { canAccess } from '@/lib/tier/resolver';
 import { Lock } from 'lucide-react';
 
 /**
@@ -13,7 +15,7 @@ type SidebarItem = {
     label: string;
     href: string;
     minRole?: WorkspaceRole;
-    minTier?: WorkspaceTier;
+    requiredFeature?: Feature;
 };
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -28,13 +30,13 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     {
         label: 'Evidence',
         href: '/evidence',
-        minTier: 'pro',
+        requiredFeature: 'evidence_export',
     },
     {
         label: 'Export',
         href: '/evidence/export',
         minRole: 'admin',
-        minTier: 'pro',
+        requiredFeature: 'bulk_export',
     },
     {
         label: 'Connectors',
@@ -60,21 +62,12 @@ function roleAllowed(
     return userRole === 'admin';
 }
 
-function tierAllowed(
-    userTier: WorkspaceTier,
-    minTier?: WorkspaceTier
-) {
-    if (!minTier) return true;
-    const order: WorkspaceTier[] = ['free', 'pro', 'enterprise'];
-    return order.indexOf(userTier) >= order.indexOf(minTier);
-}
-
 export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) {
     const pathname = usePathname();
 
     const visibleItems = SIDEBAR_ITEMS.filter(item =>
         roleAllowed(workspace.role, item.minRole) &&
-        tierAllowed(workspace.tier, item.minTier)
+        (!item.requiredFeature || canAccess(workspace.tier, item.requiredFeature))
     );
 
     const lockedItems = SIDEBAR_ITEMS.filter(item => !visibleItems.includes(item));
@@ -119,9 +112,9 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                                 >
                                     <span>{item.label}</span>
                                     <div className="flex items-center space-x-2">
-                                        {item.minTier && tierAllowed(workspace.tier, item.minTier) === false && (
+                                        {item.requiredFeature && !canAccess(workspace.tier, item.requiredFeature) && (
                                             <span className="text-[9px] bg-blue-500/5 text-blue-500/40 border border-blue-500/10 px-1.5 py-0.5 rounded uppercase">
-                                                {item.minTier}
+                                                PRO
                                             </span>
                                         )}
                                         <Lock size={12} className="text-zinc-800 group-hover:text-zinc-700 transition-colors" />

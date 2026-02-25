@@ -26,6 +26,7 @@ import (
 	"payment-node/internal/httpmw"
 	"payment-node/internal/ratelimit"
 	"payment-node/internal/startup"
+	"payment-node/internal/tier"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -121,7 +122,8 @@ var (
 	riskThresholds   [3]float64
 
 	// Tier gating (v0.2.2+)
-	exportTier string // "tier1" or "tier2" (default tier1)
+	exportTier           string            // "tier1" or "tier2" (default tier1)
+	runtimeCanonicalTier tier.CanonicalTier // Resolved once at startup from exportTier
 
 	// Pilot mode (v0.2.3+)
 	pilotModeEnabled bool
@@ -359,7 +361,8 @@ func loadTierConfig() {
 	if exportTier != "tier1" && exportTier != "tier2" {
 		log.Fatalf("PAYFLUX_TIER must be 'tier1' or 'tier2', got: %s", exportTier)
 	}
-	slog.Info("tier_config", "tier", exportTier)
+	runtimeCanonicalTier = tier.ResolveFromEnv(exportTier)
+	slog.Info("tier_config", "tier", exportTier, "canonical", string(runtimeCanonicalTier))
 	if exportTier == "tier1" {
 		slog.Info("tier_hint", "msg", "Set PAYFLUX_TIER=tier2 to include playbook context and risk trajectory in exports")
 	}
@@ -1749,13 +1752,13 @@ func exportEvent(event Event, messageID string) error {
 		exported.ProcessorRiskDrivers = res.Drivers
 
 		// Tier 1 only: Add upgrade hint (v0.2.3+)
-		if exportTier == "tier1" && res.Band != "low" {
+		if !tier.CanAccess(runtimeCanonicalTier, tier.FeatureAcceleration) && res.Band != "low" {
 			exported.UpgradeHint = "Tier 2 adds processor playbook context and risk trajectory."
 		}
 
 		// Tier 2 only: Add authority-gated context (v0.2.2+)
 		// Also respects tier2Enabled kill switch
-		if exportTier == "tier2" && tier2Enabled {
+		if tier.CanAccess(runtimeCanonicalTier, tier.FeatureAcceleration) && tier2Enabled {
 			// Processor Playbook Context (probabilistic, non-prescriptive)
 			context := generatePlaybookContext(res.Band, res.Drivers)
 			if context != "" {
