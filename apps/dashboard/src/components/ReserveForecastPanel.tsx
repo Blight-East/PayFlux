@@ -4,6 +4,22 @@ import { useState, useEffect, useCallback } from 'react';
 import { Shield, Lock, AlertTriangle, TrendingDown, TrendingUp, Minus, FileDown, X } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Telemetry — fire and forget, never blocks UI
+// ─────────────────────────────────────────────────────────────────────────────
+
+function track(event: string, properties?: Record<string, string>) {
+    try {
+        fetch('/api/v1/telemetry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event, properties }),
+        }).catch(() => {});
+    } catch {
+        // Never throw from telemetry
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types (mirrors /api/v1/risk/forecast response)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -187,7 +203,10 @@ function ForbiddenState() {
 
             {/* CTA */}
             <div className="text-center">
-                <button className="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors">
+                <button
+                    onClick={() => track('forecast_unlock_clicked')}
+                    className="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors"
+                >
                     Unlock Reserve Forecast
                 </button>
                 <p className="text-[10px] text-zinc-700 mt-2">Included with Pro</p>
@@ -376,6 +395,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
             const res = await fetch(`/api/v1/risk/forecast?${params.toString()}`);
 
             if (res.status === 403) {
+                track('forecast_403_hit', { host: targetHost });
                 setState({ status: 'forbidden' });
                 return;
             }
@@ -393,6 +413,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
 
             const data: ForecastData = await res.json();
             setState({ status: 'loaded', data });
+            track('forecast_panel_viewed', { host: targetHost, signal: data.instabilitySignal, tier: String(data.currentRiskTier) });
         } catch (err) {
             setState({ status: 'error', message: (err as Error).message });
         }
@@ -410,6 +431,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
         if (!host || state.status === 'loading') return;
         const parsed = Number(volumeInput.replace(/[,$\s]/g, ''));
         if (Number.isFinite(parsed) && parsed > 0) {
+            track('forecast_tpv_entered', { host });
             fetchForecast(host, parsed);
         } else {
             // Re-fetch without TPV to clear USD fields
@@ -471,7 +493,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                 <div className="flex items-center space-x-3">
                     <span className="text-[10px] text-zinc-700">{data.modelVersion}</span>
                     <button
-                        onClick={() => setShowExport(true)}
+                        onClick={() => { track('forecast_export_clicked', { host: data.normalizedHost, volumeMode: data.volumeMode }); setShowExport(true); }}
                         className="flex items-center space-x-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-medium rounded-lg transition-colors"
                         title="Export forecast"
                     >
