@@ -14,7 +14,7 @@ const Footer = () => {
                     </p>
                 </div>
 
-                <div className="flex gap-6 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-3 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
                     <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
                     <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
                     <Link to="/refunds" className="hover:text-white transition-colors">Refunds</Link>

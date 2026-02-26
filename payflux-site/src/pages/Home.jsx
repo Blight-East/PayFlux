@@ -4,7 +4,7 @@ import Footer from '../components/Footer';
 
 const Home = () => {
     return (
-        <div className="min-h-screen bg-[#0a0c10] text-slate-300 font-sans selection:bg-indigo-500/30 bg-grid">
+        <div className="min-h-screen bg-[#0a0c10] text-slate-300 font-sans selection:bg-indigo-500/30 bg-grid overflow-x-hidden">
             {/* NAVIGATION */}
             <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0c10]/80 backdrop-blur-xl h-16">
                 <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
