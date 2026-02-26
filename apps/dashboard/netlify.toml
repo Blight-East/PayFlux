@@ -1,0 +1,7 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Next.js Runtime handles SSR, ISR, middleware, and image optimization.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
