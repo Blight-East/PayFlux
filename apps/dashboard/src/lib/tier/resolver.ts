@@ -1,16 +1,14 @@
 import type { CanonicalTier } from "./canonical-tier";
 import type { Feature } from "./features";
 
-// resolveTier maps external tier strings (Clerk, billing, etc.)
-// into CanonicalTier. This does NOT replace existing usage yet.
+// resolveTier maps external tier strings (Clerk, billing, env vars)
+// into CanonicalTier. Accepts "tier2" for backward-compatible env config.
 export function resolveTier(input: string | undefined): CanonicalTier {
   switch (input) {
     case "pro":
     case "tier2":
-    case "GROWTH":
       return "pro";
     case "enterprise":
-    case "SCALE":
       return "enterprise";
     default:
       return "free";

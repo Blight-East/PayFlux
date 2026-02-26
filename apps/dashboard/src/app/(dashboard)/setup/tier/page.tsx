@@ -37,7 +37,7 @@ export default function ChooseTierPage() {
             </div>
 
             <div className="space-y-4">
-                {/* Tier 1 */}
+                {/* Free */}
                 <button
                     onClick={() => setSelectedTier('tier1')}
                     className={`w-full text-left p-6 rounded-lg border transition-all ${selectedTier === 'tier1'
@@ -47,7 +47,7 @@ export default function ChooseTierPage() {
                 >
                     <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="text-lg font-bold text-white">Tier 1</h3>
+                            <h3 className="text-lg font-bold text-white">Free</h3>
                             <p className="text-zinc-400 text-sm mt-1">Detection Only</p>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === 'tier1' ? 'border-blue-500 bg-blue-500' : 'border-zinc-600'
@@ -63,7 +63,7 @@ export default function ChooseTierPage() {
                     </ul>
                 </button>
 
-                {/* Tier 2 */}
+                {/* Pro */}
                 <button
                     onClick={() => setSelectedTier('tier2')}
                     className={`w-full text-left p-6 rounded-lg border transition-all ${selectedTier === 'tier2'
@@ -73,7 +73,7 @@ export default function ChooseTierPage() {
                 >
                     <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="text-lg font-bold text-white">Tier 2</h3>
+                            <h3 className="text-lg font-bold text-white">Pro</h3>
                             <p className="text-zinc-400 text-sm mt-1">Interpretation + Alerts</p>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === 'tier2' ? 'border-blue-500 bg-blue-500' : 'border-zinc-600'
@@ -82,7 +82,7 @@ export default function ChooseTierPage() {
                         </div>
                     </div>
                     <ul className="mt-4 text-xs text-zinc-500 space-y-1.5">
-                        <li>• Everything in Tier 1</li>
+                        <li>• Everything in Free</li>
                         <li>• Playbook context for elevated+ events</li>
                         <li>• Risk trajectory analysis</li>
                         <li>• Alert routing integration (Slack, PagerDuty)</li>

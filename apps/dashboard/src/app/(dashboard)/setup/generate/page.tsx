@@ -24,9 +24,9 @@ const getTierLimitCents = (tier: string): number => {
 // Helper: Get coverage tier name for display
 const getCoverageTierName = (tier: string): string => {
     switch (tier) {
-        case 'tier1': return 'pilot';
-        case 'tier2': return 'growth';
-        default: return 'pilot';
+        case 'tier1': return 'free';
+        case 'tier2': return 'pro';
+        default: return 'free';
     }
 };
 
@@ -208,7 +208,7 @@ volumes:
 Check health: \`curl http://localhost:8080/health\`
 
 ## Configuration
-- **Tier**: ${config?.tier === 'tier2' ? 'Tier 2 (Interpretation + Alerts)' : 'Tier 1 (Detection Only)'}
+- **Tier**: ${config?.tier === 'tier2' ? 'Pro (Interpretation + Alerts)' : 'Free (Detection Only)'}
 - **Pilot Mode**: ${config?.pilotMode ? 'Enabled' : 'Disabled'}
 
 ## Support
@@ -347,7 +347,7 @@ See full documentation at https://payflux.dev/docs
                     </div>
                     <div>
                         <span className="text-zinc-500">Tier:</span>
-                        <span className="ml-2 text-white capitalize">{config.tier === 'tier2' ? 'Tier 2' : 'Tier 1'}</span>
+                        <span className="ml-2 text-white capitalize">{config.tier === 'tier2' ? 'Pro' : 'Free'}</span>
                     </div>
                     <div>
                         <span className="text-zinc-500">Pilot Mode:</span>
@@ -473,7 +473,7 @@ See full documentation at https://payflux.dev/docs
                                 • Health check available at{' '}
                                 <code className="text-xs bg-black px-1.5 py-0.5 rounded text-zinc-400">http://localhost:8080/health</code>
                             </li>
-                            <li>• Warnings appear in the PayFlux dashboard (Tier 2 / Pilot only)</li>
+                            <li>• Warnings appear in the PayFlux dashboard (Pro tier only)</li>
                             <li>• No traffic is blocked — PayFlux observes and reports only</li>
                             <li>
                                 • You can shut it down anytime with{' '}
