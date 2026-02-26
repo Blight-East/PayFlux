@@ -2,6 +2,12 @@
   command = "npm run build"
   publish = "dist"
 
+# This site is Vite/React — skip the dashboard-installed Next.js plugin.
+# NETLIFY_NEXT_PLUGIN_SKIP works for v4.x; NEXT_PLUGIN_FORCE_RUN for v3.x.
+[build.environment]
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  NEXT_PLUGIN_FORCE_RUN = "false"
+
 [[redirects]]
   from = "/docs/*"
   to = "https://app.payflux.dev/docs/:splat"

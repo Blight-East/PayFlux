@@ -1,6 +1,6 @@
 [build]
 base = "payflux-site"
-command = "cd payflux-site && npm run build"
+command = "npm run build"
 publish = "payflux-site/dist"
 
 # PROXIES FIRST
