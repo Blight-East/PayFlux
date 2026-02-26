@@ -29,33 +29,41 @@ interface DB {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class SQLiteDB implements DB {
-    private db: import('better-sqlite3').Database | null = null;
+    private db: any = null;
 
-    private getDB(): import('better-sqlite3').Database {
+    private async getDB(): Promise<any> {
         if (!this.db) {
-            const Database = require('better-sqlite3');
-            this.db = new Database('.data/accounts.db') as import('better-sqlite3').Database;
-            this.db!.pragma('journal_mode = WAL');
+            if (process.env.RUNTIME === 'node' || typeof window === 'undefined') {
+                const moduleName = 'better-sqlite3' as any;
+                const sqlite3 = await import(/* webpackIgnore: true */ moduleName);
+                const Database = sqlite3.default || sqlite3;
+                this.db = new Database('.data/accounts.db');
+                this.db.pragma('journal_mode = WAL');
+            } else {
+                throw new Error("SQLite cannot run in the browser");
+            }
         }
-        return this.db!;
+        return this.db;
     }
 
     async init(): Promise<void> {
-        const fs = require('fs');
+        const fs = await import('fs');
         if (!fs.existsSync('.data')) {
             fs.mkdirSync('.data', { recursive: true });
         }
-        this.getDB().exec(`
+        const db = await this.getDB();
+        db.exec(`
             CREATE TABLE IF NOT EXISTS accounts (
                 id TEXT PRIMARY KEY,
-                tier TEXT NOT NULL DEFAULT 'PILOT' CHECK (tier IN ('PILOT','GROWTH','SCALE')),
+                tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free','pro','enterprise')),
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         `);
     }
 
     async getAccount(id: string): Promise<AccountRow | null> {
-        const row = this.getDB().prepare(
+        const db = await this.getDB();
+        const row = db.prepare(
             'SELECT id, tier, created_at FROM accounts WHERE id = ?'
         ).get(id) as AccountRow | undefined;
         return row ?? null;
@@ -63,7 +71,8 @@ class SQLiteDB implements DB {
 
     async createAccount(id: string, tier: string): Promise<AccountRow> {
         const now = new Date().toISOString();
-        this.getDB().prepare(
+        const db = await this.getDB();
+        db.prepare(
             'INSERT INTO accounts (id, tier, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING'
         ).run(id, tier, now);
         // Re-fetch to handle concurrent insert (ON CONFLICT)
@@ -77,33 +86,41 @@ class SQLiteDB implements DB {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class PostgresDB implements DB {
-    private pool: import('pg').Pool | null = null;
+    private pool: any = null;
 
-    private getPool(): import('pg').Pool {
+    private async getPool(): Promise<any> {
         if (!this.pool) {
-            const { Pool } = require('pg');
-            this.pool = new Pool({
-                connectionString: process.env.DATABASE_URL,
-                max: 5,
-                idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: 5000,
-            });
+            if (process.env.RUNTIME === 'node' || typeof window === 'undefined') {
+                const moduleName = 'pg' as any;
+                const pg = await import(/* webpackIgnore: true */ moduleName);
+                const Pool = pg.Pool || pg.default?.Pool;
+                this.pool = new Pool({
+                    connectionString: process.env.DATABASE_URL,
+                    max: 5,
+                    idleTimeoutMillis: 30000,
+                    connectionTimeoutMillis: 5000,
+                });
+            } else {
+                throw new Error("Postgres cannot run in the browser");
+            }
         }
-        return this.pool!;
+        return this.pool;
     }
 
     async init(): Promise<void> {
-        await this.getPool().query(`
+        const pool = await this.getPool();
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS accounts (
                 id TEXT PRIMARY KEY,
-                tier TEXT NOT NULL DEFAULT 'PILOT' CHECK (tier IN ('PILOT','GROWTH','SCALE')),
+                tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free','pro','enterprise')),
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         `);
     }
 
     async getAccount(id: string): Promise<AccountRow | null> {
-        const { rows } = await this.getPool().query(
+        const pool = await this.getPool();
+        const { rows } = await pool.query(
             'SELECT id, tier, created_at FROM accounts WHERE id = $1',
             [id]
         );
@@ -118,7 +135,8 @@ class PostgresDB implements DB {
     }
 
     async createAccount(id: string, tier: string): Promise<AccountRow> {
-        const { rows } = await this.getPool().query(
+        const pool = await this.getPool();
+        const { rows } = await pool.query(
             `INSERT INTO accounts (id, tier) VALUES ($1, $2)
              ON CONFLICT (id) DO NOTHING
              RETURNING id, tier, created_at`,
@@ -183,10 +201,10 @@ function rowToAccount(row: AccountRow): Account {
 }
 
 function validateTier(tier: string): PricingTier {
-    if (tier === 'PILOT' || tier === 'GROWTH' || tier === 'SCALE') {
+    if (tier === 'free' || tier === 'pro' || tier === 'enterprise') {
         return tier;
     }
-    return 'PILOT';
+    return 'free';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,7 +214,7 @@ function validateTier(tier: string): PricingTier {
 /**
  * Resolve account information for a given user ID.
  *
- * Queries database. Creates account with tier=PILOT if not found.
+ * Queries database. Creates account with tier=free if not found.
  *
  * @param userId - Clerk user ID
  * @returns Account object or null if userId is null
@@ -214,14 +232,14 @@ export async function resolveAccount(userId: string | null): Promise<Account | n
         return rowToAccount(existing);
     }
 
-    const created = await store.createAccount(accountId, 'PILOT');
+    const created = await store.createAccount(accountId, 'free');
     return rowToAccount(created);
 }
 
 /**
  * Resolves an account from an API key.
  *
- * Queries database. Creates account with tier=PILOT if not found.
+ * Queries database. Creates account with tier=free if not found.
  *
  * @param apiKey - API key from Authorization header
  * @returns Account object or null if not found
@@ -235,7 +253,7 @@ export async function resolveAccountFromAPIKey(apiKey: string): Promise<Account 
         return rowToAccount(existing);
     }
 
-    const created = await store.createAccount(accountId, 'PILOT');
+    const created = await store.createAccount(accountId, 'free');
     return rowToAccount(created);
 }
 
@@ -252,12 +270,12 @@ export function getEnvTierFallback(): PricingTier {
 
     // Map old tier1/tier2 to new pricing tiers
     if (envTier === 'tier1') {
-        return 'PILOT';
+        return 'free';
     }
     if (envTier === 'tier2') {
-        return 'GROWTH';
+        return 'pro';
     }
 
-    // Default to PILOT if not set
-    return 'PILOT';
+    // Default to free if not set
+    return 'free';
 }

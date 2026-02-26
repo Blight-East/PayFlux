@@ -306,7 +306,7 @@ export async function POST(request: Request) {
 
     // 1. Resolve Account and Tier
     const account = apiKey ? await resolveAccountFromAPIKey(apiKey) : null;
-    const tier = account?.billingTier || 'PILOT';
+    const tier = account?.billingTier || 'free';
     const keyId = account?.id || 'anon';
     const identifier = account ? keyId : ip;
 
@@ -341,7 +341,7 @@ export async function POST(request: Request) {
     // 4. Rate Limit
     const tierConfig = await resolveAccountTierConfig(account || {
         id: 'anon',
-        billingTier: 'PILOT',
+        billingTier: 'free',
         tierHistory: [],
     });
 

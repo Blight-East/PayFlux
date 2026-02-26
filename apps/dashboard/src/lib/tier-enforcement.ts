@@ -12,7 +12,7 @@
 // Core Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PricingTier = "PILOT" | "GROWTH" | "SCALE";
+export type PricingTier = "free" | "pro" | "enterprise";
 export type IntelligenceTier = "tier1" | "tier2";
 
 export interface Account {
@@ -65,7 +65,7 @@ export interface AccountTierConfig {
 type TierDefaults = Omit<AccountTierConfig, "pricingTier">;
 
 export const CANONICAL_TIER_MATRIX: Record<PricingTier, TierDefaults> = {
-    PILOT: {
+    free: {
         intelligenceTier: "tier1",
         retentionDays: 7,
         evidence: {
@@ -77,7 +77,7 @@ export const CANONICAL_TIER_MATRIX: Record<PricingTier, TierDefaults> = {
             ingestRPS: 10,
         },
     },
-    GROWTH: {
+    pro: {
         intelligenceTier: "tier2",
         retentionDays: 30,
         evidence: {
@@ -89,7 +89,7 @@ export const CANONICAL_TIER_MATRIX: Record<PricingTier, TierDefaults> = {
             ingestRPS: 100,
         },
     },
-    SCALE: {
+    enterprise: {
         intelligenceTier: "tier2",
         retentionDays: 90,
         evidence: {
@@ -183,7 +183,7 @@ export function checkEvidenceExportAllowed(config: AccountTierConfig): TierError
             error: "E_TIER_FORBIDDEN",
             reason: "EVIDENCE_EXPORT_DISABLED_TIER",
             currentTier: config.pricingTier,
-            requiredTier: "GROWTH",
+            requiredTier: "pro",
         };
     }
     return null;
@@ -201,7 +201,7 @@ export function checkBulkExportAllowed(config: AccountTierConfig): TierError | n
             error: "E_TIER_FORBIDDEN",
             reason: "BULK_EXPORT_DISABLED_TIER",
             currentTier: config.pricingTier,
-            requiredTier: "SCALE",
+            requiredTier: "enterprise",
         };
     }
     return null;

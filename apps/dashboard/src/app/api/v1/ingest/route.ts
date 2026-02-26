@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
     // TODO: Replace with actual account resolution from database
     const account: Account = {
         id: `acc_${apiKey.slice(0, 12)}`,
-        billingTier: apiKey.startsWith('pf_pilot_') ? 'PILOT' :
-            apiKey.startsWith('pf_growth_') ? 'GROWTH' :
-                apiKey.startsWith('pf_scale_') ? 'SCALE' : 'PILOT',
+        billingTier: apiKey.startsWith('pf_free_') ? 'free' :
+            apiKey.startsWith('pf_pro_') ? 'pro' :
+                apiKey.startsWith('pf_enterprise_') ? 'enterprise' : 'free',
         tierHistory: [],
         overrides: undefined,
     };
@@ -54,10 +54,10 @@ export async function POST(request: NextRequest) {
             error: error instanceof Error ? error.message : String(error),
         });
 
-        // Fallback: use canonical resolver with PILOT tier
+        // Fallback: use canonical resolver with free tier
         const fallbackAccount: Account = {
             id: account.id,
-            billingTier: 'PILOT',
+            billingTier: 'free',
             tierHistory: [],
             overrides: undefined,
         };
