@@ -33,8 +33,7 @@ const Pricing = () => {
                 <div className="mb-20 text-center">
                     <h1 className="text-4xl md:text-5xl font-semibold text-white tracking-tight mb-6">Pricing</h1>
                     <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-                        Unlock depth, not access. Every account detects risk signals.
-                        Pro accounts quantify trapped capital.
+                        Three tiers. No opacity.
                     </p>
                 </div>
 
@@ -42,22 +41,23 @@ const Pricing = () => {
                     {/* FREE */}
                     <div className="flex flex-col border border-white/5 p-10 rounded-sm">
                         <div className="mb-10">
-                            <h3 className="text-white font-semibold mb-2">Free</h3>
+                            <h3 className="text-white font-semibold mb-1">Free</h3>
+                            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4">Diagnostic Mode</div>
                             <div className="text-3xl font-bold text-white mb-6">$0</div>
                             <ul className="space-y-3 text-sm text-zinc-400">
-                                <li>Risk scan</li>
-                                <li>Signal detection</li>
-                                <li>Instability classification</li>
-                                <li>Trajectory summary</li>
-                                <li>Projection preview (no USD exposure)</li>
+                                <li>Risk tier visibility</li>
+                                <li>Trend & instability signals</li>
+                                <li className="text-zinc-600">No projection modeling</li>
+                                <li className="text-zinc-600">No intervention derivation</li>
+                                <li className="text-zinc-600">No ledger exports</li>
                             </ul>
                         </div>
                         <div className="mt-auto">
                             <a
-                                href="https://app.payflux.dev/risk"
+                                href="https://app.payflux.dev/dashboard"
                                 className="block text-center w-full py-4 border border-white/20 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-white/5 transition-all"
                             >
-                                Run Free Scan
+                                Access Dashboard
                             </a>
                         </div>
                     </div>
@@ -65,25 +65,22 @@ const Pricing = () => {
                     {/* PRO */}
                     <div className="flex flex-col border border-white/20 p-10 rounded-sm">
                         <div className="mb-10">
-                            <h3 className="text-white font-semibold mb-2">Pro</h3>
+                            <h3 className="text-white font-semibold mb-1">Pro</h3>
+                            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4">Full Instrument</div>
                             <div className="text-3xl font-bold text-white mb-6">
                                 $499<span className="text-sm text-zinc-400"> / month</span>
                             </div>
                             <ul className="space-y-3 text-sm text-zinc-400">
-                                <li>Everything in Free</li>
-                                <li>Deterministic reserve projection (30–180 day windows)</li>
-                                <li>Base + Escalation scenarios</li>
-                                <li>USD exposure modeling</li>
-                                <li>Full export artifact (PDF)</li>
-                                <li>Projection archive</li>
+                                <li>Full projection engine (T+90)</li>
+                                <li>Intervention modeling</li>
+                                <li>Signed projection ledger</li>
+                                <li>Board reserve report</li>
+                                <li>Rolling model accuracy</li>
                             </ul>
-                            <div className="text-xs text-zinc-500 mt-6">
-                                One avoided reserve escalation offsets multiple years of subscription cost.
-                            </div>
                         </div>
                         <div className="mt-auto">
                             <a
-                                href="https://app.payflux.dev/upgrade"
+                                href="https://app.payflux.dev/dashboard"
                                 className="block text-center w-full py-4 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-slate-200 transition-all"
                             >
                                 Start Pro
@@ -94,15 +91,14 @@ const Pricing = () => {
                     {/* ENTERPRISE */}
                     <div className="flex flex-col border border-white/5 p-10 rounded-sm">
                         <div className="mb-10">
-                            <h3 className="text-white font-semibold mb-2">Enterprise</h3>
+                            <h3 className="text-white font-semibold mb-1">Enterprise</h3>
+                            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4">Custom</div>
                             <div className="text-3xl font-bold text-white mb-6">Contact Sales</div>
                             <ul className="space-y-3 text-sm text-zinc-400">
-                                <li>Everything in Pro</li>
-                                <li>Custom reserve windows</li>
-                                <li>API access</li>
-                                <li>Portfolio-level reporting</li>
-                                <li>Dedicated onboarding</li>
-                                <li>SLA support</li>
+                                <li>Higher throughput</li>
+                                <li>Bulk exports</li>
+                                <li>Multi-merchant aggregation</li>
+                                <li>Processor attestation readiness</li>
                             </ul>
                         </div>
                         <div className="mt-auto">

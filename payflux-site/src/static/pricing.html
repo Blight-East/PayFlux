@@ -36,74 +36,66 @@
         <div class="mb-20 text-center">
             <h1 class="text-4xl md:text-5xl font-semibold text-white tracking-tight mb-6">Pricing</h1>
             <p class="text-lg text-slate-400 font-medium max-w-2xl mx-auto">
-                Unlock depth, not access. Every account detects risk signals.
-                Pro accounts quantify trapped capital.
+                Three tiers. No opacity.
             </p>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-8 items-stretch mb-20">
             <!-- Free -->
-            <div class="flex flex-col bg-white/[0.02] border border-white/5 p-10 rounded-sm">
+            <div class="flex flex-col border border-white/5 p-10 rounded-sm">
                 <div class="mb-10">
-                    <h3 class="text-white font-semibold mb-2">Free</h3>
+                    <h3 class="text-white font-semibold mb-1">Free</h3>
+                    <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500 mb-4">Diagnostic Mode</div>
                     <div class="text-3xl font-bold text-white mb-6">$0</div>
                     <ul class="space-y-3 text-sm text-slate-400">
-                        <li>Risk scan</li>
-                        <li>Signal detection</li>
-                        <li>Instability classification</li>
-                        <li>Trajectory summary</li>
-                        <li>Projection preview (no USD exposure)</li>
+                        <li>Risk tier visibility</li>
+                        <li>Trend & instability signals</li>
+                        <li class="text-slate-600">No projection modeling</li>
+                        <li class="text-slate-600">No intervention derivation</li>
+                        <li class="text-slate-600">No ledger exports</li>
                     </ul>
                 </div>
                 <div class="mt-auto">
-                    <a href="https://app.payflux.dev/risk"
-                        class="block w-full py-4 border border-white/20 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-white/5 transition-all text-center no-underline">Run
-                        Free Scan</a>
+                    <a href="https://app.payflux.dev/dashboard"
+                        class="block w-full py-4 border border-white/20 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-white/5 transition-all text-center no-underline">Access
+                        Dashboard</a>
                 </div>
             </div>
 
             <!-- Pro -->
-            <div
-                class="flex flex-col bg-[#0d1117] border border-indigo-500/40 p-10 rounded-sm relative shadow-2xl z-10">
-                <div
-                    class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-sm">
-                    Recommended</div>
+            <div class="flex flex-col border border-white/20 p-10 rounded-sm">
                 <div class="mb-10">
-                    <h3 class="text-white font-semibold mb-2">Pro</h3>
+                    <h3 class="text-white font-semibold mb-1">Pro</h3>
+                    <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500 mb-4">Full Instrument</div>
                     <div class="text-3xl font-bold text-white mb-6">
                         $499<span class="text-sm text-slate-400"> / month</span>
                     </div>
                     <ul class="space-y-3 text-sm text-slate-400">
-                        <li>Everything in Free</li>
-                        <li>Deterministic reserve projection (30–180 day windows)</li>
-                        <li>Base + Escalation scenarios</li>
-                        <li>USD exposure modeling</li>
-                        <li>Full export artifact (PDF)</li>
-                        <li>Projection archive</li>
+                        <li>Full projection engine (T+90)</li>
+                        <li>Intervention modeling</li>
+                        <li>Signed projection ledger</li>
+                        <li>Board reserve report</li>
+                        <li>Rolling model accuracy</li>
                     </ul>
-                    <p class="text-xs text-slate-500 mt-6">
-                        One avoided reserve escalation offsets multiple years of subscription cost.
-                    </p>
                 </div>
                 <div class="mt-auto">
-                    <a href="https://app.payflux.dev/upgrade"
-                        class="block w-full py-4 bg-indigo-600 text-white text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20 text-center no-underline">Start
+                    <a href="https://app.payflux.dev/dashboard"
+                        class="block w-full py-4 bg-white text-black text-[11px] font-extrabold rounded-sm uppercase tracking-[0.2em] hover:bg-slate-200 transition-all text-center no-underline">Start
                         Pro</a>
                 </div>
             </div>
 
             <!-- Enterprise -->
-            <div class="flex flex-col bg-white/[0.02] border border-white/5 p-10 rounded-sm">
+            <div class="flex flex-col border border-white/5 p-10 rounded-sm">
                 <div class="mb-10">
-                    <h3 class="text-white font-semibold mb-2">Enterprise</h3>
+                    <h3 class="text-white font-semibold mb-1">Enterprise</h3>
+                    <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500 mb-4">Custom</div>
                     <div class="text-3xl font-bold text-white mb-6">Contact Sales</div>
                     <ul class="space-y-3 text-sm text-slate-400">
-                        <li>Everything in Pro</li>
-                        <li>Custom reserve windows</li>
-                        <li>API access</li>
-                        <li>Portfolio-level reporting</li>
-                        <li>Dedicated onboarding</li>
-                        <li>SLA support</li>
+                        <li>Higher throughput</li>
+                        <li>Bulk exports</li>
+                        <li>Multi-merchant aggregation</li>
+                        <li>Processor attestation readiness</li>
                     </ul>
                 </div>
                 <div class="mt-auto">
@@ -147,10 +139,10 @@
         <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="text-center md:text-left">
                 <p class="text-slate-600 text-[10px] font-bold uppercase tracking-[0.3em]">
-                    © 2026 PayFlux Infrastructure.
+                    © 2026 PayFlux.
                 </p>
                 <p class="text-slate-700 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">
-                    Signals preserved for audit-ready review.
+                    Deterministic Reserve Projection Infrastructure.
                 </p>
             </div>
 
