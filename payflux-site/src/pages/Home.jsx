@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield } from 'lucide-react';
+import { Shield, TrendingUp, Activity, BookOpen } from 'lucide-react';
 import Footer from '../components/Footer';
 
 const Home = () => {
@@ -23,8 +23,11 @@ const Home = () => {
             </nav>
 
             {/* 1. HERO */}
-            <section className="relative pb-32" style={{ paddingTop: '200px' }}>
-                <div className="max-w-6xl mx-auto px-6 text-center">
+            <section className="relative pb-32 overflow-hidden" style={{ paddingTop: '200px' }}>
+                {/* Subtle radial glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-indigo-500/[0.04] rounded-full blur-3xl pointer-events-none" />
+
+                <div className="max-w-6xl mx-auto px-6 text-center relative">
                     <div className="mb-6">
                         <span className="text-[11px] uppercase tracking-[0.3em] text-zinc-400 font-semibold">
                             Deterministic Reserve Projection Infrastructure
@@ -35,10 +38,26 @@ const Home = () => {
                         Rolling reserves don't surprise you.<br />They build.
                     </h1>
 
-                    <p className="text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto mb-16">
+                    <p className="text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto mb-10">
                         Deterministic reserve projection infrastructure for high-risk merchants.<br className="hidden md:block" />
                         Model exposure. Measure accuracy. Defend capital.
                     </p>
+
+                    {/* Projection window strip — visual anchor */}
+                    <div className="flex justify-center gap-6 mb-14">
+                        <div className="text-center">
+                            <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 mb-1">T+30</div>
+                            <div className="w-16 h-1 bg-gradient-to-r from-indigo-500/60 to-indigo-500/20 rounded-full" />
+                        </div>
+                        <div className="text-center">
+                            <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 mb-1">T+60</div>
+                            <div className="w-16 h-1 bg-gradient-to-r from-indigo-500/60 to-indigo-500/20 rounded-full" />
+                        </div>
+                        <div className="text-center">
+                            <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 mb-1">T+90</div>
+                            <div className="w-16 h-1 bg-gradient-to-r from-indigo-500/60 to-indigo-500/20 rounded-full" />
+                        </div>
+                    </div>
 
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <a
@@ -60,23 +79,32 @@ const Home = () => {
             {/* 2. THE PROBLEM */}
             <section className="py-32 border-t border-white/5">
                 <div className="max-w-4xl mx-auto px-6 text-center">
-                    <h2 className="text-3xl md:text-4xl font-semibold text-white mb-12">
+                    <h2 className="text-3xl md:text-4xl font-semibold text-white mb-16">
                         Processors escalate. You react.
                     </h2>
 
-                    <div className="grid md:grid-cols-3 gap-8 text-left">
-                        <div className="border border-white/5 p-6">
-                            <p className="text-zinc-400 text-sm">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="bg-white/[0.02] border border-white/5 p-8 text-left">
+                            <div className="w-8 h-8 rounded-sm bg-red-500/10 flex items-center justify-center mb-4">
+                                <div className="w-2 h-2 bg-red-400 rounded-full" />
+                            </div>
+                            <p className="text-zinc-300 text-sm font-medium">
                                 Reserve increases are retrospective.
                             </p>
                         </div>
-                        <div className="border border-white/5 p-6">
-                            <p className="text-zinc-400 text-sm">
+                        <div className="bg-white/[0.02] border border-white/5 p-8 text-left">
+                            <div className="w-8 h-8 rounded-sm bg-amber-500/10 flex items-center justify-center mb-4">
+                                <div className="w-2 h-2 bg-amber-400 rounded-full" />
+                            </div>
+                            <p className="text-zinc-300 text-sm font-medium">
                                 Retry behavior compounds escalation.
                             </p>
                         </div>
-                        <div className="border border-white/5 p-6">
-                            <p className="text-zinc-400 text-sm">
+                        <div className="bg-white/[0.02] border border-white/5 p-8 text-left">
+                            <div className="w-8 h-8 rounded-sm bg-orange-500/10 flex items-center justify-center mb-4">
+                                <div className="w-2 h-2 bg-orange-400 rounded-full" />
+                            </div>
+                            <p className="text-zinc-300 text-sm font-medium">
                                 Capital gets trapped before you see it.
                             </p>
                         </div>
@@ -91,43 +119,81 @@ const Home = () => {
                         <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
                             Core Infrastructure
                         </div>
-                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white">
                             A Deterministic Financial Instrument
                         </h2>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-6">
                         {/* Projection */}
-                        <div className="border border-white/5 p-8">
-                            <h3 className="text-white font-semibold mb-4 text-lg">Projection</h3>
+                        <div className="bg-white/[0.02] border border-white/5 p-8 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
+                            <div className="flex items-center gap-3 mb-5">
+                                <TrendingUp className="w-5 h-5 text-indigo-400" />
+                                <h3 className="text-white font-semibold text-lg">Projection</h3>
+                            </div>
                             <ul className="space-y-3 text-sm text-zinc-400">
-                                <li>T+30 / T+60 / T+90 capital exposure modeling</li>
-                                <li>Hard-capped reserve math (25% ceiling)</li>
-                                <li>No stochastic modeling. No smoothing.</li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    T+30 / T+60 / T+90 capital exposure modeling
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    Hard-capped reserve math (25% ceiling)
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    No stochastic modeling. No smoothing.
+                                </li>
                             </ul>
                         </div>
 
                         {/* Intervention */}
-                        <div className="border border-white/5 p-8">
-                            <h3 className="text-white font-semibold mb-4 text-lg">Intervention</h3>
+                        <div className="bg-white/[0.02] border border-white/5 p-8 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
+                            <div className="flex items-center gap-3 mb-5">
+                                <Activity className="w-5 h-5 text-indigo-400" />
+                                <h3 className="text-white font-semibold text-lg">Intervention</h3>
+                            </div>
                             <ul className="space-y-3 text-sm text-zinc-400">
-                                <li>Behavior-derived recommendations</li>
-                                <li>Velocity reduction modeling</li>
-                                <li>Non-linear exposure delta simulation</li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    Behavior-derived recommendations
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    Velocity reduction modeling
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    Non-linear exposure delta simulation
+                                </li>
                             </ul>
                         </div>
 
                         {/* Record */}
-                        <div className="border border-white/5 p-8">
-                            <h3 className="text-white font-semibold mb-4 text-lg">Record</h3>
+                        <div className="bg-white/[0.02] border border-white/5 p-8 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
+                            <div className="flex items-center gap-3 mb-5">
+                                <BookOpen className="w-5 h-5 text-indigo-400" />
+                                <h3 className="text-white font-semibold text-lg">Record</h3>
+                            </div>
                             <ul className="space-y-3 text-sm text-zinc-400">
-                                <li>Append-only projection ledger</li>
-                                <li>HMAC-SHA256 signed artifacts</li>
-                                <li>Rolling model accuracy (tier, trend, bps variance)</li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    Append-only projection ledger
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    HMAC-SHA256 signed artifacts
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-indigo-400/60 mt-0.5">—</span>
+                                    Rolling model accuracy (tier, trend, bps variance)
+                                </li>
                             </ul>
                         </div>
                     </div>
-
                 </div>
             </section>
 
@@ -138,34 +204,41 @@ const Home = () => {
                         <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
                             Model Authority
                         </div>
-                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white">
                             Measured. Not Assumed.
                         </h2>
                     </div>
 
-                    <div className="grid md:grid-cols-4 gap-6 text-left">
-                        <div className="border border-white/5 p-6">
-                            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Tier Forecast Accuracy</div>
-                            <div className="text-zinc-500 text-sm italic">
-                                Aggregated metrics unlock after statistical threshold.
+                    <div className="grid md:grid-cols-4 gap-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-6 text-left">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3 font-semibold">Tier Forecast Accuracy</div>
+                            <div className="text-2xl font-bold text-zinc-600 mb-2">—</div>
+                            <div className="text-zinc-600 text-xs">
+                                Unlocks after statistical threshold
                             </div>
                         </div>
-                        <div className="border border-white/5 p-6">
-                            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Mean Reserve Variance</div>
-                            <div className="text-zinc-500 text-sm italic">
-                                Aggregated metrics unlock after statistical threshold.
+                        <div className="bg-white/[0.02] border border-white/5 p-6 text-left">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3 font-semibold">Mean Reserve Variance</div>
+                            <div className="text-2xl font-bold text-zinc-600 mb-2">— bps</div>
+                            <div className="text-zinc-600 text-xs">
+                                Unlocks after statistical threshold
                             </div>
                         </div>
-                        <div className="border border-white/5 p-6">
-                            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Model Version</div>
-                            <div className="text-white text-sm font-mono">
-                                reserve-v1.0.0
+                        <div className="bg-white/[0.02] border border-white/5 p-6 text-left">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3 font-semibold">Model Version</div>
+                            <div className="text-xl font-bold text-white font-mono mb-2">reserve-v1.0.0</div>
+                            <div className="text-zinc-500 text-xs">
+                                Current production model
                             </div>
                         </div>
-                        <div className="border border-white/5 p-6">
-                            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Version Stability</div>
-                            <div className="text-white text-sm">
-                                Stable
+                        <div className="bg-white/[0.02] border border-white/5 p-6 text-left">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3 font-semibold">Version Stability</div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                                <span className="text-xl font-bold text-emerald-400">Stable</span>
+                            </div>
+                            <div className="text-zinc-500 text-xs">
+                                No pending migrations
                             </div>
                         </div>
                     </div>
@@ -187,8 +260,42 @@ const Home = () => {
                         </p>
                     </div>
 
+                    {/* Document preview mock */}
+                    <div className="mb-16 flex justify-center">
+                        <div className="bg-white text-black p-10 w-full max-w-3xl shadow-2xl shadow-indigo-500/5 text-left relative">
+                            <div className="absolute top-4 right-4 text-[9px] uppercase tracking-[0.2em] text-zinc-400 font-bold">
+                                Board Reserve Report
+                            </div>
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold mb-6">
+                                Reserve Exposure Forecast
+                            </div>
+                            <div className="grid grid-cols-3 gap-6 mb-8">
+                                <div>
+                                    <div className="text-[9px] uppercase tracking-[0.15em] text-zinc-400 mb-1">T+30 Exposure</div>
+                                    <div className="h-3 w-20 bg-zinc-200 rounded-sm" />
+                                </div>
+                                <div>
+                                    <div className="text-[9px] uppercase tracking-[0.15em] text-zinc-400 mb-1">T+60 Exposure</div>
+                                    <div className="h-3 w-24 bg-zinc-200 rounded-sm" />
+                                </div>
+                                <div>
+                                    <div className="text-[9px] uppercase tracking-[0.15em] text-zinc-400 mb-1">T+90 Exposure</div>
+                                    <div className="h-3 w-28 bg-zinc-300 rounded-sm" />
+                                </div>
+                            </div>
+                            <div className="border-t border-zinc-200 pt-4 flex items-center justify-between">
+                                <div className="text-[9px] text-zinc-400 font-mono">
+                                    Model: reserve-v1.0.0 &middot; HMAC-SHA256 signed &middot; Deterministic
+                                </div>
+                                <div className="text-[9px] text-zinc-300 font-mono">
+                                    payflux.dev
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
-                        <div className="border border-white/5 p-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-6">
                             <h3 className="text-white font-semibold mb-3">
                                 Deterministic Derivation
                             </h3>
@@ -196,7 +303,7 @@ const Home = () => {
                                 Every output is reproducible from the same inputs. No stochastic layers.
                             </p>
                         </div>
-                        <div className="border border-white/5 p-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-6">
                             <h3 className="text-white font-semibold mb-3">
                                 Applied Constants
                             </h3>
@@ -204,7 +311,7 @@ const Home = () => {
                                 Reserve ceiling, decay rate, and escalation thresholds are explicit and auditable.
                             </p>
                         </div>
-                        <div className="border border-white/5 p-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-6">
                             <h3 className="text-white font-semibold mb-3">
                                 Signed Ledger Entries
                             </h3>
@@ -212,7 +319,7 @@ const Home = () => {
                                 Each projection is append-only and HMAC-SHA256 signed at creation.
                             </p>
                         </div>
-                        <div className="border border-white/5 p-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-6">
                             <h3 className="text-white font-semibold mb-3">
                                 Integrity Declaration
                             </h3>
@@ -238,7 +345,7 @@ const Home = () => {
 
                     <div className="grid md:grid-cols-3 gap-6 text-left">
                         {/* FREE */}
-                        <div className="border border-white/5 p-8">
+                        <div className="bg-white/[0.02] border border-white/5 p-8">
                             <div className="text-white font-semibold mb-1">Free</div>
                             <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4">Diagnostic Mode</div>
                             <div className="text-3xl font-bold text-white mb-6">$0</div>
@@ -258,7 +365,8 @@ const Home = () => {
                         </div>
 
                         {/* PRO */}
-                        <div className="border border-white/20 p-8">
+                        <div className="bg-white/[0.02] border border-white/20 p-8 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/60 to-transparent" />
                             <div className="text-white font-semibold mb-1">Pro</div>
                             <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4">Full Instrument</div>
                             <div className="text-3xl font-bold text-white mb-6">
@@ -280,7 +388,7 @@ const Home = () => {
                         </div>
 
                         {/* ENTERPRISE */}
-                        <div className="border border-white/5 p-8">
+                        <div className="bg-white/[0.02] border border-white/5 p-8">
                             <div className="text-white font-semibold mb-1">Enterprise</div>
                             <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4">Custom</div>
                             <div className="text-3xl font-bold text-white mb-6">Contact Sales</div>
@@ -306,7 +414,9 @@ const Home = () => {
                 <div className="max-w-5xl mx-auto px-6 text-center">
                     <div className="mb-16">
                         <div className="flex justify-center mb-6">
-                            <Shield className="w-6 h-6 text-white" />
+                            <div className="w-12 h-12 rounded-sm bg-white/[0.03] border border-white/5 flex items-center justify-center">
+                                <Shield className="w-5 h-5 text-white" />
+                            </div>
                         </div>
                         <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-semibold mb-4">
                             Trust
@@ -321,7 +431,7 @@ const Home = () => {
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6 text-left">
-                        <div className="border border-white/5 p-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-6">
                             <h3 className="text-white font-semibold mb-3">
                                 Non-Invasive Architecture
                             </h3>
@@ -330,7 +440,7 @@ const Home = () => {
                                 No routing changes. No approval logic. No added latency.
                             </p>
                         </div>
-                        <div className="border border-white/5 p-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-6">
                             <h3 className="text-white font-semibold mb-3">
                                 Audit-Ready Output
                             </h3>
@@ -353,7 +463,7 @@ const Home = () => {
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">
-                        <div className="border border-white/5 p-8">
+                        <div className="bg-white/[0.02] border border-white/5 p-8">
                             <h3 className="text-white font-semibold mb-3">Self-Serve</h3>
                             <p className="text-zinc-400 text-sm mb-6">
                                 Access the dashboard directly. Free tier available.
@@ -366,7 +476,7 @@ const Home = () => {
                             </a>
                         </div>
 
-                        <div className="border border-white/5 p-8">
+                        <div className="bg-white/[0.02] border border-white/5 p-8">
                             <h3 className="text-white font-semibold mb-3">Enterprise</h3>
                             <p className="text-zinc-400 text-sm mb-6">
                                 Higher throughput, bulk exports, and processor attestation readiness.
