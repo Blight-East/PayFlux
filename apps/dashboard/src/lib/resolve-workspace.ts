@@ -38,7 +38,8 @@ export async function resolveWorkspace(
         const role: WorkspaceRole = activeMembership.role === 'org:admin' ? 'admin' : 'viewer';
 
         // Extract tier from public metadata, defaulting to 'free'
-        const tier = (organization.publicMetadata?.tier as WorkspaceTier) || 'free';
+        const rawTier = organization.publicMetadata?.tier;
+        const tier: WorkspaceTier = (rawTier === 'pro' || rawTier === 'enterprise') ? rawTier : 'free';
 
         return {
             workspaceId: organization.id,

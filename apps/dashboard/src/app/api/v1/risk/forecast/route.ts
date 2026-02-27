@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/require-auth';
 import { canAccess } from '@/lib/tier/resolver';
 import { RiskIntelligence, type MerchantSnapshot } from '@/lib/risk-infra';
+import { ProjectionLedger, LEDGER_SCHEMA_VERSION, type ProjectionArtifact } from '@/lib/projection-ledger';
 
 export const runtime = "nodejs";
 
@@ -59,7 +60,45 @@ interface ReserveWindowProjection {
     riskBand: string;
 }
 
+interface Intervention {
+    action: string;
+    rationale: string;
+    priority: 'critical' | 'high' | 'moderate' | 'low';
+    velocityReduction?: number; // fractional reduction, e.g. 0.50 = 50% fewer retries
+}
+
+interface SimulationDelta {
+    velocityReduction: number;
+    exposureMultiplier: number;
+    rateMultiplier: number;
+    label: string;
+}
+
 type VolumeMode = "bps_only" | "bps_plus_usd";
+
+interface ProjectionBasis {
+    inputs: {
+        riskTier: number;
+        riskBand: string;
+        trend: string;
+        tierDelta: number;
+        policySurface: { present: number; weak: number; missing: number };
+    };
+    constants: {
+        baseReserveRate: number;
+        trendMultiplier: number;
+        projectedTier: number;
+        projectedReserveRate: number;
+        worstCaseReserveRate: number;
+        reserveRateCeiling: number;
+    };
+    interventionBasis: {
+        velocityReductionApplied: number | null;
+        exposureMultiplier: number | null;
+        rateMultiplier: number | null;
+        derivationFormula: string;
+    };
+}
 
 interface ForecastResult {
     merchantId: string;
@@ -67,8 +106,12 @@ interface ForecastResult {
     currentRiskTier: number;
     trend: string;
     tierDelta: number;
-    reserveProjections: ReserveWindowProjection[];
     instabilitySignal: string;
+    hasProjectionAccess: boolean;
+    reserveProjections: ReserveWindowProjection[];
+    recommendedInterventions: Intervention[];
+    simulationDelta: SimulationDelta | null;
+    projectionBasis: ProjectionBasis | null;
     volumeMode: VolumeMode;
     projectedAt: string;
     modelVersion: string;
@@ -184,6 +227,122 @@ function round4(n: number): number {
     return Math.round(n * 10000) / 10000;
 }
 
+/**
+ * Derives recommended interventions from snapshot data.
+ * Deterministic. No ML. No external state.
+ * Maps: (tier, trend, tierDelta, policySurface) → Intervention[]
+ *
+ * These are advisory only. PayFlux does not modify processor configuration.
+ */
+function deriveInterventions(snapshot: MerchantSnapshot): Intervention[] {
+    const interventions: Intervention[] = [];
+    const { currentRiskTier, trend, tierDeltaLast, policySurface } = snapshot;
+
+    // ── Retry velocity interventions ──
+    if (trend === 'DEGRADING' && currentRiskTier >= 4) {
+        interventions.push({
+            action: 'Modeled impact suggests reducing retry attempts from 6 → 3',
+            rationale: 'Degrading trend at Tier 4+ amplifies escalation multiplier. Fewer retries reduce velocity signal to processors.',
+            priority: 'critical',
+            velocityReduction: 0.50,
+        });
+        interventions.push({
+            action: 'Modeled impact suggests increasing backoff interval by 50%',
+            rationale: 'Spacing retry attempts reduces burst density, which processors interpret as behavioral instability.',
+            priority: 'critical',
+        });
+    } else if (trend === 'DEGRADING') {
+        interventions.push({
+            action: 'Modeled impact suggests reducing retry attempts from 6 → 4',
+            rationale: 'Degrading trend increases escalation probability. Lower retry ceiling slows velocity accumulation.',
+            priority: 'high',
+            velocityReduction: 0.33,
+        });
+        interventions.push({
+            action: 'Modeled impact suggests increasing backoff window by 30%',
+            rationale: 'Wider backoff reduces clustering signal in processor monitoring windows.',
+            priority: 'high',
+        });
+    } else if (currentRiskTier >= 4) {
+        interventions.push({
+            action: 'Modeled impact suggests capping retry attempts at 4',
+            rationale: 'High-tier merchants face asymmetric escalation risk. Preventive retry ceiling limits exposure growth.',
+            priority: 'high',
+            velocityReduction: 0.33,
+        });
+    }
+
+    // ── Tier delta interventions ──
+    if (tierDeltaLast > 0) {
+        interventions.push({
+            action: 'Modeled trajectory suggests monitoring Tier Delta over next 48h',
+            rationale: `Tier moved +${tierDeltaLast} in last evaluation period. Consecutive positive deltas trigger accelerated processor review.`,
+            priority: tierDeltaLast >= 2 ? 'critical' : 'high',
+        });
+    }
+
+    // ── Policy surface interventions ──
+    if (policySurface.missing > 0) {
+        interventions.push({
+            action: `Modeled risk weight suggests adding ${policySurface.missing} missing policy page${policySurface.missing > 1 ? 's' : ''}`,
+            rationale: 'Missing compliance pages (refund, privacy, terms) are weighted negatively in processor risk scoring.',
+            priority: policySurface.missing >= 2 ? 'high' : 'moderate',
+        });
+    }
+    if (policySurface.weak > 0) {
+        interventions.push({
+            action: `Modeled risk weight suggests strengthening ${policySurface.weak} weak policy page${policySurface.weak > 1 ? 's' : ''}`,
+            rationale: 'Weak policy pages (low keyword density, vague language) receive partial credit in stability scoring.',
+            priority: 'moderate',
+        });
+    }
+
+    // ── Stable/nominal state ──
+    if (interventions.length === 0 && trend === 'STABLE' && currentRiskTier <= 2) {
+        interventions.push({
+            action: 'No structural changes modeled',
+            rationale: 'System is in nominal state. Current configuration produces stable risk trajectory. Continue monitoring.',
+            priority: 'low',
+        });
+    }
+
+    return interventions;
+}
+
+/**
+ * Derives simulation multipliers from intervention recommendations.
+ * Uses the primary velocity reduction from the highest-priority intervention.
+ *
+ * Mathematical relationship (same non-linear model as projection engine):
+ *   exposureMultiplier = (1 - velocityReduction) ^ 1.5
+ *   rateMultiplier     = (1 - velocityReduction) ^ 1.2
+ *
+ * This ensures simulation and projection share the same escalation math.
+ * No hardcoded multipliers. No UI-only constants.
+ */
+function deriveSimulationDelta(interventions: Intervention[]): SimulationDelta | null {
+    // Find the primary velocity intervention (highest reduction)
+    const velocityInterventions = interventions.filter(i => i.velocityReduction !== undefined && i.velocityReduction > 0);
+    if (velocityInterventions.length === 0) return null;
+
+    // Use the maximum recommended reduction
+    const primaryReduction = Math.max(...velocityInterventions.map(i => i.velocityReduction!));
+    const retainedVelocity = 1 - primaryReduction;
+
+    // Non-linear: escalation penalty compounds, so velocity reduction
+    // has outsized impact on reserve accumulation
+    const exposureMultiplier = round4(Math.pow(retainedVelocity, 1.5));
+    const rateMultiplier = round4(Math.pow(retainedVelocity, 1.2));
+
+    const pctLabel = Math.round(primaryReduction * 100);
+    return {
+        velocityReduction: primaryReduction,
+        exposureMultiplier,
+        rateMultiplier,
+        label: `Simulate recommended ${pctLabel}% velocity reduction`,
+    };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Route Handler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -208,14 +367,7 @@ export async function GET(request: Request) {
     if (!authResult.ok) return authResult.response;
 
     const { workspace } = authResult;
-
-    // Gate: FeatureReserveProjection requires Pro or Enterprise
-    if (!canAccess(workspace.tier, "reserve_projection")) {
-        return NextResponse.json(
-            { error: 'Forbidden', code: 'TIER_INSUFFICIENT', requiredFeature: 'reserve_projection' },
-            { status: 403 }
-        );
-    }
+    const hasProjectionAccess = canAccess(workspace.tier, "reserve_projection");
 
     // Parse parameters
     const { searchParams } = new URL(request.url);
@@ -255,10 +407,44 @@ export async function GET(request: Request) {
         );
     }
 
-    // Compute deterministic projections
-    const reserveProjections = projectReserveWindows(snapshot, monthlyTPV);
+    // Compute deterministic projections (only if they have access)
+    const reserveProjections = hasProjectionAccess ? projectReserveWindows(snapshot, monthlyTPV) : [];
     const instabilitySignal = classifyInstability(snapshot);
+    const recommendedInterventions = hasProjectionAccess ? deriveInterventions(snapshot) : [];
+    const simulationDelta = hasProjectionAccess ? deriveSimulationDelta(recommendedInterventions) : null;
     const volumeMode: VolumeMode = monthlyTPV !== undefined ? "bps_plus_usd" : "bps_only";
+
+    // Compute audit basis — full derivation chain for transparency
+    const tier = Math.max(1, Math.min(5, snapshot.currentRiskTier));
+    const baseRate = reserveRate(tier);
+    const trendMul = TREND_MULTIPLIER[snapshot.trend] ?? 1.0;
+    const projectedTier = Math.max(1, Math.min(5, tier + snapshot.tierDeltaLast));
+    const projectedRate = reserveRate(projectedTier);
+    const worstRate = Math.min(0.25, projectedRate * trendMul);
+
+    const projectionBasis: ProjectionBasis | null = hasProjectionAccess ? {
+        inputs: {
+            riskTier: tier,
+            riskBand: tierToBand(tier),
+            trend: snapshot.trend,
+            tierDelta: snapshot.tierDeltaLast,
+            policySurface: snapshot.policySurface,
+        },
+        constants: {
+            baseReserveRate: round4(baseRate),
+            trendMultiplier: trendMul,
+            projectedTier,
+            projectedReserveRate: round4(projectedRate),
+            worstCaseReserveRate: round4(worstRate),
+            reserveRateCeiling: 0.25,
+        },
+        interventionBasis: {
+            velocityReductionApplied: simulationDelta?.velocityReduction ?? null,
+            exposureMultiplier: simulationDelta?.exposureMultiplier ?? null,
+            rateMultiplier: simulationDelta?.rateMultiplier ?? null,
+            derivationFormula: 'exposureMultiplier = (1 - velocityReduction) ^ 1.5; rateMultiplier = (1 - velocityReduction) ^ 1.2',
+        },
+    } : null;
 
     const result: ForecastResult = {
         merchantId: snapshot.merchantId,
@@ -266,12 +452,49 @@ export async function GET(request: Request) {
         currentRiskTier: snapshot.currentRiskTier,
         trend: snapshot.trend,
         tierDelta: snapshot.tierDeltaLast,
-        reserveProjections,
         instabilitySignal,
+        hasProjectionAccess,
+        reserveProjections,
+        recommendedInterventions,
+        simulationDelta,
+        projectionBasis,
         volumeMode,
         projectedAt: new Date().toISOString(),
         modelVersion: "reserve-v1.0.0",
     };
+
+    // ── Ledger: conditionally append signed projection artifact ──
+    // Fire-and-forget. Ledger failure must not block response.
+    if (hasProjectionAccess && projectionBasis) {
+        const artifact: ProjectionArtifact = {
+            projectionId: `proj_${snapshot.merchantId}_${Date.now()}`,
+            schemaVersion: LEDGER_SCHEMA_VERSION,
+            merchantId: snapshot.merchantId,
+            normalizedHost: snapshot.normalizedHost,
+            projectedAt: result.projectedAt,
+            modelVersion: result.modelVersion,
+            inputSnapshot: projectionBasis.inputs,
+            appliedConstants: projectionBasis.constants,
+            windowOutputs: reserveProjections.map(w => ({
+                windowDays: w.windowDays,
+                projectedTrappedBps: w.projectedTrappedBps,
+                worstCaseTrappedBps: w.worstCaseTrappedBps,
+                projectedTrappedUSD: w.projectedTrappedUSD,
+                worstCaseTrappedUSD: w.worstCaseTrappedUSD,
+            })),
+            interventionOutput: {
+                velocityReduction: simulationDelta?.velocityReduction ?? null,
+                exposureMultiplier: simulationDelta?.exposureMultiplier ?? null,
+                rateMultiplier: simulationDelta?.rateMultiplier ?? null,
+                interventionCount: recommendedInterventions.length,
+            },
+            instabilitySignal,
+            writeReason: 'daily_cadence', // will be overridden by shouldWrite
+        };
+        ProjectionLedger.maybeAppend(artifact).catch(err =>
+            console.error('[LEDGER_APPEND_ERROR]', err)
+        );
+    }
 
     return NextResponse.json(result, {
         headers: {

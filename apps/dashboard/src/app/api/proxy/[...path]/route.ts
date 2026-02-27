@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/require-auth';
+import { canAccess } from '@/lib/tier/resolver';
+import type { Feature } from '@/lib/tier/features';
 
-// Pilot endpoints that require explicit enablement
-const PILOT_PATHS = ['pilot/warnings', 'pilot/dashboard'];
-
-function isPilotEndpoint(targetPath: string): boolean {
-    return PILOT_PATHS.some(p => targetPath.startsWith(p));
-}
+// Exact match mapping of allowed proxy paths to their required feature capability
+const ALLOWED_PROXY_PATHS: Record<string, Feature> = {
+    'pilot/warnings': 'alert_routing',
+    'pilot/dashboard': 'alert_routing'
+};
 
 function isPilotAllowed(): boolean {
     // Require explicit enablement via env var
@@ -16,15 +18,29 @@ export async function GET(
     request: Request,
     { params }: any
 ) {
+    const authResult = await requireAuth();
+    if (!authResult.ok) return authResult.response;
+    const { workspace } = authResult;
+
     const { path } = await params;
     const targetPath = path.join('/');
     const payfluxUrl = process.env.PAYFLUX_API_URL;
     const apiKey = process.env.PAYFLUX_API_KEY;
 
-    // Defense-in-depth: block pilot endpoints unless explicitly enabled
-    if (isPilotEndpoint(targetPath) && !isPilotAllowed()) {
+    const requiredCapability = ALLOWED_PROXY_PATHS[targetPath];
+
+    // Defense-in-depth: explicitly allowlist what can be proxied (exact match)
+    if (!requiredCapability) {
         return NextResponse.json(
-            { error: 'Not available in this environment' },
+            { error: 'Forbidden', code: 'UNSUPPORTED_PROXY_PATH' },
+            { status: 403 }
+        );
+    }
+
+    // Defense-in-depth: block pilot endpoints unless explicitly enabled AND tier has capability
+    if (!isPilotAllowed() || !canAccess(workspace.tier, requiredCapability)) {
+        return NextResponse.json(
+            { error: 'Not available in this environment or tier' },
             { status: 403 }
         );
     }
@@ -41,6 +57,7 @@ export async function GET(
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
+                'X-Payflux-Account-Id': `acc_${workspace.workspaceId}`,
             },
         });
 
@@ -82,15 +99,29 @@ export async function POST(
     request: Request,
     { params }: any
 ) {
+    const authResult = await requireAuth();
+    if (!authResult.ok) return authResult.response;
+    const { workspace } = authResult;
+
     const { path } = await params;
     const targetPath = path.join('/');
     const payfluxUrl = process.env.PAYFLUX_API_URL;
     const apiKey = process.env.PAYFLUX_API_KEY;
 
-    // Defense-in-depth: block pilot endpoints unless explicitly enabled
-    if (isPilotEndpoint(targetPath) && !isPilotAllowed()) {
+    const requiredCapability = ALLOWED_PROXY_PATHS[targetPath];
+
+    // Defense-in-depth: explicitly allowlist what can be proxied (exact match)
+    if (!requiredCapability) {
         return NextResponse.json(
-            { error: 'Not available in this environment' },
+            { error: 'Forbidden', code: 'UNSUPPORTED_PROXY_PATH' },
+            { status: 403 }
+        );
+    }
+
+    // Defense-in-depth: block pilot endpoints unless explicitly enabled AND tier has capability
+    if (!isPilotAllowed() || !canAccess(workspace.tier, requiredCapability)) {
+        return NextResponse.json(
+            { error: 'Not available in this environment or tier' },
             { status: 403 }
         );
     }
@@ -108,6 +139,7 @@ export async function POST(
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
+                'X-Payflux-Account-Id': `acc_${workspace.workspaceId}`,
             },
             body: JSON.stringify(body),
         });

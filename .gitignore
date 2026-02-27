@@ -36,3 +36,11 @@ scripts/ugly_traffic_sim.sh
 scripts/audit_*.sh
 apps/dashboard/src/data/docs.json
 test-runner
+
+# Obsidian knowledge vault (local only)
+payflux-knowledge/
+node_modules/
+.claude/
+*.zip
+*.txt
+launch_reports/

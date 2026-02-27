@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +17,6 @@ func BenchmarkIngest(b *testing.B) {
 	// Setup a no-op Redis client for minimal overhead in benchmark
 	// If we want to measure Redis impact, use a real local Redis.
 	rdb = redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-	ctx = context.Background()
 
 	// Initialize metrics/keys so it doesn't panic
 	validAPIKeys = []string{"bench-key"}

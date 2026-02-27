@@ -27,6 +27,19 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'No data found for this URL' }, { status: 404, headers: { 'x-trace-id': traceId } });
     }
 
+    // 1. Enforce tier retention boundaries
+    const retentionDays = workspace.tier === 'enterprise' ? 90 : workspace.tier === 'pro' ? 30 : 7;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffIso = cutoffDate.toISOString();
+
+    if (data.lastScanAt < cutoffIso) {
+        return NextResponse.json(
+            { error: 'Data exceeds tier retention limit', code: 'RETAINED_AGE_EXCEEDED' },
+            { status: 403, headers: { 'x-trace-id': traceId } }
+        );
+    }
+
     RiskLogger.log('risk_trend_read', { traceId, url, merchantId: data.merchantId });
 
     return NextResponse.json(data, {

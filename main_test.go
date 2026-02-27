@@ -38,7 +38,6 @@ func setupTestRedis(t *testing.T) {
 
 	// Set global rdb for handlers
 	rdb = testRdb
-	ctx = testCtx
 	streamKey = "events_stream"
 	groupName = "payment_consumers"
 	dlqKey = "dlq_stream"
@@ -274,7 +273,7 @@ func TestDLQBehavior(t *testing.T) {
 	// Note: Full DLQ test requires consumer running, which is complex in unit tests
 	// This is a simplified version testing the DLQ send function
 
-	err := sendToDlq(malformedMsg, "test_failure")
+	err := sendToDlq(testCtx, malformedMsg, "test_failure")
 	if err != nil {
 		t.Errorf("sendToDlq should not error: %v", err)
 	}

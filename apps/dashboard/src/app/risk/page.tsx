@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import ReserveForecastPanel from '@/components/ReserveForecastPanel';
+import { useState } from 'react';
 import {
     Shield,
     AlertTriangle,
@@ -363,16 +362,6 @@ export default function RiskSnapshotPage() {
     const [analysis, setAnalysis] = useState<RiskAnalysis | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Extract hostname from analysis URL for forecast panel
-    const scannedHost = useMemo(() => {
-        if (!analysis?.url) return null;
-        try {
-            const normalized = analysis.url.startsWith('http') ? analysis.url : `https://${analysis.url}`;
-            return new URL(normalized).hostname;
-        } catch {
-            return null;
-        }
-    }, [analysis?.url]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -518,10 +507,6 @@ export default function RiskSnapshotPage() {
                 {/* Report View */}
                 {analysis && !isLoading && <ReportView analysis={analysis} />}
 
-                {/* Reserve Forecast — appears after scan completes */}
-                {analysis && !isLoading && (
-                    <ReserveForecastPanel host={scannedHost} />
-                )}
             </div>
         </div>
     );

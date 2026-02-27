@@ -33,13 +33,10 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('Authorization');
     const apiKey = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : 'anon';
 
-    // 2. Resolve account from API key (mock for now - should query DB)
-    // TODO: Replace with actual account resolution from database
+    // 2. Map authenticated workspace to internal account representation
     const account: Account = {
-        id: `acc_${apiKey.slice(0, 12)}`,
-        billingTier: apiKey.startsWith('pf_free_') ? 'free' :
-            apiKey.startsWith('pf_pro_') ? 'pro' :
-                apiKey.startsWith('pf_enterprise_') ? 'enterprise' : 'free',
+        id: `acc_${workspace.workspaceId}`,
+        billingTier: workspace.tier,
         tierHistory: [],
         overrides: undefined,
     };

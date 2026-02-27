@@ -23,6 +23,8 @@ import (
 	"syscall"
 	"time"
 
+	"payment-node/internal/exporter"
+	"payment-node/internal/forecast"
 	"payment-node/internal/httpmw"
 	"payment-node/internal/ratelimit"
 	"payment-node/internal/startup"
@@ -62,22 +64,20 @@ type CheckoutRequest struct {
 
 // Constants
 const (
-	dedupTTL       = 24 * time.Hour
-	idempotencyTTL = 24 * time.Hour // consumer-side export latch
+	dedupTTL          = 24 * time.Hour
+	idempotencyTTL    = 24 * time.Hour // consumer-side export latch
 	ackTimeout        = 2 * time.Second
 	redisWriteTimeout = 2 * time.Second
 	maxRetries        = 5
-	maxBodySize    = 1 * 1024 * 1024 // 1MB
+	maxBodySize       = 1 * 1024 * 1024 // 1MB
 )
 
 var (
-	ctx = context.Background()
-
-	rdb       *redis.Client
-	streamKey = "events_stream"
-	groupName = "payment_consumers"
-	dlqKey       = "events_stream_dlq"
-	poisonCounts    sync.Map // map[string]int — local poison message guard
+	rdb              *redis.Client
+	streamKey        = "events_stream"
+	groupName        = "payment_consumers"
+	dlqKey           = "events_stream_dlq"
+	poisonCounts     sync.Map // map[string]int — local poison message guard
 	exportFailStreak atomic.Int32
 	lastConsume      atomic.Int64 // unix seconds of last successful message read
 
@@ -114,6 +114,9 @@ var (
 	// Global rate limiter (Phase 3B)
 	globalRateLimiter     *ratelimit.Limiter
 	exportLastErrorReason sync.Map // destination -> reason string
+
+	// exporterInstance is declared in exporter_adapter.go (same package).
+	// Listed here for documentation: var exporterInstance *exporter.Exporter
 
 	// Risk Scorer (v0.2.1+)
 	riskScorer       *RiskScorer
@@ -467,7 +470,7 @@ func setupRedis(redisAddr string) {
 		WriteTimeout: 2 * time.Second,
 	})
 
-	if err := rdb.Ping(ctx).Err(); err != nil {
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		log.Fatalf("Redis connection failed: %v", err)
 	}
 
@@ -477,23 +480,23 @@ func setupRedis(redisAddr string) {
 	globalRateLimiter = ratelimit.NewLimiter(rdb)
 	slog.Info("rate_limiter_initialized", "type", "per-account-atomic")
 
-	if err := ensureConsumerGroup(streamKey, groupName); err != nil {
+	if err := ensureConsumerGroup(context.Background(), streamKey, groupName); err != nil {
 		log.Fatalf("consumer_group_failed stream=%s group=%s err=%v", streamKey, groupName, err)
 	}
 	slog.Info("consumer_group_ready", "stream", streamKey, "group", groupName)
 }
 
 // Helper: Setup export and start background workers
-func setupExportAndConsumer() {
+func setupExportAndConsumer(ctx context.Context) {
 	if err := setupExport(); err != nil {
 		log.Fatalf("export_setup_failed err=%v", err)
 	}
 
-	go consumeEvents()
-	go updateStreamMetrics()
+	go consumeEvents(ctx)
+	go updateStreamMetrics(ctx)
 
 	if rawEventTTLDays > 0 {
-		go runStreamRetention()
+		go runStreamRetention(ctx)
 	}
 }
 
@@ -506,6 +509,9 @@ func setupHTTPServer(httpAddr string) *http.Server {
 		authMiddleware(rateLimitMiddleware(handleEvent)))
 	mux.HandleFunc("/checkout",
 		authMiddleware(rateLimitMiddleware(handleCheckout)))
+
+	// Risk forecast endpoint
+	mux.HandleFunc("/api/v1/risk/forecast", authMiddleware(handleRiskForecast))
 
 	// Health and metrics remain unauthenticated
 	mux.HandleFunc("/health", handleHealth)
@@ -564,7 +570,7 @@ func registerEvidenceRoutes(mux *http.ServeMux) {
 }
 
 // Helper: Run server with graceful shutdown
-func runServer(srv *http.Server) {
+func runServer(srv *http.Server, appCancel context.CancelFunc) {
 	ln, err := net.Listen("tcp", srv.Addr)
 	if err != nil {
 		log.Fatalf("server_failed err=%v", err)
@@ -583,6 +589,7 @@ func runServer(srv *http.Server) {
 	<-quit
 
 	log.Println("shutdown_initiated")
+	appCancel() // signal consumer/metrics goroutines to exit
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -634,13 +641,18 @@ func main() {
 	redisAddr, httpAddr := loadConfiguration()
 	validateProduction()
 
+	// appCtx is the root context for all runtime goroutines.
+	// Cancelled by runServer on SIGINT/SIGTERM to trigger clean shutdown.
+	appCtx, appCancel := context.WithCancel(context.Background())
+	defer appCancel()
+
 	initializePrometheus()
 	setupRedis(redisAddr)
-	setupExportAndConsumer()
+	setupExportAndConsumer(appCtx)
 	defer cleanupExport()
 
 	srv := setupHTTPServer(httpAddr)
-	runServer(srv)
+	runServer(srv, appCancel)
 }
 
 // loadAPIKeys loads API keys from env vars (multi-key support)
@@ -734,22 +746,27 @@ func generateConsumerName() string {
 
 // runStreamRetention periodically purges raw events older than rawEventTTLDays.
 // Uses Redis XTRIM with MINID to delete entries older than the cutoff.
-func runStreamRetention() {
+func runStreamRetention(ctx context.Context) {
 	// Run immediately on startup
-	purgeOldStreamEntries()
+	purgeOldStreamEntries(ctx)
 
 	// Then run hourly
 	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		purgeOldStreamEntries()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			purgeOldStreamEntries(ctx)
+		}
 	}
 }
 
 // purgeOldStreamEntries trims the events_stream to remove entries older than rawEventTTLDays.
 // Redis stream IDs are millisecond timestamps, so we compute a cutoff ID.
-func purgeOldStreamEntries() {
+func purgeOldStreamEntries(ctx context.Context) {
 	if rawEventTTLDays <= 0 {
 		return
 	}
@@ -789,10 +806,52 @@ func purgeOldStreamEntries() {
 	)
 }
 
+func handleRiskForecast(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if riskScorer == nil {
+		http.Error(w, "Risk scoring is disabled", http.StatusServiceUnavailable)
+		return
+	}
+
+	accountVol, procSuccess, procVol := riskScorer.SnapshotSeries()
+
+	actForecast := forecast.ComputeAccountForecast(accountVol)
+	procForecasts := make(map[string]forecast.ProcessorForecast)
+
+	for proc, successHist := range procSuccess {
+		// We pass nil for latency history since it's not currently tracked in RiskScorer
+		procForecasts[proc] = forecast.ComputeProcessorForecasts(nil, successHist)
+	}
+
+	sysReserve := forecast.ComputeSystemReserve(accountVol, procSuccess, procVol)
+
+	response := struct {
+		AccountForecast   forecast.AccountForecast              `json:"account_forecast"`
+		Processors        map[string]forecast.ProcessorForecast `json:"processor_forecasts"`
+		ReserveProjection forecast.ReserveProjection            `json:"reserve_projection"`
+	}{
+		AccountForecast:   actForecast,
+		Processors:        procForecasts,
+		ReserveProjection: sysReserve,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		slog.Error("risk_forecast_encode_error", "error", err)
+	}
+}
+
 // Panic handling with configurable mode
-func consumeEvents() {
+func consumeEvents(ctx context.Context) {
 	consumerName := generateConsumerName()
 	consumerNameGlobal = consumerName // Store for export metadata
+	// Build the Exporter now that consumerNameGlobal is set and setupExport()
+	// has already configured exportMode / exportWriter (via setupExportAndConsumer).
+	exporterInstance = buildExporter()
 	slog.Info("consumer_started", "group", groupName, "stream", streamKey, "consumer", consumerName)
 
 	defer func() {
@@ -803,7 +862,7 @@ func consumeEvents() {
 				// Restart consumer after brief delay
 				time.Sleep(5 * time.Second)
 				log.Println("consumer_restarting")
-				go consumeEvents()
+				go consumeEvents(ctx)
 			} else {
 				// Default: crash - let supervisor restart the process
 				log.Fatal("consumer_panic_exit")
@@ -815,6 +874,10 @@ func consumeEvents() {
 	errorBackoff := 0 // For exponential backoff on errors
 
 	for {
+		if ctx.Err() != nil {
+			log.Println("consumer_stopped reason=context_cancelled")
+			return
+		}
 		if t := lastConsume.Load(); t != 0 && time.Now().Unix()-t > 30 {
 			log.Printf("consumer_watchdog_triggered stall_seconds=%d", time.Now().Unix()-t)
 		}
@@ -854,7 +917,7 @@ func consumeEvents() {
 
 			lastConsume.Store(time.Now().Unix())
 			for _, msg := range msgs {
-				safeHandleMessage(msg)
+				safeHandleMessage(ctx, msg)
 			}
 		}
 
@@ -884,7 +947,7 @@ func consumeEvents() {
 		lastConsume.Store(time.Now().Unix())
 		for _, s := range streams {
 			for _, msg := range s.Messages {
-				safeHandleMessage(msg)
+				safeHandleMessage(ctx, msg)
 			}
 		}
 	}
@@ -1175,49 +1238,54 @@ func min(a, b int) int {
 }
 
 // Background metrics updater
-func updateStreamMetrics() {
+func updateStreamMetrics(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		// Stream length
-		length, err := rdb.XLen(ctx, streamKey).Result()
-		if err == nil {
-			streamLength.Set(float64(length))
-		} else {
-			log.Printf("metrics_stream_length_error err=%v", err)
-		}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			// Stream length
+			length, err := rdb.XLen(ctx, streamKey).Result()
+			if err == nil {
+				streamLength.Set(float64(length))
+			} else {
+				log.Printf("metrics_stream_length_error err=%v", err)
+			}
 
-		// Pending count (consumer lag)
-		pending, err := rdb.XPending(ctx, streamKey, groupName).Result()
-		var pendingCountVal int64
-		if err == nil {
-			pendingCountVal = pending.Count
-			pendingCount.Set(float64(pendingCountVal))
-			consumerLagMessages.Set(float64(pendingCountVal))
-		} else {
-			log.Printf("metrics_pending_count_error err=%v", err)
-		}
+			// Pending count (consumer lag)
+			pending, err := rdb.XPending(ctx, streamKey, groupName).Result()
+			var pendingCountVal int64
+			if err == nil {
+				pendingCountVal = pending.Count
+				pendingCount.Set(float64(pendingCountVal))
+				consumerLagMessages.Set(float64(pendingCountVal))
+			} else {
+				log.Printf("metrics_pending_count_error err=%v", err)
+			}
 
-		// Backpressure warning log (if above threshold)
-		if length > backpressureThreshold {
-			slog.Warn("stream_backpressure",
-				"stream_depth", length,
-				"pending_messages", pendingCountVal,
-				"threshold", backpressureThreshold,
-			)
+			// Backpressure warning log (if above threshold)
+			if length > backpressureThreshold {
+				slog.Warn("stream_backpressure",
+					"stream_depth", length,
+					"pending_messages", pendingCountVal,
+					"threshold", backpressureThreshold,
+				)
+			}
 		}
 	}
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	// Quick Redis ping so health actually means something
-	if err := rdb.Ping(ctx).Err(); err != nil {
+	if err := rdb.Ping(r.Context()).Err(); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		json.NewEncoder(w).Encode(map[string]any{
-			"status":            "unhealthy",
-			"reason":            "redis not ok",
+			"status":             "unhealthy",
+			"reason":             "redis not ok",
 			"config_fingerprint": configFingerprint.Short,
 		})
 		return
@@ -1225,7 +1293,7 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"status":            "ok",
+		"status":             "ok",
 		"config_fingerprint": configFingerprint.Short,
 	})
 }
@@ -1272,8 +1340,9 @@ func handleEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Idempotency check
+	reqCtx := r.Context()
 	dedupKey := fmt.Sprintf("dedup:%s", e.EventID)
-	wasSet, err := rdb.SetNX(ctx, dedupKey, "1", dedupTTL).Result()
+	wasSet, err := rdb.SetNX(reqCtx, dedupKey, "1", dedupTTL).Result()
 	if err != nil {
 		log.Printf("dedup_check_error event_id=%s err=%v", e.EventID, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -1298,7 +1367,7 @@ func handleEvent(w http.ResponseWriter, r *http.Request) {
 	eventsByProcessor.WithLabelValues(e.Processor).Inc()
 
 	// XADD to stream
-	if err := rdb.XAdd(ctx, &redis.XAddArgs{
+	if err := rdb.XAdd(reqCtx, &redis.XAddArgs{
 		Stream: streamKey,
 		Values: map[string]any{"data": string(data)},
 	}).Err(); err != nil {
@@ -1310,7 +1379,7 @@ func handleEvent(w http.ResponseWriter, r *http.Request) {
 	// Stream retention: trim if configured
 	if streamMaxLen > 0 {
 		// Use approximate trimming (~) for performance
-		if err := rdb.XTrimMaxLenApprox(ctx, streamKey, streamMaxLen, 0).Err(); err != nil {
+		if err := rdb.XTrimMaxLenApprox(reqCtx, streamKey, streamMaxLen, 0).Err(); err != nil {
 			log.Printf("stream_trim_error err=%v", err)
 		}
 	}
@@ -1392,7 +1461,7 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"url": s.URL})
 }
 
-func ensureConsumerGroup(stream, group string) error {
+func ensureConsumerGroup(ctx context.Context, stream, group string) error {
 	_, err := rdb.XGroupCreateMkStream(ctx, stream, group, "0").Result()
 	if err == nil {
 		return nil
@@ -1409,7 +1478,7 @@ func ensureConsumerGroup(stream, group string) error {
 }
 
 // DLQ retry budget
-func handleMessageWithDlq(msg redis.XMessage) {
+func handleMessageWithDlq(ctx context.Context, msg redis.XMessage) {
 	// Check retry count via XPENDING
 	pending, err := rdb.XPendingExt(ctx, &redis.XPendingExtArgs{
 		Stream: streamKey,
@@ -1427,7 +1496,7 @@ func handleMessageWithDlq(msg redis.XMessage) {
 	// Enforce retry budget
 	if retryCount > maxRetries {
 		log.Printf("dlq_max_retries id=%s retries=%d", msg.ID, retryCount)
-		_ = sendToDlq(msg, "max_retries_exceeded")
+		_ = sendToDlq(ctx, msg, "max_retries_exceeded")
 		return
 	}
 
@@ -1435,14 +1504,14 @@ func handleMessageWithDlq(msg redis.XMessage) {
 	dataAny, ok := msg.Values["data"]
 	if !ok {
 		log.Printf("message_missing_data id=%s", msg.ID)
-		_ = sendToDlq(msg, "missing_data_field")
+		_ = sendToDlq(ctx, msg, "missing_data_field")
 		return
 	}
 
 	dataStr, ok := dataAny.(string)
 	if !ok {
 		log.Printf("message_data_not_string id=%s", msg.ID)
-		_ = sendToDlq(msg, "invalid_data_type")
+		_ = sendToDlq(ctx, msg, "invalid_data_type")
 		return
 	}
 
@@ -1450,7 +1519,7 @@ func handleMessageWithDlq(msg redis.XMessage) {
 	var event Event
 	if err := json.Unmarshal([]byte(dataStr), &event); err != nil {
 		log.Printf("event_unmarshal_error id=%s err=%v", msg.ID, err)
-		_ = sendToDlq(msg, "unmarshal_failed")
+		_ = sendToDlq(ctx, msg, "unmarshal_failed")
 		return
 	}
 
@@ -1461,7 +1530,7 @@ func handleMessageWithDlq(msg redis.XMessage) {
 
 	// Idempotency latch — prevent duplicate exports on redelivery
 	latchKey := fmt.Sprintf("processed:%s:%s", streamKey, msg.ID)
-	wctx, wcancel := context.WithTimeout(ctx, redisWriteTimeout)
+	wctx, wcancel := context.WithTimeout(ctx, redisWriteTimeout) //nolint:govet
 	wasSet, setErr := rdb.SetNX(wctx, latchKey, "1", idempotencyTTL).Result()
 	wcancel()
 	if setErr == nil && !wasSet {
@@ -1511,7 +1580,7 @@ func handleMessageWithDlq(msg redis.XMessage) {
 
 }
 
-func safeHandleMessage(msg redis.XMessage) {
+func safeHandleMessage(ctx context.Context, msg redis.XMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("consumer_panic_recovered message_id=%s panic=%v", msg.ID, r)
@@ -1521,7 +1590,7 @@ func safeHandleMessage(msg redis.XMessage) {
 
 			if n >= 5 {
 				log.Printf("poison_message_detected message_id=%s failures=%d", msg.ID, n)
-				_ = sendToDlq(msg, "poison_message_repeated_panics")
+				_ = sendToDlq(ctx, msg, "poison_message_repeated_panics")
 				poisonCounts.Delete(msg.ID)
 				return
 			}
@@ -1530,11 +1599,11 @@ func safeHandleMessage(msg redis.XMessage) {
 		}
 	}()
 
-	handleMessageWithDlq(msg)
+	handleMessageWithDlq(ctx, msg)
 }
 
 // Updated sendToDlq with reason and timestamp
-func sendToDlq(msg redis.XMessage, reason string) error {
+func sendToDlq(ctx context.Context, msg redis.XMessage, reason string) error {
 	consumerDlq.Inc()
 
 	raw := ""
@@ -1563,7 +1632,7 @@ func sendToDlq(msg redis.XMessage, reason string) error {
 
 	// Must ACK to remove from pending
 	wctx2, wcancel2 := context.WithTimeout(ctx, redisWriteTimeout)
-	err = rdb.XAck(wctx2, streamKey, groupName, msg.ID).Err()
+	err = rdb.XAck(wctx2, streamKey, groupName, msg.ID).Err() //nolint:govet
 	wcancel2()
 	if err != nil {
 		log.Printf("dlq_xack_error id=%s err=%v", msg.ID, err)
@@ -1708,179 +1777,17 @@ func cleanupExport() {
 	}
 }
 
-// ExportedEvent is the JSON structure written to export destinations
-type ExportedEvent struct {
-	EventID         string `json:"event_id"`
-	EventType       string `json:"event_type"`
-	EventTimestamp  string `json:"event_timestamp"`
-	Processor       string `json:"processor"`
-	StreamMessageID string `json:"stream_message_id"`
-	ConsumerName    string `json:"consumer_name"`
-	ProcessedAt     string `json:"processed_at"`
-
-	// Risk signals (v0.2.1+)
-	ProcessorRiskScore   float64  `json:"processor_risk_score,omitempty"`
-	ProcessorRiskBand    string   `json:"processor_risk_band,omitempty"`
-	ProcessorRiskDrivers []string `json:"processor_risk_drivers,omitempty"`
-
-	// Tier 1 only: Upgrade hint (v0.2.3+)
-	UpgradeHint string `json:"upgrade_hint,omitempty"`
-
-	// Tier 2 only: Authority-gated fields (v0.2.2+)
-	ProcessorPlaybookContext string `json:"processor_playbook_context,omitempty"`
-	RiskTrajectory           string `json:"risk_trajectory,omitempty"`
-}
+// ExportedEvent type has moved to internal/exporter/transform.go (Step 2).
+// exportEvent calls exporterInstance.Export which returns exporter.ExportedEvent.
 
 // exportEvent writes the processed event to configured destinations.
 // Returns nil on success; non-nil error means at least one destination failed.
+//
+// Body migrated to internal/exporter (Step 7). This wrapper converts the
+// package-main Event to exporter.Event (identical layout; direct conversion)
+// and delegates to the live exporterInstance built in consumeEvents().
 func exportEvent(event Event, messageID string) error {
-	exported := ExportedEvent{
-		EventID:         event.EventID,
-		EventType:       event.EventType,
-		EventTimestamp:  event.EventTimestamp,
-		Processor:       event.Processor,
-		StreamMessageID: messageID,
-		ConsumerName:    consumerNameGlobal,
-		ProcessedAt:     time.Now().UTC().Format(time.RFC3339),
-	}
-
-	// Enrich with risk score if enabled (v0.2.1+)
-	if riskScoreEnabled && riskScorer != nil {
-		res := riskScorer.RecordEvent(event)
-		exported.ProcessorRiskScore = res.Score
-		exported.ProcessorRiskBand = res.Band
-		exported.ProcessorRiskDrivers = res.Drivers
-
-		// Tier 1 only: Add upgrade hint (v0.2.3+)
-		if !tier.CanAccess(runtimeCanonicalTier, tier.FeatureAcceleration) && res.Band != "low" {
-			exported.UpgradeHint = "Tier 2 adds processor playbook context and risk trajectory."
-		}
-
-		// Tier 2 only: Add authority-gated context (v0.2.2+)
-		// Also respects tier2Enabled kill switch
-		if tier.CanAccess(runtimeCanonicalTier, tier.FeatureAcceleration) && tier2Enabled {
-			// Processor Playbook Context (probabilistic, non-prescriptive)
-			context := generatePlaybookContext(res.Band, res.Drivers)
-			if context != "" {
-				exported.ProcessorPlaybookContext = context
-				tier2ContextEmitted.Inc()
-			}
-
-			// Risk Trajectory (momentum framing)
-			trajectory := generateRiskTrajectory(res)
-			if trajectory != "" {
-				exported.RiskTrajectory = trajectory
-				tier2TrajectoryEmitted.Inc()
-			}
-		}
-
-		// Update metrics
-		riskEventsTotal.WithLabelValues(event.Processor, res.Band).Inc()
-		riskScoreLast.WithLabelValues(event.Processor).Set(res.Score)
-
-		// Pilot mode: Create warning record for elevated+ risk bands (v0.2.3+)
-		// Respects warningsEnabled kill switch
-		if pilotModeEnabled && warningStore != nil && res.Band != "low" {
-			if warningsEnabled {
-				// Parse event timestamp for latency measurement
-				var eventTimestamp time.Time
-				if event.EventTimestamp != "" {
-					if parsedTime, err := time.Parse(time.RFC3339, event.EventTimestamp); err == nil {
-						eventTimestamp = parsedTime
-					}
-				}
-
-				processedAt := time.Now().UTC()
-				warning := &Warning{
-					WarningID:       messageID, // Use stream message ID as stable unique ID
-					EventID:         event.EventID,
-					Processor:       event.Processor,
-					MerchantIDHash:  event.MerchantIDHash,
-					ProcessedAt:     processedAt,
-					EventTimestamp:  eventTimestamp,
-					RiskScore:       res.Score,
-					RiskBand:        res.Band,
-					RiskDrivers:     res.Drivers,
-					PlaybookContext: exported.ProcessorPlaybookContext,
-					RiskTrajectory:  exported.RiskTrajectory,
-				}
-
-				// Observe warning latency if we have a valid event timestamp
-				if !eventTimestamp.IsZero() {
-					latency := processedAt.Sub(eventTimestamp).Seconds()
-					if latency >= 0 { // Sanity check for clock skew
-						warningLatency.Observe(latency)
-					}
-				}
-
-				warningStore.Add(warning)
-			} else {
-				// Warnings disabled, increment suppression counter
-				warningsSuppressed.Inc()
-			}
-		}
-	}
-
-	data, err := json.Marshal(exported)
-	if err != nil {
-		log.Printf("export_marshal_error event_id=%s err=%v", event.EventID, err)
-		exportErrors.WithLabelValues(exportMode, "marshal").Inc()
-		return fmt.Errorf("marshal: %w", err)
-	}
-
-	// Add newline for line-delimited JSON
-	data = append(data, '\n')
-
-	var exportErr error
-
-	if exportMode == "stdout" || exportMode == "both" {
-		_, err := os.Stdout.Write(data)
-		if err != nil {
-			log.Printf("export_stdout_error event_id=%s err=%v", event.EventID, err)
-			exportErrors.WithLabelValues("stdout", "write").Inc()
-			// Record error timestamp
-			atomic.StoreInt64(&exportLastErrorStdout, time.Now().Unix())
-			exportLastErrorReason.Store("stdout", "write")
-			exportErr = fmt.Errorf("stdout: %w", err)
-		} else {
-			eventsExported.WithLabelValues("stdout").Inc()
-			// Record success timestamp (atomic + Prometheus)
-			now := time.Now().Unix()
-			atomic.StoreInt64(&exportLastSuccessStdout, now)
-			exportLastSuccess.WithLabelValues("stdout").Set(float64(now))
-		}
-	}
-
-	if (exportMode == "file" || exportMode == "both") && exportWriter != nil {
-		_, err := exportWriter.Write(data)
-		if err != nil {
-			log.Printf("export_file_error event_id=%s err=%v", event.EventID, err)
-			exportErrors.WithLabelValues("file", "write").Inc()
-			// Record error timestamp
-			atomic.StoreInt64(&exportLastErrorFile, time.Now().Unix())
-			exportLastErrorReason.Store("file", "write")
-			exportErr = fmt.Errorf("file: %w", err)
-		} else {
-			// Flush periodically (every write is okay for moderate throughput)
-			err := exportWriter.Flush()
-			if err != nil {
-				log.Printf("export_file_flush_error event_id=%s err=%v", event.EventID, err)
-				exportErrors.WithLabelValues("file", "flush").Inc()
-				// Record error timestamp
-				atomic.StoreInt64(&exportLastErrorFile, time.Now().Unix())
-				exportLastErrorReason.Store("file", "flush")
-				exportErr = fmt.Errorf("file flush: %w", err)
-			} else {
-				eventsExported.WithLabelValues("file").Inc()
-				// Record success timestamp (atomic + Prometheus)
-				now := time.Now().Unix()
-				atomic.StoreInt64(&exportLastSuccessFile, now)
-				exportLastSuccess.WithLabelValues("file").Set(float64(now))
-			}
-		}
-	}
-
-	return exportErr
+	return exporterInstance.Export(exporter.Event(event), messageID)
 }
 
 // calculateBackoff returns exponential backoff duration (100ms doubling, capped at 2s)
@@ -1896,70 +1803,9 @@ func calculateBackoff(attempt int) time.Duration {
 	return backoff
 }
 
-// generatePlaybookContext returns Tier 2 processor interpretation context
-// Rules: probabilistic language only, no recommendations, no insider claims
-func generatePlaybookContext(band string, drivers []string) string {
-	if band == "low" {
-		return "" // No context needed for low risk
-	}
-
-	// Build context based on band and drivers
-	var context string
-
-	switch band {
-	case "elevated":
-		context = "Pattern indicates early-stage deviation from nominal processor behavior."
-	case "high":
-		context = "Correlates with processor monitoring escalation; rate limiting or velocity checks often triggered."
-	case "critical":
-		context = "Associated with processor risk policy activation; account-level flags or circuit breakers typically engaged."
-	}
-
-	// Add driver-specific context
-	for _, driver := range drivers {
-		switch driver {
-		case "high_failure_rate":
-			context += " Elevated failure rates signal degraded transaction quality."
-		case "retry_pressure_spike":
-			context += " Retry clustering indicates infrastructure stress to processor risk systems."
-		case "timeout_clustering":
-			context += " Timeout patterns correlate with processor-side latency attribution."
-		case "traffic_volatility":
-			context += " Traffic spikes monitored for velocity anomalies."
-		}
-	}
-
-	return context
-}
-
-// generateRiskTrajectory returns Tier 2 momentum/trend framing
-// Rules: observed pattern + momentum, no predictions, no guarantees
-func generateRiskTrajectory(res RiskResult) string {
-	if res.TrajectoryDirection == "stable" && res.TrajectoryMultiplier < 1.5 {
-		return "" // No trajectory context for stable low patterns
-	}
-
-	// Build trajectory description
-	windowMinutes := res.TrajectoryWindowSec / 60
-
-	var trajectory string
-	switch res.TrajectoryDirection {
-	case "accelerating":
-		if res.TrajectoryMultiplier >= 5.0 {
-			trajectory = fmt.Sprintf("Rapid acceleration observed: ~%.0f× above baseline over the last %d minutes.", res.TrajectoryMultiplier, windowMinutes)
-		} else {
-			trajectory = fmt.Sprintf("Pattern accelerating: ~%.1f× above baseline over the last %d minutes.", res.TrajectoryMultiplier, windowMinutes)
-		}
-	case "decelerating":
-		trajectory = fmt.Sprintf("Pattern decelerating: failure rate trending down vs baseline over the last %d minutes.", windowMinutes)
-	case "stable":
-		if res.TrajectoryMultiplier > 1.5 {
-			trajectory = fmt.Sprintf("Sustained elevation: ~%.1f× above baseline, stable over the last %d minutes.", res.TrajectoryMultiplier, windowMinutes)
-		}
-	}
-
-	return trajectory
-}
+// generatePlaybookContext and generateRiskTrajectory have moved to
+// internal/exporter/enrich.go (Step 4). They are no longer needed here
+// because exportEvent() now delegates to exporterInstance.Export().
 
 // MerchantContext holds behavioral state for evidence categorization
 type MerchantContext struct {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -42,8 +43,8 @@ func gatherMerchants() []evidence.Merchant {
 		return merchants
 	}
 
-	iter := rdb.Scan(ctx, 0, "mctx:*", 1000).Iterator()
-	for iter.Next(ctx) {
+	iter := rdb.Scan(context.Background(), 0, "mctx:*", 1000).Iterator()
+	for iter.Next(context.Background()) {
 		key := iter.Val()
 		if len(key) <= 5 {
 			continue

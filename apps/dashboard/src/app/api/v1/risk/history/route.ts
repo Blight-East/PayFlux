@@ -23,7 +23,16 @@ export async function GET(request: Request) {
 
     const data = await RiskIntelligence.getHistory(url);
 
-    RiskLogger.log('risk_history_read', { traceId, url, merchantId: data.merchantId });
+    // 1. Enforce tier retention boundaries (server-side limits)
+    const retentionDays = workspace.tier === 'enterprise' ? 90 : workspace.tier === 'pro' ? 30 : 7;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffIso = cutoffDate.toISOString();
+
+    const filteredScans = data.scans.filter(scan => scan.createdAt >= cutoffIso);
+    data.scans = filteredScans;
+
+    RiskLogger.log('risk_history_read', { traceId, url, merchantId: data.merchantId, retained: filteredScans.length, original: data.scans.length });
 
     return NextResponse.json(data, {
         headers: { 'x-trace-id': traceId }

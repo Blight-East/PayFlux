@@ -321,3 +321,58 @@ func clamp(v float64) float64 {
 	}
 	return v
 }
+
+// SnapshotSeries extracts chronological volume and success histories securely.
+// Returns an overall account volume history, a mapping of processor -> success history,
+// and a mapping of processor -> volume history.
+// Ensures no pointers leak outside the mutex.
+func (s *RiskScorer) SnapshotSeries() ([]float64, map[string][]float64, map[string][]float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := s.nowFunc()
+	bucketIdx := int((now / int64(s.bucketSizeSec)) % int64(s.numBuckets))
+
+	// Pre-allocate the arrays. We will return exactly s.numBuckets elements,
+	// ordered chronologically from oldest bucket to current bucket.
+	accountVolume := make([]float64, s.numBuckets)
+	processorSuccess := make(map[string][]float64)
+	processorVol := make(map[string][]float64)
+
+	// Initialize processor arrays
+	for processor := range s.history {
+		processorSuccess[processor] = make([]float64, s.numBuckets)
+		processorVol[processor] = make([]float64, s.numBuckets)
+	}
+
+	for i := 0; i < s.numBuckets; i++ {
+		// Calculate true chronological index, starting at oldest
+		realIdx := (bucketIdx + 1 + i) % s.numBuckets
+
+		var totalEventsInBucket int
+
+		for processor, hist := range s.history {
+			bucket := hist[realIdx]
+
+			// Only include data if the bucket is fresh (from the current sliding window)
+			if now-bucket.LastUpdate < int64(s.windowSec) && bucket.TotalEvents > 0 {
+				totalEventsInBucket += bucket.TotalEvents
+
+				successRate := 1.0 - (float64(bucket.Failures) / float64(bucket.TotalEvents))
+				if successRate < 0 {
+					successRate = 0
+				}
+				processorSuccess[processor][i] = successRate
+				processorVol[processor][i] = float64(bucket.TotalEvents)
+			} else {
+				// Base baseline success is 1.0 (no failures)
+				processorSuccess[processor][i] = 1.0
+				processorVol[processor][i] = 0.0
+			}
+		}
+
+		accountVolume[i] = float64(totalEventsInBucket)
+	}
+
+	return accountVolume, processorSuccess, processorVol
+}

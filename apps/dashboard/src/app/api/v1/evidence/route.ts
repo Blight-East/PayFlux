@@ -95,12 +95,21 @@ function createDegradedEnvelope(error: string, diagnostics: string[] = [], statu
 }
 
 import { requireAuth } from '@/lib/require-auth';
+import { canAccess } from '@/lib/tier/resolver';
 
 export async function GET(request: Request) {
     const authResult = await requireAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;
+
+    // 1. Tier Gate for Bulk Export
+    if (!canAccess(workspace.tier, "bulk_export")) {
+        return NextResponse.json(
+            { error: 'Payment Required', code: 'UPGRADE_REQUIRED_FOR_BULK_EXPORT' },
+            { status: 402 }
+        );
+    }
 
     const baseUrl = process.env.CORE_BASE_URL || process.env.PAYFLUX_API_URL;
     const apiKey = process.env.CORE_AUTH_TOKEN || process.env.PAYFLUX_API_KEY;

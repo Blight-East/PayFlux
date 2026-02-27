@@ -6,11 +6,16 @@ const Footer = () => {
         <footer className="py-20 border-t border-white/5 bg-[#0a0c10] text-slate-300">
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="text-center md:text-left">
+<<<<<<< Updated upstream
                     <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-[0.3em]">
                         © 2026 PayFlux.
                     </p>
                     <p className="text-zinc-700 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">
                         Deterministic Reserve Projection Infrastructure.
+=======
+                    <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.3em]">
+                        © 2026 PayFlux. Deterministic Reserve Projection Infrastructure.
+>>>>>>> Stashed changes
                     </p>
                 </div>
 

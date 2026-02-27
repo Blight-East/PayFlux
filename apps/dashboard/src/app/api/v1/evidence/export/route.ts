@@ -186,6 +186,14 @@ export async function HEAD(request: NextRequest) {
 
     const { userId, workspace } = authResult;
 
+    // 1. Tier Gate
+    if (!canAccess(workspace.tier, "evidence_export")) {
+        return new NextResponse(null, {
+            status: 402,
+            headers: { 'Cache-Control': 'no-store' }
+        });
+    }
+
     const isProduction = process.env.NODE_ENV === 'production';
     const hasSecret = !!process.env.EVIDENCE_SECRET;
 

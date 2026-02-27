@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { RiskIntelligence } from '@/lib/risk-infra';
 import DashboardClient from './DashboardClient';
 
 export default async function DashboardPage() {
@@ -16,5 +17,17 @@ export default async function DashboardPage() {
         redirect('/onboarding');
     }
 
-    return <DashboardClient tier={workspace.tier} />;
+    // Resolve the primary merchant host from the most recent scan
+    let primaryHost: string | null = null;
+    try {
+        const snapshots = await RiskIntelligence.getAllSnapshots();
+        if (snapshots.length > 0) {
+            // Use the most recently scanned merchant
+            primaryHost = snapshots[snapshots.length - 1].normalizedHost;
+        }
+    } catch {
+        // Non-fatal — panel will render empty state
+    }
+
+    return <DashboardClient tier={workspace.tier} host={primaryHost} />;
 }
