@@ -8,85 +8,74 @@
     --spacing: 0.25rem;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+@layer base {
+    body {
+        font-family: 'Inter', sans-serif;
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #020617;
+        color: #1e293b;
+    }
+
+    ::selection {
+        background-color: rgba(10, 100, 188, 0.3);
+    }
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: #020617;
-    color: #1e293b;
+@layer components {
+    /* Engineering Paper Background — Light */
+    .bg-engineering {
+        background-color: #ffffff;
+        background-image:
+            linear-gradient(rgba(51, 65, 85, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(51, 65, 85, 0.03) 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+
+    /* Engineering Grid — Dark */
+    .bg-grid-dark {
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+
+    .text-numeric {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+    }
+
+    /* Shadows */
+    .shadow-elevation-subtle {
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 0 3px rgba(15, 23, 42, 0.02);
+    }
+
+    .shadow-document {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02), 0 10px 40px -10px rgba(0,0,0,0.04);
+    }
+
+    .shadow-document-float {
+        box-shadow:
+            0 4px 20px rgba(0,0,0,0.3),
+            0 20px 60px -10px rgba(0,0,0,0.4);
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+    }
+
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+    .delay-300 { animation-delay: 300ms; }
+
+    .animate-in {
+        animation: fade-in 0.6s ease-out forwards;
+    }
 }
 
-/* Engineering Paper Background — Light */
-.bg-engineering {
-    background-color: #ffffff;
-    background-image:
-        linear-gradient(rgba(51, 65, 85, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(51, 65, 85, 0.03) 1px, transparent 1px);
-    background-size: 24px 24px;
-}
-
-/* Engineering Grid — Dark */
-.bg-grid-dark {
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-    background-size: 24px 24px;
-}
-
-.font-mono {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
-
-.tabular-nums {
-    font-variant-numeric: tabular-nums;
-}
-
-.text-numeric {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-}
-
-/* Shadows */
-.shadow-elevation-subtle {
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 0 3px rgba(15, 23, 42, 0.02);
-}
-
-.shadow-document {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.02), 0 10px 40px -10px rgba(0,0,0,0.04);
-}
-
-.shadow-document-float {
-    box-shadow:
-        0 4px 20px rgba(0,0,0,0.3),
-        0 20px 60px -10px rgba(0,0,0,0.4);
-}
-
-/* Animations */
 @keyframes fade-in {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-    animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    opacity: 0;
-}
-
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-
-.animate-in {
-    animation: fade-in 0.6s ease-out forwards;
-}
-
-::selection {
-    background-color: rgba(10, 100, 188, 0.3);
 }

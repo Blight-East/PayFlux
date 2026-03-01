@@ -69,11 +69,12 @@ const Home = () => {
                 )}
             </nav>
 
-            <main className="pt-32 pb-24 space-y-32">
+            <main className="pt-16 pb-32 space-y-0">
                 {/* Hero Section */}
-                <section className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-                    <div className="space-y-8">
-                        <div className="space-y-4">
+                <section className="min-h-[92vh] flex items-center">
+                  <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center w-full">
+                    <div className="space-y-10">
+                        <div className="space-y-6">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/50 border border-slate-800 text-xs font-mono text-slate-400 uppercase tracking-wider">
                                 <Activity className="w-3 h-3 text-emerald-400" />
                                 DETERMINISTIC RESERVE PROJECTION INFRASTRUCTURE
@@ -107,8 +108,8 @@ const Home = () => {
                     {/* Hero Visual - Code Based Terminal */}
                     <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent blur-3xl rounded-full"></div>
-                        <div className="relative bg-[#0F0F0F] border border-slate-800 rounded-2xl p-8 shadow-2xl font-mono">
-                            <div className="flex items-center justify-between mb-8">
+                        <div className="relative bg-[#0F0F0F] border border-slate-800 rounded-2xl p-10 shadow-2xl font-mono">
+                            <div className="flex items-center justify-between mb-10">
                                 <div className="text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
                                     <Terminal className="w-4 h-4" />
                                     EXAMPLE OUTPUT
@@ -153,11 +154,12 @@ const Home = () => {
                             </div>
                         </div>
                     </div>
+                  </div>
                 </section>
 
                 {/* Problem Section */}
-                <section className="max-w-7xl mx-auto px-6">
-                    <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <section className="max-w-7xl mx-auto px-6 pt-16 pb-20 md:pt-20 md:pb-40">
+                    <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
                         <h2 className="text-3xl md:text-4xl font-semibold text-white tracking-tight">
                             Processors escalate. Reserves compound.
                             <br />
@@ -165,53 +167,53 @@ const Home = () => {
                         </h2>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-6">
-                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-8 rounded-2xl group">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-10 rounded-2xl group min-h-[240px] flex flex-col justify-end">
                             <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
                                 <img src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2064&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
                             </div>
                             <div className="relative z-10">
-                                <div className="text-4xl font-light text-slate-700 mb-6 group-hover:text-slate-500 transition-colors">01</div>
-                                <h3 className="text-lg text-white font-medium mb-3">Reserve increases are retrospective. You learn after the hold.</h3>
+                                <div className="text-5xl font-light text-slate-700 mb-8 group-hover:text-slate-500 transition-colors">01</div>
+                                <h3 className="text-lg text-white font-medium leading-relaxed">Reserve increases are retrospective. You learn after the hold.</h3>
                             </div>
                         </div>
 
-                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-8 rounded-2xl group">
+                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-10 rounded-2xl group min-h-[240px] flex flex-col justify-end">
                             <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
                                 <img src="https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2071&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
                             </div>
                             <div className="relative z-10">
-                                <div className="text-4xl font-light text-slate-700 mb-6 group-hover:text-slate-500 transition-colors">02</div>
-                                <h3 className="text-lg text-white font-medium mb-3">Retry behavior compounds escalation without visible thresholds.</h3>
+                                <div className="text-5xl font-light text-slate-700 mb-8 group-hover:text-slate-500 transition-colors">02</div>
+                                <h3 className="text-lg text-white font-medium leading-relaxed">Retry behavior compounds escalation without visible thresholds.</h3>
                             </div>
                         </div>
 
-                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-8 rounded-2xl group">
+                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-10 rounded-2xl group min-h-[240px] flex flex-col justify-end">
                             <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
                                 <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
                             </div>
                             <div className="relative z-10">
-                                <div className="text-4xl font-light text-slate-700 mb-6 group-hover:text-slate-500 transition-colors">03</div>
-                                <h3 className="text-lg text-white font-medium mb-3">Capital gets trapped before anyone in finance can see it coming.</h3>
+                                <div className="text-5xl font-light text-slate-700 mb-8 group-hover:text-slate-500 transition-colors">03</div>
+                                <h3 className="text-lg text-white font-medium leading-relaxed">Capital gets trapped before anyone in finance can see it coming.</h3>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* How It Works - Vertical Layout */}
-                <section id="how-it-works" className="max-w-7xl mx-auto px-6 border-t border-slate-800/50 pt-24">
-                    <div className="mb-16">
+                <section id="how-it-works" className="max-w-7xl mx-auto px-6 border-t border-slate-800/50 pt-20 pb-20 md:pt-40 md:pb-40">
+                    <div className="mb-24">
                         <div className="text-sm font-mono text-slate-500 uppercase tracking-wider mb-4">HOW IT WORKS</div>
                         <h2 className="text-4xl font-semibold text-white tracking-tight">Observe. Model. Measure.</h2>
                     </div>
 
-                    <div className="space-y-12 relative before:absolute before:inset-0 before:ml-[27px] md:before:ml-[39px] before:-translate-x-px md:before:translate-x-0 before:h-full before:w-[2px] before:bg-slate-800">
+                    <div className="space-y-24 relative before:absolute before:inset-0 before:ml-[27px] md:before:ml-[39px] before:-translate-x-px md:before:translate-x-0 before:h-full before:w-[2px] before:bg-slate-800">
                         {/* Observe */}
                         <div className="relative flex gap-6 md:gap-12 items-start">
                             <div className="relative z-10 w-14 h-14 md:w-20 md:h-20 shrink-0 bg-slate-950 border-2 border-slate-800 rounded-full flex items-center justify-center text-xl md:text-2xl font-light text-slate-500">
                                 01
                             </div>
-                            <div className="pt-2 md:pt-5 space-y-4">
+                            <div className="pt-2 md:pt-5 space-y-5">
                                 <h3 className="text-2xl text-white font-medium flex items-center gap-3">
                                     <Eye className="w-6 h-6 text-slate-500" />
                                     Observe
@@ -227,7 +229,7 @@ const Home = () => {
                             <div className="relative z-10 w-14 h-14 md:w-20 md:h-20 shrink-0 bg-slate-950 border-2 border-slate-800 rounded-full flex items-center justify-center text-xl md:text-2xl font-light text-slate-500">
                                 02
                             </div>
-                            <div className="pt-2 md:pt-5 space-y-4">
+                            <div className="pt-2 md:pt-5 space-y-5">
                                 <h3 className="text-2xl text-white font-medium flex items-center gap-3">
                                     <Cpu className="w-6 h-6 text-slate-500" />
                                     Model
@@ -243,7 +245,7 @@ const Home = () => {
                             <div className="relative z-10 w-14 h-14 md:w-20 md:h-20 shrink-0 bg-slate-950 border-2 border-slate-800 rounded-full flex items-center justify-center text-xl md:text-2xl font-light text-slate-500">
                                 03
                             </div>
-                            <div className="pt-2 md:pt-5 space-y-4">
+                            <div className="pt-2 md:pt-5 space-y-5">
                                 <h3 className="text-2xl text-white font-medium flex items-center gap-3">
                                     <BarChart4 className="w-6 h-6 text-slate-500" />
                                     Measure
@@ -257,9 +259,9 @@ const Home = () => {
                 </section>
 
                 {/* The Instrument */}
-                <section id="instrument" className="bg-slate-900/20 py-24 border-y border-slate-800/50">
+                <section id="instrument" className="bg-slate-900/20 py-20 md:py-40 border-y border-slate-800/50">
                     <div className="max-w-7xl mx-auto px-6">
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
                             <div className="max-w-2xl space-y-6">
                                 <div className="text-sm font-mono text-slate-500 uppercase tracking-wider">THE INSTRUMENT</div>
                                 <h2 className="text-4xl font-semibold text-white tracking-tight">What you actually see</h2>
@@ -277,7 +279,7 @@ const Home = () => {
                         </div>
 
                         {/* Cinematic Dashboard */}
-                        <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden border border-slate-800 mb-16 group">
+                        <div className="relative w-full h-64 md:h-[420px] rounded-2xl overflow-hidden border border-slate-800 mb-20 group">
                             <img
                                 src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
                                 alt="Data Dashboard Interface"
@@ -301,9 +303,9 @@ const Home = () => {
                                 { title: "Reserve History", desc: "Signed, append-only projection ledger" },
                                 { title: "Board Report", desc: "Deterministic export for leadership review" },
                             ].map((item, i) => (
-                                <div key={i} className="bg-slate-950 border border-slate-800 p-6 rounded-xl hover:border-slate-700 transition-colors">
-                                    <h4 className="text-white font-medium mb-2">{item.title}</h4>
-                                    <p className="text-slate-500 text-sm">{item.desc}</p>
+                                <div key={i} className="bg-slate-950 border border-slate-800 p-8 rounded-xl hover:border-slate-700 transition-colors">
+                                    <h4 className="text-white font-medium mb-3">{item.title}</h4>
+                                    <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -311,8 +313,8 @@ const Home = () => {
                 </section>
 
                 {/* Export Section - Side by Side Grid */}
-                <section className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-                    <div className="order-2 lg:order-1 bg-white text-black p-8 rounded-2xl shadow-xl border border-slate-200 font-mono text-sm relative overflow-hidden">
+                <section className="max-w-7xl mx-auto px-6 py-20 md:py-40 grid lg:grid-cols-2 gap-16 md:gap-20 items-center">
+                    <div className="order-2 lg:order-1 bg-white text-black p-10 rounded-2xl shadow-xl border border-slate-200 font-mono text-sm relative overflow-hidden">
                         {/* Watermark */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10rem] font-bold text-slate-100 -rotate-12 pointer-events-none select-none">
                             EXPORT
@@ -354,16 +356,16 @@ const Home = () => {
                         </div>
                     </div>
 
-                    <div className="order-1 lg:order-2 space-y-8">
-                        <div className="space-y-4">
+                    <div className="order-1 lg:order-2 space-y-10">
+                        <div className="space-y-6">
                             <div className="text-sm font-mono text-slate-500 uppercase tracking-wider">EXPORT</div>
                             <h2 className="text-4xl font-semibold text-white tracking-tight">Board-ready reserve forecast</h2>
-                            <p className="text-lg text-slate-400">
+                            <p className="text-lg text-slate-400 leading-relaxed">
                                 A document that survives outside the product. Deterministic, signed, printable.
                             </p>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             {[
                                 { title: "Deterministic derivation", desc: "Every output is reproducible from the same inputs. No hidden weights." },
                                 { title: "Signed ledger entries", desc: "Append-only. HMAC-SHA256 signed at creation to prevent tampering." },
@@ -385,16 +387,16 @@ const Home = () => {
                 </section>
 
                 {/* Pricing Section - Dark Cards */}
-                <section id="pricing" className="max-w-7xl mx-auto px-6 py-12">
-                    <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+                <section id="pricing" className="max-w-7xl mx-auto px-6 pt-20 pb-20 md:pt-40 md:pb-40 border-t border-slate-800/50">
+                    <div className="text-center max-w-2xl mx-auto mb-20 space-y-6">
                         <div className="text-sm font-mono text-slate-500 uppercase tracking-wider">PRICING</div>
                         <h2 className="text-4xl font-semibold text-white tracking-tight">Three tiers. No opacity.</h2>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                         {/* Free Tier */}
-                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-8 flex flex-col relative overflow-hidden">
-                            <div className="mb-8">
+                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-10 flex flex-col relative overflow-hidden">
+                            <div className="mb-10">
                                 <h3 className="text-2xl text-white font-semibold mb-2">Free</h3>
                                 <div className="text-slate-400 text-sm mb-6">Diagnostic mode</div>
                                 <div className="text-4xl text-white font-light tracking-tight">$0</div>
@@ -430,9 +432,9 @@ const Home = () => {
                         </div>
 
                         {/* Pro Tier */}
-                        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 flex flex-col relative overflow-hidden shadow-[0_0_40px_-15px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20">
+                        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-10 flex flex-col relative overflow-hidden shadow-[0_0_40px_-15px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20">
                             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
-                            <div className="mb-8">
+                            <div className="mb-10">
                                 <h3 className="text-2xl text-white font-semibold mb-2">Pro</h3>
                                 <div className="text-emerald-400 text-sm mb-6">Full instrument</div>
                                 <div className="text-4xl text-white font-light tracking-tight flex items-baseline gap-2">
@@ -470,8 +472,8 @@ const Home = () => {
                         </div>
 
                         {/* Enterprise Tier */}
-                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-8 flex flex-col relative overflow-hidden">
-                            <div className="mb-8">
+                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-10 flex flex-col relative overflow-hidden">
+                            <div className="mb-10">
                                 <h3 className="text-2xl text-white font-semibold mb-2">Enterprise</h3>
                                 <div className="text-slate-400 text-sm mb-6">Custom</div>
                                 <div className="text-4xl text-white font-light tracking-tight">Contact Sales</div>
@@ -505,8 +507,8 @@ const Home = () => {
                 </section>
 
                 {/* Bottom CTA */}
-                <section id="contact" className="max-w-7xl mx-auto px-6 pb-12">
-                    <div className="relative border border-slate-800 rounded-2xl p-8 lg:p-12 overflow-hidden bg-slate-950">
+                <section id="contact" className="max-w-7xl mx-auto px-6 pb-16 md:pb-32">
+                    <div className="relative border border-slate-800 rounded-2xl p-10 lg:p-16 overflow-hidden bg-slate-950">
                         {/* Server Texture Layer */}
                         <div className="absolute inset-0 opacity-[0.07] pointer-events-none">
                             <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2034&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
@@ -514,7 +516,7 @@ const Home = () => {
                         {/* Fade Layer */}
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950/90 pointer-events-none"></div>
 
-                        <div className="relative z-10 max-w-3xl mb-12">
+                        <div className="relative z-10 max-w-3xl mb-16">
                             <p className="text-slate-400 text-lg mb-4">
                                 PayFlux observes signals. It does not modify payment flow. <br className="hidden sm:block" />
                                 <span className="text-white">No routing changes. No approval logic. No added latency.</span>
@@ -524,8 +526,8 @@ const Home = () => {
                             </h2>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-6 relative z-10">
-                            <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800 p-8 rounded-xl flex flex-col justify-between items-start gap-8">
+                        <div className="grid md:grid-cols-2 gap-8 relative z-10">
+                            <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800 p-10 rounded-xl flex flex-col justify-between items-start gap-8">
                                 <div>
                                     <h3 className="text-xl text-white font-medium mb-2">Self-serve</h3>
                                     <p className="text-slate-400">Access the dashboard directly. Free tier available.</p>
@@ -538,10 +540,10 @@ const Home = () => {
                                 </a>
                             </div>
 
-                            <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800 p-8 rounded-xl flex flex-col justify-between items-start gap-8">
+                            <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800 p-10 rounded-xl flex flex-col justify-between items-start gap-8">
                                 <div className="w-full">
-                                    <h3 className="text-xl text-white font-medium mb-2">Enterprise</h3>
-                                    <p className="text-slate-400 mb-6">Higher throughput, bulk exports, and processor attestation readiness.</p>
+                                    <h3 className="text-xl text-white font-medium mb-3">Enterprise</h3>
+                                    <p className="text-slate-400 mb-8">Higher throughput, bulk exports, and processor attestation readiness.</p>
                                     <form
                                         name="enterprise-contact"
                                         method="POST"
