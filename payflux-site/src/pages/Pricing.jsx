@@ -16,11 +16,11 @@ const Pricing = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 font-sans">
+        <div className="min-h-screen bg-engineering text-slate-900 font-sans">
             <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 h-16">
                 <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-3">
-                        <div className="w-7 h-7 bg-slate-900 rounded-sm" />
+                        <div className="w-7 h-7 bg-[#0A64BC] rounded-sm" />
                         <span className="font-semibold tracking-tight text-lg text-slate-900">PayFlux</span>
                     </Link>
                     <Link to="/" className="text-[13px] text-slate-400 hover:text-slate-900 transition-colors">
@@ -39,49 +39,52 @@ const Pricing = () => {
 
                 <div className="grid lg:grid-cols-3 gap-6 items-stretch mb-20">
                     {/* FREE */}
-                    <div className="flex flex-col bg-white border border-slate-200 rounded-lg p-8">
+                    <div className="flex flex-col bg-white border border-slate-200 rounded-lg p-8 h-full hover:border-slate-300 transition-colors">
                         <div className="mb-8">
-                            <div className="text-base font-semibold text-slate-900 mb-1">Free</div>
-                            <div className="text-[13px] text-slate-400 mb-4">Diagnostic mode</div>
-                            <div className="text-3xl font-semibold text-slate-900 tabular-nums">$0</div>
+                            <div className="text-xl font-bold text-slate-900 mb-1">Free</div>
+                            <div className="text-sm text-slate-500 mb-6">Diagnostic mode</div>
+                            <div className="font-mono text-4xl font-bold text-slate-900 text-numeric">$0</div>
                         </div>
-                        <ul className="space-y-3 text-[13px] text-slate-600 flex-1">
-                            <li>Risk tier visibility</li>
-                            <li>Trend and instability signals</li>
-                            <li className="text-slate-300">No projection modeling</li>
-                            <li className="text-slate-300">No intervention derivation</li>
-                            <li className="text-slate-300">No ledger exports</li>
+                        <ul className="space-y-4 text-sm text-slate-600 flex-1">
+                            <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Risk tier visibility</li>
+                            <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Trend and instability signals</li>
+                            <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No projection modeling</li>
+                            <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No intervention derivation</li>
+                            <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No ledger exports</li>
                         </ul>
                         <div className="mt-8">
                             <a
                                 href="https://app.payflux.dev/dashboard"
-                                className="block text-center w-full py-3 border border-slate-200 text-slate-700 text-[13px] font-medium rounded-md hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                                className="block text-center w-full py-3 border border-slate-300 text-slate-900 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors"
                             >
                                 Access Dashboard
                             </a>
                         </div>
                     </div>
 
-                    {/* PRO */}
-                    <div className="flex flex-col bg-white border border-slate-900 rounded-lg p-8">
+                    {/* PRO (Elevated) */}
+                    <div className="flex flex-col bg-white border-2 border-slate-900 rounded-lg p-8 shadow-elevation-subtle h-full transform lg:-translate-y-2 relative">
+                        <div className="absolute top-0 right-0 bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-bl-lg rounded-tr-md">
+                            Primary
+                        </div>
                         <div className="mb-8">
-                            <div className="text-base font-semibold text-slate-900 mb-1">Pro</div>
-                            <div className="text-[13px] text-slate-400 mb-4">Full instrument</div>
-                            <div className="text-3xl font-semibold text-slate-900 tabular-nums">
-                                $499<span className="text-sm font-normal text-slate-400"> / month</span>
+                            <div className="text-xl font-bold text-slate-900 mb-1">Pro</div>
+                            <div className="text-sm text-slate-500 mb-6">Full instrument</div>
+                            <div className="font-mono text-4xl font-bold text-slate-900 text-numeric">
+                                $499<span className="text-sm text-slate-500 font-sans font-normal"> / month</span>
                             </div>
                         </div>
-                        <ul className="space-y-3 text-[13px] text-slate-600 flex-1">
-                            <li>Full projection engine (T+90)</li>
-                            <li>Intervention modeling</li>
-                            <li>Signed projection ledger</li>
-                            <li>Board reserve report</li>
-                            <li>Rolling model accuracy</li>
+                        <ul className="space-y-4 text-sm text-slate-900 font-medium flex-1">
+                            <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Full projection engine (T+90)</li>
+                            <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Intervention modeling</li>
+                            <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Signed projection ledger</li>
+                            <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Board reserve report</li>
+                            <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Rolling model accuracy</li>
                         </ul>
                         <div className="mt-8">
                             <a
                                 href="https://app.payflux.dev/dashboard"
-                                className="block text-center w-full py-3 bg-slate-900 text-white text-[13px] font-medium rounded-md hover:bg-slate-800 transition-colors"
+                                className="block text-center w-full py-3 bg-slate-900 text-white text-sm font-medium rounded-md hover:bg-slate-800 transition-colors"
                             >
                                 Start Pro
                             </a>
@@ -89,22 +92,22 @@ const Pricing = () => {
                     </div>
 
                     {/* ENTERPRISE */}
-                    <div className="flex flex-col bg-white border border-slate-200 rounded-lg p-8">
+                    <div className="flex flex-col bg-white border border-slate-200 rounded-lg p-8 h-full hover:border-slate-300 transition-colors">
                         <div className="mb-8">
-                            <div className="text-base font-semibold text-slate-900 mb-1">Enterprise</div>
-                            <div className="text-[13px] text-slate-400 mb-4">Custom</div>
-                            <div className="text-3xl font-semibold text-slate-900">Contact Sales</div>
+                            <div className="text-xl font-bold text-slate-900 mb-1">Enterprise</div>
+                            <div className="text-sm text-slate-500 mb-6">Custom</div>
+                            <div className="text-3xl font-bold text-slate-900 tracking-tight mt-1">Contact Sales</div>
                         </div>
-                        <ul className="space-y-3 text-[13px] text-slate-600 flex-1">
-                            <li>Higher throughput</li>
-                            <li>Bulk exports</li>
-                            <li>Multi-merchant aggregation</li>
-                            <li>Processor attestation readiness</li>
+                        <ul className="space-y-4 text-sm text-slate-600 flex-1">
+                            <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Higher throughput</li>
+                            <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Bulk exports</li>
+                            <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Multi-merchant aggregation</li>
+                            <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Processor attestation readiness</li>
                         </ul>
                         <div className="mt-8">
                             <Link
                                 to="/#contact"
-                                className="block text-center w-full py-3 border border-slate-200 text-slate-700 text-[13px] font-medium rounded-md hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                                className="block text-center w-full py-3 border border-slate-300 text-slate-900 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors"
                             >
                                 Talk to Sales
                             </Link>
