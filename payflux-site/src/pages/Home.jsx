@@ -59,9 +59,10 @@ const Home = () => {
                             </div>
                         </div>
 
-                        {/* Right — projection mock */}
+                        {/* Right — projection mock (illustrative) */}
                         <div className="hidden md:block">
-                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-8 space-y-6">
+                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-8 space-y-6 relative">
+                                <div className="absolute top-3 right-4 text-[9px] text-slate-300 uppercase tracking-wider">Example output</div>
                                 {/* Capital at Risk */}
                                 <div>
                                     <div className="text-[11px] text-slate-400 uppercase tracking-wider mb-2">Capital at Risk</div>
@@ -85,11 +86,11 @@ const Home = () => {
                                     </div>
                                 </div>
 
-                                {/* Model accuracy */}
+                                {/* Model metadata */}
                                 <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
                                     <div>
                                         <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Model Accuracy</div>
-                                        <div className="text-sm font-medium text-emerald-600">94% tier forecast</div>
+                                        <div className="text-sm text-slate-500">Measured after statistical threshold</div>
                                     </div>
                                     <div className="text-[10px] text-slate-400">
                                         reserve-v1.0.0
@@ -219,7 +220,8 @@ const Home = () => {
                     </p>
 
                     {/* Document preview */}
-                    <div className="mx-auto max-w-2xl bg-white border border-slate-200 rounded-lg shadow-sm p-10 text-left font-mono text-[11px] text-slate-700 leading-relaxed mb-14">
+                    <div className="mx-auto max-w-2xl bg-white border border-slate-200 rounded-lg shadow-sm p-10 text-left font-mono text-[11px] text-slate-700 leading-relaxed mb-14 relative">
+                        <div className="absolute top-3 right-4 text-[9px] text-slate-300 uppercase tracking-wider font-sans">Example output</div>
                         <div className="text-center mb-6 pb-4 border-b border-slate-200">
                             <div className="text-sm font-bold tracking-wider uppercase text-slate-900">
                                 Reserve Forecast Report
