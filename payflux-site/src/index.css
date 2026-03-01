@@ -7,21 +7,6 @@
     --spacing: 0.25rem;
 }
 
-/* Infrastructure Grid Background */
-.bg-grid {
-    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
-    background-size: 40px 40px;
-}
-
-/* Soft glowing borders */
-.infra-border {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.infra-border:hover {
-    border: 1px solid rgba(99, 102, 241, 0.3);
-}
-
 * {
     margin: 0;
     padding: 0;
@@ -33,27 +18,27 @@ body {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #0a0c10;
+    background-color: #ffffff;
+    color: #1e293b;
 }
 
 .font-mono {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
 
-    to {
-        opacity: 1;
-    }
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-in {
-    animation: fade-in 0.7s ease-out forwards;
+    animation: fade-in 0.6s ease-out forwards;
 }
 
 ::selection {
-    background-color: rgba(99, 102, 241, 0.3);
+    background-color: rgba(15, 23, 42, 0.1);
 }
