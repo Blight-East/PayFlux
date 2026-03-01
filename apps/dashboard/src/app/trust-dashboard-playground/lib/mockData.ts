@@ -39,8 +39,8 @@ export const HEALTHY_EVENTS: EventItem[] = [
             recommendation: 'Potential automated attack. Monitor closely.'
         }
     },
-    { id: 3, time: '14:28:02.883', sev: 'LOW', event: 'Pattern mismatch – anomalous OS version', tcs: 91, color: 'bg-zinc-500' },
-    { id: 4, time: '14:27:18.109', sev: 'LOW', event: 'Geolocation drift – VPN detected', tcs: 88, color: 'bg-zinc-500' },
+    { id: 3, time: '14:28:02.883', sev: 'LOW', event: 'Pattern mismatch – anomalous OS version', tcs: 91, color: 'bg-slate-500' },
+    { id: 4, time: '14:27:18.109', sev: 'LOW', event: 'Geolocation drift – VPN detected', tcs: 88, color: 'bg-slate-500' },
 ];
 
 export const VIOLATION_EVENTS: EventItem[] = [

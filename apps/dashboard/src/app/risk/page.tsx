@@ -86,13 +86,13 @@ const PROCESSORS = [
 
 const RISK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
     LOW: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-    MODERATE: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
+    MODERATE: { bg: 'bg-blue-500/10', text: 'text-[#0A64BC]', border: 'border-blue-500/30' },
     ELEVATED: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
     HIGH: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
     CRITICAL: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30' },
     // Tier mapping
     '1': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-    '2': { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
+    '2': { bg: 'bg-blue-500/10', text: 'text-[#0A64BC]', border: 'border-blue-500/30' },
     '3': { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
     '4': { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
     '5': { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30' },
@@ -126,16 +126,16 @@ function StabilityGauge({ score }: { score: number }) {
     return (
         <div className="relative">
             <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-zinc-400">Stability Score</span>
+                <span className="text-sm text-slate-400">Stability Score</span>
                 <span className="text-2xl font-bold text-white">{score}</span>
             </div>
-            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                 <div
                     className={`h-full bg-gradient-to-r ${getColor()} transition-all duration-500`}
                     style={{ width: `${score}%` }}
                 />
             </div>
-            <div className="flex justify-between mt-1 text-[10px] text-zinc-600">
+            <div className="flex justify-between mt-1 text-[10px] text-slate-600">
                 <span>0</span>
                 <span>100</span>
             </div>
@@ -148,14 +148,14 @@ function ScoreCard({ node }: { node: BreakdownNode }) {
     const isGood = percentage >= 70;
 
     return (
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
+        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-zinc-400">{node.name}</span>
+                <span className="text-sm text-slate-400">{node.name}</span>
                 <span className={`text-sm font-medium ${isGood ? 'text-emerald-400' : 'text-amber-400'}`}>
                     {node.stabilityPoints}/{node.max}
                 </span>
             </div>
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
                     className={`h-full rounded-full ${isGood ? 'bg-emerald-500' : 'bg-amber-500'}`}
                     style={{ width: `${percentage}%` }}
@@ -187,14 +187,14 @@ function PolicyCard({ name, policy }: { name: string; policy: { status: Complian
     const StatusIcon = config.icon;
 
     return (
-        <div className="flex items-center justify-between p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-800 rounded-lg">
             <div className="flex items-center space-x-3">
                 <div className={`p-2 rounded-lg ${config.bg}`}>
                     <Icon className={`w-4 h-4 ${config.color}`} />
                 </div>
                 <div>
-                    <span className="text-sm text-zinc-300 block">{displayName}</span>
-                    <span className="text-[10px] text-zinc-500">matches: {policy.matches}</span>
+                    <span className="text-sm text-slate-300 block">{displayName}</span>
+                    <span className="text-[10px] text-slate-500">matches: {policy.matches}</span>
                 </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -209,14 +209,14 @@ function DriverCard({ driver }: { driver: Driver }) {
     const impactConfig = {
         positive: { icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         negative: { icon: TrendingDown, color: 'text-red-400', bg: 'bg-red-500/10' },
-        neutral: { icon: Minus, color: 'text-zinc-400', bg: 'bg-zinc-500/10' },
+        neutral: { icon: Minus, color: 'text-slate-400', bg: 'bg-slate-500/10' },
     };
 
     const config = impactConfig[driver.impact];
     const ImpactIcon = config.icon;
 
     return (
-        <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-lg">
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center space-x-2">
                     <div className={`p-1.5 rounded ${config.bg}`}>
@@ -224,9 +224,9 @@ function DriverCard({ driver }: { driver: Driver }) {
                     </div>
                     <span className="text-sm font-medium text-white">{driver.factor}</span>
                 </div>
-                <span className="text-xs text-zinc-500">Weight: {driver.weight}/10</span>
+                <span className="text-xs text-slate-500">Weight: {driver.weight}/10</span>
             </div>
-            <p className="text-xs text-zinc-400 line-clamp-2">&ldquo;{driver.evidence}&rdquo;</p>
+            <p className="text-xs text-slate-400 line-clamp-2">&ldquo;{driver.evidence}&rdquo;</p>
         </div>
     );
 }
@@ -235,12 +235,12 @@ function LoadingSimulation({ stage }: { stage: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-16 space-y-6">
             <div className="relative">
-                <div className="w-16 h-16 border-4 border-zinc-800 rounded-full" />
+                <div className="w-16 h-16 border-4 border-slate-800 rounded-full" />
                 <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>
             <div className="text-center space-y-2">
                 <p className="text-sm font-medium text-white">{stage}</p>
-                <p className="text-xs text-zinc-500">This may take up to 30 seconds</p>
+                <p className="text-xs text-slate-500">This may take up to 30 seconds</p>
             </div>
         </div>
     );
@@ -256,10 +256,10 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
                 <div className="space-y-2">
                     <div className="flex items-center space-x-3">
                         <RiskBadge label={analysis.riskLabel} />
-                        <span className="text-xs text-zinc-500">Tier {analysis.riskTier}</span>
+                        <span className="text-xs text-slate-500">Tier {analysis.riskTier}</span>
                     </div>
                     <h2 className="text-xl font-semibold text-white">{analysis.url}</h2>
-                    <div className="flex items-center space-x-4 text-xs text-zinc-500">
+                    <div className="flex items-center space-x-4 text-xs text-slate-500">
                         <span>{analysis.industry}</span>
                         <span>•</span>
                         <span>{analysis.processor}</span>
@@ -271,7 +271,7 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
                     href={analysis.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-1 text-xs text-zinc-400 hover:text-white transition-colors"
+                    className="flex items-center space-x-1 text-xs text-slate-400 hover:text-white transition-colors"
                 >
                     <span>Visit</span>
                     <ExternalLink className="w-3 h-3" />
@@ -282,15 +282,15 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
             <div className={`p-6 rounded-xl border ${colors.border} ${colors.bg} space-y-6`}>
                 <StabilityGauge score={analysis.stabilityScore} />
 
-                <div className="pt-4 border-t border-zinc-800/50">
-                    <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Interpretation</h3>
-                    <p className="text-sm text-zinc-300 leading-relaxed">{analysis.narrative.summary}</p>
+                <div className="pt-4 border-t border-slate-800/50">
+                    <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Interpretation</h3>
+                    <p className="text-sm text-slate-300 leading-relaxed">{analysis.narrative.summary}</p>
                 </div>
             </div>
 
             {/* Score Breakdown */}
             <div className="space-y-4">
-                <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                     Score Breakdown
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -302,7 +302,7 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
 
             {/* Compliance (Policies) */}
             <div className="space-y-4">
-                <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                     Compliance
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -315,7 +315,7 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
             {/* Drivers & Action Plan */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                    <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                         Risk Drivers
                     </h3>
                 </div>
@@ -328,11 +328,11 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
 
                 {analysis.narrative.recommendations.length > 0 && (
                     <div className="space-y-3 mt-6">
-                        <h4 className="text-xs font-medium text-zinc-500">Action Plan</h4>
+                        <h4 className="text-xs font-medium text-slate-500">Action Plan</h4>
                         <ul className="space-y-2">
                             {analysis.narrative.recommendations.map((rec, i) => (
-                                <li key={i} className="flex items-start space-x-2 text-sm text-zinc-400">
-                                    <ChevronRight className="w-4 h-4 mt-0.5 text-blue-400 flex-shrink-0" />
+                                <li key={i} className="flex items-start space-x-2 text-sm text-slate-400">
+                                    <ChevronRight className="w-4 h-4 mt-0.5 text-[#0A64BC] flex-shrink-0" />
                                     <span>{rec}</span>
                                 </li>
                             ))}
@@ -342,7 +342,7 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
             </div>
 
             {/* Meta */}
-            <div className="text-xs text-zinc-600 text-center space-y-1">
+            <div className="text-xs text-slate-600 text-center space-y-1">
                 <p>AI Provider: {analysis.meta.aiProvider} • Processed in {analysis.meta.processingTimeMs}ms</p>
             </div>
         </div>
@@ -412,13 +412,13 @@ export default function RiskSnapshotPage() {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 p-8">
+        <div className="min-h-screen bg-slate-950 p-8">
             <div data-fingerprint="risk-snapshot" style={{ display: 'none' }}>ROUTE_FINGERPRINT: RISK_SNAPSHOT</div>
             <div className="max-w-3xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="space-y-2">
                     <h1 className="text-2xl font-bold text-white">Merchant Risk Snapshot</h1>
-                    <p className="text-sm text-zinc-400">
+                    <p className="text-sm text-slate-400">
                         Analyze merchant websites for payment risk indicators
                     </p>
                 </div>
@@ -426,24 +426,24 @@ export default function RiskSnapshotPage() {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-400">Website URL</label>
+                        <label className="text-sm font-medium text-slate-400">Website URL</label>
                         <input
                             type="text"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             placeholder="example.com"
-                            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                            className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                             disabled={isLoading}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Industry</label>
+                            <label className="text-sm font-medium text-slate-400">Industry</label>
                             <select
                                 value={industry}
                                 onChange={(e) => setIndustry(e.target.value as (typeof INDUSTRIES)[number])}
-                                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                                className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                                 disabled={isLoading}
                             >
                                 {INDUSTRIES.map((ind) => (
@@ -455,11 +455,11 @@ export default function RiskSnapshotPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Processor</label>
+                            <label className="text-sm font-medium text-slate-400">Processor</label>
                             <select
                                 value={processor}
                                 onChange={(e) => setProcessor(e.target.value as (typeof PROCESSORS)[number])}
-                                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                                className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                                 disabled={isLoading}
                             >
                                 {PROCESSORS.map((proc) => (
@@ -474,7 +474,7 @@ export default function RiskSnapshotPage() {
                     <button
                         type="submit"
                         disabled={isLoading || !url.trim()}
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
                     >
                         {isLoading ? (
                             <>

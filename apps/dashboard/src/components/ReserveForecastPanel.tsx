@@ -102,7 +102,7 @@ type PanelState =
 
 const SIGNAL_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
     NOMINAL: { label: 'Nominal', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
-    RECOVERING: { label: 'Recovering', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
+    RECOVERING: { label: 'Recovering', color: 'text-[#0A64BC]', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
     LATENT: { label: 'Latent', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
     ELEVATED: { label: 'Elevated', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
     ACCELERATING: { label: 'Accelerating', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
@@ -150,7 +150,7 @@ function InstabilityBadge({ signal }: { signal: string }) {
 
 function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simulationDelta }: { projection: ReserveWindowProjection; isAccelerating: boolean; isPrimary: boolean; isSimulating?: boolean; simulationDelta?: SimulationDelta | null }) {
     const hasUSD = projection.projectedTrappedUSD !== undefined;
-    const worstHighlightColor = isAccelerating ? 'text-red-400' : 'text-zinc-200';
+    const worstHighlightColor = isAccelerating ? 'text-red-400' : 'text-slate-200';
 
     // Simulation multipliers — derived from intervention engine, not hardcoded
     const exposureMultiplier = (isSimulating && simulationDelta) ? simulationDelta.exposureMultiplier : 1;
@@ -162,54 +162,54 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
 
     // Primary emphasis gets a dynamic stroke based on simulation
     const borderClass = isPrimary
-        ? (isSimulating ? 'border-emerald-500/50 ring-1 ring-emerald-500/20 bg-emerald-500/5' : 'border-zinc-700 ring-1 ring-zinc-700/50')
-        : (isSimulating ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-zinc-800');
+        ? (isSimulating ? 'border-emerald-500/50 ring-1 ring-emerald-500/20 bg-emerald-500/5' : 'border-slate-700 ring-1 ring-slate-700/50')
+        : (isSimulating ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-slate-800');
 
     return (
-        <div className={`bg-zinc-900/50 border ${borderClass} rounded-lg p-5 space-y-4 transition-all duration-300`}>
+        <div className={`bg-slate-900/50 border ${borderClass} rounded-lg p-5 space-y-4 transition-all duration-300`}>
             {/* Window Header */}
             <div className="flex items-center justify-between">
                 <span className="text-lg font-semibold text-white">{projection.windowDays}d</span>
-                <span className="text-[10px] text-zinc-600 uppercase tracking-wider">Rolling Reserve</span>
+                <span className="text-[10px] text-slate-600 uppercase tracking-wider">Rolling Reserve</span>
             </div>
 
             {/* Rates — scenario labels reinforce trajectory modeling */}
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">Base Scenario</span>
-                    <span className="text-sm text-zinc-400">{formatRate(projection.baseReserveRate)}</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Base Scenario</span>
+                    <span className="text-sm text-slate-400">{formatRate(projection.baseReserveRate)}</span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">Escalation Scenario</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Escalation Scenario</span>
                     <div className="flex items-center space-x-2">
                         <span className={`text-sm font-semibold ${isSimulating ? 'text-emerald-400' : worstHighlightColor}`}>
                             {formatRate(worstRate)}
                         </span>
                         {isSimulating && (
-                            <span className="text-[10px] text-zinc-600 line-through">{formatRate(projection.worstCaseReserveRate)}</span>
+                            <span className="text-[10px] text-slate-600 line-through">{formatRate(projection.worstCaseReserveRate)}</span>
                         )}
                     </div>
                 </div>
             </div>
 
             {/* Separator */}
-            <div className="border-t border-zinc-800" />
+            <div className="border-t border-slate-800" />
 
             {/* Trapped Exposure — USD values are the conversion driver, must feel weighty */}
             {hasUSD ? (
                 <div className="space-y-3">
                     <div>
-                        <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">Capital At Risk</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Capital At Risk</span>
                         <span className="text-2xl font-bold text-white">{formatUSD(projection.projectedTrappedUSD!)}</span>
                     </div>
                     <div>
-                        <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">Escalation Trapped</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Escalation Trapped</span>
                         <div className="flex items-baseline space-x-2">
                             <span className={`text-2xl font-extrabold ${isSimulating ? 'text-emerald-400' : worstHighlightColor}`}>
                                 {formatUSD(worstUSD!)}
                             </span>
                             {isSimulating && (
-                                <span className="text-xs text-zinc-600 line-through">{formatUSD(projection.worstCaseTrappedUSD!)}</span>
+                                <span className="text-xs text-slate-600 line-through">{formatUSD(projection.worstCaseTrappedUSD!)}</span>
                             )}
                         </div>
                     </div>
@@ -217,21 +217,21 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
             ) : (
                 <div className="space-y-3">
                     <div>
-                        <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">Capital At Risk</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Capital At Risk</span>
                         <span className="text-xl font-bold text-white">{formatBps(projection.projectedTrappedBps)}</span>
-                        <span className="text-[10px] text-zinc-600 ml-1">of monthly TPV</span>
+                        <span className="text-[10px] text-slate-600 ml-1">of monthly TPV</span>
                     </div>
                     <div>
-                        <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">Escalation Exposure</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Escalation Exposure</span>
                         <div className="flex items-baseline space-x-2">
                             <span className={`text-xl font-extrabold ${isSimulating ? 'text-emerald-400' : worstHighlightColor}`}>
                                 {formatBps(worstBps)}
                             </span>
                             {isSimulating && (
-                                <span className="text-xs text-zinc-600 line-through">{formatBps(projection.worstCaseTrappedBps)}</span>
+                                <span className="text-xs text-slate-600 line-through">{formatBps(projection.worstCaseTrappedBps)}</span>
                             )}
                         </div>
-                        <span className="text-[10px] text-zinc-600 ml-1">of monthly TPV</span>
+                        <span className="text-[10px] text-slate-600 ml-1">of monthly TPV</span>
                     </div>
                 </div>
             )}
@@ -242,15 +242,15 @@ const PRIORITY_STYLES: Record<string, { text: string; bg: string; border: string
     critical: { text: 'text-red-400', bg: 'bg-red-500/5', border: 'border-red-500/20', dot: 'bg-red-500' },
     high: { text: 'text-orange-400', bg: 'bg-orange-500/5', border: 'border-orange-500/20', dot: 'bg-orange-500' },
     moderate: { text: 'text-amber-400', bg: 'bg-amber-500/5', border: 'border-amber-500/20', dot: 'bg-amber-500' },
-    low: { text: 'text-zinc-400', bg: 'bg-zinc-800/30', border: 'border-zinc-800', dot: 'bg-zinc-600' },
+    low: { text: 'text-slate-400', bg: 'bg-slate-800/30', border: 'border-slate-800', dot: 'bg-slate-600' },
 };
 
 function InterventionBlock({ interventions, isSimulating }: { interventions: Intervention[]; isSimulating?: boolean }) {
     return (
-        <div className="border border-zinc-800 rounded-xl p-6 space-y-4">
+        <div className="border border-slate-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-                <h4 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold">Recommended Intervention</h4>
-                <span className="text-[10px] text-zinc-700 uppercase tracking-wider">Advisory Only</span>
+                <h4 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">Recommended Intervention</h4>
+                <span className="text-[10px] text-slate-700 uppercase tracking-wider">Advisory Only</span>
             </div>
 
             <div className="space-y-2.5">
@@ -276,7 +276,7 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                                     {isBeingSimulated ? 'simulating' : intervention.priority}
                                 </span>
                             </div>
-                            <p className={`text-[11px] leading-relaxed pl-4 ${isDimmed ? 'text-zinc-600' : 'text-zinc-500'}`}>
+                            <p className={`text-[11px] leading-relaxed pl-4 ${isDimmed ? 'text-slate-600' : 'text-slate-500'}`}>
                                 {intervention.rationale}
                             </p>
                             {isBeingSimulated && (
@@ -289,7 +289,7 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                 })}
             </div>
 
-            <p className="text-[10px] text-zinc-700 leading-relaxed pt-1">
+            <p className="text-[10px] text-slate-700 leading-relaxed pt-1">
                 Recommendations derived from current risk signal state. PayFlux does not modify processor configuration.
             </p>
         </div>
@@ -298,14 +298,14 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
 
 function ForbiddenState() {
     return (
-        <div className="border border-zinc-800 rounded-xl p-8 space-y-6">
+        <div className="border border-slate-800 rounded-xl p-8 space-y-6">
             <div className="flex items-start space-x-4">
-                <div className="p-3 bg-zinc-900 rounded-full flex-shrink-0">
-                    <Lock className="w-5 h-5 text-zinc-600" />
+                <div className="p-3 bg-slate-900 rounded-full flex-shrink-0">
+                    <Lock className="w-5 h-5 text-slate-600" />
                 </div>
                 <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-zinc-200">Financial Modeling Locked</h3>
-                    <p className="text-xs text-zinc-500 leading-relaxed">
+                    <h3 className="text-sm font-semibold text-slate-200">Financial Modeling Locked</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
                         Projection is unavailable in Diagnostic mode. Upgrade to Pro to model reserve holds
                         across T+90, T+120, and T+180 windows before processors escalate.
                     </p>
@@ -314,17 +314,17 @@ function ForbiddenState() {
 
             {/* Value bullets */}
             <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-zinc-900/50 rounded-lg">
-                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">90 / 120 / 180d</span>
-                    <span className="text-xs text-zinc-400">Reserve windows</span>
+                <div className="p-3 bg-slate-900/50 rounded-lg">
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">90 / 120 / 180d</span>
+                    <span className="text-xs text-slate-400">Reserve windows</span>
                 </div>
-                <div className="p-3 bg-zinc-900/50 rounded-lg">
-                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">Base + Escalation</span>
-                    <span className="text-xs text-zinc-400">Scenario modeling</span>
+                <div className="p-3 bg-slate-900/50 rounded-lg">
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Base + Escalation</span>
+                    <span className="text-xs text-slate-400">Scenario modeling</span>
                 </div>
-                <div className="p-3 bg-zinc-900/50 rounded-lg">
-                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider block mb-1">USD Exposure</span>
-                    <span className="text-xs text-zinc-400">Dollar projections</span>
+                <div className="p-3 bg-slate-900/50 rounded-lg">
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">USD Exposure</span>
+                    <span className="text-xs text-slate-400">Dollar projections</span>
                 </div>
             </div>
 
@@ -336,7 +336,7 @@ function ForbiddenState() {
                 >
                     Unlock Operational Mode
                 </button>
-                <p className="text-[10px] text-zinc-700 mt-2">Required for reserve modeling</p>
+                <p className="text-[10px] text-slate-700 mt-2">Required for reserve modeling</p>
             </div>
         </div>
     );
@@ -360,7 +360,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop — hidden in print */}
             <div
-                className="absolute inset-0 bg-black/70 print:hidden"
+                className="absolute inset-0 bg-slate-950/70 print:hidden"
                 onClick={onClose}
             />
 
@@ -661,10 +661,10 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
     // Loading
     if (state.status === 'loading') {
         return (
-            <div className="border border-zinc-800 rounded-xl p-8">
+            <div className="border border-slate-800 rounded-xl p-8">
                 <div className="flex items-center justify-center space-x-3">
-                    <div className="w-4 h-4 border-2 border-zinc-700 border-t-blue-500 rounded-full animate-spin" />
-                    <span className="text-sm text-zinc-500">Computing reserve projections...</span>
+                    <div className="w-4 h-4 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
+                    <span className="text-sm text-slate-500">Computing reserve projections...</span>
                 </div>
             </div>
         );
@@ -692,23 +692,23 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
     const { data } = state;
     const isAccelerating = data.instabilitySignal === 'ACCELERATING';
     const TrendIcon = TREND_ICONS[data.trend] || Minus;
-    const trendColor = data.trend === 'DEGRADING' ? 'text-red-400' : data.trend === 'IMPROVING' ? 'text-emerald-400' : 'text-zinc-500';
+    const trendColor = data.trend === 'DEGRADING' ? 'text-red-400' : data.trend === 'IMPROVING' ? 'text-emerald-400' : 'text-slate-500';
 
     return (
         <div className="space-y-6">
             {/* Section Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                    <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                         Capital At Risk
                     </h3>
-                    <p className="text-xs text-zinc-600 mt-0.5">If current retry velocity remains unchanged.</p>
+                    <p className="text-xs text-slate-600 mt-0.5">If current retry velocity remains unchanged.</p>
                 </div>
                 <div className="flex items-center space-x-3">
-                    <span className="text-[10px] text-zinc-700">{data.modelVersion}</span>
+                    <span className="text-[10px] text-slate-700">{data.modelVersion}</span>
                     <button
                         onClick={() => { track('forecast_export_clicked', { host: data.normalizedHost, volumeMode: data.volumeMode, simulated: String(simulateOptimization) }); setShowExport(true); }}
-                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-medium rounded-lg transition-colors"
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-lg transition-colors"
                         title="Export forecast"
                     >
                         <FileDown className="w-3.5 h-3.5" />
@@ -719,18 +719,18 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
 
             {/* Status Bar & Control Surface */}
             <div className="space-y-3">
-                <div className={`p-4 rounded-xl border ${isAccelerating ? 'border-red-500/30 bg-red-500/5' : 'border-zinc-800 bg-zinc-900/30'}`}>
+                <div className={`p-4 rounded-xl border ${isAccelerating ? 'border-red-500/30 bg-red-500/5' : 'border-slate-800 bg-slate-900/30'}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <InstabilityBadge signal={data.instabilitySignal} />
-                            <div className="flex items-center space-x-2 border-l border-zinc-800 pl-4">
-                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Driver:</span>
-                                <span className="text-xs font-medium text-zinc-300">Retry Velocity</span>
+                            <div className="flex items-center space-x-2 border-l border-slate-800 pl-4">
+                                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Driver:</span>
+                                <span className="text-xs font-medium text-slate-300">Retry Velocity</span>
                                 <TrendIcon className={`w-3.5 h-3.5 ml-1 ${trendColor}`} />
                             </div>
                         </div>
                         <div className="text-right">
-                            <span className="text-[10px] text-zinc-600 block">Risk Tier</span>
+                            <span className="text-[10px] text-slate-600 block">Risk Tier</span>
                             <span className="text-lg font-bold text-white">{data.currentRiskTier}</span>
                             {data.tierDelta !== 0 && (
                                 <span className={`text-xs ml-1 ${data.tierDelta > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
@@ -754,14 +754,14 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                                     }}
                                     className={`flex items-center px-4 py-2 text-xs font-semibold rounded-lg transition-colors border ${simulateOptimization
                                         ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-400'
+                                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-400'
                                         }`}
                                 >
                                     <TrendingDown className="w-4 h-4 mr-2" />
                                     {simulateOptimization ? data.simulationDelta.label.replace('Simulate', 'Simulating') : data.simulationDelta.label}
                                 </button>
                                 {simulateOptimization && (
-                                    <p className="text-[10px] text-zinc-500 max-w-sm text-right leading-relaxed">
+                                    <p className="text-[10px] text-slate-500 max-w-sm text-right leading-relaxed">
                                         Escalation penalty compounds non-linearly. A {Math.round(data.simulationDelta.velocityReduction * 100)}% velocity reduction reduces worst-case reserve accumulation by ~{Math.round((1 - data.simulationDelta.exposureMultiplier) * 100)}%.
                                     </p>
                                 )}
@@ -783,9 +783,9 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                         </div>
 
                         {/* Volume Input */}
-                        <div className="border border-zinc-800 rounded-lg p-4 space-y-3 mt-6">
+                        <div className="border border-slate-800 rounded-lg p-4 space-y-3 mt-6">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs text-zinc-500">
+                                <label className="text-xs text-slate-500">
                                     {data.volumeMode === 'bps_plus_usd'
                                         ? 'Monthly volume applied'
                                         : 'Enter monthly volume to see dollar exposure'
@@ -797,24 +797,24 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                             </div>
                             <div className="flex space-x-2">
                                 <div className="relative flex-1">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-sm">$</span>
                                     <input
                                         type="text"
                                         value={volumeInput}
                                         onChange={(e) => setVolumeInput(e.target.value)}
                                         onKeyDown={(e) => { if (e.key === 'Enter') handleVolumeSubmit(); }}
                                         placeholder="1,500,000"
-                                        className="w-full pl-7 pr-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50"
+                                        className="w-full pl-7 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-white placeholder:text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50"
                                     />
                                 </div>
                                 <button
                                     onClick={handleVolumeSubmit}
-                                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 font-medium rounded-lg transition-colors"
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium rounded-lg transition-colors"
                                 >
                                     Apply
                                 </button>
                             </div>
-                            <p className="text-[10px] text-zinc-700">Not stored. Not logged. Used for projection only.</p>
+                            <p className="text-[10px] text-slate-700">Not stored. Not logged. Used for projection only.</p>
                         </div>
                     </>
                 ) : (
@@ -831,9 +831,9 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
 
 
             {/* Model Integrity Annotation */}
-            <div className="pt-6 mt-6 border-t border-zinc-900">
-                <div className="font-mono text-[10px] text-zinc-600 space-y-1.5 leading-relaxed">
-                    <p className="text-zinc-500 font-bold mb-2">MODEL INTEGRITY</p>
+            <div className="pt-6 mt-6 border-t border-slate-900">
+                <div className="font-mono text-[10px] text-slate-600 space-y-1.5 leading-relaxed">
+                    <p className="text-slate-500 font-bold mb-2">MODEL INTEGRITY</p>
                     <p>Deterministic projection • {data.modelVersion}</p>
                     <p>Inputs: normalized risk tier, tier delta, monthly TPV</p>
                     <p>Base reserve capped at 25%</p>

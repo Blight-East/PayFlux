@@ -291,12 +291,12 @@ See full documentation at https://payflux.dev/docs
             <div className="p-8 max-w-3xl mx-auto">
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold text-white tracking-tight">Setup State Missing</h2>
-                    <p className="text-zinc-500 text-sm mt-2">
+                    <p className="text-slate-500 text-sm mt-2">
                         Your setup configuration could not be loaded. This may happen if your session expired or browser storage was cleared.
                     </p>
                     <button
                         onClick={() => router.push('/setup/connect')}
-                        className="mt-6 px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-zinc-200 transition-colors"
+                        className="mt-6 px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-slate-200 transition-colors"
                     >
                         Back to Connect
                     </button>
@@ -305,17 +305,17 @@ See full documentation at https://payflux.dev/docs
         ) : (
             <div className="p-8 max-w-3xl mx-auto">
                 <div className="mb-8">
-                    <div className="flex items-center space-x-2 text-[10px] text-zinc-500 uppercase tracking-widest mb-4">
-                        <span className="text-zinc-600">Step 1</span>
+                    <div className="flex items-center space-x-2 text-[10px] text-slate-500 uppercase tracking-widest mb-4">
+                        <span className="text-slate-600">Step 1</span>
                         <span>→</span>
-                        <span className="text-zinc-600">Step 2</span>
+                        <span className="text-slate-600">Step 2</span>
                         <span>→</span>
-                        <span className="text-blue-400">Step 3</span>
+                        <span className="text-[#0A64BC]">Step 3</span>
                         <span>→</span>
                         <span>Generate Setup</span>
                     </div>
                     <h2 className="text-2xl font-bold text-white tracking-tight">Generate Your Setup</h2>
-                    <p className="text-zinc-500 text-sm mt-1">Loading configuration...</p>
+                    <p className="text-slate-500 text-sm mt-1">Loading configuration...</p>
                 </div>
             </div>
         );
@@ -324,39 +324,39 @@ See full documentation at https://payflux.dev/docs
     return (
         <div className="p-8 max-w-3xl mx-auto">
             <div className="mb-8">
-                <div className="flex items-center space-x-2 text-[10px] text-zinc-500 uppercase tracking-widest mb-4">
-                    <span className="text-zinc-600">Step 1</span>
+                <div className="flex items-center space-x-2 text-[10px] text-slate-500 uppercase tracking-widest mb-4">
+                    <span className="text-slate-600">Step 1</span>
                     <span>→</span>
-                    <span className="text-zinc-600">Step 2</span>
+                    <span className="text-slate-600">Step 2</span>
                     <span>→</span>
-                    <span className="text-blue-400">Step 3</span>
+                    <span className="text-[#0A64BC]">Step 3</span>
                     <span>→</span>
                     <span>Generate Setup</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Generate Your Setup</h2>
-                <p className="text-zinc-500 text-sm mt-1">Download your configuration files and run one command.</p>
+                <p className="text-slate-500 text-sm mt-1">Download your configuration files and run one command.</p>
             </div>
 
             {/* Config Summary */}
-            <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6 mb-6">
+            <div className="bg-slate-950 border border-slate-800 rounded-lg p-6 mb-6">
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4">Configuration Summary</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span className="text-zinc-500">Processor:</span>
+                        <span className="text-slate-500">Processor:</span>
                         <span className="ml-2 text-white">{config.processor === 'generic_webhook' ? 'Generic Webhook' : 'Stripe'}</span>
                     </div>
                     <div>
-                        <span className="text-zinc-500">Tier:</span>
+                        <span className="text-slate-500">Tier:</span>
                         <span className="ml-2 text-white capitalize">{config.tier === 'tier2' ? 'Pro' : 'Free'}</span>
                     </div>
                     <div>
-                        <span className="text-zinc-500">Pilot Mode:</span>
-                        <span className={`ml-2 ${config.pilotMode ? 'text-green-500' : 'text-zinc-400'}`}>
+                        <span className="text-slate-500">Pilot Mode:</span>
+                        <span className={`ml-2 ${config.pilotMode ? 'text-green-500' : 'text-slate-400'}`}>
                             {config.pilotMode ? 'Enabled' : 'Disabled'}
                         </span>
                     </div>
                     <div>
-                        <span className="text-zinc-500">Webhook Secret:</span>
+                        <span className="text-slate-500">Webhook Secret:</span>
                         <span className="ml-2 text-white font-mono text-xs">whsec_***...{config.webhookSecret.slice(-4)}</span>
                     </div>
                 </div>
@@ -366,62 +366,62 @@ See full documentation at https://payflux.dev/docs
                 <div className="text-center py-12">
                     <button
                         onClick={handleGenerate}
-                        className="px-8 py-4 bg-white text-black font-bold rounded-lg text-lg hover:bg-zinc-200 transition-colors"
+                        className="px-8 py-4 bg-white text-black font-bold rounded-lg text-lg hover:bg-slate-200 transition-colors"
                     >
                         Generate Setup Files
                     </button>
-                    <p className="mt-4 text-xs text-zinc-600">
+                    <p className="mt-4 text-xs text-slate-600">
                         This will prepare your .env, docker-compose.yml, and README.md files
                     </p>
                 </div>
             ) : (
                 <div className="space-y-6">
                     {/* Generated Files */}
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-800">
                             <h4 className="text-sm font-bold text-white">.env</h4>
                             <button
                                 onClick={() => downloadFile(generateEnvFile(), '.env')}
-                                className="text-xs text-blue-400 hover:text-blue-300"
+                                className="text-xs text-[#0A64BC] hover:text-[#0856a3]"
                             >
                                 Download
                             </button>
                         </div>
-                        <pre className="p-4 text-xs text-zinc-400 overflow-x-auto max-h-48 bg-black">
+                        <pre className="p-4 text-xs text-slate-400 overflow-x-auto max-h-48 bg-slate-950">
                             {generateEnvFile()}
                         </pre>
                     </div>
 
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-800">
                             <h4 className="text-sm font-bold text-white">docker-compose.yml</h4>
                             <button
                                 onClick={() => downloadFile(generateDockerCompose(), 'docker-compose.yml')}
-                                className="text-xs text-blue-400 hover:text-blue-300"
+                                className="text-xs text-[#0A64BC] hover:text-[#0856a3]"
                             >
                                 Download
                             </button>
                         </div>
-                        <pre className="p-4 text-xs text-zinc-400 overflow-x-auto max-h-48 bg-black">
+                        <pre className="p-4 text-xs text-slate-400 overflow-x-auto max-h-48 bg-slate-950">
                             {generateDockerCompose()}
                         </pre>
                     </div>
 
                     {/* Before You Start */}
-                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-lg p-6">
-                        <h4 className="text-sm font-medium text-zinc-300 mb-3">Before you start</h4>
-                        <p className="text-sm text-zinc-500 mb-4">
+                    <div className="bg-slate-900/30 border border-slate-800 rounded-lg p-6">
+                        <h4 className="text-sm font-medium text-slate-300 mb-3">Before you start</h4>
+                        <p className="text-sm text-slate-500 mb-4">
                             PayFlux runs as a secure container on your infrastructure.<br />
                             You'll need Docker Desktop installed.
                         </p>
-                        <ul className="text-sm text-zinc-500 space-y-1.5">
+                        <ul className="text-sm text-slate-500 space-y-1.5">
                             <li>
                                 • Mac / Windows:{' '}
                                 <a
                                     href="https://www.docker.com/get-started"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-zinc-400 hover:text-white underline underline-offset-2"
+                                    className="text-slate-400 hover:text-white underline underline-offset-2"
                                 >
                                     Install Docker Desktop
                                 </a>
@@ -432,13 +432,13 @@ See full documentation at https://payflux.dev/docs
                                     href="https://docs.docker.com/engine/"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-zinc-400 hover:text-white underline underline-offset-2"
+                                    className="text-slate-400 hover:text-white underline underline-offset-2"
                                 >
                                     Install Docker Engine
                                 </a>
                             </li>
                         </ul>
-                        <p className="text-sm text-zinc-600 mt-4">
+                        <p className="text-sm text-slate-600 mt-4">
                             Once Docker is installed, onboarding is a single command.
                         </p>
                     </div>
@@ -447,65 +447,65 @@ See full documentation at https://payflux.dev/docs
                     <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-6">
                         <h4 className="text-sm font-bold text-green-500 uppercase tracking-widest mb-3">Run Command</h4>
                         <div className="flex items-center space-x-3">
-                            <code className="flex-1 bg-black border border-zinc-800 rounded px-4 py-3 text-green-400 font-mono text-sm">
+                            <code className="flex-1 bg-slate-950 border border-slate-800 rounded px-4 py-3 text-green-400 font-mono text-sm">
                                 docker compose up -d
                             </code>
                             <button
                                 onClick={handleCopyCommand}
                                 className={`px-4 py-3 text-xs font-medium rounded transition-all ${copied
                                     ? 'bg-green-600 text-white'
-                                    : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                                    : 'bg-slate-900 text-slate-400 hover:text-white'
                                     }`}
                             >
                                 {copied ? 'Copied!' : 'Copy'}
                             </button>
                         </div>
-                        <p className="mt-3 text-xs text-zinc-500">
+                        <p className="mt-3 text-xs text-slate-500">
                             Run this command in the directory where you saved the files above.
                         </p>
                     </div>
 
                     {/* What to Expect Next */}
-                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-lg p-6">
-                        <h4 className="text-sm font-medium text-zinc-300 mb-4">What to expect next</h4>
-                        <ul className="space-y-2.5 text-sm text-zinc-500">
+                    <div className="bg-slate-900/30 border border-slate-800 rounded-lg p-6">
+                        <h4 className="text-sm font-medium text-slate-300 mb-4">What to expect next</h4>
+                        <ul className="space-y-2.5 text-sm text-slate-500">
                             <li>
                                 • Health check available at{' '}
-                                <code className="text-xs bg-black px-1.5 py-0.5 rounded text-zinc-400">http://localhost:8080/health</code>
+                                <code className="text-xs bg-slate-950 px-1.5 py-0.5 rounded text-slate-400">http://localhost:8080/health</code>
                             </li>
                             <li>• Warnings appear in the PayFlux dashboard (Pro tier only)</li>
                             <li>• No traffic is blocked — PayFlux observes and reports only</li>
                             <li>
                                 • You can shut it down anytime with{' '}
-                                <code className="text-xs bg-black px-1.5 py-0.5 rounded text-zinc-400">docker compose down</code>
+                                <code className="text-xs bg-slate-950 px-1.5 py-0.5 rounded text-slate-400">docker compose down</code>
                             </li>
                         </ul>
-                        <p className="mt-4 text-[10px] text-zinc-600 italic">
+                        <p className="mt-4 text-[10px] text-slate-600 italic">
                             PayFlux surfaces operational context; it does not block payments.
                         </p>
                     </div>
 
                     {/* Download ZIP - Primary Option */}
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6 mb-4">
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-6 mb-4">
                         <button
                             onClick={handleDownloadZip}
                             disabled={!config || downloadingZip}
-                            className="w-full px-6 py-3 bg-white text-black font-bold rounded text-sm hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full px-6 py-3 bg-white text-black font-bold rounded text-sm hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {downloadingZip ? 'Generating...' : 'Download ZIP'}
                         </button>
-                        <p className="mt-2 text-xs text-zinc-500 text-center">
+                        <p className="mt-2 text-xs text-slate-500 text-center">
                             Use this if you want one file to download, unzip, and run.
                         </p>
 
                         <button
                             onClick={handleCopyInstallCommands}
                             disabled={!config}
-                            className="mt-3 w-full px-6 py-2.5 bg-zinc-900 text-white font-bold rounded text-sm hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="mt-3 w-full px-6 py-2.5 bg-slate-900 text-white font-bold rounded text-sm hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {copiedInstall ? 'Copied!' : 'Copy install commands'}
                         </button>
-                        <p className="mt-2 text-xs text-zinc-500 text-center">
+                        <p className="mt-2 text-xs text-slate-500 text-center">
                             Copies the commands to unzip, cd, and start PayFlux with Docker.
                         </p>
                     </div>
@@ -514,13 +514,13 @@ See full documentation at https://payflux.dev/docs
                     <div className="flex justify-between items-center pt-4">
                         <button
                             onClick={handleDownloadAll}
-                            className="px-6 py-2.5 bg-zinc-900 text-white font-bold rounded text-sm hover:bg-zinc-800 transition-colors"
+                            className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded text-sm hover:bg-slate-800 transition-colors"
                         >
                             Download All Files
                         </button>
                         <button
                             onClick={handleFinish}
-                            className="px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-zinc-200 transition-colors"
+                            className="px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-slate-200 transition-colors"
                         >
                             Finish Setup →
                         </button>
@@ -530,9 +530,9 @@ See full documentation at https://payflux.dev/docs
             }
 
             {/* Security Notice */}
-            <div className="mt-8 bg-zinc-900/50 border border-zinc-800 rounded p-4">
-                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Security Reminder</h4>
-                <ul className="text-[10px] text-zinc-500 space-y-1">
+            <div className="mt-8 bg-slate-900/50 border border-slate-800 rounded p-4">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Security Reminder</h4>
+                <ul className="text-[10px] text-slate-500 space-y-1">
                     <li>• Your secrets are processed in-browser only and never sent to our servers</li>
                     <li>• The .env file contains sensitive data — do not commit it to version control</li>
                     <li>• Change PAYFLUX_API_KEY to a strong, unique value before deploying</li>

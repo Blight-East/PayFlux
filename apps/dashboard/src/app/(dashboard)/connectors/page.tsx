@@ -79,26 +79,26 @@ export default function ConnectorsPage() {
         <div className="p-8 max-w-4xl">
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white tracking-tight">Processors & Connectors</h2>
-                <p className="text-zinc-500 text-sm mt-1">Configure how PayFlux receives events from your payment processors.</p>
+                <p className="text-slate-500 text-sm mt-1">Configure how PayFlux receives events from your payment processors.</p>
             </div>
 
             <div className="grid gap-6">
-                <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6">
+                <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
                     <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center space-x-4">
                             <div className="w-12 h-12 bg-white rounded flex items-center justify-center font-bold text-black italic">S</div>
                             <div>
                                 <h3 className="text-lg font-bold text-white">Stripe</h3>
                                 <div className="flex items-center space-x-2 mt-1">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-zinc-600'}`}></div>
-                                    <span className="text-xs text-zinc-400 capitalize">{status}</span>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-slate-600'}`}></div>
+                                    <span className="text-xs text-slate-400 capitalize">{status}</span>
                                 </div>
                             </div>
                         </div>
                         {status === 'connected' && (
                             <button
                                 onClick={sendTestEvent}
-                                className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-bold rounded hover:text-white transition-colors"
+                                className="px-3 py-1.5 bg-slate-900 border border-slate-800 text-slate-300 text-xs font-bold rounded hover:text-white transition-colors"
                             >
                                 Send Test Event
                             </button>
@@ -107,28 +107,28 @@ export default function ConnectorsPage() {
 
                     <form onSubmit={handleSave} className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                                 Stripe Signing Secret (whsec_...)
                             </label>
                             <input
                                 type="password"
-                                className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                                 placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                 value={signingSecret}
                                 onChange={(e) => setSigningSecret(e.target.value)}
                             />
-                            <p className="mt-1.5 text-[10px] text-zinc-600">
+                            <p className="mt-1.5 text-[10px] text-slate-600">
                                 You can find this in your Stripe Dashboard under Developers {'>'} Webhooks after adding the endpoint below.
                             </p>
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                                 Account Label
                             </label>
                             <input
                                 type="text"
-                                className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                                 placeholder="e.g. Primary Production Account"
                                 value={label}
                                 onChange={(e) => setLabel(e.target.value)}
@@ -136,13 +136,13 @@ export default function ConnectorsPage() {
                         </div>
 
                         <div className="pt-4 flex justify-between items-center">
-                            <div className="text-[10px] text-zinc-500">
+                            <div className="text-[10px] text-slate-500">
                                 {lastEvent ? `Last event received: ${new Date(lastEvent).toLocaleString()}` : 'No events received yet'}
                             </div>
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="bg-white text-black font-bold py-2 px-6 rounded text-sm hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                                className="bg-white text-black font-bold py-2 px-6 rounded text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
                             >
                                 {saving ? 'Saving...' : 'Save Configuration'}
                             </button>
@@ -150,24 +150,24 @@ export default function ConnectorsPage() {
                     </form>
                 </div>
 
-                <div className="bg-zinc-950 border border-zinc-800 border-dashed rounded-lg p-6">
-                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Webhook Endpoint</h4>
-                    <div className="flex items-center space-x-2 bg-black border border-zinc-900 rounded p-3">
-                        <code className="text-blue-400 text-xs flex-1">https://app.payflux.dev/api/webhooks/stripe</code>
+                <div className="bg-slate-950 border border-slate-800 border-dashed rounded-lg p-6">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Webhook Endpoint</h4>
+                    <div className="flex items-center space-x-2 bg-slate-950 border border-slate-900 rounded p-3">
+                        <code className="text-[#0A64BC] text-xs flex-1">https://app.payflux.dev/api/webhooks/stripe</code>
                         <button
                             onClick={() => {
                                 navigator.clipboard.writeText('https://app.payflux.dev/api/webhooks/stripe');
                                 alert('Copied to clipboard');
                             }}
-                            className="text-[10px] bg-zinc-900 text-zinc-400 px-2 py-1 rounded hover:text-white"
+                            className="text-[10px] bg-slate-900 text-slate-400 px-2 py-1 rounded hover:text-white"
                         >
                             Copy
                         </button>
                     </div>
-                    <p className="mt-3 text-[10px] text-zinc-600 leading-relaxed">
+                    <p className="mt-3 text-[10px] text-slate-600 leading-relaxed">
                         Paste this URL into the Stripe Dashboard to start receiving events. Ensure you select the
-                        <code className="bg-zinc-900 px-1 mx-1 text-zinc-400">payment_intent.payment_failed</code> and
-                        <code className="bg-zinc-900 px-1 mx-1 text-zinc-400">payment_intent.succeeded</code> events.
+                        <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.payment_failed</code> and
+                        <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.succeeded</code> events.
                     </p>
                 </div>
             </div>

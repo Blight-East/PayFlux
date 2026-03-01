@@ -62,8 +62,8 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
     const lockedItems = SIDEBAR_ITEMS.filter(item => !visibleItems.includes(item));
 
     return (
-        <div className="w-64 bg-black border-r border-zinc-800 h-screen flex flex-col">
-            <div className="p-6 border-b border-zinc-800">
+        <div className="w-64 bg-slate-950 border-r border-slate-800 h-screen flex flex-col">
+            <div className="p-6 border-b border-slate-800">
                 <div className="payflux-mark">
                     <PayFluxLogo height={32} />
                 </div>
@@ -79,8 +79,8 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                                 key={item.href}
                                 href={item.href}
                                 className={`block px-4 py-2 rounded-md transition-colors ${isDiagnostics
-                                    ? `text-xs ${isActive ? 'bg-zinc-800/50 text-zinc-400' : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900/50'}`
-                                    : `text-sm font-medium ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-900'}`
+                                    ? `text-xs ${isActive ? 'bg-slate-800/50 text-slate-400' : 'text-slate-600 hover:text-slate-400 hover:bg-slate-900/50'}`
+                                    : `text-sm font-medium ${isActive ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`
                                     }`}
                             >
                                 {item.label}
@@ -91,23 +91,23 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
 
                 {lockedItems.length > 0 && (
                     <div className="mt-8 px-4">
-                        <h3 className="px-4 text-[10px] uppercase tracking-widest text-zinc-600 font-bold mb-2">
+                        <h3 className="px-4 text-[10px] uppercase tracking-widest text-slate-600 font-bold mb-2">
                             Locked Features
                         </h3>
                         <div className="space-y-1">
                             {lockedItems.map((item) => (
                                 <div
                                     key={item.href}
-                                    className="group flex items-center justify-between px-4 py-2 rounded-md text-sm font-medium text-zinc-700 cursor-not-allowed"
+                                    className="group flex items-center justify-between px-4 py-2 rounded-md text-sm font-medium text-slate-700 cursor-not-allowed"
                                 >
                                     <span>{item.label}</span>
                                     <div className="flex items-center space-x-2">
                                         {item.requiredFeature && !canAccess(workspace.tier, item.requiredFeature) && (
-                                            <span className="text-[9px] bg-blue-500/5 text-blue-500/40 border border-blue-500/10 px-1.5 py-0.5 rounded uppercase">
+                                            <span className="text-[9px] bg-[#0A64BC]/5 text-[#0A64BC]/40 border border-[#0A64BC]/10 px-1.5 py-0.5 rounded uppercase">
                                                 PRO
                                             </span>
                                         )}
-                                        <Lock size={12} className="text-zinc-800 group-hover:text-zinc-700 transition-colors" />
+                                        <Lock size={12} className="text-slate-800 group-hover:text-slate-700 transition-colors" />
                                     </div>
                                 </div>
                             ))}
@@ -116,10 +116,10 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                 )}
             </div>
 
-            <div className="p-4 border-t border-zinc-800">
+            <div className="p-4 border-t border-slate-800">
                 <div className="flex items-center space-x-2 px-4 py-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-xs text-zinc-400">System Online</span>
+                    <span className="text-xs text-slate-400">System Online</span>
                 </div>
             </div>
         </div>

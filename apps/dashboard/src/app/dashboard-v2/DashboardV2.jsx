@@ -167,7 +167,7 @@ export default function DashboardPage() {
                     <button
                         onClick={handleExport}
                         disabled={isExporting || exportCapability !== 'ready'}
-                        className={`px-3 py-1.5 text-[10px] font-mono border rounded transition-all duration-200 flex items-center gap-2 border-white/10 ${isExporting || exportCapability !== 'ready' ? 'text-zinc-500 bg-zinc-900/50' : 'text-zinc-400 bg-white/5 hover:bg-white/10 hover:text-white'} ${isExporting ? 'cursor-wait' : exportCapability !== 'ready' ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`px-3 py-1.5 text-[10px] font-mono border rounded transition-all duration-200 flex items-center gap-2 border-white/10 ${isExporting || exportCapability !== 'ready' ? 'text-slate-500 bg-slate-900/50' : 'text-slate-400 bg-white/5 hover:bg-white/10 hover:text-white'} ${isExporting ? 'cursor-wait' : exportCapability !== 'ready' ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                         {isExporting ? (
                             <Download className="w-3 h-3 animate-pulse" />

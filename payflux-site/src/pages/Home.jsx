@@ -3,74 +3,89 @@ import Footer from '../components/Footer';
 
 const Home = () => {
     return (
-        <div className="min-h-screen bg-engineering text-slate-900 font-sans overflow-x-hidden">
+        <div className="min-h-screen font-sans overflow-x-hidden bg-slate-950">
             {/* NAVIGATION */}
-            <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 h-16">
+            <nav className="fixed top-0 w-full z-50 bg-slate-950/90 backdrop-blur-md border-b border-white/[0.06] h-16">
                 <div className="max-w-[960px] mx-auto px-8 h-full flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-7 h-7 bg-[#0A64BC] rounded-sm" />
-                        <span className="font-semibold tracking-tight text-lg text-slate-900">PayFlux</span>
+                        <span className="font-semibold tracking-tight text-lg text-white">PayFlux</span>
                     </div>
-                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-                        <a href="#how" className="hover:text-slate-900 transition-colors">How it works</a>
-                        <a href="#instrument" className="hover:text-slate-900 transition-colors">Instrument</a>
-                        <a href="#pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
+                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+                        <a href="#how" className="hover:text-white transition-colors">How it works</a>
+                        <a href="#instrument" className="hover:text-white transition-colors">Instrument</a>
+                        <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
                     </div>
                     <a
                         href="https://app.payflux.dev/dashboard"
-                        className="text-sm font-medium text-white bg-slate-900 px-5 py-2 rounded-md hover:bg-slate-800 transition-colors"
+                        className="text-sm font-medium text-white bg-[#0A64BC] px-5 py-2 rounded-md hover:bg-[#0856a3] transition-colors"
                     >
                         Access Dashboard
                     </a>
                 </div>
             </nav>
 
+            {/* ════════════════════════════════════════════
+                DARK BLOCK 1 — Hero + Problem
+            ════════════════════════════════════════════ */}
+
             {/* 1. HERO */}
-            <section className="pt-48 pb-32 min-h-[70vh] flex items-center">
-                <div className="max-w-[960px] mx-auto px-8 w-full">
+            <section className="bg-slate-950 pt-32 pb-20 min-h-[80vh] flex items-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-grid-dark" />
+                <div className="max-w-[960px] mx-auto px-8 w-full relative z-10">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
                         {/* Left — copy */}
                         <div className="animate-fade-in">
-                            <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">
+                            <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-6 font-mono">
                                 Deterministic Reserve Projection Infrastructure
                             </p>
-                            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-[1.1] mb-6 tracking-tight">
+                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-8 tracking-tight">
                                 Rolling reserves don't surprise&nbsp;you.<br />They build.
                             </h1>
-                            <p className="text-lg text-slate-600 leading-relaxed mb-2 max-w-lg">
+                            <p className="text-lg text-slate-400 leading-relaxed mb-2 max-w-lg">
                                 Model reserve exposure before processors escalate. Measure projection accuracy over time. Export signed reports for leadership.
                             </p>
-                            <p className="text-base text-slate-500 mb-10 max-w-lg">
+                            <p className="text-base text-slate-500 mb-12 max-w-lg">
                                 Understand capital impact before it compounds.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <a
                                     href="https://app.payflux.dev/dashboard"
-                                    className="px-6 py-3 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 transition-colors text-center"
+                                    className="px-7 py-3.5 bg-[#0A64BC] text-white font-medium rounded-md hover:bg-[#0856a3] transition-colors text-center"
                                 >
                                     Access Dashboard
                                 </a>
                                 <a
                                     href="https://app.payflux.dev/dashboard"
-                                    className="px-6 py-3 border border-slate-300 text-slate-900 font-medium rounded-md hover:bg-slate-50 hover:border-slate-400 transition-colors text-center"
+                                    className="px-7 py-3.5 border border-slate-700 text-slate-300 font-medium rounded-md hover:bg-white/5 hover:border-slate-600 transition-colors text-center"
                                 >
                                     View Board Report Sample
                                 </a>
+                            </div>
+
+                            {/* Mobile-only projection reading */}
+                            <div className="mt-12 md:hidden border border-slate-800 rounded-lg p-6 bg-slate-900/50">
+                                <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest block mb-3">Capital at Risk — Example Output</span>
+                                <div className="font-mono text-3xl font-semibold text-white text-numeric mb-1">$184,200</div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#BC620A]" />
+                                    <span className="text-sm text-[#BC620A] font-medium">Trend: Degrading</span>
+                                </div>
                             </div>
                         </div>
 
                         {/* Right — projection surface with SVG chart */}
                         <div className="hidden md:flex animate-fade-in delay-100 h-full flex-col justify-center">
-                            <div className="bg-white border border-slate-200 rounded-lg shadow-sm w-full overflow-hidden flex flex-col relative">
+                            <div className="bg-slate-900/80 border border-slate-700/50 rounded-lg w-full overflow-hidden flex flex-col">
                                 {/* Top Metadata */}
-                                <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                                <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800">
                                     <span className="text-xs font-mono font-medium tracking-widest text-slate-400 uppercase">Capital at Risk</span>
-                                    <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">Example Output</span>
+                                    <span className="text-[10px] font-mono tracking-widest text-slate-600 uppercase">Example Output</span>
                                 </div>
 
                                 {/* Main Reading */}
                                 <div className="px-6 py-6 pb-2 relative z-10">
-                                    <div className="font-mono text-4xl font-semibold tracking-tight text-slate-900 text-numeric mb-1">
+                                    <div className="font-mono text-4xl font-semibold tracking-tight text-white text-numeric mb-1">
                                         $184,200
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -83,55 +98,55 @@ const Home = () => {
                                 <div className="h-48 w-full relative -mt-4">
                                     <svg viewBox="0 0 500 200" className="w-full h-full" preserveAspectRatio="none">
                                         {/* Gridlines */}
-                                        <line x1="0" y1="50" x2="500" y2="50" stroke="#f1f5f9" strokeWidth="1" />
-                                        <line x1="0" y1="100" x2="500" y2="100" stroke="#f1f5f9" strokeWidth="1" />
-                                        <line x1="0" y1="150" x2="500" y2="150" stroke="#f1f5f9" strokeWidth="1" />
+                                        <line x1="0" y1="50" x2="500" y2="50" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+                                        <line x1="0" y1="100" x2="500" y2="100" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+                                        <line x1="0" y1="150" x2="500" y2="150" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
 
                                         {/* Confidence Band */}
                                         <path
                                             d="M0,130 Q100,120 166,105 T333,65 T500,20 L500,70 Q400,90 333,115 T166,145 T0,160 Z"
-                                            fill="rgba(10, 100, 188, 0.1)"
+                                            fill="rgba(10, 100, 188, 0.15)"
                                         />
 
                                         {/* Stepped Projection Line */}
                                         <path
                                             d="M0,140 L166,140 L166,95 L333,95 L333,45 L500,45"
                                             fill="none"
-                                            stroke="#64748b"
+                                            stroke="#0A64BC"
                                             strokeWidth="2"
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                         />
 
                                         {/* Nodes */}
-                                        <circle cx="166" cy="95" r="4" fill="#ffffff" stroke="#64748b" strokeWidth="2" />
-                                        <circle cx="333" cy="45" r="4" fill="#ffffff" stroke="#64748b" strokeWidth="2" />
+                                        <circle cx="166" cy="95" r="4" fill="#0f172a" stroke="#0A64BC" strokeWidth="2" />
+                                        <circle cx="333" cy="45" r="4" fill="#0f172a" stroke="#0A64BC" strokeWidth="2" />
                                     </svg>
                                 </div>
 
                                 {/* Data Table Footer */}
-                                <div className="grid grid-cols-3 border-t border-slate-100 bg-white">
-                                    <div className="p-4 border-r border-slate-100 flex flex-col">
-                                        <span className="text-[10px] font-mono text-slate-400 mb-1">T+30</span>
-                                        <span className="text-sm font-mono font-medium text-slate-800 text-numeric">$61,400</span>
+                                <div className="grid grid-cols-3 border-t border-slate-800">
+                                    <div className="p-4 border-r border-slate-800 flex flex-col">
+                                        <span className="text-[10px] font-mono text-slate-600 mb-1">T+30</span>
+                                        <span className="text-sm font-mono font-medium text-slate-300 text-numeric">$61,400</span>
                                     </div>
-                                    <div className="p-4 border-r border-slate-100 flex flex-col">
+                                    <div className="p-4 border-r border-slate-800 flex flex-col">
                                         <span className="text-[10px] font-mono text-[#0A64BC] mb-1">T+60</span>
                                         <span className="text-sm font-mono font-medium text-[#0A64BC] text-numeric">$122,800</span>
                                     </div>
-                                    <div className="p-4 flex flex-col bg-slate-50">
+                                    <div className="p-4 flex flex-col">
                                         <span className="text-[10px] font-mono text-slate-500 mb-1">T+90</span>
-                                        <span className="text-sm font-mono font-bold text-slate-900 text-numeric">$184,200</span>
+                                        <span className="text-sm font-mono font-bold text-white text-numeric">$184,200</span>
                                     </div>
                                 </div>
 
                                 {/* Bottom Bar */}
-                                <div className="px-6 py-3 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <div className="px-6 py-3 border-t border-slate-800 flex justify-between items-center">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Model Accuracy</span>
-                                        <span className="text-xs text-slate-500">Measured after statistical threshold</span>
+                                        <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">Model Accuracy</span>
+                                        <span className="text-xs text-slate-600">Measured after statistical threshold</span>
                                     </div>
-                                    <span className="text-[10px] font-mono text-slate-400">reserve-v1.0.0</span>
+                                    <span className="text-[10px] font-mono text-slate-700">reserve-v1.0.0</span>
                                 </div>
                             </div>
                         </div>
@@ -140,28 +155,28 @@ const Home = () => {
             </section>
 
             {/* 2. THE PROBLEM */}
-            <section className="py-24 bg-slate-50 border-y border-slate-100">
+            <section className="py-24 bg-slate-950 border-t border-white/[0.06]">
                 <div className="max-w-[960px] mx-auto px-8">
-                    <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 text-center mb-16 tracking-tight">
+                    <h2 className="text-2xl md:text-3xl font-semibold text-white text-center mb-16 tracking-tight">
                         Processors escalate. Reserves compound.<br />Capital gets trapped before visibility exists.
                     </h2>
 
                     <div className="grid md:grid-cols-3 gap-10 text-center">
                         <div>
-                            <div className="text-slate-300 text-2xl mb-4">01</div>
-                            <p className="text-sm text-slate-600 leading-relaxed">
+                            <div className="text-slate-700 font-mono text-2xl mb-4">01</div>
+                            <p className="text-sm text-slate-400 leading-relaxed">
                                 Reserve increases are retrospective. You learn after the hold.
                             </p>
                         </div>
                         <div>
-                            <div className="text-slate-300 text-2xl mb-4">02</div>
-                            <p className="text-sm text-slate-600 leading-relaxed">
+                            <div className="text-slate-700 font-mono text-2xl mb-4">02</div>
+                            <p className="text-sm text-slate-400 leading-relaxed">
                                 Retry behavior compounds escalation without visible thresholds.
                             </p>
                         </div>
                         <div>
-                            <div className="text-slate-300 text-2xl mb-4">03</div>
-                            <p className="text-sm text-slate-600 leading-relaxed">
+                            <div className="text-slate-700 font-mono text-2xl mb-4">03</div>
+                            <p className="text-sm text-slate-400 leading-relaxed">
                                 Capital gets trapped before anyone in finance can see it coming.
                             </p>
                         </div>
@@ -169,8 +184,12 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* ════════════════════════════════════════════
+                LIGHT BLOCK — How it works + Instrument
+            ════════════════════════════════════════════ */}
+
             {/* 3. HOW IT WORKS */}
-            <section id="how" className="py-24 border-b border-slate-200">
+            <section id="how" className="py-24 bg-white">
                 <div className="max-w-[960px] mx-auto px-8">
                     <div className="text-center mb-16 animate-fade-in">
                         <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">How it works</p>
@@ -267,25 +286,29 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* ════════════════════════════════════════════
+                DARK BLOCK 2 — Board Report
+            ════════════════════════════════════════════ */}
+
             {/* 5. BOARD REPORT */}
-            <section className="py-24 border-b border-slate-200">
+            <section className="py-24 bg-slate-950">
                 <div className="max-w-[960px] mx-auto px-8">
                     <div className="mb-12 text-center animate-fade-in">
-                        <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">Export</p>
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
+                        <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-4 font-mono">Export</p>
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
                             Board-ready reserve forecast
                         </h2>
-                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                        <p className="text-lg text-slate-400 max-w-2xl mx-auto">
                             A document that survives outside the product. Deterministic, signed, printable.
                         </p>
                     </div>
 
-                    {/* Document Preview */}
+                    {/* Document Preview — white card floating on dark */}
                     <div className="max-w-3xl mx-auto animate-fade-in delay-200">
-                        <div className="bg-white border border-slate-200 shadow-document rounded-sm p-8 sm:p-12 relative overflow-hidden">
+                        <div className="bg-white rounded-sm p-8 sm:p-12 relative overflow-hidden shadow-document-float">
                             {/* Subtle watermark */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.02] pointer-events-none">
-                                <span className="font-bold text-8xl uppercase tracking-tighter">PAYFLUX</span>
+                                <span className="font-bold text-8xl uppercase tracking-tighter text-slate-900">PAYFLUX</span>
                             </div>
 
                             <div className="relative z-10">
@@ -354,8 +377,12 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* ════════════════════════════════════════════
+                LIGHT BLOCK — Pricing
+            ════════════════════════════════════════════ */}
+
             {/* 6. PRICING */}
-            <section id="pricing" className="py-24 bg-slate-50 border-y border-slate-100">
+            <section id="pricing" className="py-24 bg-white bg-engineering">
                 <div className="max-w-[960px] mx-auto px-8">
                     <div className="text-center mb-16 animate-fade-in">
                         <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">Pricing</p>
@@ -435,44 +462,48 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* ════════════════════════════════════════════
+                DARK BLOCK 3 — Statement + Contact + Footer
+            ════════════════════════════════════════════ */}
+
             {/* 7. NON-INVASIVE STATEMENT */}
-            <section className="py-24">
+            <section className="py-20 bg-slate-950">
                 <div className="max-w-[960px] mx-auto px-8 text-center">
-                    <p className="text-lg text-slate-500 leading-relaxed mb-2">
+                    <p className="text-lg text-slate-400 leading-relaxed mb-2">
                         PayFlux observes signals. It does not modify payment flow.
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-600">
                         No routing changes. No approval logic. No added latency.
                     </p>
                 </div>
             </section>
 
             {/* 8. GET STARTED */}
-            <section id="contact" className="py-24 bg-slate-50 border-y border-slate-100">
+            <section id="contact" className="py-24 bg-slate-950 border-t border-white/[0.06]">
                 <div className="max-w-[960px] mx-auto px-8">
-                    <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 text-center mb-16 tracking-tight">
+                    <h2 className="text-2xl md:text-3xl font-semibold text-white text-center mb-16 tracking-tight">
                         Quantify reserve exposure before processors do.
                     </h2>
 
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Self-serve */}
-                        <div className="bg-white border border-slate-200 rounded-lg p-8">
-                            <h3 className="text-base font-semibold text-slate-900 mb-2">Self-serve</h3>
-                            <p className="text-[13px] text-slate-500 mb-6">
+                        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8">
+                            <h3 className="text-base font-semibold text-white mb-2">Self-serve</h3>
+                            <p className="text-[13px] text-slate-400 mb-6">
                                 Access the dashboard directly. Free tier available.
                             </p>
                             <a
                                 href="https://app.payflux.dev/dashboard"
-                                className="inline-block px-7 py-3 bg-slate-900 text-white text-[13px] font-medium rounded-md hover:bg-slate-800 transition-colors"
+                                className="inline-block px-7 py-3 bg-[#0A64BC] text-white text-[13px] font-medium rounded-md hover:bg-[#0856a3] transition-colors"
                             >
                                 Access Dashboard
                             </a>
                         </div>
 
                         {/* Enterprise */}
-                        <div className="bg-white border border-slate-200 rounded-lg p-8">
-                            <h3 className="text-base font-semibold text-slate-900 mb-2">Enterprise</h3>
-                            <p className="text-[13px] text-slate-500 mb-6">
+                        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8">
+                            <h3 className="text-base font-semibold text-white mb-2">Enterprise</h3>
+                            <p className="text-[13px] text-slate-400 mb-6">
                                 Higher throughput, bulk exports, and processor attestation readiness.
                             </p>
                             <form
@@ -492,18 +523,18 @@ const Home = () => {
                                     name="email"
                                     required
                                     placeholder="name@company.com"
-                                    className="w-full bg-white border border-slate-200 rounded-md px-4 py-3 text-slate-900 text-[13px] outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-white text-[13px] placeholder-slate-600 outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
                                 />
                                 <input
                                     type="text"
                                     name="company"
                                     placeholder="Company"
-                                    className="w-full bg-white border border-slate-200 rounded-md px-4 py-3 text-slate-900 text-[13px] outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-white text-[13px] placeholder-slate-600 outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
                                 />
                                 <select
                                     name="monthlyVolume"
                                     defaultValue=""
-                                    className="w-full bg-white border border-slate-200 rounded-md px-4 py-3 text-slate-500 text-[13px] outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-slate-500 text-[13px] outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
                                 >
                                     <option value="" disabled>Monthly volume</option>
                                     <option value="<100k">&lt; $100k</option>
@@ -513,7 +544,7 @@ const Home = () => {
                                 </select>
                                 <button
                                     type="submit"
-                                    className="w-full py-3 border border-slate-200 text-slate-700 text-[13px] font-medium rounded-md hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                                    className="w-full py-3 border border-slate-700 text-slate-300 text-[13px] font-medium rounded-md hover:bg-white/5 hover:border-slate-600 transition-colors"
                                 >
                                     Contact Sales
                                 </button>
