@@ -18,7 +18,7 @@ const Pricing = () => {
     return (
         <div className="min-h-screen bg-engineering text-slate-900 font-sans">
             <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 h-16">
-                <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
+                <div className="max-w-[960px] mx-auto px-8 h-full flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-3">
                         <div className="w-7 h-7 bg-[#0A64BC] rounded-sm" />
                         <span className="font-semibold tracking-tight text-lg text-slate-900">PayFlux</span>
@@ -29,7 +29,7 @@ const Pricing = () => {
                 </div>
             </nav>
 
-            <main className="max-w-5xl mx-auto px-6 pt-32 pb-20">
+            <main className="max-w-[960px] mx-auto px-8 pt-32 pb-20">
                 <div className="mb-16 text-center">
                     <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-4">Pricing</h1>
                     <p className="text-lg text-slate-500">
@@ -62,11 +62,8 @@ const Pricing = () => {
                         </div>
                     </div>
 
-                    {/* PRO (Elevated) */}
-                    <div className="flex flex-col bg-white border-2 border-slate-900 rounded-lg p-8 shadow-elevation-subtle h-full transform lg:-translate-y-2 relative">
-                        <div className="absolute top-0 right-0 bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-bl-lg rounded-tr-md">
-                            Primary
-                        </div>
+                    {/* PRO */}
+                    <div className="flex flex-col bg-white border-2 border-slate-900 rounded-lg p-8 h-full">
                         <div className="mb-8">
                             <div className="text-xl font-bold text-slate-900 mb-1">Pro</div>
                             <div className="text-sm text-slate-500 mb-6">Full instrument</div>

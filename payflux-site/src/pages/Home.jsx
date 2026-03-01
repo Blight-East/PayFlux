@@ -6,7 +6,7 @@ const Home = () => {
         <div className="min-h-screen bg-engineering text-slate-900 font-sans overflow-x-hidden">
             {/* NAVIGATION */}
             <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 h-16">
-                <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
+                <div className="max-w-[960px] mx-auto px-8 h-full flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-7 h-7 bg-[#0A64BC] rounded-sm" />
                         <span className="font-semibold tracking-tight text-lg text-slate-900">PayFlux</span>
@@ -26,12 +26,12 @@ const Home = () => {
             </nav>
 
             {/* 1. HERO */}
-            <section className="pt-40 pb-24">
-                <div className="max-w-6xl mx-auto px-6">
+            <section className="pt-48 pb-32 min-h-[70vh] flex items-center">
+                <div className="max-w-[960px] mx-auto px-8 w-full">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
                         {/* Left — copy */}
                         <div className="animate-fade-in">
-                            <p className="text-slate-500 font-medium text-sm tracking-wide uppercase mb-4">
+                            <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">
                                 Deterministic Reserve Projection Infrastructure
                             </p>
                             <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-[1.1] mb-6 tracking-tight">
@@ -141,7 +141,7 @@ const Home = () => {
 
             {/* 2. THE PROBLEM */}
             <section className="py-24 bg-slate-50 border-y border-slate-100">
-                <div className="max-w-4xl mx-auto px-6">
+                <div className="max-w-[960px] mx-auto px-8">
                     <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 text-center mb-16 tracking-tight">
                         Processors escalate. Reserves compound.<br />Capital gets trapped before visibility exists.
                     </h2>
@@ -171,9 +171,9 @@ const Home = () => {
 
             {/* 3. HOW IT WORKS */}
             <section id="how" className="py-24 border-b border-slate-200">
-                <div className="max-w-4xl mx-auto px-6">
+                <div className="max-w-[960px] mx-auto px-8">
                     <div className="text-center mb-16 animate-fade-in">
-                        <p className="text-[13px] text-slate-400 tracking-wide mb-4">How it works</p>
+                        <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">How it works</p>
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
                             Observe. Model. Measure.
                         </h2>
@@ -227,10 +227,10 @@ const Home = () => {
 
             {/* 4. WHAT YOU SEE */}
             <section id="instrument" className="py-24 bg-slate-50 border-y border-slate-100">
-                <div className="max-w-6xl mx-auto px-6">
+                <div className="max-w-[960px] mx-auto px-8">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
                         <div>
-                            <p className="text-[13px] text-slate-400 tracking-wide mb-4">The instrument</p>
+                            <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">The instrument</p>
                             <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-6 tracking-tight">
                                 What you actually see
                             </h2>
@@ -269,9 +269,9 @@ const Home = () => {
 
             {/* 5. BOARD REPORT */}
             <section className="py-24 border-b border-slate-200">
-                <div className="max-w-6xl mx-auto px-6">
+                <div className="max-w-[960px] mx-auto px-8">
                     <div className="mb-12 text-center animate-fade-in">
-                        <p className="text-slate-500 font-medium text-sm tracking-wide uppercase mb-4">Export</p>
+                        <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">Export</p>
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
                             Board-ready reserve forecast
                         </h2>
@@ -356,9 +356,9 @@ const Home = () => {
 
             {/* 6. PRICING */}
             <section id="pricing" className="py-24 bg-slate-50 border-y border-slate-100">
-                <div className="max-w-5xl mx-auto px-6">
+                <div className="max-w-[960px] mx-auto px-8">
                     <div className="text-center mb-16 animate-fade-in">
-                        <p className="text-slate-500 font-medium text-sm tracking-wide uppercase mb-4">Pricing</p>
+                        <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">Pricing</p>
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
                             Three tiers. No opacity.
                         </h2>
@@ -387,11 +387,8 @@ const Home = () => {
                             </a>
                         </div>
 
-                        {/* PRO (Elevated) */}
-                        <div className="bg-white border-2 border-slate-900 rounded-lg p-8 shadow-elevation-subtle flex flex-col h-full transform md:-translate-y-2 relative">
-                            <div className="absolute top-0 right-0 bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-bl-lg rounded-tr-md">
-                                Primary
-                            </div>
+                        {/* PRO */}
+                        <div className="bg-white border-2 border-slate-900 rounded-lg p-8 flex flex-col h-full">
                             <div className="mb-8">
                                 <div className="text-xl font-bold text-slate-900 mb-1">Pro</div>
                                 <div className="text-sm text-slate-500 mb-6">Full instrument</div>
@@ -440,7 +437,7 @@ const Home = () => {
 
             {/* 7. NON-INVASIVE STATEMENT */}
             <section className="py-24">
-                <div className="max-w-2xl mx-auto px-6 text-center">
+                <div className="max-w-[960px] mx-auto px-8 text-center">
                     <p className="text-lg text-slate-500 leading-relaxed mb-2">
                         PayFlux observes signals. It does not modify payment flow.
                     </p>
@@ -452,7 +449,7 @@ const Home = () => {
 
             {/* 8. GET STARTED */}
             <section id="contact" className="py-24 bg-slate-50 border-y border-slate-100">
-                <div className="max-w-5xl mx-auto px-6">
+                <div className="max-w-[960px] mx-auto px-8">
                     <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 text-center mb-16 tracking-tight">
                         Quantify reserve exposure before processors do.
                     </h2>
