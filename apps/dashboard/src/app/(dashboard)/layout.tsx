@@ -22,8 +22,8 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="flex min-h-screen bg-black text-white">
-            <aside className="w-64 border-r border-zinc-800">
+        <div className="flex min-h-screen bg-slate-950 text-white">
+            <aside className="w-64 border-r border-slate-800">
                 <Sidebar workspace={workspace} />
             </aside>
             <main className="flex-1 p-8">

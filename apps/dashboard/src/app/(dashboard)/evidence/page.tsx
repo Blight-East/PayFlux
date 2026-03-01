@@ -80,16 +80,16 @@ function EvidenceContent() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-white tracking-tight">Infrastructure Evidence</h1>
-                    <p className="text-zinc-500 text-sm mt-1">Core node evidence and artifact stream.</p>
+                    <p className="text-slate-500 text-sm mt-1">Core node evidence and artifact stream.</p>
                 </div>
                 <div className="flex items-center space-x-4">
                     <div className="text-right">
-                        <div className="text-[10px] text-zinc-500 uppercase tracking-widest">Last Sync</div>
-                        <div className="text-sm font-mono text-zinc-300">{lastSync}</div>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest">Last Sync</div>
+                        <div className="text-sm font-mono text-slate-300">{lastSync}</div>
                     </div>
-                    <div className="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded flex items-center space-x-2">
+                    <div className="px-3 py-1 bg-slate-900 border border-slate-800 rounded flex items-center space-x-2">
                         <div className={`w-2 h-2 rounded-full ${status === 'OK' ? 'bg-green-500' : status === 'DEGRADED' ? 'bg-amber-500' : 'bg-red-500 pulse'}`}></div>
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{fixture ? `Fixture: ${fixture}` : 'Live'}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture ? `Fixture: ${fixture}` : 'Live'}</span>
                     </div>
                 </div>
             </div>
@@ -123,31 +123,31 @@ function EvidenceContent() {
 
             {/* System Info Cards */}
             <div className="grid grid-cols-4 gap-4">
-                <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Ingest Rate</div>
+                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Ingest Rate</div>
                     <div className="text-xl font-bold text-white font-mono">{activeData?.payload.system.ingest_rate || '---'}</div>
                 </div>
-                <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Node Count</div>
+                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Node Count</div>
                     <div className="text-xl font-bold text-white font-mono">{activeData?.payload.system.node_count || 0}</div>
                 </div>
-                <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Upstream Status</div>
+                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Upstream Status</div>
                     <div className="text-xl font-bold text-white font-mono uppercase tracking-tighter">{activeData?.meta?.sourceStatus || '---'}</div>
                 </div>
-                <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Cluster</div>
+                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Cluster</div>
                     <div className="text-xl font-bold text-white font-mono">{activeData?.payload.system.cluster || '---'}</div>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
                 {/* Merchants Panel */}
-                <div className="bg-zinc-950 border border-zinc-900 rounded-lg overflow-hidden flex flex-col h-[400px]">
-                    <div className="px-6 py-4 border-b border-zinc-900 bg-zinc-900/30 font-bold text-xs uppercase tracking-widest text-zinc-300">Merchants Snapshot</div>
+                <div className="bg-slate-950 border border-slate-900 rounded-lg overflow-hidden flex flex-col h-[400px]">
+                    <div className="px-6 py-4 border-b border-slate-900 bg-slate-900/30 font-bold text-xs uppercase tracking-widest text-slate-300">Merchants Snapshot</div>
                     <div className="flex-1 overflow-y-auto">
                         <table className="w-full text-left text-xs">
-                            <thead className="sticky top-0 bg-black text-zinc-500 border-b border-zinc-900 font-medium">
+                            <thead className="sticky top-0 bg-slate-950 text-slate-500 border-b border-slate-900 font-medium">
                                 <tr>
                                     <th className="px-6 py-3">ID</th>
                                     <th className="px-6 py-3 text-right">Vol</th>
@@ -155,12 +155,12 @@ function EvidenceContent() {
                                     <th className="px-6 py-3 text-center">Status</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-900">
+                            <tbody className="divide-y divide-slate-900">
                                 {activeData?.payload.merchants.map((m: any) => (
-                                    <tr key={m.id} className="hover:bg-zinc-900/50 transition-colors">
-                                        <td className="px-6 py-3 font-mono text-zinc-400">{m.id}</td>
+                                    <tr key={m.id} className="hover:bg-slate-900/50 transition-colors">
+                                        <td className="px-6 py-3 font-mono text-slate-400">{m.id}</td>
                                         <td className="px-6 py-3 text-right font-mono text-white">{m.vol}</td>
-                                        <td className="px-6 py-3 text-right font-mono text-zinc-500">{m.baseline}</td>
+                                        <td className="px-6 py-3 text-right font-mono text-slate-500">{m.baseline}</td>
                                         <td className="px-6 py-3 text-center">
                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${m.status === 'healthy' ? 'text-green-500 bg-green-500/10' : 'text-amber-500 bg-amber-500/10'}`}>
                                                 {m.status}
@@ -168,7 +168,7 @@ function EvidenceContent() {
                                         </td>
                                     </tr>
                                 )) || (
-                                        <tr><td colSpan={4} className="px-6 py-12 text-center text-zinc-600 italic">No merchant data available</td></tr>
+                                        <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-600 italic">No merchant data available</td></tr>
                                     )}
                             </tbody>
                         </table>
@@ -176,21 +176,21 @@ function EvidenceContent() {
                 </div>
 
                 {/* Artifacts Panel */}
-                <div className="bg-zinc-950 border border-zinc-900 rounded-lg overflow-hidden flex flex-col h-[400px]">
-                    <div className="px-6 py-4 border-b border-zinc-900 bg-zinc-900/30 font-bold text-xs uppercase tracking-widest text-zinc-300">Artifact Stream</div>
+                <div className="bg-slate-950 border border-slate-900 rounded-lg overflow-hidden flex flex-col h-[400px]">
+                    <div className="px-6 py-4 border-b border-slate-900 bg-slate-900/30 font-bold text-xs uppercase tracking-widest text-slate-300">Artifact Stream</div>
                     <div className="flex-1 overflow-y-auto p-6 space-y-4">
                         {activeData?.payload.artifacts.map((a: any) => (
-                            <div key={a.id} className="border-l-2 border-zinc-800 pl-4 space-y-2">
+                            <div key={a.id} className="border-l-2 border-slate-800 pl-4 space-y-2">
                                 <div className="flex justify-between items-start">
-                                    <div className="text-[10px] font-mono font-bold text-blue-400">{a.id}</div>
-                                    <div className="text-[9px] text-zinc-600 font-mono">{new Date(a.timestamp).toLocaleTimeString()}</div>
+                                    <div className="text-[10px] font-mono font-bold text-[#0A64BC]">{a.id}</div>
+                                    <div className="text-[9px] text-slate-600 font-mono">{new Date(a.timestamp).toLocaleTimeString()}</div>
                                 </div>
-                                <div className="text-[10px] text-zinc-400 font-mono bg-zinc-900/50 p-2 rounded truncate">
+                                <div className="text-[10px] text-slate-400 font-mono bg-slate-900/50 p-2 rounded truncate">
                                     {JSON.stringify(a.data)}
                                 </div>
                             </div>
                         )) || (
-                                <div className="text-center py-12 text-zinc-600 italic text-sm">No artifacts in stream</div>
+                                <div className="text-center py-12 text-slate-600 italic text-sm">No artifacts in stream</div>
                             )}
                     </div>
                 </div>
@@ -201,7 +201,7 @@ function EvidenceContent() {
 
 export default function EvidencePage() {
     return (
-        <Suspense fallback={<div className="p-8 text-zinc-500 animate-pulse">Loading evidence scope...</div>}>
+        <Suspense fallback={<div className="p-8 text-slate-500 animate-pulse">Loading evidence scope...</div>}>
             <EvidenceContent />
         </Suspense>
     );

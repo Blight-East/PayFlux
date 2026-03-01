@@ -8,7 +8,7 @@ export default function PrivacyRedirect() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-black text-zinc-400 flex items-center justify-center">
+        <div className="min-h-screen bg-slate-950 text-slate-400 flex items-center justify-center">
             <div className="text-center">
                 <p className="text-lg">Redirecting to Privacy Policy...</p>
             </div>

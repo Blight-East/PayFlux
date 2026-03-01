@@ -8,13 +8,13 @@ export default function WorkspaceHeader({
     const { workspaceName, role, tier } = workspace;
 
     return (
-        <header className="h-16 border-b border-zinc-800 flex items-center justify-between px-8 bg-black">
+        <header className="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-950">
             <div className="flex items-center space-x-4">
-                <span className="text-sm text-zinc-500">Workspace</span>
+                <span className="text-sm text-slate-500">Workspace</span>
                 <span className="text-sm font-semibold text-white">
                     {workspaceName}
                 </span>
-                <span className="text-[10px] uppercase px-2 py-0.5 rounded border border-zinc-700 text-zinc-400">
+                <span className="text-[10px] uppercase px-2 py-0.5 rounded border border-slate-700 text-slate-400">
                     {role}
                 </span>
             </div>
@@ -26,8 +26,8 @@ export default function WorkspaceHeader({
             ${tier === 'enterprise'
                             ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                             : tier === 'pro'
-                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                ? 'bg-blue-500/10 text-[#0A64BC] border border-blue-500/20'
+                                : 'bg-slate-800 text-slate-400 border border-slate-700'
                         }
           `}
                 >

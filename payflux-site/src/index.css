@@ -19,16 +19,24 @@ body {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #ffffff;
+    background-color: #020617;
     color: #1e293b;
 }
 
-/* Engineering Paper Background */
+/* Engineering Paper Background — Light */
 .bg-engineering {
     background-color: #ffffff;
     background-image:
         linear-gradient(rgba(51, 65, 85, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(51, 65, 85, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+/* Engineering Grid — Dark */
+.bg-grid-dark {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
     background-size: 24px 24px;
 }
 
@@ -54,6 +62,12 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,0.02), 0 10px 40px -10px rgba(0,0,0,0.04);
 }
 
+.shadow-document-float {
+    box-shadow:
+        0 4px 20px rgba(0,0,0,0.3),
+        0 20px 60px -10px rgba(0,0,0,0.4);
+}
+
 /* Animations */
 @keyframes fade-in {
     from { opacity: 0; transform: translateY(10px); }
@@ -74,5 +88,5 @@ body {
 }
 
 ::selection {
-    background-color: rgba(15, 23, 42, 0.1);
+    background-color: rgba(10, 100, 188, 0.3);
 }

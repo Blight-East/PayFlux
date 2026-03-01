@@ -20,8 +20,8 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
             {/* Header */}
             <div className="flex justify-between items-center mb-10">
                 <div>
-                    <h2 className="text-lg font-semibold text-zinc-300 tracking-tight">Dashboard</h2>
-                    <p className="text-[11px] text-zinc-600 mt-0.5">Capital projection surface</p>
+                    <h2 className="text-lg font-semibold text-slate-300 tracking-tight">Dashboard</h2>
+                    <p className="text-[11px] text-slate-600 mt-0.5">Capital projection surface</p>
                 </div>
                 <UserButton
                     appearance={{
@@ -39,24 +39,24 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
 
             {/* Free tier: intervention lock + upgrade CTA */}
             {isFree && (
-                <div className="mb-8 border border-zinc-800 rounded-lg px-5 py-4">
+                <div className="mb-8 border border-slate-800 rounded-lg px-5 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <Lock className="w-4 h-4 text-zinc-600" />
-                            <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold">
+                            <Lock className="w-4 h-4 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">
                                 Intervention Modeling
                             </span>
                         </div>
-                        <span className="text-[9px] bg-blue-500/5 text-blue-500/40 border border-blue-500/10 px-1.5 py-0.5 rounded uppercase">
+                        <span className="text-[9px] bg-[#0A64BC]/5 text-[#0A64BC]/40 border border-[#0A64BC]/10 px-1.5 py-0.5 rounded uppercase">
                             PRO
                         </span>
                     </div>
-                    <p className="text-[11px] text-zinc-600 mt-2 font-mono leading-relaxed">
+                    <p className="text-[11px] text-slate-600 mt-2 font-mono leading-relaxed">
                         Intervention modeling requires a Pro subscription. Projection windows and capital-at-risk metrics are available on all tiers.
                     </p>
                     <a
                         href="/settings"
-                        className="inline-block mt-3 text-[11px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                        className="inline-block mt-3 text-[11px] text-[#0A64BC] hover:text-[#0856a3] font-medium transition-colors"
                     >
                         Upgrade to model reserve accumulation.
                     </a>
@@ -70,8 +70,8 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
 
             {/* C. RESERVE HISTORY + MODEL ACCURACY + BOARD REPORT */}
             <div className="mb-12">
-                <div className="border-t border-zinc-900 pt-6 mb-4 flex items-center justify-between">
-                    <h3 className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Reserve History</h3>
+                <div className="border-t border-slate-900 pt-6 mb-4 flex items-center justify-between">
+                    <h3 className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve History</h3>
                     <BoardReserveReport host={host} />
                 </div>
                 <ProjectionTimeline host={host} />
@@ -81,7 +81,7 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
             <div className="pt-12 pb-2">
                 <a
                     href="/dashboard/diagnostics"
-                    className="text-[10px] text-zinc-800 hover:text-zinc-600 transition-colors"
+                    className="text-[10px] text-slate-800 hover:text-slate-600 transition-colors"
                 >
                     Diagnostics
                 </a>

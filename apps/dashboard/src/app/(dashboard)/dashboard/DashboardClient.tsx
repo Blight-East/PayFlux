@@ -82,8 +82,8 @@ export default function DashboardClient({ tier, host }: { tier: string; host: st
             {/* Header — minimal, subordinate */}
             <div className="flex justify-between items-center mb-10">
                 <div>
-                    <h2 className="text-lg font-semibold text-zinc-300 tracking-tight">Dashboard</h2>
-                    <p className="text-[11px] text-zinc-600 mt-0.5">Capital control surface</p>
+                    <h2 className="text-lg font-semibold text-slate-300 tracking-tight">Dashboard</h2>
+                    <p className="text-[11px] text-slate-600 mt-0.5">Capital control surface</p>
                 </div>
                 <UserButton
                     appearance={{
@@ -115,8 +115,8 @@ export default function DashboardClient({ tier, host }: { tier: string; host: st
                 Signed, immutable projection ledger with accuracy tracking.
                ═══════════════════════════════════════════════════════════════ */}
             <div className="mb-12">
-                <div className="border-t border-zinc-900 pt-6 mb-4 flex items-center justify-between">
-                    <h3 className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Projection Record</h3>
+                <div className="border-t border-slate-900 pt-6 mb-4 flex items-center justify-between">
+                    <h3 className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Projection Record</h3>
                     <BoardReserveReport host={host} />
                 </div>
                 <ProjectionTimeline host={host} />
@@ -127,41 +127,41 @@ export default function DashboardClient({ tier, host }: { tier: string; host: st
                 Visually subordinate. Smaller. Less weight.
                ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-6">
-                <div className="border-t border-zinc-900 pt-6">
-                    <h3 className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold mb-4">Supporting Telemetry</h3>
+                <div className="border-t border-slate-900 pt-6">
+                    <h3 className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold mb-4">Supporting Telemetry</h3>
                 </div>
 
                 {/* Auth Denials Card */}
-                <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-5">
-                    <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Auth Denials (last 15m)</h4>
+                <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-5">
+                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Auth Denials (last 15m)</h4>
                     {!prometheusAvailable ? (
-                        <div className="text-[10px] text-zinc-600 italic">
+                        <div className="text-[10px] text-slate-600 italic">
                             Prometheus not configured. Set PROMETHEUS_URL to view breakdown.
                         </div>
                     ) : authDenials ? (
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Missing Key</div>
-                                <div className="text-lg font-bold text-zinc-400 font-mono">{authDenials.missing_key}</div>
+                                <div className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Missing Key</div>
+                                <div className="text-lg font-bold text-slate-400 font-mono">{authDenials.missing_key}</div>
                             </div>
                             <div>
-                                <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Revoked Key</div>
+                                <div className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Revoked Key</div>
                                 <div className="text-lg font-bold text-red-500/70 font-mono">{authDenials.revoked_key}</div>
                             </div>
                             <div>
-                                <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Invalid Key</div>
+                                <div className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Invalid Key</div>
                                 <div className="text-lg font-bold text-orange-500/70 font-mono">{authDenials.invalid_key}</div>
                             </div>
                         </div>
                     ) : (
-                        <div className="text-[10px] text-zinc-600 italic">Loading...</div>
+                        <div className="text-[10px] text-slate-600 italic">Loading...</div>
                     )}
                 </div>
 
                 {/* Warnings Table */}
-                <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg overflow-hidden">
+                <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg overflow-hidden">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-zinc-950 border-b border-zinc-800/50 text-zinc-600 font-medium">
+                        <thead className="bg-slate-950 border-b border-slate-800/50 text-slate-600 font-medium">
                             <tr>
                                 <th className="px-5 py-3 text-[10px] uppercase tracking-wider">Status</th>
                                 <th className="px-5 py-3 text-[10px] uppercase tracking-wider">Processor</th>
@@ -171,46 +171,46 @@ export default function DashboardClient({ tier, host }: { tier: string; host: st
                                 <th className="px-5 py-3 text-[10px] uppercase tracking-wider">Outcome</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-zinc-800/30">
+                        <tbody className="divide-y divide-slate-800/30">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-5 py-8 text-center text-zinc-600 italic text-xs">
+                                    <td colSpan={6} className="px-5 py-8 text-center text-slate-600 italic text-xs">
                                         Loading warnings...
                                     </td>
                                 </tr>
                             ) : warnings.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-5 py-8 text-center text-zinc-600 italic text-xs">
+                                    <td colSpan={6} className="px-5 py-8 text-center text-slate-600 italic text-xs">
                                         No warnings detected in the last 24 hours.
                                     </td>
                                 </tr>
                             ) : (
                                 warnings.map((w) => (
-                                    <tr key={w.warning_id} className="hover:bg-zinc-800/20 transition-colors">
+                                    <tr key={w.warning_id} className="hover:bg-slate-800/20 transition-colors">
                                         <td className="px-5 py-3">
                                             <div className="flex items-center space-x-2">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${w.outcome_observed ? 'bg-zinc-700' : 'bg-red-500 animate-pulse'}`}></div>
-                                                <span className="text-[10px] font-medium text-zinc-500">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${w.outcome_observed ? 'bg-slate-700' : 'bg-red-500 animate-pulse'}`}></div>
+                                                <span className="text-[10px] font-medium text-slate-500">
                                                     {w.outcome_observed ? 'Resolved' : 'Active'}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-3 font-medium text-zinc-500 uppercase tracking-wider text-[10px]">{w.processor}</td>
+                                        <td className="px-5 py-3 font-medium text-slate-500 uppercase tracking-wider text-[10px]">{w.processor}</td>
                                         <td className="px-5 py-3">
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${w.risk_band === 'critical' ? 'bg-red-500/10 text-red-500/70 border border-red-500/20' :
                                                 w.risk_band === 'high' ? 'bg-orange-500/10 text-orange-500/70 border border-orange-500/20' :
-                                                    'bg-zinc-800/50 text-zinc-500 border border-zinc-700/50'
+                                                    'bg-slate-800/50 text-slate-500 border border-slate-700/50'
                                                 }`}>
                                                 {w.risk_band}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3 font-mono text-[11px] text-zinc-500">{(w.risk_score || 0).toFixed(4)}</td>
-                                        <td className="px-5 py-3 text-[11px] text-zinc-600">{new Date(w.processed_at).toLocaleString()}</td>
+                                        <td className="px-5 py-3 font-mono text-[11px] text-slate-500">{(w.risk_score || 0).toFixed(4)}</td>
+                                        <td className="px-5 py-3 text-[11px] text-slate-600">{new Date(w.processed_at).toLocaleString()}</td>
                                         <td className="px-5 py-3">
                                             {w.outcome_observed ? (
                                                 <span className="text-[11px] text-emerald-500/60 font-medium">✓ {w.outcome_type}</span>
                                             ) : (
-                                                <span className="text-[11px] text-zinc-700 italic">Needs review</span>
+                                                <span className="text-[11px] text-slate-700 italic">Needs review</span>
                                             )}
                                         </td>
                                     </tr>

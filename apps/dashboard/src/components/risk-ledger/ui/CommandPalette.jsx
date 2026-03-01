@@ -85,7 +85,7 @@ function CommandItem({ icon: Icon, label, shortcut, isDanger }) {
                 <span>{label}</span>
             </div>
             {shortcut && (
-                <span className="text-xs text-subtle font-mono border border-white/10 px-1.5 rounded bg-black/20 group-hover:border-white/20">
+                <span className="text-xs text-subtle font-mono border border-white/10 px-1.5 rounded bg-slate-950/20 group-hover:border-white/20">
                     {shortcut}
                 </span>
             )}
