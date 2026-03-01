@@ -71,13 +71,13 @@ export default function TrustDashboardPlayground() {
                     </div>
                 </div>
                 <div className="flex items-center gap-6">
-                    {/* DEMO ONLY — Evidence Export placeholder (no behavior) */}
+                    {/* DEMO ONLY — Board Report placeholder (no behavior) */}
                     <button
                         disabled
                         className="px-3 py-1.5 border border-zinc-800 bg-zinc-900/50 text-zinc-600 cursor-not-allowed uppercase font-mono text-[10px] tracking-widest"
                         title="Coming soon — signed canonical evidence bundle"
                     >
-                        Evidence Export
+                        Board Report
                     </button>
                     <div className="mono text-[11px] text-zinc-500">
                         LAST SYNC: <span className="text-zinc-300">{systemState === 'OFFLINE' ? '18m AGO' : '2s AGO'}</span>
@@ -168,7 +168,7 @@ export default function TrustDashboardPlayground() {
                 <div className="flex-1 flex flex-col relative overflow-hidden">
                     <section className="flex-1 overflow-y-auto no-scrollbar">
                         <div className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border px-6 py-3 flex items-center justify-between z-20">
-                            <h2 className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">Risk Ledger</h2>
+                            <h2 className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">Reserve History</h2>
                             <div className="flex gap-4">
                                 <div className="flex items-center gap-1.5 font-mono text-[10px]">
                                     <div className={`w-1.5 h-1.5 rounded-full ${systemState === 'OFFLINE' ? 'bg-zinc-700' : 'bg-[#10B981] animate-pulse'}`} />

@@ -79,7 +79,7 @@ function EvidenceContent() {
         <div className="p-8 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Evidence Console</h1>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">Infrastructure Evidence</h1>
                     <p className="text-zinc-500 text-sm mt-1">Core node evidence and artifact stream.</p>
                 </div>
                 <div className="flex items-center space-x-4">

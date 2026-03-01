@@ -150,7 +150,7 @@ export default function DashboardPage() {
                         <span>PayFlux</span>
                     </div>
                 </div>
-                {/* Evidence Export Action */}
+                {/* Board Report Action */}
                 <div
                     className="flex items-center gap-3 cursor-help"
                     title={
@@ -174,7 +174,7 @@ export default function DashboardPage() {
                         ) : (
                             <Download className="w-3 h-3" />
                         )}
-                        <span>{isExporting ? 'GENERATING...' : 'EVIDENCE EXPORT'}</span>
+                        <span>{isExporting ? 'GENERATING...' : 'BOARD REPORT'}</span>
                     </button>
                 </div>
             </header>
