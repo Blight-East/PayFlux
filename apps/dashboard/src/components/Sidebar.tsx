@@ -24,19 +24,8 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
         href: '/dashboard',
     },
     {
-        label: 'Risk',
-        href: '/risk',
-    },
-    {
-        label: 'Evidence',
-        href: '/evidence',
-        requiredFeature: 'evidence_export',
-    },
-    {
-        label: 'Export',
-        href: '/evidence/export',
-        minRole: 'admin',
-        requiredFeature: 'bulk_export',
+        label: 'Diagnostics',
+        href: '/dashboard/diagnostics',
     },
     {
         label: 'Connectors',
@@ -81,16 +70,17 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
             </div>
 
             <div className="flex-1 overflow-y-auto">
-                <nav className="p-4 space-y-2">
+                <nav className="p-4 space-y-1">
                     {visibleItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        const isActive = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard');
+                        const isDiagnostics = item.href === '/dashboard/diagnostics';
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`block px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                                    ? 'bg-zinc-800 text-white'
-                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                                className={`block px-4 py-2 rounded-md transition-colors ${isDiagnostics
+                                    ? `text-xs ${isActive ? 'bg-zinc-800/50 text-zinc-400' : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-900/50'}`
+                                    : `text-sm font-medium ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-900'}`
                                     }`}
                             >
                                 {item.label}

@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { resolveWorkspace } from '@/lib/resolve-workspace';
 import { RiskIntelligence } from '@/lib/risk-infra';
-import DashboardClient from './DashboardClient';
+import ProjectionRoot from '@/components/ProjectionRoot';
 
 export default async function DashboardPage() {
     const { userId } = await auth();
@@ -29,5 +29,5 @@ export default async function DashboardPage() {
         // Non-fatal — panel will render empty state
     }
 
-    return <DashboardClient tier={workspace.tier} host={primaryHost} />;
+    return <ProjectionRoot tier={workspace.tier} host={primaryHost} />;
 }

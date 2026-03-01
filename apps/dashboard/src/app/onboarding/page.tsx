@@ -43,7 +43,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
     const isConnected = typeof stripeAccountId === "string" && stripeAccountId.length > 0;
 
     if (isConnected) {
-        redirect("/evidence");
+        redirect("/dashboard");
     }
 
     const errRaw = searchParams?.err;
@@ -79,8 +79,11 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
                         Connect your Stripe account
                     </h1>
 
-                    <p className="text-slate-600 text-center mb-8 text-sm leading-relaxed">
-                        Payflux connects to your Stripe account to provide automated insights, streamline dispute management, and ensure compliance.
+                    <p className="text-slate-600 text-center mb-2 text-sm leading-relaxed">
+                        Connect your processor to model reserve exposure and measure projection accuracy.
+                    </p>
+                    <p className="text-slate-400 text-center mb-8 text-xs leading-relaxed">
+                        PayFlux observes signals. It does not modify payment flow.
                     </p>
 
                     <div className="space-y-4">

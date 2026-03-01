@@ -418,7 +418,7 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
     if (data.totalRecords === 0) {
         return (
             <div className="border border-zinc-800 rounded-lg px-5 py-4 space-y-2">
-                <span className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Projection History</span>
+                <span className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Reserve History</span>
                 <p className="text-[11px] text-zinc-600 font-mono leading-relaxed">
                     No projection records yet. The ledger begins recording on first projection load.
                     Daily cadence and state transitions will appear here.
@@ -438,10 +438,10 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
             {/* Model Accuracy */}
             <ModelAccuracy accuracy={data.accuracy} />
 
-            {/* Projection History Ledger */}
+            {/* Reserve History Ledger */}
             <div className="space-y-1">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Projection History</span>
+                    <span className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Reserve History</span>
                     <span className="text-[10px] text-zinc-700 font-mono">{data.totalRecords} record{data.totalRecords !== 1 ? 's' : ''}</span>
                 </div>
 

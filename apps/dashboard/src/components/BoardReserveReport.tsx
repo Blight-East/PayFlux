@@ -379,7 +379,7 @@ export default function BoardReserveReport({ host, monthlyTPV }: { host: string 
                 className="flex items-center space-x-1.5 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-30"
             >
                 <FileText className="w-3.5 h-3.5" />
-                <span>{loading ? 'Generating…' : 'Board Report'}</span>
+                <span>{loading ? 'Generating…' : 'Generate Board Report'}</span>
             </button>
 
             {error && <span className="text-[10px] text-red-400 ml-2">{error}</span>}
