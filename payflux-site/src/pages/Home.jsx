@@ -161,24 +161,38 @@ const Home = () => {
                         Processors escalate. Reserves compound.<br />Capital gets trapped before visibility exists.
                     </h2>
 
-                    <div className="grid md:grid-cols-3 gap-10 text-center">
-                        <div>
-                            <div className="text-slate-700 font-mono text-2xl mb-4">01</div>
-                            <p className="text-sm text-slate-400 leading-relaxed">
-                                Reserve increases are retrospective. You learn after the hold.
-                            </p>
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {/* Card 1 — Abstract Data */}
+                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-8 rounded-2xl group">
+                            <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                                <img src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2064&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="text-4xl font-light text-slate-700 mb-6 group-hover:text-slate-500 transition-colors">01</div>
+                                <h3 className="text-lg text-white font-medium mb-3">Reserve increases are retrospective. You learn after the hold.</h3>
+                            </div>
                         </div>
-                        <div>
-                            <div className="text-slate-700 font-mono text-2xl mb-4">02</div>
-                            <p className="text-sm text-slate-400 leading-relaxed">
-                                Retry behavior compounds escalation without visible thresholds.
-                            </p>
+
+                        {/* Card 2 — Compound Waves */}
+                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-8 rounded-2xl group">
+                            <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                                <img src="https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2071&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="text-4xl font-light text-slate-700 mb-6 group-hover:text-slate-500 transition-colors">02</div>
+                                <h3 className="text-lg text-white font-medium mb-3">Retry behavior compounds escalation without visible thresholds.</h3>
+                            </div>
                         </div>
-                        <div>
-                            <div className="text-slate-700 font-mono text-2xl mb-4">03</div>
-                            <p className="text-sm text-slate-400 leading-relaxed">
-                                Capital gets trapped before anyone in finance can see it coming.
-                            </p>
+
+                        {/* Card 3 — Trapped Capital */}
+                        <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-8 rounded-2xl group">
+                            <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                                <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="text-4xl font-light text-slate-700 mb-6 group-hover:text-slate-500 transition-colors">03</div>
+                                <h3 className="text-lg text-white font-medium mb-3">Capital gets trapped before anyone in finance can see it coming.</h3>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -245,43 +259,74 @@ const Home = () => {
             </section>
 
             {/* 4. WHAT YOU SEE */}
-            <section id="instrument" className="py-24 bg-slate-50 border-y border-slate-100">
+            <section id="instrument" className="py-24 bg-slate-950">
                 <div className="max-w-[960px] mx-auto px-8">
-                    <div className="grid md:grid-cols-2 gap-16 items-center">
-                        <div>
-                            <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-4">The instrument</p>
-                            <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-6 tracking-tight">
-                                What you actually see
-                            </h2>
-                            <p className="text-sm text-slate-500 leading-relaxed mb-8">
-                                A single surface that answers five questions: How much capital is at risk. Where it is trending. What to do about it. How accurate the system has been. How to export it for leadership.
-                            </p>
-                            <a
-                                href="https://app.payflux.dev/dashboard"
-                                className="text-[13px] font-medium text-slate-900 border-b border-slate-900 pb-0.5 hover:text-slate-600 hover:border-slate-600 transition-colors"
-                            >
-                                See the dashboard
-                            </a>
-                        </div>
+                    <div className="text-center mb-8">
+                        <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-4 font-mono">The instrument</p>
+                        <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6 tracking-tight">
+                            What you actually see
+                        </h2>
+                        <p className="text-sm text-slate-400 leading-relaxed max-w-xl mx-auto">
+                            A single surface that answers five questions: How much capital is at risk. Where it is trending. What to do about it. How accurate the system has been. How to export it for leadership.
+                        </p>
+                    </div>
 
+                    {/* Cinematic Dashboard Image */}
+                    <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden border border-slate-800 mb-16 group">
+                        <img
+                            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
+                            alt="Data Dashboard Interface"
+                            className="w-full h-full object-cover opacity-30 mix-blend-luminosity group-hover:scale-105 group-hover:opacity-50 transition-all duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800 backdrop-blur-sm">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                LIVE PROJECTION SURFACE
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-16 items-start">
                         <div className="space-y-3">
                             {[
                                 { label: 'Risk Tier & Trend', desc: 'Current position and direction' },
                                 { label: 'T+30 / T+60 / T+90 Exposure', desc: 'Capital at risk by projection window' },
                                 { label: 'Intervention Modeling', desc: 'Behavior changes and their reserve impact' },
-                                { label: 'Model Accuracy', desc: 'Tier, trend, and variance over time' },
-                                { label: 'Reserve History', desc: 'Signed, append-only projection ledger' },
-                                { label: 'Board Report', desc: 'Deterministic export for leadership review' },
                             ].map((item) => (
-                                <div key={item.label} className="flex items-start gap-4 py-3 border-b border-slate-200 last:border-0">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-2 shrink-0" />
+                                <div key={item.label} className="flex items-start gap-4 py-3 border-b border-slate-800 last:border-0">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2 shrink-0" />
                                     <div>
-                                        <div className="text-sm font-medium text-slate-900">{item.label}</div>
-                                        <div className="text-[13px] text-slate-400">{item.desc}</div>
+                                        <div className="text-sm font-medium text-white">{item.label}</div>
+                                        <div className="text-[13px] text-slate-500">{item.desc}</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        <div className="space-y-3">
+                            {[
+                                { label: 'Model Accuracy', desc: 'Tier, trend, and variance over time' },
+                                { label: 'Reserve History', desc: 'Signed, append-only projection ledger' },
+                                { label: 'Board Report', desc: 'Deterministic export for leadership review' },
+                            ].map((item) => (
+                                <div key={item.label} className="flex items-start gap-4 py-3 border-b border-slate-800 last:border-0">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2 shrink-0" />
+                                    <div>
+                                        <div className="text-sm font-medium text-white">{item.label}</div>
+                                        <div className="text-[13px] text-slate-500">{item.desc}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="text-center mt-12">
+                        <a
+                            href="https://app.payflux.dev/dashboard"
+                            className="text-[13px] font-medium text-slate-400 border-b border-slate-600 pb-0.5 hover:text-white hover:border-white transition-colors"
+                        >
+                            See the dashboard
+                        </a>
                     </div>
                 </div>
             </section>
@@ -481,74 +526,91 @@ const Home = () => {
             {/* 8. GET STARTED */}
             <section id="contact" className="py-24 bg-slate-950 border-t border-white/[0.06]">
                 <div className="max-w-[960px] mx-auto px-8">
-                    <h2 className="text-2xl md:text-3xl font-semibold text-white text-center mb-16 tracking-tight">
-                        Quantify reserve exposure before processors do.
-                    </h2>
-
-                    <div className="grid md:grid-cols-2 gap-8">
-                        {/* Self-serve */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8">
-                            <h3 className="text-base font-semibold text-white mb-2">Self-serve</h3>
-                            <p className="text-[13px] text-slate-400 mb-6">
-                                Access the dashboard directly. Free tier available.
-                            </p>
-                            <a
-                                href="https://app.payflux.dev/dashboard"
-                                className="inline-block px-7 py-3 bg-[#0A64BC] text-white text-[13px] font-medium rounded-md hover:bg-[#0856a3] transition-colors"
-                            >
-                                Access Dashboard
-                            </a>
+                    <div className="relative bg-slate-900/50 border border-slate-800 rounded-2xl p-8 lg:p-12 overflow-hidden">
+                        {/* Server Infrastructure Image Layer */}
+                        <div className="absolute inset-0 opacity-[0.07] pointer-events-none">
+                            <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2034&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
                         </div>
+                        {/* Fade Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950/90 pointer-events-none"></div>
 
-                        {/* Enterprise */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8">
-                            <h3 className="text-base font-semibold text-white mb-2">Enterprise</h3>
-                            <p className="text-[13px] text-slate-400 mb-6">
-                                Higher throughput, bulk exports, and processor attestation readiness.
-                            </p>
-                            <form
-                                name="enterprise-contact"
-                                method="POST"
-                                action="/"
-                                data-netlify="true"
-                                data-netlify-honeypot="bot-field"
-                                className="space-y-3"
-                            >
-                                <input type="hidden" name="form-name" value="enterprise-contact" />
-                                <p className="hidden">
-                                    <label>Don't fill this out: <input name="bot-field" /></label>
+                        {/* Content Layer */}
+                        <div className="relative z-10">
+                            <div className="max-w-3xl mb-12">
+                                <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4 tracking-tight">
+                                    Quantify reserve exposure before processors do.
+                                </h2>
+                                <p className="text-sm text-slate-400 leading-relaxed">
+                                    Start with diagnostic mode or deploy the full projection engine. No routing changes. No approval logic. No added latency.
                                 </p>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    required
-                                    placeholder="name@company.com"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-white text-[13px] placeholder-slate-600 outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
-                                />
-                                <input
-                                    type="text"
-                                    name="company"
-                                    placeholder="Company"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-white text-[13px] placeholder-slate-600 outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
-                                />
-                                <select
-                                    name="monthlyVolume"
-                                    defaultValue=""
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-slate-500 text-[13px] outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
-                                >
-                                    <option value="" disabled>Monthly volume</option>
-                                    <option value="<100k">&lt; $100k</option>
-                                    <option value="100k-1m">$100k–$1M</option>
-                                    <option value="1m-10m">$1M–$10M</option>
-                                    <option value="10m+">$10M+</option>
-                                </select>
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 border border-slate-700 text-slate-300 text-[13px] font-medium rounded-md hover:bg-white/5 hover:border-slate-600 transition-colors"
-                                >
-                                    Contact Sales
-                                </button>
-                            </form>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-8">
+                                {/* Self-serve */}
+                                <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-8 backdrop-blur-sm">
+                                    <h3 className="text-base font-semibold text-white mb-2">Self-serve</h3>
+                                    <p className="text-[13px] text-slate-400 mb-6">
+                                        Access the dashboard directly. Free tier available.
+                                    </p>
+                                    <a
+                                        href="https://app.payflux.dev/dashboard"
+                                        className="inline-block px-7 py-3 bg-[#0A64BC] text-white text-[13px] font-medium rounded-md hover:bg-[#0856a3] transition-colors"
+                                    >
+                                        Access Dashboard
+                                    </a>
+                                </div>
+
+                                {/* Enterprise */}
+                                <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-8 backdrop-blur-sm">
+                                    <h3 className="text-base font-semibold text-white mb-2">Enterprise</h3>
+                                    <p className="text-[13px] text-slate-400 mb-6">
+                                        Higher throughput, bulk exports, and processor attestation readiness.
+                                    </p>
+                                    <form
+                                        name="enterprise-contact"
+                                        method="POST"
+                                        action="/"
+                                        data-netlify="true"
+                                        data-netlify-honeypot="bot-field"
+                                        className="space-y-3"
+                                    >
+                                        <input type="hidden" name="form-name" value="enterprise-contact" />
+                                        <p className="hidden">
+                                            <label>Don't fill this out: <input name="bot-field" /></label>
+                                        </p>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            required
+                                            placeholder="name@company.com"
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-white text-[13px] placeholder-slate-600 outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
+                                        />
+                                        <input
+                                            type="text"
+                                            name="company"
+                                            placeholder="Company"
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-white text-[13px] placeholder-slate-600 outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
+                                        />
+                                        <select
+                                            name="monthlyVolume"
+                                            defaultValue=""
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-md px-4 py-3 text-slate-500 text-[13px] outline-none focus:border-[#0A64BC] focus:ring-1 focus:ring-[#0A64BC]/20 transition-all"
+                                        >
+                                            <option value="" disabled>Monthly volume</option>
+                                            <option value="<100k">&lt; $100k</option>
+                                            <option value="100k-1m">$100k–$1M</option>
+                                            <option value="1m-10m">$1M–$10M</option>
+                                            <option value="10m+">$10M+</option>
+                                        </select>
+                                        <button
+                                            type="submit"
+                                            className="w-full py-3 border border-slate-700 text-slate-300 text-[13px] font-medium rounded-md hover:bg-white/5 hover:border-slate-600 transition-colors"
+                                        >
+                                            Contact Sales
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
