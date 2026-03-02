@@ -1,5 +1,3 @@
-import type { Config } from "@netlify/functions";
-
 /**
  * Projection Cadence Cron
  *
@@ -46,6 +44,6 @@ export default async function handler() {
     }
 }
 
-export const config: Config = {
+export const config = {
     schedule: "0 */6 * * *",
 };
