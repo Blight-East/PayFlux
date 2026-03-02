@@ -22,9 +22,15 @@ export async function GET(request) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
+        const headers = { 'Content-Type': 'application/json' };
+        const authToken = process.env.CORE_AUTH_TOKEN;
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
         const res = await fetch(url, {
             signal: controller.signal,
-            headers: { 'Content-Type': 'application/json' }
+            headers,
         });
 
         clearTimeout(timeout);
