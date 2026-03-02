@@ -464,7 +464,10 @@ export async function GET(request: Request) {
     };
 
     // ── Ledger: conditionally append signed projection artifact ──
-    // Fire-and-forget. Ledger failure must not block response.
+    // Await-confirmed. Ledger write must complete before response returns.
+    // Serverless functions terminate on response — fire-and-forget loses writes.
+    let ledgerStatus: { written: boolean; error: string | null } = { written: false, error: null };
+
     if (hasProjectionAccess && projectionBasis) {
         const artifact: ProjectionArtifact = {
             projectionId: `proj_${snapshot.merchantId}_${Date.now()}`,
@@ -491,12 +494,16 @@ export async function GET(request: Request) {
             instabilitySignal,
             writeReason: 'daily_cadence', // will be overridden by shouldWrite
         };
-        ProjectionLedger.maybeAppend(artifact).catch(err =>
-            console.error('[LEDGER_APPEND_ERROR]', err)
-        );
+        try {
+            const record = await ProjectionLedger.maybeAppend(artifact);
+            ledgerStatus.written = record !== null;
+        } catch (err) {
+            ledgerStatus.error = (err as Error).message;
+            console.error('[LEDGER_APPEND_ERROR]', err);
+        }
     }
 
-    return NextResponse.json(result, {
+    return NextResponse.json({ ...result, _ledger: ledgerStatus }, {
         headers: {
             'Cache-Control': 'no-store',
             'X-Model-Version': 'reserve-v1.0.0',
