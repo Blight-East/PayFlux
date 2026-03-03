@@ -32,6 +32,10 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
         href: '/dashboard/governance',
     },
     {
+        label: 'Verify',
+        href: '/dashboard/verify',
+    },
+    {
         label: 'Connectors',
         href: '/connectors',
         minRole: 'admin',
@@ -77,7 +81,7 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                 <nav className="p-4 space-y-1">
                     {visibleItems.map((item) => {
                         const isActive = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard');
-                        const isSubordinate = item.href === '/dashboard/diagnostics' || item.href === '/dashboard/governance';
+                        const isSubordinate = item.href === '/dashboard/diagnostics' || item.href === '/dashboard/governance' || item.href === '/dashboard/verify';
                         return (
                             <Link
                                 key={item.href}

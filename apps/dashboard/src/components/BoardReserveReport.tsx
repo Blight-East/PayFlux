@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { FileText, Printer, X } from 'lucide-react';
+import { FileText, Printer, Download, X } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Board-Grade Reserve Report
@@ -290,6 +290,19 @@ export default function BoardReserveReport({ host, monthlyTPV }: { host: string 
         }
     }
 
+    function handleDownloadJSON() {
+        if (!data) return;
+        const canonical = JSON.stringify(data, Object.keys(data).sort(), 2);
+        const blob = new Blob([canonical], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `payflux-reserve-report-${ts}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
     function handlePrint() {
         if (!printRef.current) return;
 
@@ -396,7 +409,14 @@ export default function BoardReserveReport({ host, monthlyTPV }: { host: string 
                                     className="flex items-center space-x-1 text-xs text-gray-600 hover:text-black transition-colors"
                                 >
                                     <Printer className="w-3.5 h-3.5" />
-                                    <span>Print / PDF</span>
+                                    <span>Print</span>
+                                </button>
+                                <button
+                                    onClick={handleDownloadJSON}
+                                    className="flex items-center space-x-1 text-xs text-gray-600 hover:text-black transition-colors"
+                                >
+                                    <Download className="w-3.5 h-3.5" />
+                                    <span>JSON</span>
                                 </button>
                                 <button
                                     onClick={() => { setOpen(false); setData(null); }}
