@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import SignOutLink from "@/components/SignOutLink";
 
 const ERROR_MESSAGES: Record<string, string> = {
-    stripe_connect_failed: "Stripe connection failed. Please try again.",
-    invalid_state: "Security check failed. Please retry the connection.",
+    stripe_connect_failed: "Stripe connection failed. Retry.",
+    invalid_state: "Security validation failed. Retry.",
     clerk_not_configured: "Clerk is not configured. Contact admin.",
 };
 
@@ -80,10 +80,10 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
                     </h1>
 
                     <p className="text-slate-600 text-center mb-2 text-sm leading-relaxed">
-                        Connect your processor to model reserve exposure and measure projection accuracy.
+                        Required for reserve exposure modeling and projection accuracy measurement.
                     </p>
                     <p className="text-slate-400 text-center mb-8 text-xs leading-relaxed">
-                        PayFlux observes signals. It does not modify payment flow.
+                        Observe-only. No payment flow modification.
                     </p>
 
                     <div className="space-y-4">

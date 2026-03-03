@@ -91,9 +91,9 @@ export default function VarianceBand({ data, loading }: VarianceBandProps) {
                 </div>
             </div>
 
-            {/* Footer — Derivation context */}
+            {/* Footer */}
             <p className="text-[11px] text-slate-500 font-mono mt-4">
-                Derived from {totalEvaluations} evaluation pairs · {evalWindow} window
+                {totalEvaluations} Evaluation Pairs · {evalWindow === '8w' ? '8 Week Window' : `${evalWindow} Window`}
             </p>
         </div>
     );

@@ -26,7 +26,7 @@ export default function ApiKeysPage() {
         <div className="p-8 max-w-4xl">
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white tracking-tight">API Key Management</h2>
-                <p className="text-slate-500 text-sm mt-1">Authenticates your connector or custom integration with the PayFlux control plane.</p>
+                <p className="text-slate-500 text-sm mt-1">Control plane authentication for connectors and integrations.</p>
             </div>
 
             <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
@@ -53,18 +53,18 @@ export default function ApiKeysPage() {
                                 {showKey ? 'Hide' : 'Reveal'}
                             </button>
                         </div>
-                        <p className="text-[10px] text-slate-600 italic">
-                            Warning: This key will only be shown once. Please store it securely.
+                        <p className="text-[10px] text-slate-600 font-mono">
+                            Displayed once. Store securely.
                         </p>
                     </div>
                 ) : (
                     <div className="text-center py-12 bg-slate-950/50 border border-slate-900 border-dashed rounded">
-                        <p className="text-slate-500 text-sm mb-4">No active API key found.</p>
+                        <p className="text-slate-500 text-sm mb-4">No active key.</p>
                         <button
                             onClick={generateKey}
                             className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 transition-colors"
                         >
-                            Generate First Key
+                            Generate Key
                         </button>
                     </div>
                 )}

@@ -47,7 +47,7 @@ const copyViaTextareaFallback = (text: string): boolean => {
     }
 };
 
-// Helper: Smart clipboard copy with fallback
+// Clipboard copy with fallback
 const copyTextSmart = async (text: string): Promise<boolean> => {
     try {
         if (navigator.clipboard?.writeText) {
@@ -292,13 +292,13 @@ See full documentation at https://payflux.dev/docs
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold text-white tracking-tight">Setup State Missing</h2>
                     <p className="text-slate-500 text-sm mt-2">
-                        Your setup configuration could not be loaded. This may happen if your session expired or browser storage was cleared.
+                        Setup state not found. Session expired or browser storage cleared.
                     </p>
                     <button
                         onClick={() => router.push('/setup/connect')}
                         className="mt-6 px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-slate-200 transition-colors"
                     >
-                        Back to Connect
+                        Restart
                     </button>
                 </div>
             </div>
@@ -315,7 +315,7 @@ See full documentation at https://payflux.dev/docs
                         <span>Generate Setup</span>
                     </div>
                     <h2 className="text-2xl font-bold text-white tracking-tight">Generate Your Setup</h2>
-                    <p className="text-slate-500 text-sm mt-1">Loading configuration...</p>
+                    <p className="text-slate-500 text-sm mt-1">Loading...</p>
                 </div>
             </div>
         );
@@ -334,7 +334,7 @@ See full documentation at https://payflux.dev/docs
                     <span>Generate Setup</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Generate Your Setup</h2>
-                <p className="text-slate-500 text-sm mt-1">Download your configuration files and run one command.</p>
+                <p className="text-slate-500 text-sm mt-1">Configuration output.</p>
             </div>
 
             {/* Config Summary */}
@@ -368,10 +368,10 @@ See full documentation at https://payflux.dev/docs
                         onClick={handleGenerate}
                         className="px-8 py-4 bg-white text-black font-bold rounded-lg text-lg hover:bg-slate-200 transition-colors"
                     >
-                        Generate Setup Files
+                        Generate
                     </button>
                     <p className="mt-4 text-xs text-slate-600">
-                        This will prepare your .env, docker-compose.yml, and README.md files
+                        Generates .env, docker-compose.yml, README.md
                     </p>
                 </div>
             ) : (
@@ -409,10 +409,9 @@ See full documentation at https://payflux.dev/docs
 
                     {/* Before You Start */}
                     <div className="bg-slate-900/30 border border-slate-800 rounded-lg p-6">
-                        <h4 className="text-sm font-medium text-slate-300 mb-3">Before you start</h4>
+                        <h4 className="text-sm font-medium text-slate-300 mb-3">Prerequisites</h4>
                         <p className="text-sm text-slate-500 mb-4">
-                            PayFlux runs as a secure container on your infrastructure.<br />
-                            You'll need Docker Desktop installed.
+                            Container deployment. Requires Docker Desktop.
                         </p>
                         <ul className="text-sm text-slate-500 space-y-1.5">
                             <li>
@@ -439,7 +438,7 @@ See full documentation at https://payflux.dev/docs
                             </li>
                         </ul>
                         <p className="text-sm text-slate-600 mt-4">
-                            Once Docker is installed, onboarding is a single command.
+                            Single command after installation.
                         </p>
                     </div>
 
@@ -461,27 +460,27 @@ See full documentation at https://payflux.dev/docs
                             </button>
                         </div>
                         <p className="mt-3 text-xs text-slate-500">
-                            Run this command in the directory where you saved the files above.
+                            Execute in the directory containing the downloaded files.
                         </p>
                     </div>
 
                     {/* What to Expect Next */}
                     <div className="bg-slate-900/30 border border-slate-800 rounded-lg p-6">
-                        <h4 className="text-sm font-medium text-slate-300 mb-4">What to expect next</h4>
+                        <h4 className="text-sm font-medium text-slate-300 mb-4">Post-Installation</h4>
                         <ul className="space-y-2.5 text-sm text-slate-500">
                             <li>
                                 • Health check available at{' '}
                                 <code className="text-xs bg-slate-950 px-1.5 py-0.5 rounded text-slate-400">http://localhost:8080/health</code>
                             </li>
-                            <li>• Warnings appear in the PayFlux dashboard (Pro tier only)</li>
-                            <li>• No traffic is blocked — PayFlux observes and reports only</li>
+                            <li>• Warnings visible in dashboard (Pro tier)</li>
+                            <li>• Observe-only. No traffic modification.</li>
                             <li>
-                                • You can shut it down anytime with{' '}
+                                • Shutdown:{' '}
                                 <code className="text-xs bg-slate-950 px-1.5 py-0.5 rounded text-slate-400">docker compose down</code>
                             </li>
                         </ul>
-                        <p className="mt-4 text-[10px] text-slate-600 italic">
-                            PayFlux surfaces operational context; it does not block payments.
+                        <p className="mt-4 text-[10px] text-slate-600 font-mono">
+                            Observe-only. No payment flow modification.
                         </p>
                     </div>
 
@@ -495,7 +494,7 @@ See full documentation at https://payflux.dev/docs
                             {downloadingZip ? 'Generating...' : 'Download ZIP'}
                         </button>
                         <p className="mt-2 text-xs text-slate-500 text-center">
-                            Use this if you want one file to download, unzip, and run.
+                            Single archive. Unzip and run.
                         </p>
 
                         <button
@@ -503,10 +502,10 @@ See full documentation at https://payflux.dev/docs
                             disabled={!config}
                             className="mt-3 w-full px-6 py-2.5 bg-slate-900 text-white font-bold rounded text-sm hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {copiedInstall ? 'Copied!' : 'Copy install commands'}
+                            {copiedInstall ? 'Copied' : 'Copy Commands'}
                         </button>
-                        <p className="mt-2 text-xs text-slate-500 text-center">
-                            Copies the commands to unzip, cd, and start PayFlux with Docker.
+                        <p className="mt-2 text-xs text-slate-500 text-center font-mono">
+                            unzip → cd → docker compose up
                         </p>
                     </div>
 
@@ -516,13 +515,13 @@ See full documentation at https://payflux.dev/docs
                             onClick={handleDownloadAll}
                             className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded text-sm hover:bg-slate-800 transition-colors"
                         >
-                            Download All Files
+                            Download All
                         </button>
                         <button
                             onClick={handleFinish}
                             className="px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-slate-200 transition-colors"
                         >
-                            Finish Setup →
+                            Complete
                         </button>
                     </div>
                 </div>
@@ -531,11 +530,11 @@ See full documentation at https://payflux.dev/docs
 
             {/* Security Notice */}
             <div className="mt-8 bg-slate-900/50 border border-slate-800 rounded p-4">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Security Reminder</h4>
-                <ul className="text-[10px] text-slate-500 space-y-1">
-                    <li>• Your secrets are processed in-browser only and never sent to our servers</li>
-                    <li>• The .env file contains sensitive data — do not commit it to version control</li>
-                    <li>• Change PAYFLUX_API_KEY to a strong, unique value before deploying</li>
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Security</h4>
+                <ul className="text-[10px] text-slate-500 space-y-1 font-mono">
+                    <li>• Browser-only. Not transmitted.</li>
+                    <li>• .env contains secrets. Do not commit.</li>
+                    <li>• Replace PAYFLUX_API_KEY before deployment.</li>
                 </ul>
             </div>
         </div >

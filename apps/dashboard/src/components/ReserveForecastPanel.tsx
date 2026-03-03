@@ -249,8 +249,8 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
     return (
         <div className="border border-slate-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-                <h4 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">Recommended Intervention</h4>
-                <span className="text-[10px] text-slate-700 uppercase tracking-wider">Advisory Only</span>
+                <h4 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">Intervention Advisory</h4>
+                <span className="text-[10px] text-slate-700 uppercase tracking-wider">Non-Binding</span>
             </div>
 
             <div className="space-y-2.5">
@@ -280,8 +280,8 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                                 {intervention.rationale}
                             </p>
                             {isBeingSimulated && (
-                                <p className="text-[10px] text-emerald-500/60 pl-4 italic">
-                                    Simulating this intervention&apos;s impact on reserve accumulation.
+                                <p className="text-[10px] text-emerald-500/60 pl-4 font-mono">
+                                    Simulation active.
                                 </p>
                             )}
                         </div>
@@ -289,8 +289,8 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                 })}
             </div>
 
-            <p className="text-[10px] text-slate-700 leading-relaxed pt-1">
-                Recommendations derived from current risk signal state. PayFlux does not modify processor configuration.
+            <p className="text-[10px] text-slate-700 font-mono pt-1">
+                Signal-derived. No processor modification.
             </p>
         </div>
     );
@@ -304,39 +304,37 @@ function ForbiddenState() {
                     <Lock className="w-5 h-5 text-slate-600" />
                 </div>
                 <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-slate-200">Financial Modeling Locked</h3>
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                        Projection is unavailable in Diagnostic mode. Upgrade to Pro to model reserve holds
-                        across T+90, T+120, and T+180 windows before processors escalate.
+                    <h3 className="text-sm font-semibold text-slate-200">Projection Access: Restricted</h3>
+                    <p className="text-xs text-slate-500 font-mono leading-relaxed">
+                        Scope: Pro. Reserve window modeling (T+90, T+120, T+180) unavailable at current tier.
                     </p>
                 </div>
             </div>
 
-            {/* Value bullets */}
+            {/* Scope */}
             <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-slate-900/50 rounded-lg">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">90 / 120 / 180d</span>
-                    <span className="text-xs text-slate-400">Reserve windows</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Windows</span>
+                    <span className="text-xs text-slate-400 font-mono">90 / 120 / 180d</span>
                 </div>
                 <div className="p-3 bg-slate-900/50 rounded-lg">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Base + Escalation</span>
-                    <span className="text-xs text-slate-400">Scenario modeling</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Scenarios</span>
+                    <span className="text-xs text-slate-400 font-mono">Base + Escalation</span>
                 </div>
                 <div className="p-3 bg-slate-900/50 rounded-lg">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">USD Exposure</span>
-                    <span className="text-xs text-slate-400">Dollar projections</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Exposure</span>
+                    <span className="text-xs text-slate-400 font-mono">USD Projection</span>
                 </div>
             </div>
 
-            {/* CTA */}
+            {/* Action */}
             <div className="text-center">
                 <button
                     onClick={() => track('forecast_unlock_clicked')}
-                    className="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors"
+                    className="inline-flex items-center px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg transition-colors border border-slate-700"
                 >
-                    Unlock Operational Mode
+                    Authorize
                 </button>
-                <p className="text-[10px] text-slate-700 mt-2">Required for reserve modeling</p>
             </div>
         </div>
     );
@@ -368,14 +366,14 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
             <div className="relative w-full max-w-2xl mx-4 bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:mx-0 print:max-w-none">
                 {/* Modal Controls — hidden in print */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 print:hidden">
-                    <span className="text-sm font-medium text-gray-600">Reserve Forecast Export</span>
+                    <span className="text-sm font-medium text-gray-600">Reserve Exposure Report</span>
                     <div className="flex items-center space-x-2">
                         <button
                             onClick={handlePrint}
                             className="flex items-center space-x-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-xs font-medium rounded-lg transition-colors"
                         >
                             <FileDown className="w-3.5 h-3.5" />
-                            <span>Print / Save PDF</span>
+                            <span>Export</span>
                         </button>
                         <button
                             onClick={onClose}
@@ -422,7 +420,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
                         <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">90-Day Reserve Window</span>
-                                <span className="text-[10px] text-gray-400">Most probable hold period</span>
+                                <span className="text-[10px] text-gray-400">Primary Hold Period</span>
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
@@ -580,10 +578,9 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
                             <span>Generated {projectedAt}</span>
                             <span>PayFlux deterministic reserve model ({data.modelVersion})</span>
                         </div>
-                        <p className="text-[10px] text-gray-400 leading-relaxed">
-                            This forecast is a deterministic projection based on current risk signals and does not constitute
-                            financial advice. Reserve rates are modeled estimates — actual processor behavior may differ.
-                            Volume figures, if shown, were supplied by the user and are not stored or validated by PayFlux.
+                        <p className="text-[10px] text-gray-400 leading-relaxed font-mono">
+                            Deterministic projection. Not financial advice. Modeled estimates — actual processor behavior may differ.
+                            Volume figures client-supplied, not stored.
                         </p>
                         <p className="text-[10px] text-gray-300 pt-1">
                             payflux.dev
@@ -664,7 +661,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
             <div className="border border-slate-800 rounded-xl p-8">
                 <div className="flex items-center justify-center space-x-3">
                     <div className="w-4 h-4 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
-                    <span className="text-sm text-slate-500">Computing reserve projections...</span>
+                    <span className="text-sm text-slate-500">Loading projection...</span>
                 </div>
             </div>
         );
@@ -676,8 +673,8 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
             <div className="border border-red-500/20 rounded-xl p-4 flex items-start space-x-3">
                 <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
-                    <span className="text-sm text-red-400">Forecast unavailable</span>
-                    <p className="text-xs text-red-400/60 mt-0.5">{state.message}</p>
+                    <span className="text-sm text-red-400">Forecast Unavailable</span>
+                    <p className="text-xs text-red-400/60 mt-0.5 font-mono">{state.message}</p>
                 </div>
             </div>
         );
@@ -702,7 +699,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                     <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                         Capital At Risk
                     </h3>
-                    <p className="text-xs text-slate-600 mt-0.5">If current retry velocity remains unchanged.</p>
+                    <p className="text-xs text-slate-600 mt-0.5">Current reserve trajectory.</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     <span className="text-[10px] text-slate-700">{data.modelVersion}</span>
@@ -761,8 +758,8 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                                     {simulateOptimization ? data.simulationDelta.label.replace('Simulate', 'Simulating') : data.simulationDelta.label}
                                 </button>
                                 {simulateOptimization && (
-                                    <p className="text-[10px] text-slate-500 max-w-sm text-right leading-relaxed">
-                                        Escalation penalty compounds non-linearly. A {Math.round(data.simulationDelta.velocityReduction * 100)}% velocity reduction reduces worst-case reserve accumulation by ~{Math.round((1 - data.simulationDelta.exposureMultiplier) * 100)}%.
+                                    <p className="text-[10px] text-slate-500 max-w-sm text-right font-mono">
+                                        Velocity reduction: {Math.round(data.simulationDelta.velocityReduction * 100)}% · Exposure reduction: ~{Math.round((1 - data.simulationDelta.exposureMultiplier) * 100)}%
                                     </p>
                                 )}
                             </div>
@@ -787,8 +784,8 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                             <div className="flex items-center justify-between">
                                 <label className="text-xs text-slate-500">
                                     {data.volumeMode === 'bps_plus_usd'
-                                        ? 'Monthly volume applied'
-                                        : 'Enter monthly volume to see dollar exposure'
+                                        ? 'Monthly Volume Applied'
+                                        : 'Monthly TPV (USD)'
                                     }
                                 </label>
                                 {data.volumeMode === 'bps_plus_usd' && (
@@ -814,7 +811,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                                     Apply
                                 </button>
                             </div>
-                            <p className="text-[10px] text-slate-700">Not stored. Not logged. Used for projection only.</p>
+                            <p className="text-[10px] text-slate-700 font-mono">Not stored. Not logged. Projection only.</p>
                         </div>
                     </>
                 ) : (
@@ -837,8 +834,8 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                     <p>Deterministic projection • {data.modelVersion}</p>
                     <p>Inputs: normalized risk tier, tier delta, monthly TPV</p>
                     <p>Base reserve capped at 25%</p>
-                    <p>Escalation multiplier applied for behavioral instability</p>
-                    <p>No stochastic modeling. No smoothing.</p>
+                    <p>Escalation multiplier: behavioral instability</p>
+                    <p>No stochastic modeling · No smoothing</p>
                 </div>
             </div>
 

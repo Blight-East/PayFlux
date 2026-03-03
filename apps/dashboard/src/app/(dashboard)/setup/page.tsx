@@ -7,10 +7,10 @@ export default function SetupPage() {
                 {/* Header */}
                 <div className="text-center">
                     <h1 className="text-4xl font-bold text-slate-900 mb-2">
-                        Let's check your risk.
+                        Risk Assessment
                     </h1>
                     <p className="text-slate-600">
-                        Get started in under 3 minutes
+                        Initialize in under 3 minutes.
                     </p>
                 </div>
 

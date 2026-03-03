@@ -136,7 +136,7 @@ function ModelAccuracy({ accuracy }: { accuracy: Accuracy }) {
                     <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Model Accuracy</span>
                 </div>
                 <p className="text-[11px] text-slate-600 mt-2 font-mono">
-                    Insufficient data. Requires ≥2 projections with ≥{accuracy.evaluationWindowHours}h evaluation window.
+                    Insufficient data. Threshold: ≥2 projections · ≥{accuracy.evaluationWindowHours}h evaluation window.
                 </p>
             </div>
         );
@@ -271,7 +271,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                                 <XCircle className="w-3 h-3 text-red-400/60" />
                             )}
                             <span className={`text-[10px] font-mono ${isVerified ? 'text-emerald-500/60' : 'text-red-400/60'}`}>
-                                {isVerified ? 'Verified' : 'Integrity failure'}
+                                {isVerified ? 'Verified' : 'Integrity Failure'}
                             </span>
                         </div>
                         <button
@@ -279,7 +279,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                             className="flex items-center space-x-1 text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
                         >
                             <FileText className="w-3 h-3" />
-                            <span>Integrity details</span>
+                            <span>Details</span>
                             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         </button>
                     </div>
@@ -418,10 +418,9 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
     if (data.totalRecords === 0) {
         return (
             <div className="border border-slate-800 rounded-lg px-5 py-4 space-y-2">
-                <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve History</span>
+                <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve Ledger</span>
                 <p className="text-[11px] text-slate-600 font-mono leading-relaxed">
-                    No projection records yet. The ledger begins recording on first projection load.
-                    Daily cadence and state transitions will appear here.
+                    No records. Ledger populates on first projection.
                 </p>
             </div>
         );
@@ -441,7 +440,7 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
             {/* Reserve History Ledger */}
             <div className="space-y-1">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve History</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve Ledger</span>
                     <span className="text-[10px] text-slate-700 font-mono">{data.totalRecords} record{data.totalRecords !== 1 ? 's' : ''}</span>
                 </div>
 
@@ -458,9 +457,7 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
                 {/* Ledger footer */}
                 <div className="pt-2 pl-8">
                     <p className="text-[10px] text-slate-700 font-mono leading-relaxed">
-                        Records are append-only and cryptographically signed at creation time.
-                        Accuracy is derived at read-time by comparing projections against subsequent observed state.
-                        Historical entries are never modified.
+                        Append-only. Cryptographically signed. Accuracy derived at read-time. Immutable.
                     </p>
                 </div>
             </div>

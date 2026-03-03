@@ -18,13 +18,11 @@ interface ModelAuthorityProps {
 
 function formatTimestamp(iso: string): string {
     const d = new Date(iso);
-    return d.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    });
+    const month = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+    const day = d.getUTCDate();
+    const h = String(d.getUTCHours()).padStart(2, '0');
+    const m = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${month} ${day}, ${h}:${m} UTC`;
 }
 
 export default function ModelAuthority({ data, loading }: ModelAuthorityProps) {
@@ -97,11 +95,11 @@ export default function ModelAuthority({ data, loading }: ModelAuthorityProps) {
                             {hasAccuracy ? `${trendAccuracy}%` : '—'}
                         </span>
                     </div>
-                    {/* Micro-context */}
+                    {/* Evaluation basis */}
                     <p className="text-[11px] text-slate-500 font-mono">
                         {hasAccuracy
-                            ? `Based on ${totalEvaluations} evaluated projections`
-                            : `Requires ≥${thresholds.minEvaluations} evaluations across ≥${thresholds.minMerchants} merchants`
+                            ? `${totalEvaluations} Evaluated Projections · ${evaluatedMerchants} Merchants`
+                            : `Threshold: ≥${thresholds.minEvaluations} evaluations · ≥${thresholds.minMerchants} merchants`
                         }
                     </p>
                 </div>
@@ -138,28 +136,34 @@ export default function ModelAuthority({ data, loading }: ModelAuthorityProps) {
                         <span className={`text-[10px] font-mono ${
                             meetsSignificanceThreshold ? 'text-emerald-500/60' : 'text-amber-500/60'
                         }`}>
-                            {meetsSignificanceThreshold ? 'Statistically Significant' : 'Below Threshold'}
+                            {meetsSignificanceThreshold ? 'Statistically Significant (p < 0.05)' : 'Below Threshold'}
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* Footer — Model Version + Stability + Window */}
-            <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center space-x-6">
-                <span className="text-[10px] text-slate-500 font-mono">
-                    Model: {modelVersion}
-                </span>
-                <span className={`text-[10px] font-mono ${
-                    versionStability ? 'text-emerald-500/60' : 'text-amber-500/60'
-                }`}>
-                    {versionStability ? '✓ Stable' : `${data.activeVersions.length} active versions`}
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">
-                    {evalWindow} window
-                </span>
-                <span className="text-[10px] text-slate-600 font-mono ml-auto">
-                    {formatTimestamp(generatedAt)}
-                </span>
+            {/* Footer — Stacked metadata */}
+            <div className="mt-6 pt-4 border-t border-slate-800/60 grid grid-cols-4 gap-4">
+                <div>
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider block">Model</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{modelVersion}</span>
+                </div>
+                <div>
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider block">Window</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{evalWindow === '8w' ? '8 Weeks' : evalWindow}</span>
+                </div>
+                <div>
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider block">Status</span>
+                    <span className={`text-[10px] font-mono ${
+                        versionStability ? 'text-emerald-500/60' : 'text-amber-500/60'
+                    }`}>
+                        {versionStability ? 'Stable' : `${data.activeVersions.length} Versions Active`}
+                    </span>
+                </div>
+                <div>
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider block">Generated</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{formatTimestamp(generatedAt)}</span>
+                </div>
             </div>
         </div>
     );

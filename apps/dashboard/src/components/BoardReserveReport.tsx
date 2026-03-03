@@ -379,7 +379,7 @@ export default function BoardReserveReport({ host, monthlyTPV }: { host: string 
                 className="flex items-center space-x-1.5 text-[10px] text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-30"
             >
                 <FileText className="w-3.5 h-3.5" />
-                <span>{loading ? 'Generating…' : 'Generate Board Report'}</span>
+                <span>{loading ? 'Generating…' : 'Reserve Report'}</span>
             </button>
 
             {error && <span className="text-[10px] text-red-400 ml-2">{error}</span>}
@@ -389,7 +389,7 @@ export default function BoardReserveReport({ host, monthlyTPV }: { host: string 
                     <div className="relative bg-white rounded-lg shadow-2xl max-w-[850px] w-full print:shadow-none print:rounded-none">
                         {/* Controls (hidden in print) */}
                         <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 print:hidden">
-                            <span className="text-xs font-mono text-gray-600 uppercase tracking-wider">Board Reserve Report</span>
+                            <span className="text-xs font-mono text-gray-600 uppercase tracking-wider">Reserve Report</span>
                             <div className="flex items-center space-x-3">
                                 <button
                                     onClick={handlePrint}

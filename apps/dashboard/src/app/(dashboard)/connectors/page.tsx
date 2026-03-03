@@ -51,10 +51,10 @@ export default function ConnectorsPage() {
             });
             if (res.ok) {
                 setStatus('connected');
-                alert('Config saved successfully');
+                alert('Configuration saved.');
             }
         } catch (err) {
-            alert('Failed to save config');
+            alert('Save failed.');
         } finally {
             setSaving(false);
         }
@@ -66,12 +66,12 @@ export default function ConnectorsPage() {
                 method: 'POST',
             });
             if (res.ok) {
-                alert('Test event sent. Check dashboard for updates.');
+                alert('Test event dispatched.');
             } else {
-                alert('Failed to send test event');
+                alert('Test event failed.');
             }
         } catch (err) {
-            alert('Error sending test event');
+            alert('Test event failed.');
         }
     };
 
@@ -79,7 +79,7 @@ export default function ConnectorsPage() {
         <div className="p-8 max-w-4xl">
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white tracking-tight">Processors & Connectors</h2>
-                <p className="text-slate-500 text-sm mt-1">Configure how PayFlux receives events from your payment processors.</p>
+                <p className="text-slate-500 text-sm mt-1">Processor event configuration.</p>
             </div>
 
             <div className="grid gap-6">
@@ -118,7 +118,7 @@ export default function ConnectorsPage() {
                                 onChange={(e) => setSigningSecret(e.target.value)}
                             />
                             <p className="mt-1.5 text-[10px] text-slate-600">
-                                You can find this in your Stripe Dashboard under Developers {'>'} Webhooks after adding the endpoint below.
+                                Stripe Dashboard → Developers → Webhooks. Add the endpoint below.
                             </p>
                         </div>
 
@@ -137,14 +137,14 @@ export default function ConnectorsPage() {
 
                         <div className="pt-4 flex justify-between items-center">
                             <div className="text-[10px] text-slate-500">
-                                {lastEvent ? `Last event received: ${new Date(lastEvent).toLocaleString()}` : 'No events received yet'}
+                                {lastEvent ? `Last event: ${new Date(lastEvent).toLocaleString()}` : 'No events received'}
                             </div>
                             <button
                                 type="submit"
                                 disabled={saving}
                                 className="bg-white text-black font-bold py-2 px-6 rounded text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
                             >
-                                {saving ? 'Saving...' : 'Save Configuration'}
+                                {saving ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </form>
@@ -165,7 +165,7 @@ export default function ConnectorsPage() {
                         </button>
                     </div>
                     <p className="mt-3 text-[10px] text-slate-600 leading-relaxed">
-                        Paste this URL into the Stripe Dashboard to start receiving events. Ensure you select the
+                        Add to Stripe Dashboard. Required events:
                         <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.payment_failed</code> and
                         <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.succeeded</code> events.
                     </p>

@@ -55,7 +55,7 @@ export default function ConnectProcessorPage() {
                     <span>Connect Processor</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Connect Your Processor</h2>
-                <p className="text-slate-500 text-sm mt-1">Choose your processor and enter credentials. These are used locally only.</p>
+                <p className="text-slate-500 text-sm mt-1">Processor credentials. Browser-only — not transmitted.</p>
             </div>
 
             {/* Processor Selection Dropdown */}
@@ -78,10 +78,10 @@ export default function ConnectProcessorPage() {
                 <div className="bg-slate-900/30 border border-slate-800 rounded-lg p-5 mb-6">
                     <h4 className="text-sm font-medium text-slate-300 mb-2">Generic Webhook (Beta)</h4>
                     <p className="text-sm text-slate-500 mb-3">
-                        For processors such as Paddle, Braintree, Square, Adyen, Checkout.com, and others. We'll map your webhook payloads into PayFlux's normalized event schema so you can surface warnings and operational signals.
+                        Paddle, Braintree, Square, Adyen, Checkout.com, and others. Maps webhook payloads to PayFlux normalized event schema. Surfaces warnings and operational signals.
                     </p>
-                    <p className="text-[10px] text-slate-600 italic">
-                        PayFlux surfaces operational context; it does not block payments.
+                    <p className="text-[10px] text-slate-600 font-mono">
+                        Observe-only. No payment flow modification.
                     </p>
                 </div>
             )}
@@ -93,7 +93,7 @@ export default function ConnectProcessorPage() {
                             <div className="w-12 h-12 bg-white rounded flex items-center justify-center font-bold text-black italic text-xl">S</div>
                             <div>
                                 <h3 className="text-lg font-bold text-white">Stripe</h3>
-                                <p className="text-xs text-slate-500">Secure automated connection via Stripe Connect</p>
+                                <p className="text-xs text-slate-500">OAuth 2.0 via Stripe Connect</p>
                             </div>
                         </div>
 
@@ -109,8 +109,7 @@ export default function ConnectProcessorPage() {
                                 <span>Connect with Stripe</span>
                             </button>
                             <p className="mt-4 text-[10px] text-slate-500 text-center leading-relaxed">
-                                You will be redirected to Stripe to authorize PayFlux. <br />
-                                No credentials are ever shared or stored on our servers.
+                                Redirects to Stripe for authorization. No credentials stored.
                             </p>
                         </div>
                     </div>
@@ -164,9 +163,9 @@ export default function ConnectProcessorPage() {
                 <div className="bg-slate-900/50 border border-slate-800 rounded p-4 mt-4">
                     <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Security Notice</h4>
                     <ul className="text-[10px] text-slate-500 space-y-1">
-                        <li>• Connections are established using industry-standard OAuth 2.0</li>
-                        <li>• Tokens are stored securely and never exposed in the UI</li>
-                        <li>• PayFlux only requests read_write permissions for event management</li>
+                        <li>• OAuth 2.0 connection</li>
+                        <li>• Tokens stored securely. Not exposed in UI.</li>
+                        <li>• Scope: read_write (event management)</li>
                     </ul>
                 </div>
             </div>
@@ -176,7 +175,7 @@ export default function ConnectProcessorPage() {
                     onClick={handleContinue}
                     className="px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-slate-200 transition-colors"
                 >
-                    Continue →
+                    Continue
                 </button>
             </div>
         </div>

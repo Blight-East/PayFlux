@@ -11,7 +11,7 @@ export function BlastRadius() {
             {/* Header */}
             <div>
                 <h3 className="text-muted text-[10px] font-medium uppercase tracking-wider">Blast Radius & Impact Analysis</h3>
-                <p className="text-subtle text-[10px] mt-1 font-mono">Real-time exposure assessment.</p>
+                <p className="text-subtle text-[10px] mt-1 font-mono">Exposure assessment.</p>
             </div>
 
             {/* Top Regions - Heat Bars (Flat) */}

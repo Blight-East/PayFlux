@@ -11,7 +11,7 @@ export default function ScanPage() {
 
     async function handleScan() {
         if (!url) {
-            setError('Please enter a URL');
+            setError('URL required.');
             return;
         }
 
@@ -65,7 +65,7 @@ export default function ScanPage() {
             // Redirect to completion page
             router.push('/setup/complete');
         } catch (err) {
-            setError('Failed to scan. Please try again.');
+            setError('Scan failed. Retry.');
             setScanning(false);
         }
     }
@@ -76,10 +76,10 @@ export default function ScanPage() {
                 {/* Header */}
                 <div className="text-center">
                     <h1 className="text-3xl font-bold text-slate-900 mb-2">
-                        Scan your website
+                        Risk Scan
                     </h1>
                     <p className="text-slate-600">
-                        Enter your website URL to analyze risk signals
+                        Risk signal analysis by URL.
                     </p>
                 </div>
 
@@ -126,7 +126,7 @@ export default function ScanPage() {
                                     Scanning...
                                 </span>
                             ) : (
-                                'Scan Now'
+                                'Scan'
                             )}
                         </button>
                     </div>
@@ -136,7 +136,7 @@ export default function ScanPage() {
                 {scanning && (
                     <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                         <p className="text-sm text-indigo-800 text-center">
-                            Analyzing your website for risk signals...
+                            Scanning for risk signals...
                         </p>
                     </div>
                 )}

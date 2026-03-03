@@ -50,7 +50,7 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
             <div className="flex justify-between items-center mb-10">
                 <div>
                     <h2 className="text-lg font-semibold text-slate-300 tracking-tight">Dashboard</h2>
-                    <p className="text-[11px] text-slate-600 mt-0.5">Capital projection surface</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">Capital Projection Surface</p>
                 </div>
                 <UserButton
                     appearance={{
@@ -91,13 +91,13 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
                         </span>
                     </div>
                     <p className="text-[11px] text-slate-600 mt-2 font-mono leading-relaxed">
-                        Intervention modeling requires a Pro subscription. Projection windows and capital-at-risk metrics are available on all tiers.
+                        Scope: Pro. Projection windows and capital-at-risk available on all tiers.
                     </p>
                     <a
                         href="/settings"
                         className="inline-block mt-3 text-[11px] text-[#0A64BC] hover:text-[#0856a3] font-medium transition-colors"
                     >
-                        Upgrade to model reserve accumulation.
+                        Upgrade
                     </a>
                 </div>
             )}
@@ -105,7 +105,7 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
             {/* D. RESERVE HISTORY + BOARD REPORT */}
             <div className="mb-12">
                 <div className="border-t border-slate-800/60 pt-6 mb-4 flex items-center justify-between">
-                    <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">Reserve History</h3>
+                    <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">Reserve Ledger</h3>
                     <BoardReserveReport host={host} />
                 </div>
                 <ProjectionTimeline host={host} />
@@ -117,7 +117,7 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
                     href="/dashboard/diagnostics"
                     className="text-[10px] text-slate-800 hover:text-slate-600 transition-colors"
                 >
-                    Diagnostics
+                    System Diagnostics
                 </a>
             </div>
         </div>
