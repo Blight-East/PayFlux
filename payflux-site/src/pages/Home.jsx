@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-    ArrowRight,
     Activity,
     Eye,
     Cpu,
@@ -8,7 +7,6 @@ import {
     Terminal,
     Check,
     X,
-    FileText,
     Lock,
     ChevronDown,
     Menu,
@@ -84,7 +82,7 @@ const Home = () => {
                                 <span className="text-slate-500">They build.</span>
                             </h1>
                             <p className="text-lg text-slate-400 leading-relaxed max-w-xl">
-                                Model reserve exposure before processors escalate. Measure projection accuracy over time. Export signed reports for leadership. Understand capital impact before it compounds.
+                                Deterministic projection of reserve exposure at T+30, T+60, and T+90. Rolling accuracy measurement against actual outcomes. Signed exports for board reporting.
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-4">
@@ -93,22 +91,19 @@ const Home = () => {
                                 className="text-sm font-medium text-slate-950 bg-white hover:bg-slate-200 px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
                             >
                                 Access Dashboard
-                                <ArrowRight className="w-4 h-4" />
                             </a>
                             <a
                                 href="https://app.payflux.dev/dashboard"
-                                className="text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+                                className="text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 px-6 py-3 rounded-lg transition-colors"
                             >
-                                <FileText className="w-4 h-4 text-slate-400" />
-                                View Board Report Sample
+                                Board Report Sample
                             </a>
                         </div>
                     </div>
 
                     {/* Hero Visual - Code Based Terminal */}
                     <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent blur-3xl rounded-full"></div>
-                        <div className="relative bg-[#0F0F0F] border border-slate-800 rounded-2xl p-10 shadow-2xl font-mono">
+                        <div className="relative bg-[#0F0F0F] border border-slate-800 rounded-2xl p-10 font-mono">
                             <div className="flex items-center justify-between mb-10">
                                 <div className="text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
                                     <Terminal className="w-4 h-4" />
@@ -122,8 +117,8 @@ const Home = () => {
                             <div className="space-y-1 mb-8">
                                 <div className="text-sm text-slate-400 uppercase tracking-wider">CAPITAL AT RISK</div>
                                 <div className="text-5xl text-white tracking-tight">$184,200</div>
-                                <div className="text-sm text-red-400 flex items-center gap-2 pt-2">
-                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                <div className="text-sm text-amber-500 flex items-center gap-2 pt-2">
+                                    <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                                     Trend: Degrading
                                 </div>
                             </div>
@@ -169,31 +164,31 @@ const Home = () => {
 
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-10 rounded-2xl group min-h-[240px] flex flex-col justify-end">
-                            <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                            <div className="absolute inset-0 opacity-10">
                                 <img src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2064&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
                             </div>
                             <div className="relative z-10">
-                                <div className="text-5xl font-light text-slate-700 mb-8 group-hover:text-slate-500 transition-colors">01</div>
+                                <div className="text-5xl font-light text-slate-600 mb-8">01</div>
                                 <h3 className="text-lg text-white font-medium leading-relaxed">Reserve increases are retrospective. You learn after the hold.</h3>
                             </div>
                         </div>
 
                         <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-10 rounded-2xl group min-h-[240px] flex flex-col justify-end">
-                            <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                            <div className="absolute inset-0 opacity-10">
                                 <img src="https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2071&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
                             </div>
                             <div className="relative z-10">
-                                <div className="text-5xl font-light text-slate-700 mb-8 group-hover:text-slate-500 transition-colors">02</div>
+                                <div className="text-5xl font-light text-slate-600 mb-8">02</div>
                                 <h3 className="text-lg text-white font-medium leading-relaxed">Retry behavior compounds escalation without visible thresholds.</h3>
                             </div>
                         </div>
 
                         <div className="relative overflow-hidden bg-slate-900/30 border border-slate-800/50 p-10 rounded-2xl group min-h-[240px] flex flex-col justify-end">
-                            <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                            <div className="absolute inset-0 opacity-10">
                                 <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover mix-blend-luminosity" />
                             </div>
                             <div className="relative z-10">
-                                <div className="text-5xl font-light text-slate-700 mb-8 group-hover:text-slate-500 transition-colors">03</div>
+                                <div className="text-5xl font-light text-slate-600 mb-8">03</div>
                                 <h3 className="text-lg text-white font-medium leading-relaxed">Capital gets trapped before anyone in finance can see it coming.</h3>
                             </div>
                         </div>
@@ -219,7 +214,7 @@ const Home = () => {
                                     Observe
                                 </h3>
                                 <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
-                                    PayFlux connects to your processor and observes risk signals — dispute velocity, chargeback ratios, policy surface gaps. No data leaves your environment.
+                                    Processor webhook integration observes risk signals — dispute velocity, chargeback ratios, policy surface gaps. Observe-only. No payment flow modification.
                                 </p>
                             </div>
                         </div>
@@ -251,7 +246,7 @@ const Home = () => {
                                     Measure
                                 </h3>
                                 <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
-                                    Every projection is evaluated against actual outcomes. Rolling accuracy metrics — tier prediction, trend prediction, reserve variance — build trust through measurement.
+                                    Every projection is evaluated against actual outcomes. Rolling accuracy metrics — tier prediction, trend prediction, reserve variance — measured after statistical significance threshold.
                                 </p>
                             </div>
                         </div>
@@ -264,32 +259,31 @@ const Home = () => {
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
                             <div className="max-w-2xl space-y-6">
                                 <div className="text-sm font-mono text-slate-500 uppercase tracking-wider">THE INSTRUMENT</div>
-                                <h2 className="text-4xl font-semibold text-white tracking-tight">What you actually see</h2>
+                                <h2 className="text-4xl font-semibold text-white tracking-tight">Capital projection surface</h2>
                                 <p className="text-lg text-slate-400 leading-relaxed">
-                                    A single surface that answers five questions: How much capital is at risk. Where it is trending. What to do about it. How accurate the system has been. How to export it for leadership.
+                                    Capital at risk. Trend direction. Intervention modeling. Model accuracy. Board-grade export. Single instrument.
                                 </p>
                             </div>
                             <a
                                 href="https://app.payflux.dev/dashboard"
-                                className="text-sm font-medium text-white bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2 self-start md:self-auto"
+                                className="text-sm font-medium text-white bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center self-start md:self-auto"
                             >
-                                See the dashboard
-                                <ArrowRight className="w-4 h-4" />
+                                Access Dashboard
                             </a>
                         </div>
 
                         {/* Cinematic Dashboard */}
-                        <div className="relative w-full h-64 md:h-[420px] rounded-2xl overflow-hidden border border-slate-800 mb-20 group">
+                        <div className="relative w-full h-64 md:h-[420px] rounded-2xl overflow-hidden border border-slate-800 mb-20">
                             <img
                                 src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
                                 alt="Data Dashboard Interface"
-                                className="w-full h-full object-cover opacity-30 mix-blend-luminosity group-hover:scale-105 group-hover:opacity-50 transition-all duration-700"
+                                className="w-full h-full object-cover opacity-30 mix-blend-luminosity"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
                             <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800 backdrop-blur-sm">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                    LIVE PROJECTION SURFACE
+                                <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    PROJECTION SURFACE
                                 </div>
                             </div>
                         </div>
@@ -314,7 +308,7 @@ const Home = () => {
 
                 {/* Export Section - Side by Side Grid */}
                 <section className="max-w-7xl mx-auto px-6 py-20 md:py-40 grid lg:grid-cols-2 gap-16 md:gap-20 items-center">
-                    <div className="order-2 lg:order-1 bg-white text-black p-10 rounded-2xl shadow-xl border border-slate-200 font-mono text-sm relative overflow-hidden">
+                    <div className="order-2 lg:order-1 bg-white text-black p-10 rounded-2xl border border-slate-200 font-mono text-sm relative overflow-hidden">
                         {/* Watermark */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10rem] font-bold text-slate-100 -rotate-12 pointer-events-none select-none">
                             EXPORT
@@ -359,9 +353,9 @@ const Home = () => {
                     <div className="order-1 lg:order-2 space-y-10">
                         <div className="space-y-6">
                             <div className="text-sm font-mono text-slate-500 uppercase tracking-wider">EXPORT</div>
-                            <h2 className="text-4xl font-semibold text-white tracking-tight">Board-ready reserve forecast</h2>
+                            <h2 className="text-4xl font-semibold text-white tracking-tight">Reserve forecast export</h2>
                             <p className="text-lg text-slate-400 leading-relaxed">
-                                A document that survives outside the product. Deterministic, signed, printable.
+                                Deterministic derivation. HMAC-SHA256 signed. Print-native format.
                             </p>
                         </div>
 
@@ -432,34 +426,33 @@ const Home = () => {
                         </div>
 
                         {/* Pro Tier */}
-                        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-10 flex flex-col relative overflow-hidden shadow-[0_0_40px_-15px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20">
-                            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
+                        <div className="bg-slate-950 border-2 border-slate-600 rounded-2xl p-10 flex flex-col relative overflow-hidden">
                             <div className="mb-10">
                                 <h3 className="text-2xl text-white font-semibold mb-2">Pro</h3>
-                                <div className="text-emerald-400 text-sm mb-6">Full instrument</div>
+                                <div className="text-slate-400 text-sm mb-6">Full instrument</div>
                                 <div className="text-4xl text-white font-light tracking-tight flex items-baseline gap-2">
                                     $499 <span className="text-lg text-slate-500 font-normal">/ month</span>
                                 </div>
                             </div>
                             <div className="space-y-4 mb-8 flex-grow">
-                                <div className="flex items-start gap-3 text-sm text-white">
-                                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <div className="flex items-start gap-3 text-sm text-slate-300">
+                                    <Check className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                                     <span>Full projection engine (T+90)</span>
                                 </div>
-                                <div className="flex items-start gap-3 text-sm text-white">
-                                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <div className="flex items-start gap-3 text-sm text-slate-300">
+                                    <Check className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                                     <span>Intervention modeling</span>
                                 </div>
-                                <div className="flex items-start gap-3 text-sm text-white">
-                                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <div className="flex items-start gap-3 text-sm text-slate-300">
+                                    <Check className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                                     <span>Signed projection ledger</span>
                                 </div>
-                                <div className="flex items-start gap-3 text-sm text-white">
-                                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <div className="flex items-start gap-3 text-sm text-slate-300">
+                                    <Check className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                                     <span>Board reserve report</span>
                                 </div>
-                                <div className="flex items-start gap-3 text-sm text-white">
-                                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <div className="flex items-start gap-3 text-sm text-slate-300">
+                                    <Check className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                                     <span>Rolling model accuracy</span>
                                 </div>
                             </div>
@@ -467,7 +460,7 @@ const Home = () => {
                                 href="https://app.payflux.dev/dashboard"
                                 className="block w-full text-center text-sm font-medium text-slate-950 bg-white hover:bg-slate-200 py-3 rounded-lg transition-colors"
                             >
-                                Start Pro
+                                Access Dashboard
                             </a>
                         </div>
 
@@ -500,7 +493,7 @@ const Home = () => {
                                 href="#contact"
                                 className="block w-full text-center text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 py-3 rounded-lg transition-colors"
                             >
-                                Talk to Sales
+                                Contact
                             </a>
                         </div>
                     </div>
@@ -529,8 +522,8 @@ const Home = () => {
                         <div className="grid md:grid-cols-2 gap-8 relative z-10">
                             <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800 p-10 rounded-xl flex flex-col justify-between items-start gap-8">
                                 <div>
-                                    <h3 className="text-xl text-white font-medium mb-2">Self-serve</h3>
-                                    <p className="text-slate-400">Access the dashboard directly. Free tier available.</p>
+                                    <h3 className="text-xl text-white font-medium mb-2">Dashboard</h3>
+                                    <p className="text-slate-400">Free and Pro tiers. No sales process required.</p>
                                 </div>
                                 <a
                                     href="https://app.payflux.dev/dashboard"
@@ -543,7 +536,7 @@ const Home = () => {
                             <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800 p-10 rounded-xl flex flex-col justify-between items-start gap-8">
                                 <div className="w-full">
                                     <h3 className="text-xl text-white font-medium mb-3">Enterprise</h3>
-                                    <p className="text-slate-400 mb-8">Higher throughput, bulk exports, and processor attestation readiness.</p>
+                                    <p className="text-slate-400 mb-8">Higher throughput. Bulk exports. Processor attestation readiness.</p>
                                     <form
                                         name="enterprise-contact"
                                         method="POST"

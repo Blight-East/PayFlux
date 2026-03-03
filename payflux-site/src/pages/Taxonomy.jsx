@@ -32,7 +32,7 @@ const Taxonomy = () => {
                                 <h3>Pilot</h3>
                                 <p>Early-stage integration with full monitoring and risk analysis</p>
                                 <ul>
-                                    <li>Real-time risk scoring</li>
+                                    <li>Continuous risk scoring</li>
                                     <li>Pattern detection</li>
                                     <li>Alert generation</li>
                                 </ul>

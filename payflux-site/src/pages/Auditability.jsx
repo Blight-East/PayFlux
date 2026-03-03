@@ -100,7 +100,7 @@ const Auditability = () => {
                                     <li>CSV and JSON export for all audit records</li>
                                     <li>Date range and merchant-scoped filtering</li>
                                     <li>Scheduled automated exports via API</li>
-                                    <li>Webhook delivery for real-time audit streams</li>
+                                    <li>Webhook delivery for continuous audit streams</li>
                                 </ul>
                             </div>
                             <div className="tier-card growth">
@@ -149,9 +149,9 @@ const Auditability = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Make every risk decision defensible</h2>
-                    <p>When processors ask questions, have the answers ready. PayFlux gives you complete audit trails and compliance documentation out of the box.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Start Building Audit Trails</a>
+                    <h2>Auditable risk decisions</h2>
+                    <p>Complete audit trails and compliance documentation for every risk signal.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

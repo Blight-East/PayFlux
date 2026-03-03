@@ -70,9 +70,9 @@ const DeterministicRiskScoring = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Score risk with full transparency</h2>
-                    <p>See how PayFlux gives your team deterministic, explainable risk scores for every payment event.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Explore PayFlux</a>
+                    <h2>Deterministic risk scoring</h2>
+                    <p>Explainable, reproducible risk scores for every payment event.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

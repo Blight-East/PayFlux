@@ -21,7 +21,7 @@ const Architecture = () => {
             <main className="content">
                 <section className="hero">
                     <h1>Architecture</h1>
-                    <p className="subtitle">How PayFlux ingests payment events, scores risk in real time, and delivers observable evidence to your team</p>
+                    <p className="subtitle">Event ingestion, deterministic risk scoring, and observable evidence delivery</p>
                 </section>
 
                 <section id="architecture" className="signals-grid">
@@ -41,7 +41,7 @@ const Architecture = () => {
                         <p>The scoring engine evaluates every event against a deterministic rule set. Each rule emits typed signals, and signals are weighted and aggregated into a composite risk score with a full evidence chain.</p>
                         <ul>
                             <li>Deterministic evaluation: same input always produces the same score</li>
-                            <li>Signal-level granularity allows independent tuning of individual risk indicators</li>
+                            <li>Signal-level granularity supports independent tuning of individual risk indicators</li>
                             <li>Composite scoring aggregates weighted signals into risk bands (low, elevated, high, critical)</li>
                             <li>Evidence generation runs in-line with scoring — every score ships with its narrative</li>
                         </ul>
@@ -49,7 +49,7 @@ const Architecture = () => {
 
                     <div className="signal-card">
                         <h3>Evidence and Storage Layer</h3>
-                        <p>Scored events, signals, and evidence narratives are persisted for querying, audit, and historical analysis. The storage layer is optimized for both real-time lookups and bulk analytical queries.</p>
+                        <p>Scored events, signals, and evidence narratives are persisted for querying, audit, and historical analysis. The storage layer is optimized for both low-latency lookups and bulk analytical queries.</p>
                         <ul>
                             <li>PostgreSQL stores canonical event records, scores, and structured evidence</li>
                             <li>Redis provides sub-millisecond access to active session and velocity state</li>
@@ -62,7 +62,7 @@ const Architecture = () => {
                         <h3>Dashboard and API Layer</h3>
                         <p>The presentation layer serves both human operators through the dashboard and automated systems through the API. Both surfaces expose the same underlying data with full signal traceability.</p>
                         <ul>
-                            <li>React-based dashboard with real-time event streaming and drill-down views</li>
+                            <li>React-based dashboard with event streaming and drill-down views</li>
                             <li>REST API for programmatic access to scores, signals, and evidence</li>
                             <li>Webhook delivery pushes risk decisions to your existing payment orchestration</li>
                             <li>Role-based access control separates analyst, operations, and integration permissions</li>
@@ -71,9 +71,9 @@ const Architecture = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Explore the platform architecture</h2>
-                    <p>See how PayFlux connects to your payment stack and delivers real-time risk observability end to end.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Explore PayFlux</a>
+                    <h2>System architecture</h2>
+                    <p>Processor webhook integration, deterministic scoring, and observable evidence delivery.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

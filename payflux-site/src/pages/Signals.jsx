@@ -21,7 +21,7 @@ const Signals = () => {
             <main className="content">
                 <section className="hero">
                     <h1>Signal Registry</h1>
-                    <p className="subtitle">Real-time risk indicators and detection patterns for payment processors</p>
+                    <p className="subtitle">Risk indicators and detection patterns for payment processors</p>
                 </section>
 
                 <section className="signals-grid">
@@ -67,9 +67,9 @@ const Signals = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Ready to detect risk signals?</h2>
-                    <p>Join PayFlux and start protecting your payment operations today.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Explore PayFlux</a>
+                    <h2>Risk signal detection</h2>
+                    <p>Deterministic risk indicators across all processor event types.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

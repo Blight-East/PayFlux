@@ -70,7 +70,7 @@ const Security = () => {
                     </div>
                     <div className="signal-card">
                         <h3>In Processing</h3>
-                        <p>Redis streams used for real-time signal processing are configured with authentication and network isolation. Stream data is ephemeral and automatically trimmed after processing.</p>
+                        <p>Redis streams used for signal processing are configured with authentication and network isolation. Stream data is ephemeral and automatically trimmed after processing.</p>
                         <ul>
                             <li>Authenticated Redis connections (requirepass + ACLs)</li>
                             <li>Network-level isolation via private subnets</li>
@@ -144,9 +144,9 @@ const Security = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Security you can verify</h2>
-                    <p>Our privacy-first architecture means you get full risk intelligence without exposing sensitive data. See how PayFlux keeps your merchant operations secure.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Explore PayFlux</a>
+                    <h2>Verifiable security posture</h2>
+                    <p>Privacy-first architecture. Full risk intelligence without sensitive data exposure.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

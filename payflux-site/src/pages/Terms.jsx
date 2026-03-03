@@ -12,7 +12,7 @@ const Terms = () => {
                         <span className="text-white font-bold tracking-tight text-xl">PayFlux</span>
                     </Link>
                     <Link to="/" className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors">
-                        ← Back to Home
+                        Home
                     </Link>
                 </div>
             </nav>

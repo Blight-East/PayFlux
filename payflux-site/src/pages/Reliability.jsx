@@ -43,7 +43,7 @@ const Reliability = () => {
                             </div>
                             <div className="tier-card growth">
                                 <h3>Stream Processing</h3>
-                                <p>Real-time signal processing pipeline maintains throughput under variable load conditions</p>
+                                <p>Signal processing pipeline maintains throughput under variable load conditions</p>
                                 <ul>
                                     <li>Redis Streams with consumer group guarantees</li>
                                     <li>At-least-once delivery for all risk events</li>
@@ -68,7 +68,7 @@ const Reliability = () => {
                 <section id="durability" className="taxonomy-content">
                     <div className="taxonomy-section">
                         <h2>Redis Stream Durability</h2>
-                        <p>PayFlux uses Redis Streams as the backbone of its real-time processing pipeline. Streams provide ordered, persistent, and replayable event logs that ensure no risk signal is lost, even during consumer failures or deployment windows.</p>
+                        <p>PayFlux uses Redis Streams as the backbone of its event processing pipeline. Streams provide ordered, persistent, and replayable event logs that ensure no risk signal is lost, even during consumer failures or deployment windows.</p>
                         <div className="processor-list">
                             <div className="processor-item">
                                 <h3>Persistent Event Log</h3>
@@ -145,9 +145,9 @@ const Reliability = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Risk infrastructure that never sleeps</h2>
-                    <p>Payment risk does not take downtime. Neither does PayFlux. Build on infrastructure designed for continuous, reliable operation.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Get Started</a>
+                    <h2>Continuous risk infrastructure</h2>
+                    <p>Designed for always-on operation. No maintenance windows. No dropped signals.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

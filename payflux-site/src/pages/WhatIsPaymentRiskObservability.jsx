@@ -68,9 +68,9 @@ const WhatIsPaymentRiskObservability = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>See payment risk observability in action</h2>
-                    <p>Explore how PayFlux gives your team continuous visibility into transaction risk with full signal traceability.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Explore PayFlux</a>
+                    <h2>Payment risk observability</h2>
+                    <p>Continuous visibility into transaction risk with full signal traceability.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

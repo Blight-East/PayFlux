@@ -153,9 +153,9 @@ const ProcessorRiskIntelligence = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>See your risk profile through processor eyes</h2>
-                    <p>Stop guessing how processors evaluate your account. Get real-time risk intelligence calibrated to actual processor models.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Start Risk Analysis</a>
+                    <h2>Processor-calibrated risk intelligence</h2>
+                    <p>Risk signals calibrated to actual processor evaluation models.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

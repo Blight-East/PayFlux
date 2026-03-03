@@ -121,9 +121,9 @@ const Glossary = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Master payment risk terminology</h2>
-                    <p>Learn the language of payment processing and fraud prevention with PayFlux.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Start Learning</a>
+                    <h2>Payment risk terminology</h2>
+                    <p>Standardized definitions for payment processing and risk classification.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

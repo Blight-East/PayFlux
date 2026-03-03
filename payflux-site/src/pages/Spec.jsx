@@ -71,9 +71,9 @@ const Spec = () => {
                 </section>
 
                 <section className="cta-section">
-                    <h2>Ready to integrate?</h2>
-                    <p>Start sending payment events to PayFlux and receive real-time risk scores with full evidence traceability.</p>
-                    <a href="https://app.payflux.dev" className="btn-primary">Explore PayFlux</a>
+                    <h2>Integration</h2>
+                    <p>Webhook event ingestion with deterministic risk scores and full evidence traceability.</p>
+                    <a href="https://app.payflux.dev" className="btn-primary">Access Dashboard</a>
                 </section>
             </main>
 

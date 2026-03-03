@@ -24,7 +24,7 @@ const Pricing = () => {
                         <span className="font-semibold tracking-tight text-lg text-white">PayFlux</span>
                     </Link>
                     <Link to="/" className="text-[13px] text-slate-500 hover:text-white transition-colors">
-                        &larr; Back
+                        Back
                     </Link>
                 </div>
             </nav>
@@ -84,7 +84,7 @@ const Pricing = () => {
                                     href="https://app.payflux.dev/dashboard"
                                     className="block text-center w-full py-3 bg-slate-900 text-white text-sm font-medium rounded-md hover:bg-slate-800 transition-colors"
                                 >
-                                    Start Pro
+                                    Access Dashboard
                                 </a>
                             </div>
                         </div>
@@ -107,7 +107,7 @@ const Pricing = () => {
                                     to="/#contact"
                                     className="block text-center w-full py-3 border border-slate-300 text-slate-900 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors"
                                 >
-                                    Talk to Sales
+                                    Contact
                                 </Link>
                             </div>
                         </div>
