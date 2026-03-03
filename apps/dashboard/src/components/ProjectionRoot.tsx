@@ -1,11 +1,14 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import ReserveForecastPanel from '@/components/ReserveForecastPanel';
+import ModelAuthority from '@/components/ModelAuthority';
+import VarianceBand from '@/components/VarianceBand';
 import ProjectionTimeline from '@/components/ProjectionTimeline';
 import BoardReserveReport from '@/components/BoardReserveReport';
-import NetworkAggregate from '@/components/NetworkAggregate';
 import { Lock } from 'lucide-react';
+import type { AggregateData } from '@/types/aggregate';
 
 interface ProjectionRootProps {
     tier: string;
@@ -14,6 +17,32 @@ interface ProjectionRootProps {
 
 export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
     const isFree = tier === 'free';
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Aggregate fetch — single call, passed to ModelAuthority + VarianceBand
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const [aggregate, setAggregate] = useState<AggregateData | null>(null);
+    const [aggregateLoading, setAggregateLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchAggregate() {
+            try {
+                const res = await fetch('/api/v1/risk/forecast/aggregate');
+                if (!res.ok) {
+                    setAggregateLoading(false);
+                    return;
+                }
+                const json: AggregateData = await res.json();
+                setAggregate(json);
+            } catch {
+                // Silent — aggregate is supplementary
+            } finally {
+                setAggregateLoading(false);
+            }
+        }
+        fetchAggregate();
+    }, []);
 
     return (
         <div className="p-8 max-w-6xl mx-auto">
@@ -32,9 +61,19 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
                 />
             </div>
 
-            {/* A. CAPITAL AT RISK — Primary Instrument */}
-            <div className="mb-12">
+            {/* A. CAPITAL AT RISK — Hero, owns the page */}
+            <div className="mb-16">
                 <ReserveForecastPanel host={host} />
+            </div>
+
+            {/* B. MODEL AUTHORITY — Accuracy + Depth + Stability */}
+            <div className="mb-12">
+                <ModelAuthority data={aggregate} loading={aggregateLoading} />
+            </div>
+
+            {/* C. VARIANCE BAND — Forecast Confidence */}
+            <div className="mb-16">
+                <VarianceBand data={aggregate} loading={aggregateLoading} />
             </div>
 
             {/* Free tier: intervention lock + upgrade CTA */}
@@ -63,21 +102,16 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
                 </div>
             )}
 
-            {/* B. NETWORK BENCHMARK — Only if significance met */}
-            <div className="mb-8">
-                <NetworkAggregate />
-            </div>
-
-            {/* C. RESERVE HISTORY + MODEL ACCURACY + BOARD REPORT */}
+            {/* D. RESERVE HISTORY + BOARD REPORT */}
             <div className="mb-12">
-                <div className="border-t border-slate-900 pt-6 mb-4 flex items-center justify-between">
-                    <h3 className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve History</h3>
+                <div className="border-t border-slate-800/60 pt-6 mb-4 flex items-center justify-between">
+                    <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">Reserve History</h3>
                     <BoardReserveReport host={host} />
                 </div>
                 <ProjectionTimeline host={host} />
             </div>
 
-            {/* Diagnostics — tertiary, discoverable but not prominent */}
+            {/* E. Diagnostics — tertiary, discoverable but not prominent */}
             <div className="pt-12 pb-2">
                 <a
                     href="/dashboard/diagnostics"

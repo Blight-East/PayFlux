@@ -5,7 +5,9 @@ import { UserButton } from '@clerk/nextjs';
 import ReserveForecastPanel from '@/components/ReserveForecastPanel';
 import ProjectionTimeline from '@/components/ProjectionTimeline';
 import BoardReserveReport from '@/components/BoardReserveReport';
-import NetworkAggregate from '@/components/NetworkAggregate';
+import ModelAuthority from '@/components/ModelAuthority';
+import VarianceBand from '@/components/VarianceBand';
+import type { AggregateData } from '@/types/aggregate';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -103,12 +105,9 @@ export default function DashboardClient({ tier, host }: { tier: string; host: st
             </div>
 
             {/* ═══════════════════════════════════════════════════════════════
-                NETWORK AGGREGATE — System-level model performance
-                Only renders when statistical significance threshold is met.
+                MODEL AUTHORITY + VARIANCE BAND
+                Replaced NetworkAggregate with projection-first hierarchy.
                ═══════════════════════════════════════════════════════════════ */}
-            <div className="mb-8">
-                <NetworkAggregate />
-            </div>
 
             {/* ═══════════════════════════════════════════════════════════════
                 PROJECTION HISTORY — Temporal evidence layer
