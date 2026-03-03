@@ -264,7 +264,7 @@ function ReportView({ analysis }: { analysis: RiskAnalysis }) {
                         <span>•</span>
                         <span>{analysis.processor}</span>
                         <span>•</span>
-                        <span>{new Date(analysis.analyzedAt).toLocaleString()}</span>
+                        <span>{new Date(analysis.analyzedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })} UTC</span>
                     </div>
                 </div>
                 <a

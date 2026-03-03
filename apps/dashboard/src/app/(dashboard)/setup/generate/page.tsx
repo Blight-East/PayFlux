@@ -456,7 +456,7 @@ See full documentation at https://payflux.dev/docs
                                     : 'bg-slate-900 text-slate-400 hover:text-white'
                                     }`}
                             >
-                                {copied ? 'Copied!' : 'Copy'}
+                                {copied ? 'Copied' : 'Copy'}
                             </button>
                         </div>
                         <p className="mt-3 text-xs text-slate-500">

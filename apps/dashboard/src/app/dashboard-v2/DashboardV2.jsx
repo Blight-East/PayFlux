@@ -160,7 +160,7 @@ export default function DashboardPage() {
                                     exportCapability === 'checking' ? "Checking export availability..." :
                                         exportCapability === 'unavailable' ? "Export temporarily unavailable" :
                                             lastExport
-                                                ? `Last export: ${lastExport.status === 'success' ? (lastExport.isSigned ? 'Success' : 'Unsigned (dev)') : 'Failed'} at ${lastExport.time.toLocaleTimeString()}`
+                                                ? `Last export: ${lastExport.status === 'success' ? (lastExport.isSigned ? 'Success' : 'Unsigned (dev)') : 'Failed'} at ${String(lastExport.time.getUTCHours()).padStart(2,'0')}:${String(lastExport.time.getUTCMinutes()).padStart(2,'0')} UTC`
                                                 : "Signed canonical evidence bundle"
                     }
                 >
@@ -241,7 +241,7 @@ export default function DashboardPage() {
                             <span className="text-white/10 mx-1">|</span>
                             <span>
                                 Last verified: {meta.watermark.lastVerifiedAt
-                                    ? new Date(meta.watermark.lastVerifiedAt).toLocaleTimeString()
+                                    ? (() => { const d = new Date(meta.watermark.lastVerifiedAt); return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`; })()
                                     : "Not yet verified"}
                                 {meta.watermark.seq ? ` (Seq: ${meta.watermark.seq})` : ''}
                             </span>
@@ -268,10 +268,10 @@ export default function DashboardPage() {
                     )}
                     {meta?.client?.lastHeartbeat && (
                         <span className="opacity-70">
-                            Heartbeat: {new Date(meta.client.lastHeartbeat).toLocaleTimeString()}
+                            Heartbeat: {(() => { const d = new Date(meta.client.lastHeartbeat); return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`; })()}
                         </span>
                     )}
-                    {meta?.generatedAt ? `Sync: ${new Date(meta.generatedAt).toLocaleTimeString()}` : 'v2.0.0-beta'}
+                    {meta?.generatedAt ? `Sync: ${(() => { const d = new Date(meta.generatedAt); return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`; })()}` : 'v2.0.0-beta'}
                 </div>
             </div>
         </div>

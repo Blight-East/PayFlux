@@ -64,7 +64,7 @@ export default async function DocsPage({ params }: DocsPageProps) {
                     href="/docs"
                     className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
                 >
-                    ← Back to Index
+                    Index
                 </Link>
             </div>
 

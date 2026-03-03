@@ -17,7 +17,7 @@ export function EvidenceHealthPanel() {
             <div className="p-4 border border-white/10 bg-void rounded-sm">
                 <div className="flex items-center gap-2 text-void-dim text-xs">
                     <Activity className="h-3 w-3 animate-pulse" />
-                    <span>Awaiting health signal...</span>
+                    <span>Loading health signal...</span>
                 </div>
             </div>
         );
@@ -28,15 +28,13 @@ export function EvidenceHealthPanel() {
     // Status colors: OK=Success, DEGRADED=Warning, STALE=Warning
     const statusVariant = isDegraded ? 'warning' : 'success';
 
-    // Relative Time Helper
-    const getRelativeTime = (date) => {
+    // Absolute UTC Time Helper
+    const formatUTC = (date) => {
         if (!date) return 'Never';
-        const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-        if (seconds < 60) return `${seconds}s ago`;
-        const minutes = Math.floor(seconds / 60);
-        if (minutes < 60) return `${minutes}m ago`;
-        const hours = Math.floor(minutes / 60);
-        return `${hours}h ago`;
+        const h = String(date.getUTCHours()).padStart(2, '0');
+        const m = String(date.getUTCMinutes()).padStart(2, '0');
+        const s = String(date.getUTCSeconds()).padStart(2, '0');
+        return `${h}:${m}:${s} UTC`;
     };
 
     return (
@@ -54,7 +52,7 @@ export function EvidenceHealthPanel() {
                 <div>
                     <div className="text-[10px] text-void-dim uppercase">Last Good</div>
                     <div className={clsx("text-xs mt-0.5 truncate flex items-center gap-1", isStale ? "text-warning" : "text-void-fg")}>
-                        {getRelativeTime(lastGoodDate)}
+                        {formatUTC(lastGoodDate)}
                         {isStale && <AlertTriangle className="h-3 w-3" />}
                     </div>
                 </div>
@@ -113,10 +111,10 @@ export function EvidenceHealthPanel() {
             {/* Actions (Read-Only) */}
             <div className="border-t border-white/5 pt-3 flex items-center justify-end gap-3">
                 <button className="text-[10px] text-void-dim hover:text-void-fg transition-colors">
-                    View Details
+                    Details
                 </button>
                 <button className="text-[10px] text-void-dim hover:text-void-fg transition-colors">
-                    View Trace
+                    Trace
                 </button>
             </div>
         </div>

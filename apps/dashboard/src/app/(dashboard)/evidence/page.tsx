@@ -31,6 +31,13 @@ function EvidenceContent() {
     const [data, setData] = useState<EvidenceData | null>(null);
     const [lkgData, setLkgData] = useState<EvidenceData | null>(null);
     const [status, setStatus] = useState<'OK' | 'DEGRADED' | 'VIOLATION'>('OK');
+    const formatSyncTime = () => {
+        const d = new Date();
+        const h = String(d.getUTCHours()).padStart(2, '0');
+        const m = String(d.getUTCMinutes()).padStart(2, '0');
+        const s = String(d.getUTCSeconds()).padStart(2, '0');
+        return `${h}:${m}:${s} UTC`;
+    };
     const [lastSync, setLastSync] = useState<string>('Never');
     const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +50,7 @@ function EvidenceContent() {
             // 1. Contract Violation Check (LKG Freeze)
             if (json.schemaVersion !== '1.0') {
                 setStatus('VIOLATION');
-                setLastSync(new Date().toLocaleTimeString());
+                setLastSync(formatSyncTime());
                 setData(null); // Clear the 'bad' data but lkgData remains!
                 return;
             }
@@ -58,7 +65,7 @@ function EvidenceContent() {
             }
 
             setData(json);
-            setLastSync(new Date().toLocaleTimeString());
+            setLastSync(formatSyncTime());
             setError(null);
         } catch (err) {
             console.error('Fetch failed', err);
@@ -183,7 +190,7 @@ function EvidenceContent() {
                             <div key={a.id} className="border-l-2 border-slate-800 pl-4 space-y-2">
                                 <div className="flex justify-between items-start">
                                     <div className="text-[10px] font-mono font-bold text-[#0A64BC]">{a.id}</div>
-                                    <div className="text-[9px] text-slate-600 font-mono">{new Date(a.timestamp).toLocaleTimeString()}</div>
+                                    <div className="text-[9px] text-slate-600 font-mono">{(() => { const d = new Date(a.timestamp); return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`; })()}</div>
                                 </div>
                                 <div className="text-[10px] text-slate-400 font-mono bg-slate-900/50 p-2 rounded truncate">
                                     {JSON.stringify(a.data)}

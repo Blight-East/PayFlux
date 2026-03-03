@@ -80,7 +80,7 @@ export default function TrustDashboardPlayground() {
                         Board Report
                     </button>
                     <div className="mono text-[11px] text-slate-500">
-                        LAST SYNC: <span className="text-slate-300">{systemState === 'OFFLINE' ? '18m AGO' : '2s AGO'}</span>
+                        LAST SYNC: <span className="text-slate-300">{systemState === 'OFFLINE' ? '14:09 UTC' : '14:27 UTC'}</span>
                     </div>
                 </div>
             </header>
@@ -99,7 +99,7 @@ export default function TrustDashboardPlayground() {
                             <div className={`text-sm font-bold ${tcsColor} mb-1 tracking-tight transition-colors duration-500 uppercase`}>
                                 {tcsValue > 80 ? 'High Confidence' : tcsValue > 50 ? 'Medium Confidence' : 'Low Confidence'}
                             </div>
-                            <div className="text-[10px] text-slate-500 mb-4">Verified {systemState === 'OFFLINE' ? '11m ago' : '3m ago'}</div>
+                            <div className="text-[10px] text-slate-500 mb-4">Verified {systemState === 'OFFLINE' ? '14:16 UTC' : '14:24 UTC'}</div>
                             <button
                                 onClick={() => setShowTcsBreakdown(!showTcsBreakdown)}
                                 className="text-[10px] uppercase font-bold tracking-widest text-slate-400 hover:text-slate-100 transition-colors border-b border-slate-700 pb-0.5"

@@ -33,7 +33,7 @@ export default function ChooseTierPage() {
                     <span>Choose Tier</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Choose Your Tier</h2>
-                <p className="text-slate-500 text-sm mt-1">Select the PayFlux tier that matches your needs.</p>
+                <p className="text-slate-500 text-sm mt-1">Coverage tier selection.</p>
             </div>
 
             <div className="space-y-4">
@@ -96,7 +96,7 @@ export default function ChooseTierPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h4 className="text-sm font-bold text-white">Enable Pilot Mode</h4>
-                            <p className="text-xs text-slate-500 mt-0.5">Access the warnings dashboard for outcome annotation</p>
+                            <p className="text-xs text-slate-500 mt-0.5">Warnings dashboard. Outcome annotation.</p>
                         </div>
                         <button
                             onClick={() => setPilotMode(!pilotMode)}
@@ -115,13 +115,13 @@ export default function ChooseTierPage() {
                     onClick={() => router.push('/setup/connect')}
                     className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded text-sm hover:bg-slate-800 transition-colors"
                 >
-                    ← Back
+                    Back
                 </button>
                 <button
                     onClick={handleContinue}
                     className="px-6 py-2.5 bg-white text-black font-bold rounded text-sm hover:bg-slate-200 transition-colors"
                 >
-                    Continue →
+                    Continue
                 </button>
             </div>
         </div>

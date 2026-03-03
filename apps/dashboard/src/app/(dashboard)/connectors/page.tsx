@@ -137,7 +137,7 @@ export default function ConnectorsPage() {
 
                         <div className="pt-4 flex justify-between items-center">
                             <div className="text-[10px] text-slate-500">
-                                {lastEvent ? `Last event: ${new Date(lastEvent).toLocaleString()}` : 'No events received'}
+                                {lastEvent ? `Last event: ${new Date(lastEvent).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })} UTC` : 'No events received'}
                             </div>
                             <button
                                 type="submit"

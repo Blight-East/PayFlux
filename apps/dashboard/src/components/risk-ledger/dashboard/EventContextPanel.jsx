@@ -63,7 +63,7 @@ export function EventContextPanel({ event, credibility }) {
                                 <div className="flex justify-between">
                                     <span className="text-subtle">Computed</span>
                                     <span className="text-void-dim text-[10px]">
-                                        {credibility.computedAt ? new Date(credibility.computedAt).toLocaleTimeString() : 'N/A'}
+                                        {credibility.computedAt ? (() => { const d = new Date(credibility.computedAt); return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`; })() : 'N/A'}
                                     </span>
                                 </div>
                             </div>

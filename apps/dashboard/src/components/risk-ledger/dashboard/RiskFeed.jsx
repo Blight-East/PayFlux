@@ -6,7 +6,7 @@ function EventRow({ evt, isChild = false, isSelected, onSelect }) {
     // Format: <timestamp> | <kind> | <processor> | <summary> | Action: [View trace]
     // 12:04:22 | Evidence health | Stripe | status: OK | Action: [View trace]
 
-    const timeStr = evt.ts ? new Date(evt.ts).toLocaleTimeString('en-GB', { hour12: false }) : evt.timestamp;
+    const timeStr = evt.ts ? (() => { const d = new Date(evt.ts); return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')} UTC`; })() : evt.timestamp;
 
     return (
         <div

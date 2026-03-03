@@ -348,7 +348,14 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
     const signalConfig = SIGNAL_CONFIG[data.instabilitySignal] || SIGNAL_CONFIG.NOMINAL;
     const hasUSD = data.volumeMode === 'bps_plus_usd';
     const primary = data.reserveProjections.find((p) => p.windowDays === 90);
-    const projectedAt = new Date(data.projectedAt).toLocaleString();
+    const projectedAt = (() => {
+        const d = new Date(data.projectedAt);
+        const month = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+        const day = d.getUTCDate();
+        const h = String(d.getUTCHours()).padStart(2, '0');
+        const m = String(d.getUTCMinutes()).padStart(2, '0');
+        return `${month} ${day}, ${h}:${m} UTC`;
+    })();
 
     const handlePrint = () => {
         window.print();

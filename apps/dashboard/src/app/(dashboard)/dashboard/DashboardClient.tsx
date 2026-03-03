@@ -204,7 +204,7 @@ export default function DashboardClient({ tier, host }: { tier: string; host: st
                                             </span>
                                         </td>
                                         <td className="px-5 py-3 font-mono text-[11px] text-slate-500">{(w.risk_score || 0).toFixed(4)}</td>
-                                        <td className="px-5 py-3 text-[11px] text-slate-600">{new Date(w.processed_at).toLocaleString()}</td>
+                                        <td className="px-5 py-3 text-[11px] text-slate-600 font-mono">{new Date(w.processed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })} UTC</td>
                                         <td className="px-5 py-3">
                                             {w.outcome_observed ? (
                                                 <span className="text-[11px] text-emerald-500/60 font-medium">✓ {w.outcome_type}</span>
