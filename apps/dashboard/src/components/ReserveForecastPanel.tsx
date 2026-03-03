@@ -127,11 +127,11 @@ function formatUSD(value: number): string {
 }
 
 function formatBps(bps: number): string {
-    return `${(bps / 100).toFixed(1)}%`;
+    return `${(bps / 100).toFixed(2)}%`;
 }
 
 function formatRate(rate: number): string {
-    return `${(rate * 100).toFixed(1)}%`;
+    return `${(rate * 100).toFixed(2)}%`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
