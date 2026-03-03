@@ -28,6 +28,10 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
         href: '/dashboard/diagnostics',
     },
     {
+        label: 'Governance',
+        href: '/dashboard/governance',
+    },
+    {
         label: 'Connectors',
         href: '/connectors',
         minRole: 'admin',
@@ -73,12 +77,12 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                 <nav className="p-4 space-y-1">
                     {visibleItems.map((item) => {
                         const isActive = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard');
-                        const isDiagnostics = item.href === '/dashboard/diagnostics';
+                        const isSubordinate = item.href === '/dashboard/diagnostics' || item.href === '/dashboard/governance';
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`block px-4 py-2 rounded-md transition-colors ${isDiagnostics
+                                className={`block px-4 py-2 rounded-md transition-colors ${isSubordinate
                                     ? `text-xs ${isActive ? 'bg-slate-800/50 text-slate-400' : 'text-slate-600 hover:text-slate-400 hover:bg-slate-900/50'}`
                                     : `text-sm font-medium ${isActive ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`
                                     }`}
@@ -118,7 +122,7 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
 
             <div className="p-4 border-t border-slate-800">
                 <div className="flex items-center space-x-2 px-4 py-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
                     <span className="text-xs text-slate-400">System Online</span>
                 </div>
             </div>
