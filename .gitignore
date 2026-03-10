@@ -44,3 +44,6 @@ node_modules/
 *.zip
 *.txt
 launch_reports/
+
+# Local Netlify folder
+.netlify

@@ -55,10 +55,10 @@ const Pricing = () => {
                             </ul>
                             <div className="mt-8">
                                 <a
-                                    href="https://app.payflux.dev/dashboard"
+                                    href="https://app.payflux.dev/start"
                                     className="block text-center w-full py-3 border border-slate-300 text-slate-900 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors"
                                 >
-                                    Access Dashboard
+                                    Get Started
                                 </a>
                             </div>
                         </div>
@@ -81,10 +81,10 @@ const Pricing = () => {
                             </ul>
                             <div className="mt-8">
                                 <a
-                                    href="https://app.payflux.dev/dashboard"
+                                    href="https://app.payflux.dev/start"
                                     className="block text-center w-full py-3 bg-slate-900 text-white text-sm font-medium rounded-md hover:bg-slate-800 transition-colors"
                                 >
-                                    Access Dashboard
+                                    Start Pro
                                 </a>
                             </div>
                         </div>

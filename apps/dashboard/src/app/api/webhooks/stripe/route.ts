@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { clerkClient } from '@clerk/nextjs/server';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -82,6 +83,44 @@ function normalizeStripeEvent(event: Stripe.Event): any | null {
     return null;
 }
 
+// Helper: Handle checkout.session.completed — upgrade Clerk org tier to "pro"
+async function handleCheckoutCompleted(session: any) {
+    const workspaceId = session.metadata?.workspaceId;
+    if (!workspaceId) {
+        console.error('[CHECKOUT_COMPLETED] No workspaceId in session metadata');
+        return;
+    }
+
+    try {
+        const clerk = await clerkClient();
+        await clerk.organizations.updateOrganization(workspaceId, {
+            publicMetadata: { tier: 'pro' },
+        });
+        console.log(`[CHECKOUT_COMPLETED] Upgraded workspace ${workspaceId} to pro`);
+    } catch (err) {
+        console.error('[CHECKOUT_COMPLETED] Failed to update Clerk org tier:', err);
+    }
+}
+
+// Helper: Handle customer.subscription.deleted — downgrade Clerk org tier to "free"
+async function handleSubscriptionDeleted(subscription: any) {
+    const workspaceId = subscription.metadata?.workspaceId;
+    if (!workspaceId) {
+        console.error('[SUBSCRIPTION_DELETED] No workspaceId in subscription metadata');
+        return;
+    }
+
+    try {
+        const clerk = await clerkClient();
+        await clerk.organizations.updateOrganization(workspaceId, {
+            publicMetadata: { tier: 'free' },
+        });
+        console.log(`[SUBSCRIPTION_DELETED] Downgraded workspace ${workspaceId} to free`);
+    } catch (err) {
+        console.error('[SUBSCRIPTION_DELETED] Failed to update Clerk org tier:', err);
+    }
+}
+
 // Helper: Forward event to PayFlux Ingest API
 async function forwardToPayFlux(payfluxEvent: any) {
     try {
@@ -111,8 +150,16 @@ export async function POST(request: Request) {
 
     try {
         const event = constructEvent(payload, sig, secret);
-        const payfluxEvent = normalizeStripeEvent(event);
 
+        // Handle billing lifecycle events
+        if (event.type === 'checkout.session.completed') {
+            await handleCheckoutCompleted(event.data.object);
+        } else if (event.type === 'customer.subscription.deleted') {
+            await handleSubscriptionDeleted(event.data.object);
+        }
+
+        // Forward payment events to PayFlux ingest
+        const payfluxEvent = normalizeStripeEvent(event);
         if (payfluxEvent) {
             await forwardToPayFlux(payfluxEvent);
         }

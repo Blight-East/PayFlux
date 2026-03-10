@@ -39,3 +39,31 @@ export async function requireAuth(): Promise<
 
     return { ok: true, userId, workspace };
 }
+
+/**
+ * Enforced authentication, workspace resolution, AND paid tier check.
+ *
+ * Rules:
+ * 1. Must have a valid Clerk userId (401 Unauthorized)
+ * 2. Must belong to an active workspace (403 Forbidden)
+ * 3. Workspace must be on a paid tier — pro or enterprise (402 Payment Required)
+ */
+export async function requirePaidAuth(): Promise<
+    | { ok: true; userId: string; workspace: WorkspaceContext }
+    | { ok: false; response: NextResponse }
+> {
+    const result = await requireAuth();
+    if (!result.ok) return result;
+
+    if (result.workspace.tier === 'free') {
+        return {
+            ok: false,
+            response: NextResponse.json(
+                { error: 'Payment Required', code: 'SUBSCRIPTION_REQUIRED' },
+                { status: 402 }
+            ),
+        };
+    }
+
+    return result;
+}

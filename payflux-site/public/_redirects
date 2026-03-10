@@ -10,8 +10,9 @@
 /terms    /terms.html    200
 /privacy  /privacy.html  200
 /refunds  /refunds.html  200
-/pricing  /pricing.html  200
 /refund   /refund.html   200
+
+# /pricing, /success, /cancel served by React SPA (fall through to catch-all)
 
 # STATIC AUTHORITY PAGES
 /signals                            /signals.html                           200

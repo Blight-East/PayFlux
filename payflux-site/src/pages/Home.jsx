@@ -37,7 +37,7 @@ const Home = () => {
                     </div>
                     <div className="hidden md:flex items-center gap-4">
                         <a
-                            href="https://app.payflux.dev/dashboard"
+                            href="https://app.payflux.dev/start"
                             className="text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/5"
                         >
                             Access Dashboard
@@ -58,7 +58,7 @@ const Home = () => {
                         <a href="#instrument" className="block text-sm font-medium text-slate-400 hover:text-white">Instrument</a>
                         <a href="#pricing" className="block text-sm font-medium text-slate-400 hover:text-white">Pricing</a>
                         <a
-                            href="https://app.payflux.dev/dashboard"
+                            href="https://app.payflux.dev/start"
                             className="block w-full text-center text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/5"
                         >
                             Access Dashboard
@@ -87,13 +87,13 @@ const Home = () => {
                         </div>
                         <div className="flex flex-wrap items-center gap-4">
                             <a
-                                href="https://app.payflux.dev/dashboard"
+                                href="https://app.payflux.dev/start"
                                 className="text-sm font-medium text-slate-950 bg-white hover:bg-slate-200 px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
                             >
                                 Access Dashboard
                             </a>
                             <a
-                                href="https://app.payflux.dev/dashboard"
+                                href="https://app.payflux.dev/start"
                                 className="text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 px-6 py-3 rounded-lg transition-colors"
                             >
                                 Board Report Sample
@@ -265,7 +265,7 @@ const Home = () => {
                                 </p>
                             </div>
                             <a
-                                href="https://app.payflux.dev/dashboard"
+                                href="https://app.payflux.dev/start"
                                 className="text-sm font-medium text-white bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center self-start md:self-auto"
                             >
                                 Access Dashboard
@@ -418,7 +418,7 @@ const Home = () => {
                                 </div>
                             </div>
                             <a
-                                href="https://app.payflux.dev/dashboard"
+                                href="https://app.payflux.dev/start"
                                 className="block w-full text-center text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 py-3 rounded-lg transition-colors"
                             >
                                 Access Dashboard
@@ -457,7 +457,7 @@ const Home = () => {
                                 </div>
                             </div>
                             <a
-                                href="https://app.payflux.dev/dashboard"
+                                href="https://app.payflux.dev/start"
                                 className="block w-full text-center text-sm font-medium text-slate-950 bg-white hover:bg-slate-200 py-3 rounded-lg transition-colors"
                             >
                                 Access Dashboard
@@ -526,7 +526,7 @@ const Home = () => {
                                     <p className="text-slate-400">Free and Pro tiers. No sales process required.</p>
                                 </div>
                                 <a
-                                    href="https://app.payflux.dev/dashboard"
+                                    href="https://app.payflux.dev/start"
                                     className="text-sm font-medium text-slate-950 bg-white hover:bg-slate-200 px-6 py-3 rounded-lg transition-colors"
                                 >
                                     Access Dashboard

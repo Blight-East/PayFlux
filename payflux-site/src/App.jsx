@@ -17,6 +17,10 @@ import ProcessorRiskIntelligence from './pages/ProcessorRiskIntelligence';
 import Security from './pages/Security';
 import Reliability from './pages/Reliability';
 import Auditability from './pages/Auditability';
+import Success from './pages/Success';
+import Cancel from './pages/Cancel';
+import Reports from './pages/Reports';
+import ReportDetail from './pages/ReportDetail';
 
 const App = () => {
     return (
@@ -39,6 +43,10 @@ const App = () => {
                 <Route path="/security" element={<Security />} />
                 <Route path="/reliability" element={<Reliability />} />
                 <Route path="/auditability" element={<Auditability />} />
+                <Route path="/success" element={<Success />} />
+                <Route path="/cancel" element={<Cancel />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/reports/:slug" element={<ReportDetail />} />
                 <Route path="*" element={<Home />} />
             </Routes>
         </BrowserRouter>
