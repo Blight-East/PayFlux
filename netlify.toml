@@ -1,3 +1,13 @@
+# ──────────────────────────────────────────────────────────────
+# WARNING: This config builds the MARKETING SITE (payflux-site).
+# It does NOT build the Next.js dashboard (apps/dashboard).
+#
+# To deploy the dashboard (app.payflux.dev):
+#   cd apps/dashboard && npx netlify deploy --prod --build
+#
+# NEVER run `npx netlify deploy --prod --build` from the repo root.
+# Doing so will overwrite app.payflux.dev with the static marketing site.
+# ──────────────────────────────────────────────────────────────
 [build]
 base = "payflux-site"
 command = "npm run build"

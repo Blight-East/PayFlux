@@ -1,3 +1,12 @@
+# ──────────────────────────────────────────────────────────────
+# PayFlux Dashboard — Next.js app deployed to app.payflux.dev
+# Netlify Site: teal-cannoli-99b857 (cbc15329-828c-4122-a1a9-661472a6ebbb)
+#
+# Safe production deploy (from this directory):
+#   npx netlify deploy --prod --build
+#
+# Auto-deploy: pushes to main trigger Netlify GitHub integration.
+# ──────────────────────────────────────────────────────────────
 [build]
   command = "npm run build"
   publish = ".next"
