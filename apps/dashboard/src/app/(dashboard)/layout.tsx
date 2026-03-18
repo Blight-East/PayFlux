@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 export const runtime = 'nodejs';
 import { redirect } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { resolveOnboardingState } from '@/lib/onboarding-state';
 
 export default async function DashboardLayout({
     children,
@@ -15,20 +15,23 @@ export default async function DashboardLayout({
         redirect('/sign-in');
     }
 
-    const workspace = await resolveWorkspace(userId);
+    // Use resolveOnboardingState for consistency with /start routing semantics.
+    // This ensures the layout and the entry router agree on stage → route mapping.
+    const onboarding = await resolveOnboardingState(userId);
 
-    if (!workspace) {
-        redirect('/onboarding');
+    // No workspace → route to scan (same as /start for stage "none")
+    if (!onboarding.workspace) {
+        redirect('/scan');
     }
 
-    if (workspace.tier === 'free') {
-        redirect('/checkout');
-    }
+    // IMPORTANT: Free-tier users see a limited dashboard preview.
+    // Do NOT redirect free tier to /checkout — value before payment.
+    // The page-level component (DashboardPage) handles free vs paid rendering.
 
     return (
         <div className="flex min-h-screen bg-slate-950 text-white">
             <aside className="w-64 border-r border-slate-800">
-                <Sidebar workspace={workspace} />
+                <Sidebar workspace={onboarding.workspace} />
             </aside>
             <main className="flex-1 p-8">
                 {children}

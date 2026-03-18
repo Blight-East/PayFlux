@@ -124,6 +124,19 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                 )}
             </div>
 
+            {/* Upgrade nudge for free tier */}
+            {workspace.tier === 'free' && (
+                <div className="px-4 pb-2">
+                    <Link
+                        href="/upgrade"
+                        className="block px-4 py-3 bg-amber-500/5 border border-amber-500/10 rounded-lg text-center no-underline hover:bg-amber-500/10 transition-colors"
+                    >
+                        <p className="text-[10px] text-amber-400/80 font-bold uppercase tracking-wider">Pro</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">Unlock projections &amp; interventions</p>
+                    </Link>
+                </div>
+            )}
+
             <div className="p-4 border-t border-slate-800">
                 <div className="flex items-center space-x-2 px-4 py-2">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>

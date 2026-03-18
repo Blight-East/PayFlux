@@ -1,17 +1,19 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { resolveOnboardingState } from '@/lib/onboarding-state';
+import { logOnboardingEvent } from '@/lib/onboarding-events';
 
 export const runtime = 'nodejs';
 
 /**
- * /start — Smart entry point for landing page CTAs.
+ * /start — Canonical entry router.
  *
- * Routes the user based on auth + billing state:
- *   - Not logged in       → /sign-up
- *   - No workspace         → /onboarding
- *   - Free tier            → /checkout
- *   - Pro / Enterprise     → /dashboard
+ * Routes users based on onboarding state:
+ *   - Not logged in        → /sign-up
+ *   - stage "none"          → /scan
+ *   - stage "scanned"       → /connect (encourage, not require)
+ *   - stage "connected_free"→ /dashboard (free preview)
+ *   - stage "upgraded"      → /dashboard (full)
  */
 export default async function StartPage() {
     const { userId } = await auth();
@@ -20,15 +22,21 @@ export default async function StartPage() {
         redirect('/sign-up');
     }
 
-    const workspace = await resolveWorkspace(userId);
+    const state = await resolveOnboardingState(userId);
 
-    if (!workspace) {
-        redirect('/onboarding');
+    logOnboardingEvent('sign_up_completed', { userId, metadata: { stage: state.stage } });
+
+    switch (state.stage) {
+        case 'none':
+            redirect('/scan');
+        case 'scanned':
+            // Encourage connection but don't force — they can skip to dashboard
+            redirect('/connect');
+        case 'connected_free':
+            redirect('/dashboard');
+        case 'upgraded':
+            redirect('/dashboard');
+        default:
+            redirect('/scan');
     }
-
-    if (workspace.tier === 'free') {
-        redirect('/checkout');
-    }
-
-    redirect('/dashboard');
 }

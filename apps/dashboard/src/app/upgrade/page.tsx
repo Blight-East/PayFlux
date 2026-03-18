@@ -1,0 +1,53 @@
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { resolveOnboardingState } from '@/lib/onboarding-state';
+import { logOnboardingEvent } from '@/lib/onboarding-events';
+import UpgradeClient from './UpgradeClient';
+
+export const runtime = 'nodejs';
+
+export default async function UpgradePage() {
+    const { userId } = await auth();
+
+    if (!userId) {
+        redirect('/sign-in');
+    }
+
+    const onboarding = await resolveOnboardingState(userId);
+
+    // Already paid — send to dashboard
+    if (onboarding.stage === 'upgraded') {
+        redirect('/dashboard');
+    }
+
+    logOnboardingEvent('upgrade_cta_clicked', {
+        userId,
+        workspaceId: onboarding.workspace?.workspaceId,
+        metadata: {
+            stage: onboarding.stage,
+            source: 'upgrade_page_view',
+        },
+    });
+
+    // Read scan data from org metadata for server-side context
+    let scanContext: {
+        hasStripeConnection: boolean;
+        hasScanCompleted: boolean;
+        stage: string;
+        workspaceId: string | undefined;
+    } = {
+        hasStripeConnection: onboarding.hasStripeConnection,
+        hasScanCompleted: onboarding.hasScanCompleted,
+        stage: onboarding.stage,
+        workspaceId: onboarding.workspace?.workspaceId,
+    };
+
+    return (
+        <UpgradeClient
+            hasStripeConnection={scanContext.hasStripeConnection}
+            hasScanCompleted={scanContext.hasScanCompleted}
+            stage={scanContext.stage}
+            workspaceId={scanContext.workspaceId ?? null}
+        />
+    );
+}

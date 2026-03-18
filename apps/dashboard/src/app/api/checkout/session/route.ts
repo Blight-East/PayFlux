@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${appUrl}/dashboard?checkout=success`,
-        cancel_url: `${appUrl}/checkout?cancelled=true`,
+        cancel_url: `${appUrl}/upgrade?cancelled=true`,
         metadata: {
             workspaceId: workspace.workspaceId,
             workspaceName: workspace.workspaceName,

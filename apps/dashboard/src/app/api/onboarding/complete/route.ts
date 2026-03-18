@@ -1,36 +1,22 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { logStageTransition } from '@/lib/onboarding-events';
+
+export const runtime = 'nodejs';
 
 /**
  * POST /api/onboarding/complete
- * 
- * Marks user's onboarding as complete.
- * 
- * Body:
- * - mode: 'UI_SCAN' | 'API_FIRST' | 'NO_SITE'
- * 
- * PRODUCTION BLOCKER:
- * - No database client configured
- * - Cannot persist onboarding state
- * - Completion is logged but NOT stored
- * 
- * NOTE: Onboarding completion is enforced at the UI/middleware level only.
- * Persistence will be added once database infrastructure exists.
- * 
- * Current behavior:
- * - Logs completion event
- * - Returns success response
- * - Does NOT persist to database
- * - State does NOT survive session/page refresh
+ *
+ * Marks user's onboarding scan as complete.
+ * Persists `onboardingScanCompleted: true` to Clerk org publicMetadata.
+ *
+ * Body: { mode: 'UI_SCAN' | 'API_FIRST' | 'NO_SITE' }
  */
 export async function POST(request: Request) {
     const { userId } = await auth();
 
     if (!userId) {
-        return NextResponse.json(
-            { error: 'Unauthorized' },
-            { status: 401 }
-        );
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
@@ -38,30 +24,38 @@ export async function POST(request: Request) {
         const { mode } = body;
 
         if (!mode || !['UI_SCAN', 'API_FIRST', 'NO_SITE'].includes(mode)) {
-            return NextResponse.json(
-                { error: 'Invalid mode' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
         }
 
-        // TODO: Update database with onboarding completion
-        // For now, this is a placeholder that returns success
-        // The actual state is managed in the account resolver mock
+        // Persist scan completion to Clerk org publicMetadata
+        const client = await clerkClient();
+        const memberships = await client.users.getOrganizationMembershipList({ userId });
 
-        // In production:
-        // await db.accounts.update({
-        //     where: { userId },
-        //     data: {
-        //         onboarding: {
-        //             completed: true,
-        //             step: 'VALUE_REALIZED',
-        //             completedAt: new Date().toISOString(),
-        //             mode,
-        //         },
-        //     },
-        // });
+        if (memberships.data && memberships.data.length > 0) {
+            const org = memberships.data.sort(
+                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            )[0].organization;
 
-        console.log(`[Onboarding] User ${userId} completed onboarding via ${mode}`);
+            await client.organizations.updateOrganizationMetadata(org.id, {
+                publicMetadata: {
+                    ...((org.publicMetadata as Record<string, unknown>) ?? {}),
+                    onboardingScanCompleted: true,
+                    onboardingScanCompletedAt: new Date().toISOString(),
+                    onboardingScanMode: mode,
+                },
+            });
+
+            console.log(`[ONBOARDING_EVENT] ${JSON.stringify({
+                event: 'scan_completed',
+                userId,
+                workspaceId: org.id,
+                metadata: { mode },
+                timestamp: new Date().toISOString(),
+            })}`);
+
+            // Emit stage transition: none → scanned
+            logStageTransition('none', 'scanned', { userId, workspaceId: org.id });
+        }
 
         return NextResponse.json({
             success: true,
@@ -74,9 +68,6 @@ export async function POST(request: Request) {
         });
     } catch (error) {
         console.error('[Onboarding] Error completing onboarding:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

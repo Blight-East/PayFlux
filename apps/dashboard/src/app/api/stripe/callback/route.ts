@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { validateAndConsumeState } from '@/lib/oauth-state';
+import { logStageTransition } from '@/lib/onboarding-events';
 
 export async function GET(req: NextRequest) {
     const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
     const ssk = process.env.STRIPE_SECRET_KEY;
     if (!pk?.startsWith("pk_") || !sk?.startsWith("sk_") || !ssk) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        return NextResponse.redirect(new URL("/onboarding?err=stripe_connect_failed", baseUrl));
+        return NextResponse.redirect(new URL("/connect?err=stripe_connect_failed", baseUrl));
     }
 
     const { auth, clerkClient } = await import("@clerk/nextjs/server");
@@ -31,11 +32,11 @@ export async function GET(req: NextRequest) {
 
     if (error) {
         console.error('Stripe OAuth error:', error, errorDescription);
-        return NextResponse.redirect(`${baseUrl}/onboarding?err=stripe_connect_failed`);
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
     }
 
     if (!code || !state) {
-        return NextResponse.redirect(`${baseUrl}/onboarding?err=stripe_connect_failed`);
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
     }
 
     // 1) Verify the request is associated with an authenticated Clerk user
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
     const oauthState = await validateAndConsumeState(state, userId);
     if (!oauthState) {
         console.error('Hardened State Validation Failed');
-        return NextResponse.redirect(`${baseUrl}/onboarding?err=invalid_state`);
+        return NextResponse.redirect(`${baseUrl}/connect?err=invalid_state`);
     }
 
     try {
@@ -79,11 +80,21 @@ export async function GET(req: NextRequest) {
 
         console.log(`Successfully persisted Stripe Account: ${stripeAccountId} to Clerk Org: ${activeOrgId}`);
 
-        // 5) Redirect to /evidence on success
-        return NextResponse.redirect(`${baseUrl}/evidence`);
+        console.log(`[ONBOARDING_EVENT] ${JSON.stringify({
+            event: 'connect_completed',
+            userId,
+            workspaceId: activeOrgId,
+            timestamp: new Date().toISOString(),
+        })}`);
+
+        // Emit stage transition: scanned → connected_free
+        logStageTransition('scanned', 'connected_free', { userId, workspaceId: activeOrgId });
+
+        // 5) Redirect to dashboard on success
+        return NextResponse.redirect(`${baseUrl}/dashboard`);
     } catch (err: any) {
         console.error('Stripe Connection Failure (Safely Logged):', err.message);
         // 6) On any failure, redirect to /onboarding?err=stripe_connect_failed
-        return NextResponse.redirect(`${baseUrl}/onboarding?err=stripe_connect_failed`);
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
     }
 }
