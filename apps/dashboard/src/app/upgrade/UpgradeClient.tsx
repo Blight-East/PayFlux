@@ -1,23 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Lock, TrendingUp, Shield, FileCheck } from 'lucide-react';
+import { TrendingUp, Shield, FileCheck } from 'lucide-react';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
-
-interface ScanData {
-    url: string;
-    data: {
-        riskLabel?: string;
-        riskScore?: number;
-        stabilityScore?: number;
-        findings?: Array<{
-            title: string;
-            description: string;
-            severity?: string;
-        }>;
-    };
-}
+import { useScanData } from '@/lib/use-scan-data';
 
 interface UpgradeClientProps {
     hasStripeConnection: boolean;
@@ -49,15 +36,8 @@ function contextualHeadline(label?: string, hasConnection?: boolean): string {
 }
 
 export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, stage, workspaceId }: UpgradeClientProps) {
-    const [scanData, setScanData] = useState<ScanData | null>(null);
+    const { scanData } = useScanData();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
-
-    useEffect(() => {
-        const stored = sessionStorage.getItem('payflux_scan_result');
-        if (stored) {
-            try { setScanData(JSON.parse(stored)); } catch { /* silent */ }
-        }
-    }, []);
 
     const score = scanData?.data?.stabilityScore ?? scanData?.data?.riskScore ?? null;
     const label = scanData?.data?.riskLabel ?? null;
@@ -273,6 +253,13 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             'Start Pro monitoring'
                         )}
                     </button>
+
+                    {/* Explanation for disabled state */}
+                    {!workspaceId && (
+                        <p className="text-center text-xs text-slate-600 mt-2">
+                            Complete your scan first to set up your workspace.
+                        </p>
+                    )}
 
                     {/* Secondary */}
                     <Link

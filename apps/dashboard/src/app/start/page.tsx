@@ -24,7 +24,11 @@ export default async function StartPage() {
 
     const state = await resolveOnboardingState(userId);
 
-    logOnboardingEvent('sign_up_completed', { userId, metadata: { stage: state.stage } });
+    // Only emit sign_up_completed for genuinely new users (stage "none").
+    // Returning users hit /start on every visit — don't pollute telemetry.
+    if (state.stage === 'none') {
+        logOnboardingEvent('sign_up_completed', { userId, metadata: { stage: state.stage } });
+    }
 
     switch (state.stage) {
         case 'none':

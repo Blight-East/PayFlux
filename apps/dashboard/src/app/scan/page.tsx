@@ -59,11 +59,19 @@ export default function ScanPage() {
             // Store result for results page
             sessionStorage.setItem('payflux_scan_result', JSON.stringify({ url: url.trim(), data }));
 
-            // Persist scan completion to Clerk org metadata
+            // Persist scan completion + summary to Clerk org metadata
             await fetch('/api/onboarding/complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode: 'UI_SCAN' }),
+                body: JSON.stringify({
+                    mode: 'UI_SCAN',
+                    scanResult: {
+                        url: url.trim(),
+                        riskLabel: data.riskLabel,
+                        stabilityScore: data.stabilityScore ?? data.riskScore,
+                        findings: data.findings,
+                    },
+                }),
             });
 
             logOnboardingEventClient('scan_completed', {

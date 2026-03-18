@@ -8,9 +8,12 @@ export const runtime = 'nodejs';
  * POST /api/onboarding/complete
  *
  * Marks user's onboarding scan as complete.
- * Persists `onboardingScanCompleted: true` to Clerk org publicMetadata.
+ * Persists scan completion flag AND scan summary to Clerk org publicMetadata.
  *
- * Body: { mode: 'UI_SCAN' | 'API_FIRST' | 'NO_SITE' }
+ * Body: {
+ *   mode: 'UI_SCAN' | 'API_FIRST' | 'NO_SITE',
+ *   scanResult?: { url, riskLabel, stabilityScore, findings }
+ * }
  */
 export async function POST(request: Request) {
     const { userId } = await auth();
@@ -21,13 +24,13 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { mode } = body;
+        const { mode, scanResult } = body;
 
         if (!mode || !['UI_SCAN', 'API_FIRST', 'NO_SITE'].includes(mode)) {
             return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
         }
 
-        // Persist scan completion to Clerk org publicMetadata
+        // Persist scan completion + summary to Clerk org publicMetadata
         const client = await clerkClient();
         const memberships = await client.users.getOrganizationMembershipList({ userId });
 
@@ -36,12 +39,29 @@ export async function POST(request: Request) {
                 (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
             )[0].organization;
 
+            // Build scan summary for durable persistence (keeps metadata small — ~1KB)
+            const scanSummary = scanResult ? {
+                url: String(scanResult.url ?? '').slice(0, 200),
+                riskLabel: String(scanResult.riskLabel ?? ''),
+                stabilityScore: Number(scanResult.stabilityScore ?? 0),
+                findingsCount: Array.isArray(scanResult.findings) ? scanResult.findings.length : 0,
+                findings: Array.isArray(scanResult.findings)
+                    ? scanResult.findings.slice(0, 5).map((f: any) => ({
+                        title: String(f.title ?? '').slice(0, 200),
+                        description: String(f.description ?? '').slice(0, 300),
+                        severity: String(f.severity ?? ''),
+                    }))
+                    : [],
+                scannedAt: new Date().toISOString(),
+            } : undefined;
+
             await client.organizations.updateOrganizationMetadata(org.id, {
                 publicMetadata: {
                     ...((org.publicMetadata as Record<string, unknown>) ?? {}),
                     onboardingScanCompleted: true,
                     onboardingScanCompletedAt: new Date().toISOString(),
                     onboardingScanMode: mode,
+                    ...(scanSummary ? { onboardingScanResult: scanSummary } : {}),
                 },
             });
 

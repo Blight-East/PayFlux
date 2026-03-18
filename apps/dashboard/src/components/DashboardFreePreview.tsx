@@ -1,29 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import { Lock } from 'lucide-react';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
+import { useScanData } from '@/lib/use-scan-data';
 import Link from 'next/link';
 
 interface DashboardFreePreviewProps {
     host: string | null;
     hasStripeConnection: boolean;
     onboardingStage: string;
-}
-
-interface ScanData {
-    url: string;
-    data: {
-        riskLabel?: string;
-        riskScore?: number;
-        stabilityScore?: number;
-        findings?: Array<{
-            title: string;
-            description: string;
-            severity?: string;
-        }>;
-    };
 }
 
 function riskBandColor(label?: string) {
@@ -35,18 +22,10 @@ function riskBandColor(label?: string) {
 }
 
 export default function DashboardFreePreview({ host, hasStripeConnection, onboardingStage }: DashboardFreePreviewProps) {
-    const [scanData, setScanData] = useState<ScanData | null>(null);
+    const { scanData } = useScanData();
 
     useEffect(() => {
         logOnboardingEventClient('dashboard_preview_viewed');
-
-        // Load scan data from sessionStorage
-        const stored = sessionStorage.getItem('payflux_scan_result');
-        if (stored) {
-            try {
-                setScanData(JSON.parse(stored));
-            } catch { /* silent */ }
-        }
     }, []);
 
     const score = scanData?.data?.stabilityScore ?? scanData?.data?.riskScore ?? null;

@@ -1,23 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
-
-interface ScanResult {
-    url: string;
-    data: {
-        riskLabel?: string;
-        riskScore?: number;
-        stabilityScore?: number;
-        findings?: Array<{
-            title: string;
-            description: string;
-            severity?: string;
-        }>;
-    };
-}
+import { useScanData } from '@/lib/use-scan-data';
 
 const SEVERITY_STYLE: Record<string, string> = {
     high: 'bg-red-500/10 text-red-400 border-red-500/20',
@@ -45,20 +32,16 @@ function riskSummary(score: number, findingsCount: number): string {
 
 export default function ScanResultsPage() {
     const router = useRouter();
-    const [result, setResult] = useState<ScanResult | null>(null);
+    const { scanData: result, loading } = useScanData();
 
     useEffect(() => {
-        const stored = sessionStorage.getItem('payflux_scan_result');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            setResult(parsed);
-            // Don't clear — user may refresh
-        } else {
+        // Only redirect to /scan if loading is complete and no data exists anywhere
+        if (!loading && !result) {
             router.push('/scan');
         }
-    }, [router]);
+    }, [loading, result, router]);
 
-    if (!result) {
+    if (loading || !result) {
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center">
                 <div className="text-center">
