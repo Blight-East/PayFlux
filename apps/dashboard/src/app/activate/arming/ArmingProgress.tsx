@@ -241,6 +241,9 @@ export default function ArmingProgress() {
                                             {windows.t30.trappedBps.toLocaleString()}
                                         </p>
                                         <p className="text-[10px] text-slate-600">trapped bps</p>
+                                        <p className="text-[10px] text-slate-500 mt-1">
+                                            ≈ {(windows.t30.trappedBps / 100).toFixed(1)}% of volume
+                                        </p>
                                     </div>
                                     <div className="bg-slate-800/40 rounded-lg px-3 py-2.5">
                                         <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">T+60</p>
@@ -248,6 +251,9 @@ export default function ArmingProgress() {
                                             {windows.t60.trappedBps.toLocaleString()}
                                         </p>
                                         <p className="text-[10px] text-slate-600">trapped bps</p>
+                                        <p className="text-[10px] text-slate-500 mt-1">
+                                            ≈ {(windows.t60.trappedBps / 100).toFixed(1)}% of volume
+                                        </p>
                                     </div>
                                     <div className="bg-slate-800/40 rounded-lg px-3 py-2.5">
                                         <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">T+90</p>
@@ -255,6 +261,9 @@ export default function ArmingProgress() {
                                             {windows.t90.trappedBps.toLocaleString()}
                                         </p>
                                         <p className="text-[10px] text-slate-600">trapped bps</p>
+                                        <p className="text-[10px] text-slate-500 mt-1">
+                                            ≈ {(windows.t90.trappedBps / 100).toFixed(1)}% of volume
+                                        </p>
                                     </div>
                                 </div>
                             </div>
