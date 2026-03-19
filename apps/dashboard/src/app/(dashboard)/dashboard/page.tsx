@@ -2,9 +2,11 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { resolveWorkspace } from '@/lib/resolve-workspace';
 import { resolveOnboardingState } from '@/lib/onboarding-state';
+import { resolveActivationStatus } from '@/lib/activation-state';
 import { RiskIntelligence } from '@/lib/risk-infra';
 import ProjectionRoot from '@/components/ProjectionRoot';
 import DashboardFreePreview from '@/components/DashboardFreePreview';
+import ActivationBanner from '@/components/ActivationBanner';
 
 export default async function DashboardPage() {
     const { userId } = await auth();
@@ -41,7 +43,11 @@ export default async function DashboardPage() {
         );
     }
 
-    // Paid tier → full projection dashboard
+    // Paid tier — check activation state for proper UX
+    const activation = await resolveActivationStatus(userId);
+    const isActivated = activation?.state === 'live_monitored';
+    const isWarming = activation?.state === 'connected_generating';
+
     let primaryHost: string | null = null;
     try {
         const snapshots = await RiskIntelligence.getAllSnapshots();
@@ -50,5 +56,15 @@ export default async function DashboardPage() {
         }
     } catch { /* non-fatal */ }
 
-    return <ProjectionRoot tier={workspace.tier} host={primaryHost} />;
+    return (
+        <div>
+            {/* Show activation status banner for freshly activated or still-warming workspaces */}
+            <ActivationBanner
+                isActivated={isActivated}
+                isWarming={isWarming}
+                activationMeta={activation?.meta}
+            />
+            <ProjectionRoot tier={workspace.tier} host={primaryHost} />
+        </div>
+    );
 }

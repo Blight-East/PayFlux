@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { validateAndConsumeState } from '@/lib/oauth-state';
-import { logStageTransition } from '@/lib/onboarding-events';
+import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
 
 export async function GET(req: NextRequest) {
     const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -80,17 +80,21 @@ export async function GET(req: NextRequest) {
 
         console.log(`Successfully persisted Stripe Account: ${stripeAccountId} to Clerk Org: ${activeOrgId}`);
 
-        console.log(`[ONBOARDING_EVENT] ${JSON.stringify({
-            event: 'connect_completed',
+        logOnboardingEvent('connect_completed', {
             userId,
             workspaceId: activeOrgId,
-            timestamp: new Date().toISOString(),
-        })}`);
+            metadata: { stripeAccountId },
+        });
 
         // Emit stage transition: scanned → connected_free
         logStageTransition('scanned', 'connected_free', { userId, workspaceId: activeOrgId });
 
-        // 5) Redirect to dashboard on success
+        // 5) Check if user is paid — route to activation arming if so, otherwise dashboard
+        const org = await client.organizations.getOrganization({ organizationId: activeOrgId });
+        const tier = (org.publicMetadata as Record<string, unknown>)?.tier;
+        if (tier === 'pro' || tier === 'enterprise') {
+            return NextResponse.redirect(`${baseUrl}/activate/arming`);
+        }
         return NextResponse.redirect(`${baseUrl}/dashboard`);
     } catch (err: any) {
         console.error('Stripe Connection Failure (Safely Logged):', err.message);

@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { redirect } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { resolveOnboardingState } from '@/lib/onboarding-state';
+import { resolveActivationStatus } from '@/lib/activation-state';
 
 export default async function DashboardLayout({
     children,
@@ -22,6 +23,22 @@ export default async function DashboardLayout({
     // No workspace → route to scan (same as /start for stage "none")
     if (!onboarding.workspace) {
         redirect('/scan');
+    }
+
+    // ── Activation-aware routing for paid users ────────────────────────────
+    // If user is paid but hasn't completed activation, route them into the
+    // activation flow instead of showing an empty dashboard.
+    if (onboarding.workspace.tier === 'pro' || onboarding.workspace.tier === 'enterprise') {
+        const activation = await resolveActivationStatus(userId);
+        if (activation) {
+            if (activation.state === 'paid_unconnected') {
+                redirect('/activate');
+            }
+            if (activation.state === 'connected_generating') {
+                redirect('/activate/arming');
+            }
+            // live_monitored → continue to dashboard (fall through)
+        }
     }
 
     // IMPORTANT: Free-tier users see a limited dashboard preview.

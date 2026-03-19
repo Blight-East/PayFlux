@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { clerkClient } from '@clerk/nextjs/server';
+import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -94,9 +95,16 @@ async function handleCheckoutCompleted(session: any) {
     try {
         const clerk = await clerkClient();
         await clerk.organizations.updateOrganization(workspaceId, {
-            publicMetadata: { tier: 'pro' },
+            publicMetadata: { tier: 'pro', activationState: 'paid_unconnected' },
         });
         console.log(`[CHECKOUT_COMPLETED] Upgraded workspace ${workspaceId} to pro`);
+
+        logOnboardingEvent('upgrade_completed', {
+            workspaceId,
+            metadata: { sessionId: session.id },
+        });
+
+        logStageTransition('connected_free', 'upgraded', { workspaceId });
     } catch (err) {
         console.error('[CHECKOUT_COMPLETED] Failed to update Clerk org tier:', err);
     }

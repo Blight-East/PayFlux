@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { resolveOnboardingState } from '@/lib/onboarding-state';
-import { logOnboardingEvent } from '@/lib/onboarding-events';
+import { resolveActivationStatus } from '@/lib/activation-state';
+import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 export const runtime = 'nodejs';
 
@@ -13,7 +14,7 @@ export const runtime = 'nodejs';
  *   - stage "none"          → /scan
  *   - stage "scanned"       → /connect (encourage, not require)
  *   - stage "connected_free"→ /dashboard (free preview)
- *   - stage "upgraded"      → /dashboard (full)
+ *   - stage "upgraded"      → /activate (post-purchase activation flow)
  */
 export default async function StartPage() {
     const { userId } = await auth();
@@ -38,8 +39,14 @@ export default async function StartPage() {
             redirect('/connect');
         case 'connected_free':
             redirect('/dashboard');
-        case 'upgraded':
-            redirect('/dashboard');
+        case 'upgraded': {
+            // Route through activation flow — it handles all sub-states
+            const activation = await resolveActivationStatus(userId);
+            if (activation?.state === 'live_monitored') {
+                redirect('/dashboard');
+            }
+            redirect('/activate');
+        }
         default:
             redirect('/scan');
     }

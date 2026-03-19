@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 import Stripe from 'stripe';
 
 export const runtime = 'nodejs';
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${appUrl}/dashboard?checkout=success`,
+        success_url: `${appUrl}/activate`,
         cancel_url: `${appUrl}/upgrade?cancelled=true`,
         metadata: {
             workspaceId: workspace.workspaceId,
@@ -61,6 +62,13 @@ export async function POST(request: Request) {
                 workspaceId: workspace.workspaceId,
             },
         },
+    });
+
+    // Emit checkout_started — user is being redirected to Stripe
+    logOnboardingEvent('checkout_started', {
+        userId,
+        workspaceId: workspace.workspaceId,
+        metadata: { sessionId: session.id },
     });
 
     return NextResponse.json({ url: session.url });
