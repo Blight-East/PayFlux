@@ -101,7 +101,7 @@ function ReportBody({ data }: { data: any }) {
                     <div className="text-xs font-semibold uppercase tracking-wider mb-1">Projected Capital Exposure</div>
                     {cf.projectedExposure?.map((w: any) => (
                         <div key={w.windowDays} className="flex justify-between py-0.5">
-                            <span>{w.windowDays}-day</span>
+                            <span>{w.windowDays}-day outlook</span>
                             <span>
                                 {w.worstCaseTrappedUSD !== undefined
                                     ? `${fmtUSD(w.worstCaseTrappedUSD)} (${(w.worstCaseTrappedBps / 100).toFixed(2)}%)`
@@ -210,7 +210,7 @@ function ReportBody({ data }: { data: any }) {
                                     <Row label="Reserve Rate" value={fmtRate(r.appliedConstants.worstCaseReserveRate)} />
                                     {r.windowOutputs?.find((w: any) => w.windowDays === 90) && (
                                         <Row
-                                            label="Capital at risk (90-day)"
+                                            label="Capital at risk (90-day outlook)"
                                             value={
                                                 r.windowOutputs.find((w: any) => w.windowDays === 90).worstCaseTrappedUSD !== undefined
                                                     ? fmtUSD(r.windowOutputs.find((w: any) => w.windowDays === 90).worstCaseTrappedUSD)

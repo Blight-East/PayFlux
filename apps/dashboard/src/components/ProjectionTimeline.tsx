@@ -252,7 +252,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                     {/* Primary window */}
                     {primary && (
                         <div className="border-t border-slate-800 pt-2">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Capital at risk (90-day)</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Capital at risk (90-day outlook)</span>
                             <div className="flex items-baseline space-x-3">
                                 {primary.worstCaseTrappedUSD !== undefined ? (
                                     <span className="text-base font-mono font-bold text-slate-100">{formatUSD(primary.worstCaseTrappedUSD)}</span>

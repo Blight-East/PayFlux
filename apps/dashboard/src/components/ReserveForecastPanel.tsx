@@ -307,7 +307,7 @@ function ForbiddenState() {
                 <div className="space-y-2">
                     <h3 className="text-sm font-semibold text-slate-200">Projection Access: Restricted</h3>
                     <p className="text-xs text-slate-500 font-mono leading-relaxed">
-                        Scope: Pro. Reserve projections (90-day, 120-day, 180-day) unavailable at current tier.
+                        Scope: Pro. Reserve projections (90-day, 120-day, 180-day outlook) unavailable at current tier.
                     </p>
                 </div>
             </div>
@@ -316,7 +316,7 @@ function ForbiddenState() {
             <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-slate-900/50 rounded-lg">
                     <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Windows</span>
-                    <span className="text-xs text-slate-400 font-mono">90 / 120 / 180 days</span>
+                    <span className="text-xs text-slate-400 font-mono">90 / 120 / 180-day outlook</span>
                 </div>
                 <div className="p-3 bg-slate-900/50 rounded-lg">
                     <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Scenarios</span>
@@ -423,11 +423,11 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
                         </div>
                     </div>
 
-                    {/* Primary Window — 90d highlighted */}
+                    {/* Primary Window — 90-day highlighted */}
                     {primary && (
                         <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg">
                             <div className="flex items-center justify-between mb-4">
-                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">90-Day Reserve Window</span>
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">90-Day Outlook</span>
                                 <span className="text-[10px] text-gray-400">Primary Hold Period</span>
                             </div>
                             <div className="grid grid-cols-2 gap-6">
@@ -475,7 +475,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
                             <tbody>
                                 {data.reserveProjections.map((p) => (
                                     <tr key={p.windowDays} className={`border-b border-gray-100 ${p.windowDays === 90 ? 'bg-gray-50 font-semibold' : ''}`}>
-                                        <td className="py-2.5 text-gray-900">{p.windowDays} days</td>
+                                        <td className="py-2.5 text-gray-900">{p.windowDays}-day outlook</td>
                                         <td className="py-2.5 text-right text-gray-700">{formatRate(p.baseReserveRate)}</td>
                                         <td className="py-2.5 text-right text-red-700">{formatRate(p.worstCaseReserveRate)}</td>
                                         {hasUSD && <td className="py-2.5 text-right text-gray-900">{p.projectedTrappedUSD !== undefined ? formatUSD(p.projectedTrappedUSD) : '—'}</td>}
@@ -773,7 +773,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                             </div>
                         )}
 
-                        {/* Reserve Windows — 90d gets primary operational emphasis */}
+                        {/* Reserve Windows — 90-day gets primary operational emphasis */}
                         <div className="grid grid-cols-3 gap-3 mt-6">
                             {data.reserveProjections.map((projection) => (
                                 <WindowCard

@@ -183,15 +183,15 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                         <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-4">Capital At Risk</h3>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">30-day</p>
+                                <p className="text-[10px] text-slate-600">30-day outlook</p>
                                 <p className="text-lg font-bold text-white mt-1">$—</p>
                             </div>
                             <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">60-day</p>
+                                <p className="text-[10px] text-slate-600">60-day outlook</p>
                                 <p className="text-lg font-bold text-white mt-1">$—</p>
                             </div>
                             <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">90-day</p>
+                                <p className="text-[10px] text-slate-600">90-day outlook</p>
                                 <p className="text-lg font-bold text-white mt-1">$—</p>
                             </div>
                         </div>
