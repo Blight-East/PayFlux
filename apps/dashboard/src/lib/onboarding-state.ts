@@ -55,7 +55,9 @@ export async function resolveOnboardingState(userId: string): Promise<Onboarding
         };
     }
 
-    // Check Stripe connection from org metadata
+    // Check Stripe connection from org metadata.
+    // IMPORTANT: Fetch the org directly via getOrganization() to avoid stale embedded
+    // data from getOrganizationMembershipList(). Same fix as activation-state.ts.
     let hasStripeConnection = false;
     let hasScanCompleted = false;
 
@@ -63,9 +65,13 @@ export async function resolveOnboardingState(userId: string): Promise<Onboarding
         const client = await clerkClient();
         const memberships = await client.users.getOrganizationMembershipList({ userId });
         if (memberships.data && memberships.data.length > 0) {
-            const org = memberships.data.sort(
+            const oldestMembership = memberships.data.sort(
                 (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            )[0].organization;
+            )[0];
+            // Direct fetch — always returns fresh metadata
+            const org = await client.organizations.getOrganization({
+                organizationId: oldestMembership.organization.id,
+            });
 
             const meta = org.publicMetadata as Record<string, unknown> | undefined;
             hasStripeConnection = typeof meta?.stripeAccountId === 'string' && meta.stripeAccountId.length > 0;

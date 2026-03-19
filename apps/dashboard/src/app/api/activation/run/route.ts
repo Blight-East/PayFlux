@@ -235,9 +235,13 @@ export async function GET() {
         return NextResponse.json({ error: 'No organization' }, { status: 404 });
     }
 
-    const org = memberships.data.sort(
+    // Direct fetch — the embedded org from membership list can be stale
+    const oldestMembership = memberships.data.sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    )[0].organization;
+    )[0];
+    const org = await client.organizations.getOrganization({
+        organizationId: oldestMembership.organization.id,
+    });
 
     const meta = (org.publicMetadata as Record<string, unknown>) || {};
 

@@ -51,15 +51,24 @@ export async function resolveActivationStatus(userId: string): Promise<Activatio
         return null;
     }
 
-    // Fetch org metadata for activation conditions
+    // Fetch org metadata for activation conditions.
+    // IMPORTANT: Fetch the org directly via getOrganization() — do NOT rely on the
+    // embedded organization object from getOrganizationMembershipList(). The embedded
+    // copy can be stale immediately after a metadata update (e.g., callback just wrote
+    // stripeAccountId), causing the state to resolve as paid_unconnected and loop the
+    // user back to the Connect Stripe page.
     let orgMeta: Record<string, unknown> = {};
     try {
         const client = await clerkClient();
         const memberships = await client.users.getOrganizationMembershipList({ userId });
         if (memberships.data && memberships.data.length > 0) {
-            const org = memberships.data.sort(
+            const oldestMembership = memberships.data.sort(
                 (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            )[0].organization;
+            )[0];
+            // Direct fetch — always returns fresh metadata
+            const org = await client.organizations.getOrganization({
+                organizationId: oldestMembership.organization.id,
+            });
             orgMeta = (org.publicMetadata as Record<string, unknown>) || {};
         }
     } catch {

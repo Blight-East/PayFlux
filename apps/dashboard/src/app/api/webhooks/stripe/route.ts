@@ -94,7 +94,11 @@ async function handleCheckoutCompleted(session: any) {
 
     try {
         const clerk = await clerkClient();
-        await clerk.organizations.updateOrganization(workspaceId, {
+        // IMPORTANT: Use updateOrganizationMetadata (merge) not updateOrganization (replace).
+        // updateOrganization replaces the ENTIRE publicMetadata object, which wipes
+        // stripeAccountId, stripeConnectedAt, onboardingScanCompleted, etc.
+        // updateOrganizationMetadata shallow-merges, preserving existing fields.
+        await clerk.organizations.updateOrganizationMetadata(workspaceId, {
             publicMetadata: { tier: 'pro', activationState: 'paid_unconnected' },
         });
         console.log(`[CHECKOUT_COMPLETED] Upgraded workspace ${workspaceId} to pro`);
@@ -120,7 +124,8 @@ async function handleSubscriptionDeleted(subscription: any) {
 
     try {
         const clerk = await clerkClient();
-        await clerk.organizations.updateOrganization(workspaceId, {
+        // Use updateOrganizationMetadata (merge) to preserve existing fields
+        await clerk.organizations.updateOrganizationMetadata(workspaceId, {
             publicMetadata: { tier: 'free' },
         });
         console.log(`[SUBSCRIPTION_DELETED] Downgraded workspace ${workspaceId} to free`);
