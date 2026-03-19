@@ -101,11 +101,11 @@ function ReportBody({ data }: { data: any }) {
                     <div className="text-xs font-semibold uppercase tracking-wider mb-1">Projected Capital Exposure</div>
                     {cf.projectedExposure?.map((w: any) => (
                         <div key={w.windowDays} className="flex justify-between py-0.5">
-                            <span>T+{w.windowDays}</span>
+                            <span>{w.windowDays}-day</span>
                             <span>
                                 {w.worstCaseTrappedUSD !== undefined
-                                    ? `${fmtUSD(w.worstCaseTrappedUSD)} (${w.worstCaseTrappedBps} bps)`
-                                    : `${w.worstCaseTrappedBps} bps`
+                                    ? `${fmtUSD(w.worstCaseTrappedUSD)} (${(w.worstCaseTrappedBps / 100).toFixed(2)}%)`
+                                    : `${(w.worstCaseTrappedBps / 100).toFixed(2)}% (${w.worstCaseTrappedBps} bps)`
                                 }
                             </span>
                         </div>
@@ -144,7 +144,7 @@ function ReportBody({ data }: { data: any }) {
                         <Row label="Total Projections" value={ma.totalProjections} />
                         <Row label="Tier Forecast Accuracy" value={ma.tierPredictionAccuracy !== null ? `${ma.tierPredictionAccuracy}%` : 'Insufficient data'} />
                         <Row label="Trend Forecast Accuracy" value={ma.trendPredictionAccuracy !== null ? `${ma.trendPredictionAccuracy}%` : 'Insufficient data'} />
-                        <Row label="Mean Reserve Variance" value={ma.meanReserveVarianceBps !== null ? `±${ma.meanReserveVarianceBps} bps` : 'Insufficient data'} />
+                        <Row label="Mean Reserve Variance" value={ma.meanReserveVarianceBps !== null ? `±${(ma.meanReserveVarianceBps / 100).toFixed(2)}% (${ma.meanReserveVarianceBps} bps)` : 'Insufficient data'} />
                         <Row label="Evaluation Window" value={`${ma.evaluationWindowHours}h`} />
                         {ma.versionStability && (
                             <>
@@ -177,7 +177,7 @@ function ReportBody({ data }: { data: any }) {
                                                     {r.trendAccurate ? '✓' : '✗'}
                                                 </td>
                                                 <td className="text-right py-0.5">
-                                                    {r.reserveRateVarianceBps >= 0 ? '+' : ''}{r.reserveRateVarianceBps} bps
+                                                    {r.reserveRateVarianceBps >= 0 ? '+' : ''}{(r.reserveRateVarianceBps / 100).toFixed(2)}%
                                                 </td>
                                             </tr>
                                         ))}
@@ -210,11 +210,11 @@ function ReportBody({ data }: { data: any }) {
                                     <Row label="Reserve Rate" value={fmtRate(r.appliedConstants.worstCaseReserveRate)} />
                                     {r.windowOutputs?.find((w: any) => w.windowDays === 90) && (
                                         <Row
-                                            label="Capital At Risk (T+90)"
+                                            label="Capital at risk (90-day)"
                                             value={
                                                 r.windowOutputs.find((w: any) => w.windowDays === 90).worstCaseTrappedUSD !== undefined
                                                     ? fmtUSD(r.windowOutputs.find((w: any) => w.windowDays === 90).worstCaseTrappedUSD)
-                                                    : `${r.windowOutputs.find((w: any) => w.windowDays === 90).worstCaseTrappedBps} bps`
+                                                    : `${(r.windowOutputs.find((w: any) => w.windowDays === 90).worstCaseTrappedBps / 100).toFixed(2)}%`
                                             }
                                         />
                                     )}

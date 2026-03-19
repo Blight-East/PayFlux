@@ -164,7 +164,7 @@ function ModelAccuracy({ accuracy }: { accuracy: Accuracy }) {
                 <div>
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Forecast Variance</span>
                     <span className="text-lg font-mono font-bold text-slate-200">
-                        {accuracy.meanReserveVarianceBps !== null ? `±${accuracy.meanReserveVarianceBps} bps` : '—'}
+                        {accuracy.meanReserveVarianceBps !== null ? `±${(accuracy.meanReserveVarianceBps / 100).toFixed(2)}%` : '—'}
                     </span>
                 </div>
                 <div>
@@ -252,12 +252,12 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                     {/* Primary window */}
                     {primary && (
                         <div className="border-t border-slate-800 pt-2">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Capital At Risk (T+90)</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Capital at risk (90-day)</span>
                             <div className="flex items-baseline space-x-3">
                                 {primary.worstCaseTrappedUSD !== undefined ? (
                                     <span className="text-base font-mono font-bold text-slate-100">{formatUSD(primary.worstCaseTrappedUSD)}</span>
                                 ) : (
-                                    <span className="text-base font-mono font-bold text-slate-100">{primary.worstCaseTrappedBps} bps</span>
+                                    <span className="text-base font-mono font-bold text-slate-100">{(primary.worstCaseTrappedBps / 100).toFixed(1)}% <span className="text-xs font-normal text-slate-500">({primary.worstCaseTrappedBps} bps)</span></span>
                                 )}
                                 <span className="text-[10px] text-slate-600 font-mono">escalation scenario</span>
                             </div>
@@ -356,7 +356,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                                         {formatRate(accuracyRecord.projectedReserveRate)} → {formatRate(accuracyRecord.actualReserveRate)}
                                     </span>
                                     <span className={`text-[10px] font-mono block ${Math.abs(accuracyRecord.reserveRateVarianceBps) <= 50 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                        {accuracyRecord.reserveRateVarianceBps >= 0 ? '+' : ''}{accuracyRecord.reserveRateVarianceBps} bps
+                                        {accuracyRecord.reserveRateVarianceBps >= 0 ? '+' : ''}{(accuracyRecord.reserveRateVarianceBps / 100).toFixed(2)}% ({accuracyRecord.reserveRateVarianceBps} bps)
                                     </span>
                                 </div>
                             </div>

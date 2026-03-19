@@ -47,7 +47,7 @@ interface ActivationResponse {
 const STAGES = [
     { key: 'processorConnected', label: 'Connecting processor data', detail: 'Retrieving payment events from your Stripe account...' },
     { key: 'baselineGenerated', label: 'Calculating reserve sensitivity', detail: 'Analyzing failure patterns, retry pressure, geographic entropy...' },
-    { key: 'projectionExists', label: 'Generating first projection', detail: 'Modeling reserve exposure across T+30, T+60, T+90 windows...' },
+    { key: 'projectionExists', label: 'Generating first projection', detail: 'Modeling reserve exposure across 30-day, 60-day, and 90-day windows...' },
     { key: 'alertsArmed', label: 'Arming default alerts', detail: 'Setting up tier escalation, reserve spike, and trend monitors...' },
 ] as const;
 
@@ -196,7 +196,7 @@ export default function ArmingProgress() {
                         {/* Risk surface header */}
                         <div className="px-6 pt-5 pb-4 border-b border-slate-800/60">
                             <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-4">
-                                Baseline risk surface
+                                Baseline risk profile
                             </h2>
                             <div className="flex items-baseline justify-between">
                                 <div>
@@ -231,38 +231,38 @@ export default function ArmingProgress() {
                                         {(rate * 100).toFixed(1)}%
                                     </span>
                                     <span className="ml-1.5 text-xs text-slate-500">
-                                        effective reserve rate
+                                        projected reserve rate
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-3 gap-3">
                                     <div className="bg-slate-800/40 rounded-lg px-3 py-2.5">
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">T+30</p>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">30-day outlook</p>
                                         <p className="text-lg font-bold text-slate-200 tabular-nums mt-0.5">
-                                            {windows.t30.trappedBps.toLocaleString()}
+                                            {(windows.t30.trappedBps / 100).toFixed(1)}%
                                         </p>
-                                        <p className="text-[10px] text-slate-600">trapped bps</p>
+                                        <p className="text-[10px] text-slate-600">projected reserve exposure</p>
                                         <p className="text-[10px] text-slate-500 mt-1">
-                                            ≈ {(windows.t30.trappedBps / 100).toFixed(1)}% of volume
+                                            {windows.t30.trappedBps.toLocaleString()} bps
                                         </p>
                                     </div>
                                     <div className="bg-slate-800/40 rounded-lg px-3 py-2.5">
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">T+60</p>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">60-day outlook</p>
                                         <p className="text-lg font-bold text-slate-200 tabular-nums mt-0.5">
-                                            {windows.t60.trappedBps.toLocaleString()}
+                                            {(windows.t60.trappedBps / 100).toFixed(1)}%
                                         </p>
-                                        <p className="text-[10px] text-slate-600">trapped bps</p>
+                                        <p className="text-[10px] text-slate-600">projected reserve exposure</p>
                                         <p className="text-[10px] text-slate-500 mt-1">
-                                            ≈ {(windows.t60.trappedBps / 100).toFixed(1)}% of volume
+                                            {windows.t60.trappedBps.toLocaleString()} bps
                                         </p>
                                     </div>
                                     <div className="bg-slate-800/40 rounded-lg px-3 py-2.5">
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">T+90</p>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">90-day outlook</p>
                                         <p className="text-lg font-bold text-slate-200 tabular-nums mt-0.5">
-                                            {windows.t90.trappedBps.toLocaleString()}
+                                            {(windows.t90.trappedBps / 100).toFixed(1)}%
                                         </p>
-                                        <p className="text-[10px] text-slate-600">trapped bps</p>
+                                        <p className="text-[10px] text-slate-600">projected reserve exposure</p>
                                         <p className="text-[10px] text-slate-500 mt-1">
-                                            ≈ {(windows.t90.trappedBps / 100).toFixed(1)}% of volume
+                                            {windows.t90.trappedBps.toLocaleString()} bps
                                         </p>
                                     </div>
                                 </div>

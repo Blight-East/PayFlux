@@ -70,7 +70,11 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                     <Link
                         href={!hasStripeConnection ? '/connect' : '/upgrade'}
                         onClick={() => {
-                            if (hasStripeConnection) logOnboardingEventClient('upgrade_cta_clicked', { source: 'banner' });
+                            if (hasStripeConnection) {
+                                logOnboardingEventClient('upgrade_cta_clicked', { source: 'banner' });
+                            } else {
+                                logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_banner' });
+                            }
                         }}
                         className="ml-4 flex-shrink-0 px-4 py-2 bg-amber-500 text-slate-950 text-xs font-semibold rounded-lg hover:bg-amber-400 transition-all no-underline"
                     >
@@ -162,7 +166,7 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                             <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Pro</span>
                         </div>
                         <p className="text-sm text-slate-300 text-center max-w-sm leading-relaxed">
-                            See how much capital your processor could hold at T+30, T+60, and T+90.
+                            See how much capital your processor could hold over the next 30, 60, and 90 days.
                             Reserve holds compound silently — by the time you notice, the capital is already trapped.
                         </p>
                         <Link
@@ -179,15 +183,15 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                         <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-4">Capital At Risk</h3>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">T+30</p>
+                                <p className="text-[10px] text-slate-600">30-day</p>
                                 <p className="text-lg font-bold text-white mt-1">$—</p>
                             </div>
                             <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">T+60</p>
+                                <p className="text-[10px] text-slate-600">60-day</p>
                                 <p className="text-lg font-bold text-white mt-1">$—</p>
                             </div>
                             <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">T+90</p>
+                                <p className="text-[10px] text-slate-600">90-day</p>
                                 <p className="text-lg font-bold text-white mt-1">$—</p>
                             </div>
                         </div>

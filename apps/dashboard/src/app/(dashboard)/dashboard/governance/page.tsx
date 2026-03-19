@@ -72,7 +72,7 @@ export default function GovernancePage() {
                     <div>
                         <div className="text-xs font-bold text-white mb-3">Purpose</div>
                         <p className="text-xs text-slate-400 leading-relaxed">
-                            PayFlux reserve-v1.0.0 projects reserve capital exposure at T+30, T+60, and T+90 windows based on current risk tier, trend direction, and processing volume. The model is deterministic — identical inputs always produce identical outputs.
+                            PayFlux reserve-v1.0.0 projects reserve capital exposure at 30-day, 60-day, and 90-day windows based on current risk tier, trend direction, and processing volume. The model is deterministic — identical inputs always produce identical outputs.
                         </p>
                     </div>
 
@@ -137,7 +137,7 @@ export default function GovernancePage() {
                             <li className="flex gap-2"><span className="text-slate-600 mt-0.5">·</span> The model does not account for processor-specific contractual terms or negotiated thresholds.</li>
                             <li className="flex gap-2"><span className="text-slate-600 mt-0.5">·</span> Tier-to-rate mapping is based on industry-observed ranges, not processor-disclosed formulas.</li>
                             <li className="flex gap-2"><span className="text-slate-600 mt-0.5">·</span> Intervention modeling assumes linear velocity reduction. Actual behavioral changes may be non-linear.</li>
-                            <li className="flex gap-2"><span className="text-slate-600 mt-0.5">·</span> USD projections require monthly TPV input. Without TPV, projections are basis-point only.</li>
+                            <li className="flex gap-2"><span className="text-slate-600 mt-0.5">·</span> USD projections require monthly TPV input. Without TPV, projections are shown as percentages of volume.</li>
                         </ul>
                     </div>
                 </div>

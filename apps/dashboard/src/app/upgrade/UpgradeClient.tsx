@@ -162,7 +162,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             <h3 className="text-sm font-semibold text-white">Reserve Projection</h3>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            See how much capital your processor could hold at T+30, T+60, and T+90 based on your actual payment behavior.
+                            See how much capital your processor could hold over the next 30, 60, and 90 days based on your actual payment behavior.
                             {hasStripeConnection
                                 ? ' With your Stripe connection, projections update continuously as new transactions flow through.'
                                 : ' Once connected, projections reflect your real transaction patterns, not estimates.'

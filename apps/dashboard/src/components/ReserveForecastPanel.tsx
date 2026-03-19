@@ -169,8 +169,8 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
         <div className={`bg-slate-900/50 border ${borderClass} rounded-lg p-5 space-y-4 transition-all duration-300`}>
             {/* Window Header */}
             <div className="flex items-center justify-between">
-                <span className="text-lg font-semibold text-white">{projection.windowDays}d</span>
-                <span className="text-[10px] text-slate-600 uppercase tracking-wider">Rolling Reserve</span>
+                <span className="text-lg font-semibold text-white">{projection.windowDays}-day outlook</span>
+                <span className="text-[10px] text-slate-600 uppercase tracking-wider">Reserve window</span>
             </div>
 
             {/* Rates — scenario labels reinforce trajectory modeling */}
@@ -217,9 +217,10 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
             ) : (
                 <div className="space-y-3">
                     <div>
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Capital At Risk</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Projected Reserve Exposure</span>
                         <span className="text-xl font-bold text-white">{formatBps(projection.projectedTrappedBps)}</span>
-                        <span className="text-[10px] text-slate-600 ml-1">of monthly TPV</span>
+                        <span className="text-[10px] text-slate-600 ml-1">of monthly volume</span>
+                        <span className="text-[10px] text-slate-700 block mt-0.5">{projection.projectedTrappedBps.toLocaleString()} bps</span>
                     </div>
                     <div>
                         <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Escalation Exposure</span>
@@ -231,7 +232,7 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
                                 <span className="text-xs text-slate-600 line-through">{formatBps(projection.worstCaseTrappedBps)}</span>
                             )}
                         </div>
-                        <span className="text-[10px] text-slate-600 ml-1">of monthly TPV</span>
+                        <span className="text-[10px] text-slate-600 ml-1">of monthly volume</span>
                     </div>
                 </div>
             )}
@@ -306,7 +307,7 @@ function ForbiddenState() {
                 <div className="space-y-2">
                     <h3 className="text-sm font-semibold text-slate-200">Projection Access: Restricted</h3>
                     <p className="text-xs text-slate-500 font-mono leading-relaxed">
-                        Scope: Pro. Reserve window modeling (T+90, T+120, T+180) unavailable at current tier.
+                        Scope: Pro. Reserve projections (90-day, 120-day, 180-day) unavailable at current tier.
                     </p>
                 </div>
             </div>
@@ -315,7 +316,7 @@ function ForbiddenState() {
             <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-slate-900/50 rounded-lg">
                     <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Windows</span>
-                    <span className="text-xs text-slate-400 font-mono">90 / 120 / 180d</span>
+                    <span className="text-xs text-slate-400 font-mono">90 / 120 / 180 days</span>
                 </div>
                 <div className="p-3 bg-slate-900/50 rounded-lg">
                     <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Scenarios</span>
@@ -438,7 +439,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
                                     )}
                                     {!hasUSD && (
                                         <span className="text-lg font-bold text-gray-900 block mt-1">
-                                            {formatBps(primary.projectedTrappedBps)} <span className="text-xs font-normal text-gray-400">of TPV</span>
+                                            {formatBps(primary.projectedTrappedBps)} <span className="text-xs font-normal text-gray-400">of volume</span>
                                         </span>
                                     )}
                                 </div>
@@ -450,7 +451,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
                                     )}
                                     {!hasUSD && (
                                         <span className="text-lg font-extrabold text-red-700 block mt-1">
-                                            {formatBps(primary.worstCaseTrappedBps)} <span className="text-xs font-normal text-gray-400">of TPV</span>
+                                            {formatBps(primary.worstCaseTrappedBps)} <span className="text-xs font-normal text-gray-400">of volume</span>
                                         </span>
                                     )}
                                 </div>
@@ -777,7 +778,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                             {data.reserveProjections.map((projection) => (
                                 <WindowCard
                                     key={projection.windowDays}
-                                    projection={{ ...projection, windowDays: `T+${projection.windowDays}` as any }}
+                                    projection={projection}
                                     isAccelerating={isAccelerating}
                                     isPrimary={projection.windowDays === 90}
                                     isSimulating={simulateOptimization}
