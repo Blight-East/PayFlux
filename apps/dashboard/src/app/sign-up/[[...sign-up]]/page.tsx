@@ -1,6 +1,7 @@
 import { SignUp } from "@clerk/nextjs";
 import { redirect } from 'next/navigation';
 import AuthStoryShell from '@/components/AuthStoryShell';
+import SignupViewedEvent from '@/components/SignupViewedEvent';
 
 type PageProps = {
     searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -22,13 +23,16 @@ export default async function Page({ searchParams }: PageProps) {
     const redirectTarget = nextRedirectTarget ?? legacyRedirectTarget ?? '/start';
 
     return (
-        <AuthStoryShell
-            title="Create an account before payout risk becomes a cash-flow problem."
-            body="PayFlux shows merchants when their payment processor may start holding back money, slowing payouts, or escalating account risk — and tells them what to do before it happens."
-            secondaryCtaLabel="Run a quick site check first"
-            secondaryCtaHref="/scan"
-        >
-            <SignUp forceRedirectUrl={redirectTarget} />
-        </AuthStoryShell>
+        <>
+            <SignupViewedEvent />
+            <AuthStoryShell
+                title="Create an account before payout risk becomes a cash-flow problem."
+                body="PayFlux shows merchants when their payment processor may start holding back money, slowing payouts, or escalating account risk — and tells them what to do before it happens."
+                secondaryCtaLabel="Run a quick site check first"
+                secondaryCtaHref="/scan"
+            >
+                <SignUp forceRedirectUrl={redirectTarget} />
+            </AuthStoryShell>
+        </>
     );
 }
