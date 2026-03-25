@@ -63,6 +63,65 @@ function isBlockedHostname(hostname: string): boolean {
     return BLOCKED_HOSTNAME_PATTERNS.some((pattern) => pattern.test(hostname));
 }
 
+function isValidHostnameSyntax(hostname: string): boolean {
+    if (!hostname || hostname.length > 253 || hostname.endsWith('.')) return false;
+    if (net.isIP(hostname)) return true;
+    if (!hostname.includes('.')) return false;
+
+    return hostname.split('.').every((label) =>
+        /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label)
+    );
+}
+
+function parseScanTarget(rawInput: string): {
+    ok: true;
+    targetUrl: string;
+    normalizedUrl: string;
+    hostname: string;
+    allowHttpFallback: boolean;
+} | {
+    ok: false;
+    error: string;
+} {
+    const trimmed = rawInput.trim();
+    if (!trimmed) {
+        return { ok: false, error: 'Invalid URL or domain' };
+    }
+
+    if (/\s/.test(trimmed)) {
+        return { ok: false, error: 'Invalid URL or domain' };
+    }
+
+    const allowHttpFallback = !/^https?:\/\//i.test(trimmed);
+    const candidate = allowHttpFallback ? `https://${trimmed}` : trimmed;
+
+    let parsed: URL;
+    try {
+        parsed = new URL(candidate);
+    } catch {
+        return { ok: false, error: 'Invalid URL or domain' };
+    }
+
+    if ((parsed.protocol !== 'http:' && parsed.protocol !== 'https:') || parsed.username || parsed.password) {
+        return { ok: false, error: 'Invalid URL or domain' };
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+    if (!isValidHostnameSyntax(hostname)) {
+        return { ok: false, error: 'Invalid URL or domain' };
+    }
+
+    const targetUrl = parsed.toString();
+
+    return {
+        ok: true,
+        targetUrl,
+        normalizedUrl: RiskCache.normalizeUrl(targetUrl),
+        hostname,
+        allowHttpFallback,
+    };
+}
+
 async function validateHostname(hostname: string): Promise<{ safe: boolean; error?: string }> {
     const cacheKey = `dns:safe:${hostname}`;
     const cached = await RiskCache.get(cacheKey);
@@ -423,12 +482,13 @@ export async function POST(request: Request) {
     }
 
     const { url: rawUrl, industry, processor } = parseResult.data;
-    const allowHttpFallback = !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://');
-    let targetUrl = rawUrl;
-    if (allowHttpFallback) targetUrl = `https://${targetUrl}`;
-    const normalizedUrl = RiskCache.normalizeUrl(targetUrl);
-    let hostname = 'unknown';
-    try { hostname = new URL(targetUrl).hostname; } catch { }
+    const parsedTarget = parseScanTarget(rawUrl);
+    if (!parsedTarget.ok) {
+        RiskMetrics.inc('risk_failures_total');
+        return NextResponse.json({ error: parsedTarget.error }, { status: 400, headers: { 'x-trace-id': traceId } });
+    }
+
+    const { allowHttpFallback, hostname, normalizedUrl, targetUrl } = parsedTarget;
 
     // 3. DNS/SSRF Check
     const dnsCheck = await validateHostname(hostname);

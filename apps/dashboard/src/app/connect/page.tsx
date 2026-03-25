@@ -31,7 +31,7 @@ async function resolveActiveOrgId(client: any, userId: string, orgId: string | n
 
 export default async function ConnectPage({ searchParams }: PageProps) {
     const { userId, orgId } = await auth();
-    if (!userId) redirect('/sign-in');
+    if (!userId) redirect('/sign-in?redirect_url=%2Fconnect');
 
     const client = await clerkClient();
     const activeOrgId = await resolveActiveOrgId(client, userId, orgId ?? null);

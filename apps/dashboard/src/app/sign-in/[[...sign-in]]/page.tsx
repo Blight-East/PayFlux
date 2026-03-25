@@ -1,7 +1,25 @@
 import { SignIn } from "@clerk/nextjs";
+import { redirect } from 'next/navigation';
 import AuthStoryShell from '@/components/AuthStoryShell';
 
-export default function Page() {
+type PageProps = {
+    searchParams?: Record<string, string | string[] | undefined>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+    return Array.isArray(value) ? value[0] : value;
+}
+
+export default function Page({ searchParams }: PageProps) {
+    const legacyRedirectTarget = firstValue(searchParams?.redirect_url);
+    const nextRedirectTarget = firstValue(searchParams?.next);
+
+    if (legacyRedirectTarget && nextRedirectTarget !== legacyRedirectTarget) {
+        redirect(`/sign-in?next=${encodeURIComponent(legacyRedirectTarget)}`);
+    }
+
+    const redirectTarget = nextRedirectTarget ?? legacyRedirectTarget ?? '/start';
+
     return (
         <AuthStoryShell
             title="Sign in to see whether your processor risk is rising."
@@ -9,7 +27,7 @@ export default function Page() {
             secondaryCtaLabel="Need a first check? Start here"
             secondaryCtaHref="/scan"
         >
-            <SignIn fallbackRedirectUrl="/start" />
+            <SignIn forceRedirectUrl={redirectTarget} />
         </AuthStoryShell>
     );
 }

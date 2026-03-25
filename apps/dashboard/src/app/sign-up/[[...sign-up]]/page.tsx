@@ -1,7 +1,25 @@
 import { SignUp } from "@clerk/nextjs";
+import { redirect } from 'next/navigation';
 import AuthStoryShell from '@/components/AuthStoryShell';
 
-export default function Page() {
+type PageProps = {
+    searchParams?: Record<string, string | string[] | undefined>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+    return Array.isArray(value) ? value[0] : value;
+}
+
+export default function Page({ searchParams }: PageProps) {
+    const legacyRedirectTarget = firstValue(searchParams?.redirect_url);
+    const nextRedirectTarget = firstValue(searchParams?.next);
+
+    if (legacyRedirectTarget && nextRedirectTarget !== legacyRedirectTarget) {
+        redirect(`/sign-up?next=${encodeURIComponent(legacyRedirectTarget)}`);
+    }
+
+    const redirectTarget = nextRedirectTarget ?? legacyRedirectTarget ?? '/start';
+
     return (
         <AuthStoryShell
             title="Create an account before payout risk becomes a cash-flow problem."
@@ -9,7 +27,7 @@ export default function Page() {
             secondaryCtaLabel="Run a quick site check first"
             secondaryCtaHref="/scan"
         >
-            <SignUp fallbackRedirectUrl="/start" />
+            <SignUp forceRedirectUrl={redirectTarget} />
         </AuthStoryShell>
     );
 }

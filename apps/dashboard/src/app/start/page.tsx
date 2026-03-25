@@ -29,10 +29,10 @@ export default async function StartPage() {
                             Processor Early Warning
                         </p>
                         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-                            PayFlux shows merchants when their payment processor may start holding back money, slowing payouts, or escalating account risk — and tells them what to do before it happens.
+                            See processor risk before it turns into a cash-flow problem.
                         </h1>
                         <p className="max-w-2xl text-base leading-relaxed text-slate-300">
-                            Start with a simple check to see whether your site is showing warning signs. Then connect live processor data so PayFlux can keep watching payouts, account pressure, and the money your processor may decide to hold back.
+                            PayFlux shows when your payment processor may start holding back money, slowing payouts, or escalating account risk. Start with a simple check, then connect live processor data so PayFlux can keep watching payouts, account pressure, and the money your processor may decide to hold back.
                         </p>
                     </div>
 

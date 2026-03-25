@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 
 export default async function ActivatePage() {
     const { userId } = await auth();
-    if (!userId) redirect('/sign-in');
+    if (!userId) redirect('/sign-in?redirect_url=%2Factivate');
 
     const status = await resolveActivationStatus(userId);
 

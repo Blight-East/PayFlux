@@ -21,7 +21,7 @@ export const runtime = 'nodejs';
  */
 export default async function ArmingPage() {
     const { userId } = await auth();
-    if (!userId) redirect('/sign-in');
+    if (!userId) redirect('/sign-in?redirect_url=%2Factivate%2Farming');
 
     const status = await resolveActivationStatus(userId);
 

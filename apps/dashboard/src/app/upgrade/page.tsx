@@ -11,7 +11,7 @@ export default async function UpgradePage() {
     const { userId } = await auth();
 
     if (!userId) {
-        redirect('/sign-in');
+        redirect('/sign-in?redirect_url=%2Fupgrade');
     }
 
     const onboarding = await resolveOnboardingState(userId);
