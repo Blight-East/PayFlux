@@ -372,17 +372,32 @@ export default function ArmingProgress() {
                 )}
 
                 {/* Timeout fallback */}
-                {elapsedSeconds > 90 && (
+                {elapsedSeconds > 120 && (
                     <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 space-y-3">
                         <p className="text-sm text-slate-300">
                             Still arming in the background. Your workspace will be fully live shortly.
                         </p>
-                        <button
-                            onClick={() => router.push('/dashboard')}
-                            className="w-full px-4 py-2 text-sm bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
-                        >
-                            Enter dashboard (warming up)
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setActivationTriggered(false);
+                                    setElapsedSeconds(0);
+                                    setError(null);
+                                }}
+                                className="flex-1 px-4 py-2 text-sm bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
+                            >
+                                Retry
+                            </button>
+                            <button
+                                onClick={() => router.push('/dashboard')}
+                                className="flex-1 px-4 py-2 text-sm bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
+                            >
+                                Enter dashboard
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-slate-600 text-center">
+                            If this persists, contact support at support@payflux.dev
+                        </p>
                     </div>
                 )}
 

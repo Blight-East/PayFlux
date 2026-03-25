@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         );
     }
 
-    const workspace = await resolveWorkspace(userId);
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
 
     if (!workspace) {
         return NextResponse.json(
@@ -48,28 +48,44 @@ export async function POST(request: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.payflux.dev';
 
-    const session = await stripe.checkout.sessions.create({
-        mode: 'subscription',
-        line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${appUrl}/activate`,
-        cancel_url: `${appUrl}/upgrade?cancelled=true`,
-        metadata: {
-            workspaceId: workspace.workspaceId,
-            workspaceName: workspace.workspaceName,
-        },
-        subscription_data: {
+    try {
+        const session = await stripe.checkout.sessions.create({
+            mode: 'subscription',
+            line_items: [{ price: priceId, quantity: 1 }],
+            success_url: `${appUrl}/activate`,
+            cancel_url: `${appUrl}/upgrade?cancelled=true`,
             metadata: {
                 workspaceId: workspace.workspaceId,
+                workspaceName: workspace.workspaceName,
             },
-        },
-    });
+            subscription_data: {
+                metadata: {
+                    workspaceId: workspace.workspaceId,
+                },
+            },
+        });
 
-    // Emit checkout_started — user is being redirected to Stripe
-    logOnboardingEvent('checkout_started', {
-        userId,
-        workspaceId: workspace.workspaceId,
-        metadata: { sessionId: session.id },
-    });
+        if (!session.url) {
+            console.error('[CHECKOUT_SESSION] Stripe returned session without URL', { sessionId: session.id });
+            return NextResponse.json(
+                { error: 'Checkout session created but no redirect URL returned' },
+                { status: 502 }
+            );
+        }
 
-    return NextResponse.json({ url: session.url });
+        // Emit checkout_started — user is being redirected to Stripe
+        logOnboardingEvent('checkout_started', {
+            userId,
+            workspaceId: workspace.workspaceId,
+            metadata: { sessionId: session.id },
+        });
+
+        return NextResponse.json({ url: session.url });
+    } catch (err) {
+        console.error('[CHECKOUT_SESSION] Failed to create Stripe checkout session:', err);
+        return NextResponse.json(
+            { error: 'Failed to create checkout session' },
+            { status: 502 }
+        );
+    }
 }

@@ -1,83 +1,46 @@
 /**
  * Onboarding Event Logger
  *
- * Structured logging for onboarding funnel transitions.
- * No analytics platform dependency — writes to stdout as structured JSON.
- * Can be piped to any collector later.
+ * Client-safe module — no Node.js imports.
+ * Server helpers that need durable persistence live in onboarding-events-server.ts.
+ *
+ * Client components import from this file.
+ * Server components / API routes import from onboarding-events-server.ts.
  */
 
-type OnboardingEvent =
+export type OnboardingEvent =
     | 'sign_up_completed'
     | 'scan_started'
     | 'scan_completed'
-    | 'connect_started'
+    | 'results_viewed'
+    | 'connect_cta_clicked'
+    | 'connect_page_viewed'
     | 'connect_completed'
     | 'connect_skipped'
     | 'dashboard_preview_viewed'
     | 'upgrade_cta_clicked'
-    | 'onboarding_stage_changed';
-
-interface EventPayload {
-    event: OnboardingEvent;
-    userId?: string;
-    workspaceId?: string;
-    metadata?: Record<string, unknown>;
-    timestamp: string;
-}
-
-/**
- * Log a server-side onboarding event.
- */
-export function logOnboardingEvent(
-    event: OnboardingEvent,
-    opts?: {
-        userId?: string;
-        workspaceId?: string;
-        metadata?: Record<string, unknown>;
-    }
-) {
-    const payload: EventPayload = {
-        event,
-        userId: opts?.userId,
-        workspaceId: opts?.workspaceId,
-        metadata: opts?.metadata,
-        timestamp: new Date().toISOString(),
-    };
-
-    console.log(`[ONBOARDING_EVENT] ${JSON.stringify(payload)}`);
-}
-
-/**
- * Log a stage transition (server-side convenience wrapper).
- * Emits `onboarding_stage_changed` with `from` and `to` in metadata.
- */
-export function logStageTransition(
-    from: string,
-    to: string,
-    opts?: {
-        userId?: string;
-        workspaceId?: string;
-    }
-) {
-    logOnboardingEvent('onboarding_stage_changed', {
-        userId: opts?.userId,
-        workspaceId: opts?.workspaceId,
-        metadata: { from, to },
-    });
-}
+    | 'checkout_started'
+    | 'upgrade_completed'
+    | 'onboarding_stage_changed'
+    | 'scan_example_viewed'
+    | 'invoice_payment_failed'
+    | 'invoice_payment_succeeded'
+    | 'subscription_status_changed'
+    | 'subscription_deleted';
 
 /**
  * Client-side event logger.
- * Posts to /api/onboarding/event (fire-and-forget).
+ * POSTs to /api/onboarding/event for server-side persistence.
+ * Fire-and-forget — never blocks UI.
  */
 export function logOnboardingEventClient(
     event: OnboardingEvent,
     metadata?: Record<string, unknown>
 ) {
-    // Log locally
+    // Log locally for devtools
     console.log(`[ONBOARDING_EVENT] ${event}`, metadata ?? '');
 
-    // Fire-and-forget POST
+    // POST to backend for durable persistence
     try {
         fetch('/api/onboarding/event', {
             method: 'POST',

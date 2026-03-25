@@ -38,15 +38,22 @@ function contextualHeadline(label?: string, hasConnection?: boolean): string {
 export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, stage, workspaceId }: UpgradeClientProps) {
     const { scanData } = useScanData();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
     const score = scanData?.data?.stabilityScore ?? scanData?.data?.riskScore ?? null;
     const label = scanData?.data?.riskLabel ?? null;
     const findings = scanData?.data?.findings ?? [];
     const riskStyle = riskBandStyle(label ?? undefined);
+    const hasActualScan = hasScanCompleted || !!scanData;
+
+    const headline = hasActualScan
+        ? contextualHeadline(label ?? undefined, hasStripeConnection)
+        : 'Start with a scan to surface your current exposure.';
 
     const handleCheckout = async () => {
         if (!workspaceId) return;
         setCheckoutLoading(true);
+        setCheckoutError(null);
         logOnboardingEventClient('upgrade_cta_clicked', { source: 'upgrade_page_cta' });
 
         try {
@@ -60,9 +67,11 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                 window.location.href = data.url;
             } else {
                 setCheckoutLoading(false);
+                setCheckoutError(data.error || 'Unable to start checkout. Please try again.');
             }
         } catch {
             setCheckoutLoading(false);
+            setCheckoutError('Connection error. Please check your network and try again.');
         }
     };
 
@@ -89,10 +98,12 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                 {/* ── A. Headline ── */}
                 <div className="space-y-4">
                     <h1 className="text-2xl font-semibold tracking-tight leading-tight">
-                        {contextualHeadline(label ?? undefined, hasStripeConnection)}
+                        {headline}
                     </h1>
                     <p className="text-slate-400 text-sm leading-relaxed max-w-xl">
-                        {hasStripeConnection
+                        {!hasActualScan
+                            ? 'Run a scan first so the upgrade path is grounded in your actual risk profile, findings, and reserve exposure.'
+                            : hasStripeConnection
                             ? 'Your processor is connected and we\u2019re monitoring live signals. Pro unlocks the forward-looking layers that turn detection into prevention.'
                             : 'Your risk scan identified exposure. Pro gives you the forward visibility to act before reserve holds, payout freezes, or account actions escalate.'
                         }
@@ -253,6 +264,13 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             'Start Pro monitoring'
                         )}
                     </button>
+
+                    {/* Checkout error */}
+                    {checkoutError && (
+                        <div className="mt-3 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
+                            <p className="text-sm text-red-400">{checkoutError}</p>
+                        </div>
+                    )}
 
                     {/* Explanation for disabled state */}
                     {!workspaceId && (
