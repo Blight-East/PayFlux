@@ -232,7 +232,7 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                         <div className="flex items-center space-x-2">
                             <Lock className="w-4 h-4 text-slate-600" />
                             <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">
-                                What to do now
+                                Top actions to lower payout risk
                             </span>
                         </div>
                         <span className="text-[9px] bg-amber-500/10 text-amber-400/60 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase">
