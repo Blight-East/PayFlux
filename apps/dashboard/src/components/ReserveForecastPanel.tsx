@@ -178,8 +178,9 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Likely case</span>
-                        <div className="text-xl font-bold text-white">{formatUSD(projection.projectedTrappedUSD!)}</div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{formatRate(projection.baseReserveRate)}</div>
+                        <div className="flex items-baseline space-x-1">
+                            <span className="text-xl font-bold text-white">{formatUSD(projection.projectedTrappedUSD!)}</span>
+                        </div>
                     </div>
                     <div>
                         <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Worst case</span>
@@ -191,15 +192,16 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
                                 <span className="text-xs text-slate-600 line-through">{formatUSD(projection.worstCaseTrappedUSD!)}</span>
                             )}
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{formatRate(worstRate)}</div>
                     </div>
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Likely case</span>
-                        <div className="text-xl font-bold text-white">{formatBps(projection.projectedTrappedBps)}</div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{formatRate(projection.baseReserveRate)}</div>
+                        <div className="flex items-baseline space-x-1">
+                            <span className="text-xl font-bold text-white">{formatBps(projection.projectedTrappedBps)}</span>
+                            <span className="text-[10px] text-slate-500">of sales</span>
+                        </div>
                     </div>
                     <div>
                         <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Worst case</span>
@@ -207,11 +209,11 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
                             <span className={`text-xl font-extrabold ${isSimulating ? 'text-emerald-400' : worstHighlightColor}`}>
                                 {formatBps(worstBps)}
                             </span>
+                            <span className="text-[10px] text-slate-500">of sales</span>
                             {isSimulating && (
                                 <span className="text-xs text-slate-600 line-through">{formatBps(projection.worstCaseTrappedBps)}</span>
                             )}
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{formatRate(worstRate)}</div>
                     </div>
                 </div>
             )}
@@ -243,12 +245,18 @@ function normalizeInterventionTitle(action: string): string {
 
 function normalizeRationale(rationale: string): string {
     return rationale
-        .replace(/[Dd]egrading trend increases escalation probability/i, 'Risk is still rising, so processors may tighten faster if this continues')
-        .replace(/[Ll]ower retry ceiling slows velocity accumulation/i, 'Reducing repeated failed payments can make your account look less risky')
-        .replace(/[Ww]ider backoff reduces clustering signal in processor monitoring windows/i, 'Spacing out retries reduces the patterns processors flag as risky')
-        .replace(/[Tt]ier moved \+\d+ in last evaluation period\.?\s*[Cc]onsecutive positive deltas trigger accelerated processor review/i, 'Your risk level moved up recently — consecutive increases can trigger faster processor action')
-        .replace(/[Mm]issing compliance pages \(.*?\) are weighted negatively in processor risk scoring/i, 'Missing policy pages (refund, privacy, terms) count against you in processor reviews')
-        .replace(/[Ww]eak policy pages \(.*?\) receive partial credit in stability scoring/i, 'Vague or incomplete policy pages only get partial credit when processors evaluate your site');
+        .replace(/[Dd]egrading trend increases escalation probability\.?/i, 'Risk is still rising, so processors may tighten faster if this continues.')
+        .replace(/[Ll]ower retry ceiling slows velocity accumulation\.?/i, 'Reducing repeated failed payments can make your account look less risky.')
+        .replace(/[Ww]ider backoff reduces clustering signal in processor monitoring windows\.?/i, 'Spacing out retries reduces the patterns processors flag as risky.')
+        .replace(/[Tt]ier moved \+\d+ in last evaluation period\.?\s*[Cc]onsecutive positive deltas trigger accelerated processor review\.?/i, 'Your risk level moved up recently \u2014 consecutive increases can trigger faster processor action.')
+        .replace(/[Mm]issing compliance pages \(.*?\) are weighted negatively in processor risk scoring\.?/i, 'Missing refund, privacy, or terms pages can make your business look riskier to a payment processor.')
+        .replace(/[Ww]eak policy pages? \(.*?\) receive[s]? partial credit in stability scoring\.?/i, 'Vague or incomplete policy pages only get partial credit when processors evaluate your site.')
+        .replace(/[Ll]ow[- ]?keyword[- ]?density/gi, 'thin content')
+        .replace(/processor risk scoring/gi, 'processor reviews')
+        .replace(/stability scoring/gi, 'processor evaluation')
+        .replace(/velocity accumulation/gi, 'failed-payment patterns')
+        .replace(/escalation probability/gi, 'the chance of tighter controls')
+        .replace(/clustering signal/gi, 'risky patterns');
 }
 
 function InterventionBlock({ interventions, isSimulating }: { interventions: Intervention[]; isSimulating?: boolean }) {
@@ -733,8 +741,8 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
     })();
 
     const summaryBody = (() => {
-        if (!nearTermWindow || !longWindow) return 'PayFlux is watching for the warning signs that usually show up before a processor changes payout behavior.';
-        return `Within the next ${nearTermWindow.windowDays} days, as much as ${formatWindowImpact(nearTermWindow)} could be affected if processor concern rises. Over ${longWindow.windowDays} days, that could grow to ${formatWindowImpact(longWindow)}.`;
+        if (!longWindow) return 'PayFlux is watching for the warning signs that usually show up before a processor changes payout behavior.';
+        return `If processor concern rises, up to ${formatWindowImpact(longWindow)} of sales could be affected in the next ${longWindow.windowDays} days.`;
     })();
 
     const trendSummary = data.trend === 'DEGRADING'
@@ -767,31 +775,31 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
         if (policySurface?.missing && policySurface.missing > 0) {
             derived.push({
                 title: 'Important policy pages are missing or hard to find.',
-                body: '',
+                body: 'This can make processors less comfortable with disputes, refunds, and customer communication.',
             });
         }
         if (policySurface?.weak && policySurface.weak > 0) {
             derived.push({
                 title: 'Some customer-facing policies are too weak.',
-                body: '',
+                body: 'Thin or vague policy pages get less credit when processors evaluate your site.',
             });
         }
         if (data.trend === 'DEGRADING') {
             derived.push({
                 title: 'Recent signals suggest processor concern is rising.',
-                body: '',
+                body: 'If the trend continues, your processor may start holding back funds sooner.',
             });
         }
         if (data.tierDelta > 0) {
             derived.push({
-                title: 'Your internal risk level moved up on the latest check.',
-                body: '',
+                title: 'Your risk level moved up on the latest check.',
+                body: 'Consecutive increases can trigger faster processor action.',
             });
         }
         if (derived.length === 0) {
             derived.push({
                 title: 'No single issue is dominating right now.',
-                body: '',
+                body: 'PayFlux is still monitoring, but the current pattern does not point to one urgent driver.',
             });
         }
 
@@ -842,9 +850,12 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
 
                             <div className="mt-4 grid gap-3 md:grid-cols-3">
                                 {driverCards.map((driver) => (
-                                    <div key={driver.title} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4 flex items-center">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-500 mr-3 flex-shrink-0" />
-                                        <p className="text-sm text-slate-300">{driver.title}</p>
+                                    <div key={driver.title} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                                        <div className="flex items-center mb-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-500 mr-3 flex-shrink-0" />
+                                            <p className="text-sm font-medium text-slate-200">{driver.title}</p>
+                                        </div>
+                                        {driver.body && <p className="text-[11px] leading-relaxed text-slate-400 pl-[18px]">{driver.body}</p>}
                                     </div>
                                 ))}
                             </div>
@@ -897,9 +908,9 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
 
                         <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
                             <div>
-                                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">How soon this could matter</h4>
+                                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">How much could be affected</h4>
                                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-                                    Use these views to estimate how much of your sales could be held back if processor concern stays flat or gets worse.
+                                    Use these views to estimate how much of your sales could be delayed or held back if processor concern rises.
                                 </p>
                             </div>
 
