@@ -4,8 +4,8 @@ export default function GovernancePage() {
     return (
         <div className="p-8 max-w-4xl">
             <div className="mb-12">
-                <h1 className="text-2xl font-bold text-white tracking-tight">Model Governance</h1>
-                <p className="text-slate-500 text-sm mt-1 font-mono">Versioned disclosures, validation methodology, and change history.</p>
+                <h1 className="text-2xl font-bold text-white tracking-tight">Forecast Confidence & Model Details</h1>
+                <p className="text-slate-500 text-sm mt-1 font-mono">Versioned disclosures, validation methodology, and change history for PayFlux forecasts.</p>
             </div>
 
             {/* Current Model Version */}

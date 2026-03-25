@@ -139,8 +139,8 @@ export default function VerifyPage() {
     return (
         <div className="p-8 max-w-4xl">
             <div className="mb-12">
-                <h1 className="text-2xl font-bold text-white tracking-tight">Artifact Verification</h1>
-                <p className="text-slate-500 text-sm mt-1 font-mono">Independent integrity verification for signed exports.</p>
+                <h1 className="text-2xl font-bold text-white tracking-tight">Check a Signed Export</h1>
+                <p className="text-slate-500 text-sm mt-1 font-mono">Independent integrity verification for signed PayFlux exports.</p>
             </div>
 
             {/* Input */}

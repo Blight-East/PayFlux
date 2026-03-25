@@ -24,15 +24,15 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
         href: '/dashboard',
     },
     {
-        label: 'Diagnostics',
+        label: 'System Status',
         href: '/dashboard/diagnostics',
     },
     {
-        label: 'Governance',
+        label: 'Forecast Confidence',
         href: '/dashboard/governance',
     },
     {
-        label: 'Verify',
+        label: 'Check Export',
         href: '/dashboard/verify',
     },
     {

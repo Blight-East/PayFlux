@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@clerk/nextjs';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
 
 function normalizeUrl(input: string): string {
@@ -17,6 +18,7 @@ function normalizeUrl(input: string): string {
 
 export default function ScanPage() {
     const router = useRouter();
+    const { userId } = useAuth();
     const [url, setUrl] = useState('');
     const [scanning, setScanning] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -37,9 +39,9 @@ export default function ScanPage() {
     }, []);
 
     const SCAN_STAGES = [
-        { label: 'Checking processor configuration...', detail: 'Identifying your payment stack and processor relationship' },
-        { label: 'Identifying exposure points...', detail: 'Analyzing compliance gaps, dispute patterns, and risk signals' },
-        { label: 'Estimating reserve risk...', detail: 'Calculating how much capital your processor could hold' },
+        { label: 'Checking for payout-risk warning signs...', detail: 'Reviewing your site for the policies and support paths processors look for.' },
+        { label: 'Estimating where processor concern may rise...', detail: 'Looking for gaps that can increase disputes, reviews, or payout pressure.' },
+        { label: 'Estimating money your processor could hold back...', detail: 'Turning those warning signs into a first risk read in plain English.' },
     ];
 
     async function handleScan() {
@@ -83,20 +85,23 @@ export default function ScanPage() {
             // Store result for results page
             sessionStorage.setItem('payflux_scan_result', JSON.stringify({ url: domain, data }));
 
-            // Persist scan completion + summary to Clerk org metadata
-            await fetch('/api/onboarding/complete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    mode: 'UI_SCAN',
-                    scanResult: {
-                        url: domain,
-                        riskLabel: data.riskLabel,
-                        stabilityScore: data.stabilityScore ?? data.riskScore,
-                        findings: data.findings,
-                    },
-                }),
-            });
+            // Persist scan completion + summary when the user is signed in.
+            // Anonymous users still get the result in-session via sessionStorage.
+            if (userId) {
+                await fetch('/api/onboarding/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mode: 'UI_SCAN',
+                        scanResult: {
+                            url: domain,
+                            riskLabel: data.riskLabel,
+                            stabilityScore: data.stabilityScore ?? data.riskScore,
+                            findings: data.findings,
+                        },
+                    }),
+                }).catch(() => { });
+            }
 
             // scan_completed is emitted server-side in /api/onboarding/complete
             // (authoritative, has userId + workspace context)
@@ -104,7 +109,7 @@ export default function ScanPage() {
             router.push('/scan/results');
         } catch {
             clearInterval(stageTimer);
-            setError('Scan failed. Check the domain and try again.');
+            setError('We could not complete the check. Confirm the domain and try again.');
             setScanning(false);
         }
     }
@@ -120,11 +125,32 @@ export default function ScanPage() {
                         </svg>
                     </div>
                     <h1 className="text-2xl font-semibold text-white tracking-tight">
-                        How exposed is your payment stack?
+                        Check whether your processor may start holding back money or slowing payouts.
                     </h1>
                     <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto">
-                        Enter your domain. In 30 seconds you&apos;ll see your processor risk level, compliance gaps, and how much capital could be at risk.
+                        PayFlux gives you a fast first check of payout risk. Enter your domain and we&apos;ll show what warning signs a processor may see, why they matter, and what could happen next.
                     </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-slate-800/60 bg-slate-900/30 p-4">
+                        <p className="text-xs font-semibold text-white">What is happening?</p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                            Your site may already be showing signs that make a processor more likely to slow payouts, hold back money, or review the account.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-800/60 bg-slate-900/30 p-4">
+                        <p className="text-xs font-semibold text-white">Why does it matter?</p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                            These issues usually turn into cash-flow problems before a merchant sees them clearly in reporting.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-800/60 bg-slate-900/30 p-4">
+                        <p className="text-xs font-semibold text-white">What should you do next?</p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                            Start with this first check. Then connect live processor data so PayFlux can keep watching for changes.
+                        </p>
+                    </div>
                 </div>
 
                 {/* ── Example result preview ── */}
@@ -132,37 +158,37 @@ export default function ScanPage() {
                     <div className="flex items-center justify-between">
                         <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-bold">Example scan output</p>
                         <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded-full uppercase font-bold">
-                            Elevated
+                            Payout risk is elevated
                         </span>
                     </div>
 
                     <div className="flex items-center space-x-4">
                         <div className="flex-shrink-0">
                             <div className="text-2xl font-bold text-red-400">38</div>
-                            <div className="text-[9px] text-slate-600 uppercase">Stability</div>
+                            <div className="text-[9px] text-slate-600 uppercase">Risk score</div>
                         </div>
                         <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
                             <div className="h-full rounded-full bg-red-500" style={{ width: '38%' }} />
                         </div>
                         <div className="flex-shrink-0 text-right">
-                            <div className="text-sm font-semibold text-white">4 findings</div>
-                            <div className="text-[9px] text-slate-600 uppercase">Detected</div>
+                            <div className="text-sm font-semibold text-white">4 warning signs</div>
+                            <div className="text-[9px] text-slate-600 uppercase">Found</div>
                         </div>
                     </div>
 
                     <div className="space-y-1.5 pt-1">
                         <div className="flex items-start space-x-2">
                             <div className="w-1 h-1 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
-                            <p className="text-[11px] text-slate-400">Missing refund policy increases dispute escalation risk</p>
+                            <p className="text-[11px] text-slate-400">Refund terms are hard to find, which can raise dispute pressure.</p>
                         </div>
                         <div className="flex items-start space-x-2">
                             <div className="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                            <p className="text-[11px] text-slate-400">No clear cancellation flow detected — processor flag risk</p>
+                            <p className="text-[11px] text-slate-400">Cancellation steps are unclear, which can make a processor more cautious.</p>
                         </div>
                     </div>
 
                     <p className="text-[10px] text-slate-600 pt-1 border-t border-slate-800/50">
-                        This merchant&apos;s processor could place a 10% rolling reserve on monthly volume within 60 days.
+                        This merchant could see part of monthly sales held back within 60 days if the current pattern continues.
                     </p>
                 </div>
 
@@ -171,23 +197,23 @@ export default function ScanPage() {
                     <div className="flex-1 space-y-1">
                         <div className="flex items-center space-x-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                            <p className="text-xs text-slate-300">Processor risk signals</p>
+                            <p className="text-xs text-slate-300">Current payout risk</p>
                         </div>
-                        <p className="text-[10px] text-slate-600 ml-3.5">Dispute rates, account flags, reserve triggers</p>
+                        <p className="text-[10px] text-slate-600 ml-3.5">A simple read on whether processor concern looks low, moderate, or rising</p>
                     </div>
                     <div className="flex-1 space-y-1">
                         <div className="flex items-center space-x-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                            <p className="text-xs text-slate-300">Compliance gaps</p>
+                            <p className="text-xs text-slate-300">Why it matters</p>
                         </div>
-                        <p className="text-[10px] text-slate-600 ml-3.5">Policies, disclosures, checkout signals</p>
+                        <p className="text-[10px] text-slate-600 ml-3.5">The site issues that can lead to reserve holds, slower payouts, or account review</p>
                     </div>
                     <div className="flex-1 space-y-1">
                         <div className="flex items-center space-x-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                            <p className="text-xs text-slate-300">Reserve exposure</p>
+                            <p className="text-xs text-slate-300">Next step</p>
                         </div>
-                        <p className="text-[10px] text-slate-600 ml-3.5">How much capital your processor could hold</p>
+                        <p className="text-[10px] text-slate-600 ml-3.5">A clear handoff into live monitoring if the warning signs look real</p>
                     </div>
                 </div>
 
@@ -213,7 +239,7 @@ export default function ScanPage() {
                             }}
                         />
                         <p className="mt-1.5 text-[10px] text-slate-600">
-                            Just the domain — no https:// needed. Takes about 30 seconds.
+                            Just the domain. No processor connection needed for this first check.
                         </p>
                     </div>
 
@@ -234,10 +260,10 @@ export default function ScanPage() {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
-                                Analyzing your exposure...
+                                Checking your payout risk...
                             </span>
                         ) : (
-                            'Show my risk'
+                            'Check my payout risk'
                         )}
                     </button>
                 </div>
@@ -276,17 +302,26 @@ export default function ScanPage() {
 
                 {/* Trust footer */}
                 <p className="text-center text-[11px] text-slate-600">
-                    Read-only analysis. We never modify your payment configuration.
+                    This first check is read-only. PayFlux does not touch your processor settings or payout flow.
                 </p>
 
                 {/* Escape hatch — visually secondary */}
                 <div className="text-center">
-                    <Link
-                        href="/dashboard"
-                        className="text-[11px] text-slate-600 hover:text-slate-500 transition-colors no-underline"
-                    >
-                        Skip to dashboard →
-                    </Link>
+                    {userId ? (
+                        <Link
+                            href="/dashboard"
+                            className="text-[11px] text-slate-600 hover:text-slate-500 transition-colors no-underline"
+                        >
+                            Skip to dashboard →
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/sign-up"
+                            className="text-[11px] text-slate-600 hover:text-slate-500 transition-colors no-underline"
+                        >
+                            Create a free account to save your next check →
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>

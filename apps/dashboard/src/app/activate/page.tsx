@@ -41,18 +41,17 @@ export default async function ActivatePage() {
                         </svg>
                     </div>
                     <h1 className="text-2xl font-semibold text-white tracking-tight">
-                        Your risk defense layer is ready to arm.
+                        Finish setup so PayFlux can start watching your payouts.
                     </h1>
                     <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
-                        Connect your processor and PayFlux will generate your first reserve
-                        exposure projection in under 60 seconds.
+                        Connect your processor and PayFlux will build your first live view of payout risk, held-fund risk, and account pressure in about a minute.
                     </p>
                 </div>
 
                 {/* What happens next */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-4">
                     <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
-                        What happens when you connect
+                        What happens next
                     </h2>
                     <div className="space-y-3">
                         <div className="flex items-start space-x-3">
@@ -60,8 +59,8 @@ export default async function ActivatePage() {
                                 <span className="text-[10px] text-amber-400 font-bold">1</span>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-200">PayFlux pulls your recent payment data</p>
-                                <p className="text-xs text-slate-500">Read-only. No access to modify payments or issue refunds.</p>
+                                <p className="text-sm text-slate-200">PayFlux reads your recent payment activity</p>
+                                <p className="text-xs text-slate-500">Read-only. It cannot change payments, refunds, or processor settings.</p>
                             </div>
                         </div>
                         <div className="flex items-start space-x-3">
@@ -69,8 +68,8 @@ export default async function ActivatePage() {
                                 <span className="text-[10px] text-amber-400 font-bold">2</span>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-200">We compute your baseline risk surface</p>
-                                <p className="text-xs text-slate-500">Failure patterns, retry pressure, reserve sensitivity.</p>
+                                <p className="text-sm text-slate-200">We estimate how your processor may behave next</p>
+                                <p className="text-xs text-slate-500">Held-fund risk, payout pressure, and the warning signs pushing risk up.</p>
                             </div>
                         </div>
                         <div className="flex items-start space-x-3">
@@ -78,8 +77,8 @@ export default async function ActivatePage() {
                                 <span className="text-[10px] text-amber-400 font-bold">3</span>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-200">Your workspace goes live with default alerts armed</p>
-                                <p className="text-xs text-slate-500">Payout holds, chargeback spikes, tier escalation monitoring.</p>
+                                <p className="text-sm text-slate-200">Your workspace goes live with practical alerts turned on</p>
+                                <p className="text-xs text-slate-500">Held funds, slower payouts, rising dispute pressure, and worsening account risk.</p>
                             </div>
                         </div>
                     </div>
@@ -90,7 +89,7 @@ export default async function ActivatePage() {
                     href="/api/stripe/authorize"
                     className="flex items-center justify-center w-full px-6 py-4 bg-amber-500 text-slate-950 font-semibold rounded-xl hover:bg-amber-400 transition-all active:scale-[0.98] no-underline text-base"
                 >
-                    Connect Stripe
+                    Connect Stripe safely
                 </a>
 
                 {/* Secondary */}

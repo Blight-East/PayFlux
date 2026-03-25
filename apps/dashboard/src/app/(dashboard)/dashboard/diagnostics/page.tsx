@@ -70,8 +70,8 @@ export default function DiagnosticsPage() {
             {/* Header */}
             <div className="flex justify-between items-center mb-10">
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-300 tracking-tight">Diagnostics</h2>
-                    <p className="text-[11px] text-slate-600 mt-0.5">Supporting infrastructure signals</p>
+                    <h2 className="text-lg font-semibold text-slate-300 tracking-tight">System Status</h2>
+                    <p className="text-[11px] text-slate-600 mt-0.5">Supporting infrastructure signals and internal warning logs</p>
                 </div>
                 <UserButton
                     appearance={{

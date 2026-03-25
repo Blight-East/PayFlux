@@ -393,13 +393,10 @@ const RequestSchema = z.object({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json(
-            { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
-            { status: 401 }
-        );
-    }
+    // Public first-check endpoint. Signed-in users can persist the result into
+    // onboarding state, but the scan itself is available before auth so the
+    // product can teach the problem before asking for account creation.
+    await auth();
 
     const traceId = crypto.randomUUID();
     const startTime = performance.now();

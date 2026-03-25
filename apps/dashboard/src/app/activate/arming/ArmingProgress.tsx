@@ -45,10 +45,10 @@ interface ActivationResponse {
 }
 
 const STAGES = [
-    { key: 'processorConnected', label: 'Connecting processor data', detail: 'Retrieving payment events from your Stripe account...' },
-    { key: 'baselineGenerated', label: 'Calculating reserve sensitivity', detail: 'Analyzing failure patterns, retry pressure, geographic entropy...' },
-    { key: 'projectionExists', label: 'Generating first projection', detail: 'Modeling reserve exposure across 30-day, 60-day, and 90-day windows...' },
-    { key: 'alertsArmed', label: 'Arming default alerts', detail: 'Setting up tier escalation, reserve spike, and trend monitors...' },
+    { key: 'processorConnected', label: 'Pulling recent processor activity', detail: 'Retrieving the live payment and payout signals PayFlux needs to watch...' },
+    { key: 'baselineGenerated', label: 'Learning your current payout risk', detail: 'Finding the warning signs most likely to raise processor concern...' },
+    { key: 'projectionExists', label: 'Estimating what may happen next', detail: 'Calculating how much money could be held back over the next 30, 60, and 90 days...' },
+    { key: 'alertsArmed', label: 'Turning on practical alerts', detail: 'Preparing alerts for held funds, slower payouts, and worsening account risk...' },
 ] as const;
 
 const RISK_BAND_COLORS: Record<string, string> = {
@@ -186,7 +186,7 @@ export default function ArmingProgress() {
                             Your workspace is live.
                         </h1>
                         <p className="text-sm text-slate-400">
-                            Here is the first reserve-risk baseline generated from your processor data.
+                            Here is the first live payout-risk baseline generated from your processor data.
                         </p>
                     </div>
 
@@ -196,15 +196,15 @@ export default function ArmingProgress() {
                         {/* Risk surface header */}
                         <div className="px-6 pt-5 pb-4 border-b border-slate-800/60">
                             <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-4">
-                                Baseline risk profile
+                                What PayFlux sees right now
                             </h2>
                             <div className="flex items-baseline justify-between">
                                 <div>
-                                    <span className={`text-3xl font-bold tabular-nums ${bandColor}`}>
-                                        Tier {tier}
+                                    <span className={`text-3xl font-bold tabular-nums capitalize ${bandColor}`}>
+                                        {band} risk
                                     </span>
-                                    <span className={`ml-2 text-sm font-medium capitalize ${bandColor}`}>
-                                        {band}
+                                    <span className="ml-2 text-sm font-medium text-slate-500">
+                                        Internal tier {tier}
                                     </span>
                                 </div>
                                 <div className="text-right">
@@ -213,7 +213,7 @@ export default function ArmingProgress() {
                                     </span>
                                     {stability !== undefined && (
                                         <p className="text-[10px] text-slate-600 mt-0.5">
-                                            Stability {stability}/100
+                                            Current risk score {stability}/100
                                         </p>
                                     )}
                                 </div>
@@ -224,14 +224,14 @@ export default function ArmingProgress() {
                         {rate !== undefined && windows && (
                             <div className="px-6 py-4 border-b border-slate-800/60">
                                 <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-3">
-                                    First reserve projection
+                                    What could happen next
                                 </h2>
                                 <div className="flex items-baseline mb-3">
                                     <span className="text-2xl font-bold text-white tabular-nums">
                                         {(rate * 100).toFixed(1)}%
                                     </span>
                                     <span className="ml-1.5 text-xs text-slate-500">
-                                        projected reserve rate
+                                        of monthly sales could be held if risk keeps rising
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-3 gap-3">
@@ -240,7 +240,7 @@ export default function ArmingProgress() {
                                         <p className="text-lg font-bold text-slate-200 tabular-nums mt-0.5">
                                             {(windows.t30.trappedBps / 100).toFixed(1)}%
                                         </p>
-                                        <p className="text-[10px] text-slate-600">projected reserve exposure</p>
+                                        <p className="text-[10px] text-slate-600">possible sales held back</p>
                                         <p className="text-[10px] text-slate-500 mt-1">
                                             {windows.t30.trappedBps.toLocaleString()} bps
                                         </p>
@@ -250,7 +250,7 @@ export default function ArmingProgress() {
                                         <p className="text-lg font-bold text-slate-200 tabular-nums mt-0.5">
                                             {(windows.t60.trappedBps / 100).toFixed(1)}%
                                         </p>
-                                        <p className="text-[10px] text-slate-600">projected reserve exposure</p>
+                                        <p className="text-[10px] text-slate-600">possible sales held back</p>
                                         <p className="text-[10px] text-slate-500 mt-1">
                                             {windows.t60.trappedBps.toLocaleString()} bps
                                         </p>
@@ -260,7 +260,7 @@ export default function ArmingProgress() {
                                         <p className="text-lg font-bold text-slate-200 tabular-nums mt-0.5">
                                             {(windows.t90.trappedBps / 100).toFixed(1)}%
                                         </p>
-                                        <p className="text-[10px] text-slate-600">projected reserve exposure</p>
+                                        <p className="text-[10px] text-slate-600">possible sales held back</p>
                                         <p className="text-[10px] text-slate-500 mt-1">
                                             {windows.t90.trappedBps.toLocaleString()} bps
                                         </p>
@@ -272,14 +272,14 @@ export default function ArmingProgress() {
                         {/* Alerts armed */}
                         <div className="px-6 py-4">
                             <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2.5">
-                                Default alerts armed
+                                Alerts now turned on
                             </h2>
                             <div className="space-y-1.5">
                                 {[
                                     'Risk tier escalation',
-                                    'Reserve exposure spike (>25%)',
-                                    'Trend shift to degrading',
-                                    'Projection exceeds worst-case',
+                                    'Held-fund estimate jumps sharply',
+                                    'Risk direction turns worse',
+                                    'Processor pressure moves beyond the current range',
                                 ].map((rule) => (
                                     <div key={rule} className="flex items-center space-x-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
@@ -295,12 +295,12 @@ export default function ArmingProgress() {
                         onClick={() => router.push('/dashboard?activated=true')}
                         className="w-full px-6 py-4 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-400 transition-all active:scale-[0.98] text-base"
                     >
-                        Enter your workspace
+                        Open dashboard
                     </button>
 
                     {/* Trust line */}
                     <p className="text-center text-[10px] text-slate-600 uppercase tracking-wide">
-                        Monitoring active across all armed channels
+                        Live monitoring is now active
                     </p>
                 </div>
             </div>
@@ -320,10 +320,10 @@ export default function ArmingProgress() {
                         </svg>
                     </div>
                     <h1 className="text-2xl font-semibold text-white tracking-tight">
-                        Arming your workspace...
+                        Getting PayFlux ready...
                     </h1>
                     <p className="text-sm text-slate-400">
-                        PayFlux is analyzing your payment stack and building your risk baseline.
+                        PayFlux is reading your processor activity and building the first live view of payout risk.
                     </p>
                 </div>
 
@@ -375,7 +375,7 @@ export default function ArmingProgress() {
                 {elapsedSeconds > 120 && (
                     <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 space-y-3">
                         <p className="text-sm text-slate-300">
-                            Still arming in the background. Your workspace will be fully live shortly.
+                            Setup is still finishing in the background. Your workspace should be fully live shortly.
                         </p>
                         <div className="flex gap-2">
                             <button
@@ -392,7 +392,7 @@ export default function ArmingProgress() {
                                 onClick={() => router.push('/dashboard')}
                                 className="flex-1 px-4 py-2 text-sm bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
                             >
-                                Enter dashboard
+                                Open dashboard
                             </button>
                         </div>
                         <p className="text-[10px] text-slate-600 text-center">

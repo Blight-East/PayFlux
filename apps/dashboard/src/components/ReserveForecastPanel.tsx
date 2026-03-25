@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Shield, Lock, AlertTriangle, TrendingDown, TrendingUp, Minus, FileDown, X } from 'lucide-react';
+import { useScanData } from '@/lib/use-scan-data';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Telemetry — fire and forget, never blocks UI
@@ -101,11 +102,11 @@ type PanelState =
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SIGNAL_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    NOMINAL: { label: 'Nominal', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
-    RECOVERING: { label: 'Recovering', color: 'text-[#0A64BC]', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-    LATENT: { label: 'Latent', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
-    ELEVATED: { label: 'Elevated', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
-    ACCELERATING: { label: 'Accelerating', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+    NOMINAL: { label: 'Low concern', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+    RECOVERING: { label: 'Settling down', color: 'text-[#0A64BC]', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
+    LATENT: { label: 'Early warning', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+    ELEVATED: { label: 'Elevated concern', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
+    ACCELERATING: { label: 'Risk rising quickly', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
 };
 
 const TREND_ICONS: Record<string, typeof TrendingUp> = {
@@ -170,17 +171,16 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
             {/* Window Header */}
             <div className="flex items-center justify-between">
                 <span className="text-lg font-semibold text-white">{projection.windowDays}-day outlook</span>
-                <span className="text-[10px] text-slate-600 uppercase tracking-wider">Reserve window</span>
+                <span className="text-[10px] text-slate-600 uppercase tracking-wider">{isPrimary ? 'Priority view' : 'Timeframe'}</span>
             </div>
 
-            {/* Rates — scenario labels reinforce trajectory modeling */}
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Base Scenario</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Likely case</span>
                     <span className="text-sm text-slate-400">{formatRate(projection.baseReserveRate)}</span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Escalation Scenario</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">If risk gets worse</span>
                     <div className="flex items-center space-x-2">
                         <span className={`text-sm font-semibold ${isSimulating ? 'text-emerald-400' : worstHighlightColor}`}>
                             {formatRate(worstRate)}
@@ -195,15 +195,14 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
             {/* Separator */}
             <div className="border-t border-slate-800" />
 
-            {/* Trapped Exposure — USD values are the conversion driver, must feel weighty */}
             {hasUSD ? (
                 <div className="space-y-3">
                     <div>
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Capital At Risk</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Possible money held back</span>
                         <span className="text-2xl font-bold text-white">{formatUSD(projection.projectedTrappedUSD!)}</span>
                     </div>
                     <div>
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Escalation Trapped</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">If processor concern rises</span>
                         <div className="flex items-baseline space-x-2">
                             <span className={`text-2xl font-extrabold ${isSimulating ? 'text-emerald-400' : worstHighlightColor}`}>
                                 {formatUSD(worstUSD!)}
@@ -217,13 +216,13 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
             ) : (
                 <div className="space-y-3">
                     <div>
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Projected Reserve Exposure</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Possible sales held back</span>
                         <span className="text-xl font-bold text-white">{formatBps(projection.projectedTrappedBps)}</span>
-                        <span className="text-[10px] text-slate-600 ml-1">of monthly volume</span>
+                        <span className="text-[10px] text-slate-600 ml-1">of monthly sales</span>
                         <span className="text-[10px] text-slate-700 block mt-0.5">{projection.projectedTrappedBps.toLocaleString()} bps</span>
                     </div>
                     <div>
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Escalation Exposure</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">If processor concern rises</span>
                         <div className="flex items-baseline space-x-2">
                             <span className={`text-xl font-extrabold ${isSimulating ? 'text-emerald-400' : worstHighlightColor}`}>
                                 {formatBps(worstBps)}
@@ -232,13 +231,14 @@ function WindowCard({ projection, isAccelerating, isPrimary, isSimulating, simul
                                 <span className="text-xs text-slate-600 line-through">{formatBps(projection.worstCaseTrappedBps)}</span>
                             )}
                         </div>
-                        <span className="text-[10px] text-slate-600 ml-1">of monthly volume</span>
+                        <span className="text-[10px] text-slate-600 ml-1">of monthly sales</span>
                     </div>
                 </div>
             )}
         </div>
     );
 }
+
 const PRIORITY_STYLES: Record<string, { text: string; bg: string; border: string; dot: string }> = {
     critical: { text: 'text-red-400', bg: 'bg-red-500/5', border: 'border-red-500/20', dot: 'bg-red-500' },
     high: { text: 'text-orange-400', bg: 'bg-orange-500/5', border: 'border-orange-500/20', dot: 'bg-orange-500' },
@@ -246,12 +246,20 @@ const PRIORITY_STYLES: Record<string, { text: string; bg: string; border: string
     low: { text: 'text-slate-400', bg: 'bg-slate-800/30', border: 'border-slate-800', dot: 'bg-slate-600' },
 };
 
+function normalizeInterventionTitle(action: string): string {
+    return action
+        .replace(/^Modeled impact suggests\s+/i, '')
+        .replace(/^Modeled trajectory suggests\s+/i, '')
+        .replace(/^Modeled risk weight suggests\s+/i, '')
+        .replace(/^No structural changes modeled$/i, 'No urgent changes needed right now');
+}
+
 function InterventionBlock({ interventions, isSimulating }: { interventions: Intervention[]; isSimulating?: boolean }) {
     return (
         <div className="border border-slate-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-                <h4 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">Intervention Advisory</h4>
-                <span className="text-[10px] text-slate-700 uppercase tracking-wider">Non-Binding</span>
+                <h4 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">What to do now</h4>
+                <span className="text-[10px] text-slate-700 uppercase tracking-wider">Suggested actions</span>
             </div>
 
             <div className="space-y-2.5">
@@ -272,7 +280,7 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                         >
                             <div className="flex items-center space-x-2.5">
                                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isBeingSimulated ? 'bg-emerald-500' : style.dot}`} />
-                                <span className={`text-xs font-semibold ${isBeingSimulated ? 'text-emerald-400' : style.text}`}>{intervention.action}</span>
+                                <span className={`text-xs font-semibold ${isBeingSimulated ? 'text-emerald-400' : style.text}`}>{normalizeInterventionTitle(intervention.action)}</span>
                                 <span className={`text-[9px] uppercase tracking-wider font-bold ml-auto ${isBeingSimulated ? 'text-emerald-400 opacity-60' : `${style.text} opacity-60`}`}>
                                     {isBeingSimulated ? 'simulating' : intervention.priority}
                                 </span>
@@ -281,8 +289,8 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                                 {intervention.rationale}
                             </p>
                             {isBeingSimulated && (
-                                <p className="text-[10px] text-emerald-500/60 pl-4 font-mono">
-                                    Simulation active.
+                                <p className="text-[10px] text-emerald-500/60 pl-4">
+                                    Showing the estimated improvement if this change works.
                                 </p>
                             )}
                         </div>
@@ -290,8 +298,8 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                 })}
             </div>
 
-            <p className="text-[10px] text-slate-700 font-mono pt-1">
-                Signal-derived. No processor modification.
+            <p className="text-[10px] text-slate-700 pt-1">
+                These are recommendations only. PayFlux does not change processor settings for you.
             </p>
         </div>
     );
@@ -305,36 +313,34 @@ function ForbiddenState() {
                     <Lock className="w-5 h-5 text-slate-600" />
                 </div>
                 <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-slate-200">Projection Access: Restricted</h3>
-                    <p className="text-xs text-slate-500 font-mono leading-relaxed">
-                        Scope: Pro. Reserve projections (90-day, 120-day, 180-day outlook) unavailable at current tier.
+                    <h3 className="text-sm font-semibold text-slate-200">Unlock the forward-looking view</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        Pro shows how much money a processor may hold back over the next few weeks and what changes are most likely to reduce that risk.
                     </p>
                 </div>
             </div>
 
-            {/* Scope */}
             <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-slate-900/50 rounded-lg">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Windows</span>
-                    <span className="text-xs text-slate-400 font-mono">90 / 120 / 180-day outlook</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Timeframes</span>
+                    <span className="text-xs text-slate-400">30 / 60 / 90-day outlook</span>
                 </div>
                 <div className="p-3 bg-slate-900/50 rounded-lg">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Scenarios</span>
-                    <span className="text-xs text-slate-400 font-mono">Base + Escalation</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Money impact</span>
+                    <span className="text-xs text-slate-400">What could be held back if risk stays flat or gets worse</span>
                 </div>
                 <div className="p-3 bg-slate-900/50 rounded-lg">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Exposure</span>
-                    <span className="text-xs text-slate-400 font-mono">USD Projection</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">Action plan</span>
+                    <span className="text-xs text-slate-400">Which fixes to tackle first and how much they may help</span>
                 </div>
             </div>
 
-            {/* Action */}
             <div className="text-center">
                 <button
                     onClick={() => track('forecast_unlock_clicked')}
                     className="inline-flex items-center px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg transition-colors border border-slate-700"
                 >
-                    Authorize
+                    Upgrade to Pro
                 </button>
             </div>
         </div>
@@ -605,6 +611,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function ReserveForecastPanel({ host }: { host: string | null }) {
+    const { scanData } = useScanData();
     const [state, setState] = useState<PanelState>({ status: 'idle' });
     const [volumeInput, setVolumeInput] = useState('');
     const [showExport, setShowExport] = useState(false);
@@ -669,7 +676,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
             <div className="border border-slate-800 rounded-xl p-8">
                 <div className="flex items-center justify-center space-x-3">
                     <div className="w-4 h-4 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
-                    <span className="text-sm text-slate-500">Loading projection...</span>
+                    <span className="text-sm text-slate-500">Loading payout forecast...</span>
                 </div>
             </div>
         );
@@ -681,7 +688,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
             <div className="border border-red-500/20 rounded-xl p-4 flex items-start space-x-3">
                 <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
-                    <span className="text-sm text-red-400">Forecast Unavailable</span>
+                    <span className="text-sm text-red-400">Payout forecast unavailable</span>
                     <p className="text-xs text-red-400/60 mt-0.5 font-mono">{state.message}</p>
                 </div>
             </div>
@@ -696,130 +703,288 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
     // Loaded — render forecast
     const { data } = state;
     const isAccelerating = data.instabilitySignal === 'ACCELERATING';
+    const signalConfig = SIGNAL_CONFIG[data.instabilitySignal] || SIGNAL_CONFIG.NOMINAL;
     const TrendIcon = TREND_ICONS[data.trend] || Minus;
     const trendColor = data.trend === 'DEGRADING' ? 'text-red-400' : data.trend === 'IMPROVING' ? 'text-emerald-400' : 'text-slate-500';
+    const nearTermWindow = data.reserveProjections.find((projection) => projection.windowDays === 30) ?? data.reserveProjections[0];
+    const longWindow = data.reserveProjections.find((projection) => projection.windowDays === 90) ?? data.reserveProjections[data.reserveProjections.length - 1];
+
+    const formatWindowImpact = (projection: ReserveWindowProjection | undefined) => {
+        if (!projection) return '—';
+        if (projection.worstCaseTrappedUSD !== undefined) return formatUSD(projection.worstCaseTrappedUSD);
+        return formatBps(projection.worstCaseTrappedBps);
+    };
+
+    const summaryHeadline = (() => {
+        if (isAccelerating || data.currentRiskTier >= 4) return 'Your processor may hold back part of your sales soon if this pattern continues.';
+        if (data.currentRiskTier === 3 || data.instabilitySignal === 'ELEVATED' || data.instabilitySignal === 'LATENT') {
+            return 'Your processor is showing early signs of concern.';
+        }
+        return 'Your current payout risk looks manageable, but PayFlux is still watching for changes.';
+    })();
+
+    const summaryBody = (() => {
+        if (!nearTermWindow || !longWindow) return 'PayFlux is watching for the warning signs that usually show up before a processor changes payout behavior.';
+        return `Within the next ${nearTermWindow.windowDays} days, as much as ${formatWindowImpact(nearTermWindow)} could be affected if processor concern rises. Over ${longWindow.windowDays} days, that could grow to ${formatWindowImpact(longWindow)}.`;
+    })();
+
+    const trendSummary = data.trend === 'DEGRADING'
+        ? 'Risk is moving in the wrong direction right now.'
+        : data.trend === 'IMPROVING'
+            ? 'Risk is easing compared with the last check.'
+            : 'Risk is not moving sharply right now.';
+
+    const nextStepSummary = (() => {
+        if (data.recommendedInterventions.length > 0) {
+            return 'Start with the highest-priority fix below, then watch whether payout pressure eases on the next checks.';
+        }
+        if (isAccelerating || data.currentRiskTier >= 4) {
+            return 'Keep a close eye on payouts and support signals now. PayFlux is watching for processor action.';
+        }
+        return 'Keep monitoring. There is no urgent action to take right now.';
+    })();
+
+    const driverCards = (() => {
+        const findings = scanData?.data?.findings?.slice(0, 3).map((finding) => ({
+            title: finding.title,
+            body: finding.description,
+        }));
+
+        if (findings && findings.length > 0) return findings;
+
+        const derived: Array<{ title: string; body: string }> = [];
+        const policySurface = data.projectionBasis?.inputs.policySurface;
+
+        if (policySurface?.missing && policySurface.missing > 0) {
+            derived.push({
+                title: 'Important policy pages are missing or hard to find',
+                body: `${policySurface.missing} missing policy signal${policySurface.missing > 1 ? 's are' : ' is'} making processor concern more likely.`,
+            });
+        }
+        if (policySurface?.weak && policySurface.weak > 0) {
+            derived.push({
+                title: 'Some customer-facing policies are too weak',
+                body: `${policySurface.weak} policy signal${policySurface.weak > 1 ? 's look' : ' looks'} incomplete, which can raise dispute pressure and account scrutiny.`,
+            });
+        }
+        if (data.trend === 'DEGRADING') {
+            derived.push({
+                title: 'Processor concern is rising',
+                body: 'Recent signals suggest risk is moving in the wrong direction instead of settling down.',
+            });
+        }
+        if (data.tierDelta > 0) {
+            derived.push({
+                title: 'Your internal risk level moved up',
+                body: `PayFlux moved this account up by ${data.tierDelta} step${Math.abs(data.tierDelta) !== 1 ? 's' : ''} on the latest check, which usually means the processor would be more cautious too.`,
+            });
+        }
+        if (derived.length === 0) {
+            derived.push({
+                title: 'No single issue is dominating right now',
+                body: 'PayFlux is still monitoring for payout risk, but the current pattern does not point to one urgent driver.',
+            });
+        }
+
+        return derived.slice(0, 3);
+    })();
 
     return (
         <div className="space-y-6">
-            {/* Section Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
-                        Capital At Risk
-                    </h3>
-                    <p className="text-xs text-slate-600 mt-0.5">Current reserve trajectory.</p>
-                </div>
-                <div className="flex items-center space-x-3">
-                    <span className="text-[10px] text-slate-700">{data.modelVersion}</span>
-                    <button
-                        onClick={() => { track('forecast_export_clicked', { host: data.normalizedHost, volumeMode: data.volumeMode, simulated: String(simulateOptimization) }); setShowExport(true); }}
-                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-lg transition-colors"
-                        title="Export forecast"
-                    >
-                        <FileDown className="w-3.5 h-3.5" />
-                        <span>Export</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Status Bar & Control Surface */}
             <div className="space-y-3">
-                <div className={`p-4 rounded-xl border ${isAccelerating ? 'border-red-500/30 bg-red-500/5' : 'border-slate-800 bg-slate-900/30'}`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <InstabilityBadge signal={data.instabilitySignal} />
-                            <div className="flex items-center space-x-2 border-l border-slate-800 pl-4">
-                                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Driver:</span>
-                                <span className="text-xs font-medium text-slate-300">Retry Velocity</span>
-                                <TrendIcon className={`w-3.5 h-3.5 ml-1 ${trendColor}`} />
+                <div className={`rounded-2xl border p-6 ${isAccelerating ? 'border-red-500/30 bg-red-500/5' : 'border-slate-800 bg-slate-900/30'}`}>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="max-w-2xl space-y-3">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <InstabilityBadge signal={data.instabilitySignal} />
+                                <div className="flex items-center gap-2 rounded-full border border-slate-800 px-3 py-1">
+                                    <TrendIcon className={`h-3.5 w-3.5 ${trendColor}`} />
+                                    <span className="text-[11px] text-slate-300">{trendSummary}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-semibold tracking-tight text-white">
+                                    {summaryHeadline}
+                                </h3>
+                                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+                                    {summaryBody}
+                                </p>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <span className="text-[10px] text-slate-600 block">Risk Tier</span>
-                            <span className="text-lg font-bold text-white">{data.currentRiskTier}</span>
+
+                        <div className="min-w-[200px] rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-500">Processor concern right now</span>
+                            <div className="mt-1 text-2xl font-bold text-white">{signalConfig.label}</div>
+                            <p className="mt-1 text-xs text-slate-400">{trendSummary}</p>
                             {data.tierDelta !== 0 && (
-                                <span className={`text-xs ml-1 ${data.tierDelta > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                                    {data.tierDelta > 0 ? '+' : ''}{data.tierDelta}
-                                </span>
+                                <p className={`mt-2 text-[11px] ${data.tierDelta > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                                    Internal risk level moved {data.tierDelta > 0 ? 'up' : 'down'} {Math.abs(data.tierDelta)} step{Math.abs(data.tierDelta) !== 1 ? 's' : ''} since the last check.
+                                </p>
                             )}
+                        </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 md:grid-cols-3">
+                        <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">What may happen first</p>
+                            <p className="mt-2 text-xl font-bold text-white">{formatWindowImpact(nearTermWindow)}</p>
+                            <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                                could be affected within {nearTermWindow?.windowDays ?? 30} days if processor concern rises.
+                            </p>
+                        </div>
+                        <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">If the pattern keeps building</p>
+                            <p className="mt-2 text-xl font-bold text-white">{formatWindowImpact(longWindow)}</p>
+                            <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                                could be affected within {longWindow?.windowDays ?? 90} days.
+                            </p>
+                        </div>
+                        <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Why it matters now</p>
+                            <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                                If a processor starts holding back sales or slowing payouts, the pressure hits cash flow immediately, not later.
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Consequence Layer (Gated) */}
                 {data.hasProjectionAccess ? (
                     <>
-                        {/* Simulation Control Surface */}
-                        {data.simulationDelta && (
-                            <div className="flex flex-col items-end space-y-2 mt-3">
-                                <button
-                                    onClick={() => {
-                                        setSimulateOptimization(!simulateOptimization);
-                                        if (!simulateOptimization) track('forecast_simulation_enabled', { host: data.normalizedHost });
-                                    }}
-                                    className={`flex items-center px-4 py-2 text-xs font-semibold rounded-lg transition-colors border ${simulateOptimization
-                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-400'
-                                        }`}
-                                >
-                                    <TrendingDown className="w-4 h-4 mr-2" />
-                                    {simulateOptimization ? data.simulationDelta.label.replace('Simulate', 'Simulating') : data.simulationDelta.label}
-                                </button>
-                                {simulateOptimization && (
-                                    <p className="text-[10px] text-slate-500 max-w-sm text-right font-mono">
-                                        Velocity reduction: {Math.round(data.simulationDelta.velocityReduction * 100)}% · Exposure reduction: ~{Math.round((1 - data.simulationDelta.exposureMultiplier) * 100)}%
-                                    </p>
-                                )}
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
+                            <div>
+                                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Why this is happening</h4>
+                                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                                    These are the main signals pushing processor concern higher right now.
+                                </p>
                             </div>
-                        )}
 
-                        {/* Reserve Windows — 90-day gets primary operational emphasis */}
-                        <div className="grid grid-cols-3 gap-3 mt-6">
-                            {data.reserveProjections.map((projection) => (
-                                <WindowCard
-                                    key={projection.windowDays}
-                                    projection={projection}
-                                    isAccelerating={isAccelerating}
-                                    isPrimary={projection.windowDays === 90}
-                                    isSimulating={simulateOptimization}
-                                    simulationDelta={data.simulationDelta}
-                                />
-                            ))}
+                            <div className="mt-4 grid gap-3 md:grid-cols-3">
+                                {driverCards.map((driver) => (
+                                    <div key={driver.title} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                                        <p className="text-sm font-semibold text-white">{driver.title}</p>
+                                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">{driver.body}</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Volume Input */}
-                        <div className="border border-slate-800 rounded-lg p-4 space-y-3 mt-6">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs text-slate-500">
-                                    {data.volumeMode === 'bps_plus_usd'
-                                        ? 'Monthly Volume Applied'
-                                        : 'Monthly TPV (USD)'
-                                    }
-                                </label>
-                                {data.volumeMode === 'bps_plus_usd' && (
-                                    <span className="text-[10px] text-emerald-500/60 uppercase tracking-wider">USD Active</span>
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">What to do now</h4>
+                                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                                        {nextStepSummary}
+                                    </p>
+                                </div>
+                                {data.simulationDelta && (
+                                    <div className="flex flex-col items-end space-y-2">
+                                        <button
+                                            onClick={() => {
+                                                setSimulateOptimization(!simulateOptimization);
+                                                if (!simulateOptimization) track('forecast_simulation_enabled', { host: data.normalizedHost });
+                                            }}
+                                            className={`flex items-center px-4 py-2 text-xs font-semibold rounded-lg transition-colors border ${simulateOptimization
+                                                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                                : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-400'
+                                                }`}
+                                        >
+                                            <TrendingDown className="w-4 h-4 mr-2" />
+                                            {simulateOptimization ? 'Showing possible improvement' : 'Estimate the upside from the top fix'}
+                                        </button>
+                                        {simulateOptimization && (
+                                            <p className="text-[10px] text-slate-500 max-w-sm text-right">
+                                                If the highest-impact fix works, held-fund pressure could drop by about {Math.round((1 - data.simulationDelta.exposureMultiplier) * 100)}%.
+                                            </p>
+                                        )}
+                                    </div>
                                 )}
                             </div>
-                            <div className="flex space-x-2">
-                                <div className="relative flex-1">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-sm">$</span>
-                                    <input
-                                        type="text"
-                                        value={volumeInput}
-                                        onChange={(e) => setVolumeInput(e.target.value)}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') handleVolumeSubmit(); }}
-                                        placeholder="1,500,000"
-                                        className="w-full pl-7 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-white placeholder:text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50"
+
+                            {data.recommendedInterventions.length > 0 ? (
+                                <div className="mt-4">
+                                    <InterventionBlock interventions={data.recommendedInterventions} isSimulating={simulateOptimization} />
+                                </div>
+                            ) : (
+                                <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                                    <p className="text-sm font-semibold text-white">No urgent changes are recommended right now</p>
+                                    <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                                        PayFlux does not see one immediate action that stands out above the others. Keep monitoring payout behavior and customer-facing policy quality.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
+                            <div>
+                                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">How soon this could matter</h4>
+                                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                                    Use these views to estimate how much of your sales could be held back if processor concern stays flat or gets worse.
+                                </p>
+                            </div>
+
+                            <div className="mt-4 grid gap-3 md:grid-cols-3">
+                                {data.reserveProjections.map((projection) => (
+                                    <WindowCard
+                                        key={projection.windowDays}
+                                        projection={projection}
+                                        isAccelerating={isAccelerating}
+                                        isPrimary={projection.windowDays === 90}
+                                        isSimulating={simulateOptimization}
+                                        simulationDelta={data.simulationDelta}
                                     />
+                                ))}
+                            </div>
+
+                            <div className="border border-slate-800 rounded-lg p-4 space-y-3 mt-6">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs text-slate-500">
+                                        {data.volumeMode === 'bps_plus_usd'
+                                            ? 'Monthly sales applied'
+                                            : 'Add monthly sales to see dollar impact'
+                                        }
+                                    </label>
+                                    {data.volumeMode === 'bps_plus_usd' && (
+                                        <span className="text-[10px] text-emerald-500/60 uppercase tracking-wider">Dollar view active</span>
+                                    )}
+                                </div>
+                                <div className="flex space-x-2">
+                                    <div className="relative flex-1">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-sm">$</span>
+                                        <input
+                                            type="text"
+                                            value={volumeInput}
+                                            onChange={(e) => setVolumeInput(e.target.value)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') handleVolumeSubmit(); }}
+                                            placeholder="1,500,000"
+                                            className="w-full pl-7 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-white placeholder:text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleVolumeSubmit}
+                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium rounded-lg transition-colors"
+                                    >
+                                        Show dollars
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-slate-700">Optional. Used only for this estimate on this screen.</p>
+                            </div>
+
+                            <div className="mt-6 flex flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Advanced detail</p>
+                                    <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                                        Need a signed export or the internal forecast inputs? Use the advanced report and confidence pages.
+                                    </p>
                                 </div>
                                 <button
-                                    onClick={handleVolumeSubmit}
-                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium rounded-lg transition-colors"
+                                    onClick={() => { track('forecast_export_clicked', { host: data.normalizedHost, volumeMode: data.volumeMode, simulated: String(simulateOptimization) }); setShowExport(true); }}
+                                    className="flex items-center space-x-1.5 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-700 hover:text-slate-200"
+                                    title="Export forecast"
                                 >
-                                    Apply
+                                    <FileDown className="h-3.5 w-3.5" />
+                                    <span>Export advanced report</span>
                                 </button>
                             </div>
-                            <p className="text-[10px] text-slate-700 font-mono">Not stored. Not logged. Projection only.</p>
                         </div>
                     </>
                 ) : (
@@ -827,24 +992,6 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                         <ForbiddenState />
                     </div>
                 )}
-            </div>
-
-            {/* Recommended Intervention — action vector */}
-            {data.hasProjectionAccess && data.recommendedInterventions.length > 0 && (
-                <InterventionBlock interventions={data.recommendedInterventions} isSimulating={simulateOptimization} />
-            )}
-
-
-            {/* Model Integrity Annotation */}
-            <div className="pt-6 mt-6 border-t border-slate-900">
-                <div className="font-mono text-[10px] text-slate-600 space-y-1.5 leading-relaxed">
-                    <p className="text-slate-500 font-bold mb-2">MODEL INTEGRITY</p>
-                    <p>Deterministic projection • {data.modelVersion}</p>
-                    <p>Inputs: normalized risk tier, tier delta, monthly TPV</p>
-                    <p>Base reserve capped at 25%</p>
-                    <p>Escalation multiplier: behavioral instability</p>
-                    <p>No stochastic modeling · No smoothing</p>
-                </div>
             </div>
 
             {/* Export Modal */}

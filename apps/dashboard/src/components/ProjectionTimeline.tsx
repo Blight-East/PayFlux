@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, ChevronDown, ChevronUp, CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — mirror API response, never recompute client-side
@@ -135,10 +135,10 @@ function ModelAccuracy({ accuracy }: { accuracy: Accuracy }) {
             <div className="border border-slate-800 rounded-lg px-5 py-4">
                 <div className="flex items-center space-x-2">
                     <Clock className="w-3.5 h-3.5 text-slate-600" />
-                    <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Model Accuracy</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Forecast confidence</span>
                 </div>
                 <p className="text-[11px] text-slate-600 mt-2 font-mono">
-                    Insufficient data. Threshold: ≥2 projections · ≥{accuracy.evaluationWindowHours}h evaluation window.
+                    Not enough completed history yet. PayFlux needs at least 2 forecasts and a {accuracy.evaluationWindowHours}h evaluation window before it shows confidence data.
                 </p>
             </div>
         );
@@ -149,32 +149,32 @@ function ModelAccuracy({ accuracy }: { accuracy: Accuracy }) {
     return (
         <div className="border border-slate-800 rounded-lg px-5 py-4">
             <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Model Accuracy (Rolling)</span>
+                <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Recent forecast confidence</span>
                 <span className="text-[10px] text-slate-700 font-mono">{accuracy.records.length} evaluated</span>
             </div>
             <div className="grid grid-cols-4 gap-4">
                 <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Tier Prediction</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Risk level forecast</span>
                     <span className="text-lg font-mono font-bold text-slate-200">{accuracy.tierPredictionAccuracy}%</span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Trend Prediction</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Direction forecast</span>
                     <span className="text-lg font-mono font-bold text-slate-200">{accuracy.trendPredictionAccuracy}%</span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Forecast Variance</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Typical forecast error</span>
                     <span className="text-lg font-mono font-bold text-slate-200">
                         {accuracy.meanReserveVarianceBps !== null ? `±${(accuracy.meanReserveVarianceBps / 100).toFixed(2)}%` : '—'}
                     </span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Eval. Window</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Evaluation window</span>
                     <span className="text-lg font-mono font-bold text-slate-200">{accuracy.evaluationWindowHours}h</span>
                 </div>
             </div>
             {/* Version stability */}
             <div className="mt-3 pt-2 border-t border-slate-800 flex items-center space-x-4">
-                <span className="text-[10px] text-slate-600 font-mono">Model: {vs.currentVersion}</span>
+                <span className="text-[10px] text-slate-600 font-mono">Forecast model: {vs.currentVersion}</span>
                 <span className={`text-[10px] font-mono ${vs.isStable ? 'text-emerald-500/60' : 'text-amber-500/60'}`}>
                     {vs.isStable ? '✓ Stable' : `${vs.versionChangesInWindow} version change${vs.versionChangesInWindow !== 1 ? 's' : ''} in window`}
                 </span>
@@ -195,7 +195,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
     const primary = artifact.windowOutputs.find(w => w.windowDays === 90);
 
     const isVerified = verification.hashValid && (verification.signatureValid === null || verification.signatureValid);
-    const triggerLabel = artifact.writeReason === 'state_transition' ? 'State Transition' : 'Daily Cadence';
+    const triggerLabel = artifact.writeReason === 'state_transition' ? 'Risk change' : 'Daily check';
 
     return (
         <div className="relative pl-8">
@@ -228,9 +228,9 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                     {/* Risk state */}
                     <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Projected Tier</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Risk level at the time</span>
                             <span className="text-sm font-mono font-semibold text-slate-200">
-                                Tier {input.riskTier}
+                                Level {input.riskTier}
                                 {input.tierDelta !== 0 && (
                                     <span className={input.tierDelta > 0 ? 'text-red-400' : 'text-emerald-400'}>
                                         {' '}{input.tierDelta > 0 ? '+' : ''}{input.tierDelta}
@@ -239,12 +239,12 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                             </span>
                         </div>
                         <div>
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Trend</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Direction</span>
                             <span className={`text-sm font-mono font-semibold ${input.trend === 'DEGRADING' ? 'text-red-400' : input.trend === 'IMPROVING' ? 'text-emerald-400' : 'text-slate-300'
                                 }`}>{input.trend}</span>
                         </div>
                         <div>
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Reserve Rate</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Estimated hold rate</span>
                             <span className="text-sm font-mono font-semibold text-slate-200">{formatRate(constants.worstCaseReserveRate)}</span>
                         </div>
                     </div>
@@ -252,7 +252,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                     {/* Primary window */}
                     {primary && (
                         <div className="border-t border-slate-800 pt-2">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Capital at risk (90-day outlook)</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Possible money held back in 90 days</span>
                             <div className="flex items-baseline space-x-3">
                                 {primary.worstCaseTrappedUSD !== undefined ? (
                                     <span className="text-base font-mono font-bold text-slate-100">{formatUSD(primary.worstCaseTrappedUSD)}</span>
@@ -273,7 +273,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                                 <XCircle className="w-3 h-3 text-red-400/60" />
                             )}
                             <span className={`text-[10px] font-mono ${isVerified ? 'text-emerald-500/60' : 'text-red-400/60'}`}>
-                                {isVerified ? 'Verified' : 'Integrity Failure'}
+                                {isVerified ? 'Signed and verified' : 'Verification issue'}
                             </span>
                         </div>
                         <button
@@ -281,7 +281,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                             className="flex items-center space-x-1 text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
                         >
                             <FileText className="w-3 h-3" />
-                            <span>Details</span>
+                            <span>Audit details</span>
                             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         </button>
                     </div>
@@ -332,7 +332,7 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                             </div>
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <span className="text-[10px] text-slate-600 block">Tier Forecast → Actual</span>
+                                    <span className="text-[10px] text-slate-600 block">Risk level forecast → actual</span>
                                     <span className={`text-xs font-mono font-semibold ${accuracyRecord.tierAccurate ? 'text-emerald-400' : 'text-red-400'}`}>
                                         {accuracyRecord.predictedTier} → {accuracyRecord.actualTier}
                                         {' '}{accuracyRecord.tierAccurate ? '✓' : '✗'}
@@ -344,14 +344,14 @@ function LedgerEntry({ record, accuracyRecord }: { record: HistoryRecord; accura
                                     )}
                                 </div>
                                 <div>
-                                    <span className="text-[10px] text-slate-600 block">Trend Forecast → Actual</span>
+                                    <span className="text-[10px] text-slate-600 block">Direction forecast → actual</span>
                                     <span className={`text-xs font-mono font-semibold ${accuracyRecord.trendAccurate ? 'text-emerald-400' : 'text-red-400'}`}>
                                         {accuracyRecord.predictedTrend} → {accuracyRecord.actualTrend}
                                         {' '}{accuracyRecord.trendAccurate ? '✓' : '✗'}
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] text-slate-600 block">Reserve Rate Variance</span>
+                                    <span className="text-[10px] text-slate-600 block">Hold-rate forecast → actual</span>
                                     <span className="text-xs font-mono font-semibold text-slate-300">
                                         {formatRate(accuracyRecord.projectedReserveRate)} → {formatRate(accuracyRecord.actualReserveRate)}
                                     </span>
@@ -420,9 +420,9 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
     if (data.totalRecords === 0) {
         return (
             <div className="border border-slate-800 rounded-lg px-5 py-4 space-y-2">
-                <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve Ledger</span>
+                <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Monitoring history</span>
                 <p className="text-[11px] text-slate-600 font-mono leading-relaxed">
-                    No records. Ledger populates on first projection.
+                    No history yet. This view fills in after the first saved forecast.
                 </p>
             </div>
         );
@@ -436,13 +436,11 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
 
     return (
         <div className="space-y-4">
-            {/* Model Accuracy */}
             <ModelAccuracy accuracy={data.accuracy} />
 
-            {/* Reserve History Ledger */}
             <div className="space-y-1">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Reserve Ledger</span>
+                    <span className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Monitoring history</span>
                     <span className="text-[10px] text-slate-700 font-mono">{data.totalRecords} record{data.totalRecords !== 1 ? 's' : ''}</span>
                 </div>
 
@@ -456,10 +454,9 @@ export default function ProjectionTimeline({ host }: { host: string | null }) {
                     ))}
                 </div>
 
-                {/* Ledger footer */}
                 <div className="pt-2 pl-8">
                     <p className="text-[10px] text-slate-700 font-mono leading-relaxed">
-                        Append-only. Cryptographically signed. Accuracy derived at read-time. Immutable.
+                        Append-only signed history. Open audit details on any record if you need hashes, signatures, or version metadata.
                     </p>
                 </div>
             </div>

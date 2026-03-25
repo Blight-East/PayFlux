@@ -30,10 +30,10 @@ export default function ActivationBanner({ isActivated, isWarming, activationMet
                 </div>
                 <div>
                     <p className="text-sm font-medium text-emerald-300">
-                        Risk monitoring is now live for your payment stack.
+                        PayFlux is now watching your processor activity live.
                     </p>
                     <p className="text-xs text-emerald-400/60 mt-1">
-                        Default alerts are armed for tier escalations, reserve spikes, and trend degradation.
+                        Alerts are on for held-fund risk, worsening payout pressure, and rising account risk.
                     </p>
                 </div>
             </div>
@@ -51,10 +51,10 @@ export default function ActivationBanner({ isActivated, isWarming, activationMet
                 </div>
                 <div>
                     <p className="text-sm font-medium text-amber-300">
-                        Your workspace is still warming up.
+                        PayFlux is still learning your payout pattern.
                     </p>
                     <p className="text-xs text-amber-400/60 mt-1">
-                        Baseline generation and projection calculation are still in progress. Data will appear as it becomes available.
+                        Live processor data is still being pulled in. Your first risk estimate will appear as soon as setup finishes.
                     </p>
                 </div>
             </div>

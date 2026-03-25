@@ -24,15 +24,15 @@ function riskBandStyle(label?: string) {
 function contextualHeadline(label?: string, hasConnection?: boolean): string {
     const l = (label ?? '').toUpperCase();
     if (l === 'CRITICAL' || l === 'HIGH') {
-        return 'Your risk level is elevated. Here\u2019s what you still can\u2019t see.';
+        return 'Your payout risk is elevated. PayFlux can show what may happen next before it hits cash flow.';
     }
     if (l === 'ELEVATED') {
-        return 'You\u2019ve identified exposure. Pro shows how it evolves before it hits.';
+        return 'You found early warning signs. Pro shows whether they are likely to turn into held funds or slower payouts.';
     }
     if (hasConnection) {
-        return 'You\u2019ve seen the warning signs. Pro shows the trajectory.';
+        return 'You can already see the warning signs. Pro shows how quickly they may turn into payout pain.';
     }
-    return 'You\u2019ve completed your scan. Here\u2019s what\u2019s still hidden.';
+    return 'You ran the first check. Here is what PayFlux can warn you about before the processor acts.';
 }
 
 export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, stage, workspaceId }: UpgradeClientProps) {
@@ -102,10 +102,10 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                     </h1>
                     <p className="text-slate-400 text-sm leading-relaxed max-w-xl">
                         {!hasActualScan
-                            ? 'Run a scan first so the upgrade path is grounded in your actual risk profile, findings, and reserve exposure.'
+                            ? 'Run a first check so the upgrade path starts from your real payout-risk warning signs, not generic assumptions.'
                             : hasStripeConnection
-                            ? 'Your processor is connected and we\u2019re monitoring live signals. Pro unlocks the forward-looking layers that turn detection into prevention.'
-                            : 'Your risk scan identified exposure. Pro gives you the forward visibility to act before reserve holds, payout freezes, or account actions escalate.'
+                            ? 'Your processor is already connected. Pro turns live monitoring into an operator view of what may happen next, why it matters, and what to do before payouts are affected.'
+                            : 'Your scan found signs that could lead to held funds, slower payouts, or tighter account review. Pro helps you act before the processor moves.'
                         }
                     </p>
                 </div>
@@ -113,7 +113,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                 {/* ── B. Context block ── */}
                 {(scanData || hasScanCompleted) && (
                     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                        <h2 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-4">Your Current Exposure</h2>
+                        <h2 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-4">What PayFlux knows right now</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             {/* Risk band */}
                             {label && (
@@ -125,7 +125,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             {/* Score */}
                             {score !== null && (
                                 <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                                    <p className="text-[10px] text-slate-500 uppercase mb-1">Stability</p>
+                                    <p className="text-[10px] text-slate-500 uppercase mb-1">Risk score</p>
                                     <p className="text-sm font-bold text-white">{score}/100</p>
                                 </div>
                             )}
@@ -138,10 +138,10 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             )}
                             {/* Connection */}
                             <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                                <p className="text-[10px] text-slate-500 uppercase mb-1">Monitoring</p>
-                                <p className={`text-sm font-bold ${hasStripeConnection ? 'text-emerald-400' : 'text-slate-500'}`}>
-                                    {hasStripeConnection ? 'Live' : 'Snapshot'}
-                                </p>
+                                    <p className="text-[10px] text-slate-500 uppercase mb-1">Live data</p>
+                                    <p className={`text-sm font-bold ${hasStripeConnection ? 'text-emerald-400' : 'text-slate-500'}`}>
+                                        {hasStripeConnection ? 'Live' : 'Snapshot'}
+                                    </p>
                             </div>
                         </div>
 
@@ -162,59 +162,57 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
 
                 {/* ── C. Three Pro value blocks ── */}
                 <div className="space-y-4">
-                    <h2 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">What Pro unlocks</h2>
+                    <h2 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">What Pro adds</h2>
 
-                    {/* Block 1: Reserve Projection */}
+                    {/* Block 1: Money at risk */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-3">
                         <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center justify-center">
                                 <TrendingUp className="w-4 h-4 text-amber-400" />
                             </div>
-                            <h3 className="text-sm font-semibold text-white">Reserve Projection</h3>
+                            <h3 className="text-sm font-semibold text-white">See how much money could be held back</h3>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            See how much capital your processor could hold over the next 30, 60, and 90 days based on your actual payment behavior.
+                            See how much of your sales your processor may decide to hold back over the next 30, 60, and 90 days based on real payment behavior.
                             {hasStripeConnection
-                                ? ' With your Stripe connection, projections update continuously as new transactions flow through.'
-                                : ' Once connected, projections reflect your real transaction patterns, not estimates.'
+                                ? ' With Stripe connected, those estimates stay tied to live processor behavior instead of a one-time snapshot.'
+                                : ' Once you connect Stripe, these estimates are based on live processor data instead of a one-time site check.'
                             }
                         </p>
                         <p className="text-xs text-slate-500">
-                            Reserve holds compound silently. By the time you notice, the capital is already trapped.
+                            Held funds compound quietly. By the time most merchants notice, the cash is already harder to access.
                         </p>
                     </div>
 
-                    {/* Block 2: Intervention Modeling */}
+                    {/* Block 2: Clear next actions */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-3">
                         <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
                                 <Shield className="w-4 h-4 text-blue-400" />
                             </div>
-                            <h3 className="text-sm font-semibold text-white">Intervention Modeling</h3>
+                            <h3 className="text-sm font-semibold text-white">See what to do before payouts are hit</h3>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            Test what happens to your reserve exposure if dispute rates rise, processing volume shifts, or your processor tightens terms.
-                            Run scenarios before the outcome is real.
+                            Turn warnings into a practical action list. PayFlux highlights the fixes most likely to reduce payout risk before the outcome becomes real.
                         </p>
                         <p className="text-xs text-slate-500">
-                            Processors adjust terms without warning. Modeling lets you see the impact before it lands on your balance sheet.
+                            The job is not to admire the model. The job is to make the next processor decision less painful.
                         </p>
                     </div>
 
-                    {/* Block 3: Signed Evidence */}
+                    {/* Block 3: History and proof */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-3">
                         <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center">
                                 <FileCheck className="w-4 h-4 text-emerald-400" />
                             </div>
-                            <h3 className="text-sm font-semibold text-white">Signed Evidence &amp; Reporting</h3>
+                            <h3 className="text-sm font-semibold text-white">Keep a usable history when you need proof</h3>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            Generate timestamped, signed records of your reserve exposure and risk trajectory.
-                            Use them for board reporting, processor negotiation, or audit preparation.
+                            Keep timestamped records of risk changes, held-fund estimates, and what PayFlux saw over time for reporting or processor conversations.
                         </p>
                         <p className="text-xs text-slate-500">
-                            When you need to prove what your processor did and when, you&apos;ll have the receipts.
+                            Advanced trust details stay available, but they no longer have to be the first thing an operator sees.
                         </p>
                     </div>
                 </div>
@@ -261,7 +259,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                                 Connecting to Stripe...
                             </span>
                         ) : (
-                            'Start Pro monitoring'
+                            'Start Pro'
                         )}
                     </button>
 
@@ -284,15 +282,15 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                         href="/dashboard"
                         className="flex items-center justify-center w-full mt-3 px-4 py-2 text-sm text-slate-500 hover:text-slate-400 transition-colors no-underline"
                     >
-                        Return to dashboard
+                        Go back for now
                     </Link>
                 </div>
 
                 {/* ── F. "Why now" line ── */}
                 <p className="text-center text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
                     {score !== null && score < 50
-                        ? 'At your current risk level, delaying visibility increases the chance that reserve exposure compounds before you see it.'
-                        : 'You\u2019ve already identified risk. Pro helps you see whether it is stabilizing or accelerating.'
+                        ? 'At your current risk level, waiting makes it more likely the processor acts before you do.'
+                        : 'The warning signs are visible now. Pro helps you see whether they are calming down or getting worse.'
                     }
                 </p>
 

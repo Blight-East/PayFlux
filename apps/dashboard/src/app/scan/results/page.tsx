@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@clerk/nextjs';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
 import { useScanData } from '@/lib/use-scan-data';
 
@@ -22,16 +23,25 @@ function riskColor(label?: string) {
 
 function riskSummary(score: number, findingsCount: number): string {
     if (score < 40) {
-        return `Your payment infrastructure has significant exposure. ${findingsCount} risk factor${findingsCount !== 1 ? 's were' : ' was'} identified that could lead to reserve holds, processing interruptions, or account review.`;
+        return `Your processor may see enough warning signs to hold back money, slow payouts, or review the account. ${findingsCount} issue${findingsCount !== 1 ? 's were' : ' was'} found that could raise concern quickly.`;
     }
     if (score <= 70) {
-        return `Your payment setup is functional but has gaps. ${findingsCount} area${findingsCount !== 1 ? 's' : ''} could become problems if your processor tightens enforcement or volume changes.`;
+        return `There are early signs your processor could become more cautious if volume changes or enforcement tightens. ${findingsCount} area${findingsCount !== 1 ? 's' : ''} should be fixed before they turn into payout problems.`;
     }
-    return `Your payment infrastructure looks stable. Minor gaps exist but your current risk profile is within normal bounds.`;
+    return `Nothing major is jumping out right now. Your current payout risk looks manageable, but it is still worth fixing smaller gaps before they become processor issues.`;
+}
+
+function headline(label?: string): string {
+    const l = (label ?? '').toUpperCase();
+    if (l === 'CRITICAL' || l === 'HIGH') return 'Your processor may be quick to hold back money if this pattern continues.';
+    if (l === 'ELEVATED') return 'Your processor may be seeing early warning signs.';
+    if (l === 'MODERATE') return 'Your payout risk is not urgent yet, but the warning signs are real.';
+    return 'Your current payout risk looks fairly stable.';
 }
 
 export default function ScanResultsPage() {
     const router = useRouter();
+    const { userId } = useAuth();
     const { scanData: result, loading } = useScanData();
 
     useEffect(() => {
@@ -74,7 +84,7 @@ export default function ScanResultsPage() {
                 {/* Header */}
                 <div className="text-center space-y-2">
                     <h1 className="text-2xl font-semibold text-white tracking-tight">
-                        Your Payment Risk Profile
+                        {headline(result?.data?.riskLabel)}
                     </h1>
                     <p className="text-sm text-slate-400">{url}</p>
                 </div>
@@ -84,12 +94,12 @@ export default function ScanResultsPage() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${colors.bg} ${colors.text} border ${colors.border}`}>
-                                {label} Risk
+                                {label} payout risk
                             </span>
                         </div>
                         <div className="text-right">
                             <div className={`text-3xl font-bold ${colors.text}`}>{score}</div>
-                            <div className="text-[10px] text-slate-500 uppercase">Stability Score</div>
+                            <div className="text-[10px] text-slate-500 uppercase">Current risk score</div>
                         </div>
                     </div>
 
@@ -105,6 +115,27 @@ export default function ScanResultsPage() {
                     <p className="text-sm text-slate-300 leading-relaxed">
                         {riskSummary(score, findings.length)}
                     </p>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                    <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+                        <p className="text-xs font-semibold text-white">What is happening?</p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                            Your site is showing warning signs a processor could use to justify slower payouts, held funds, or tighter account review.
+                        </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+                        <p className="text-xs font-semibold text-white">Why does it matter?</p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                            If concern rises, the money impact lands on cash flow first. Merchants usually feel it before they can explain it.
+                        </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+                        <p className="text-xs font-semibold text-white">What should you do next?</p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                            Fix the strongest warning signs and connect live processor data so PayFlux can watch for real payout changes.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Findings */}
@@ -145,33 +176,49 @@ export default function ScanResultsPage() {
 
                 {/* Context line */}
                 <p className="text-xs text-slate-500 text-center">
-                    This is a point-in-time snapshot. Connect your processor for continuous monitoring.
+                    This is a one-time check. Live processor data is what turns this into an early-warning system.
                 </p>
 
                 {/* CTA ladder */}
                 <div className="space-y-3">
-                    {/* Primary: Connect Stripe */}
-                    <Link
-                        href="/connect"
-                        onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'scan_results' })}
-                        className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
-                    >
-                        Connect Stripe for live monitoring
-                    </Link>
-
-                    {/* Secondary: Skip to dashboard preview */}
-                    <Link
-                        href="/dashboard"
-                        onClick={() => logOnboardingEventClient('connect_skipped')}
-                        className="flex items-center justify-center w-full px-6 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors no-underline"
-                    >
-                        Continue to dashboard preview
-                    </Link>
+                    {userId ? (
+                        <>
+                            <Link
+                                href="/connect"
+                                onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'scan_results' })}
+                                className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
+                            >
+                                Connect Stripe so PayFlux can watch payout risk live
+                            </Link>
+                            <Link
+                                href="/dashboard"
+                                onClick={() => logOnboardingEventClient('connect_skipped')}
+                                className="flex items-center justify-center w-full px-6 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors no-underline"
+                            >
+                                Continue to dashboard preview
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                href="/sign-up"
+                                className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
+                            >
+                                Create a free account to save this result
+                            </Link>
+                            <Link
+                                href="/sign-in"
+                                className="flex items-center justify-center w-full px-6 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors no-underline"
+                            >
+                                Already have an account? Sign in
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 {/* Trust footer */}
                 <p className="text-center text-[11px] text-slate-600">
-                    Read-only access via Stripe Connect. We never modify your payments.
+                    PayFlux does not change processor settings or payout behavior. Live mode is read-only.
                 </p>
             </div>
         </div>

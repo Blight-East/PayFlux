@@ -72,11 +72,32 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                             </svg>
                         </div>
                         <h1 className="text-xl font-semibold text-white">
-                            Connect your processor
+                            Connect Stripe so PayFlux can watch payout risk live.
                         </h1>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            We'll monitor your payment events for risk signals and alert you before they escalate.
+                            PayFlux uses live processor data to catch held funds, slower payouts, and rising account pressure before they turn into a cash-flow surprise.
                         </p>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-lg border border-slate-800/60 bg-slate-900/40 p-3">
+                            <p className="text-[11px] font-semibold text-white">What is happening?</p>
+                            <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+                                A site scan gives you a snapshot. A processor connection lets PayFlux watch the real payout and account signals behind it.
+                            </p>
+                        </div>
+                        <div className="rounded-lg border border-slate-800/60 bg-slate-900/40 p-3">
+                            <p className="text-[11px] font-semibold text-white">Why does it matter?</p>
+                            <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+                                Processors can change reserve behavior or payout timing fast. Live monitoring helps you see it before cash flow gets squeezed.
+                            </p>
+                        </div>
+                        <div className="rounded-lg border border-slate-800/60 bg-slate-900/40 p-3">
+                            <p className="text-[11px] font-semibold text-white">What should you do next?</p>
+                            <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+                                Connect Stripe read-only, then use PayFlux to see what may change next and what to fix first.
+                            </p>
+                        </div>
                     </div>
 
                     {/* What we monitor */}
@@ -85,15 +106,15 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                         <ul className="space-y-2">
                             <li className="flex items-start space-x-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                                <span className="text-sm text-slate-300">Reserve holds and payout timing shifts</span>
+                                <span className="text-sm text-slate-300">Money your processor starts holding back</span>
                             </li>
                             <li className="flex items-start space-x-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                                <span className="text-sm text-slate-300">Dispute rate trajectory and threshold proximity</span>
+                                <span className="text-sm text-slate-300">Payouts getting slower or less predictable</span>
                             </li>
                             <li className="flex items-start space-x-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                                <span className="text-sm text-slate-300">Account health signals from your processor</span>
+                                <span className="text-sm text-slate-300">Account warnings that suggest processor concern is rising</span>
                             </li>
                         </ul>
                     </div>
@@ -110,7 +131,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                         href="/api/stripe/authorize"
                         className="flex items-center justify-center w-full px-4 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
                     >
-                        Connect Stripe
+                        Connect Stripe safely
                     </a>
 
                     {/* Secondary: Skip */}
@@ -118,7 +139,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                         href="/dashboard"
                         className="flex items-center justify-center w-full px-4 py-2 text-sm text-slate-500 hover:text-slate-400 transition-colors no-underline"
                     >
-                        Skip for now — go to dashboard preview
+                        Keep using the snapshot for now
                     </Link>
 
                     <div className="text-center pt-2">
