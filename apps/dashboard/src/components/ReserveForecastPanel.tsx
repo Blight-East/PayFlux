@@ -241,6 +241,16 @@ function normalizeInterventionTitle(action: string): string {
     return plain.charAt(0).toUpperCase() + plain.slice(1);
 }
 
+function normalizeRationale(rationale: string): string {
+    return rationale
+        .replace(/[Dd]egrading trend increases escalation probability/i, 'Risk is still rising, so processors may tighten faster if this continues')
+        .replace(/[Ll]ower retry ceiling slows velocity accumulation/i, 'Reducing repeated failed payments can make your account look less risky')
+        .replace(/[Ww]ider backoff reduces clustering signal in processor monitoring windows/i, 'Spacing out retries reduces the patterns processors flag as risky')
+        .replace(/[Tt]ier moved \+\d+ in last evaluation period\.?\s*[Cc]onsecutive positive deltas trigger accelerated processor review/i, 'Your risk level moved up recently — consecutive increases can trigger faster processor action')
+        .replace(/[Mm]issing compliance pages \(.*?\) are weighted negatively in processor risk scoring/i, 'Missing policy pages (refund, privacy, terms) count against you in processor reviews')
+        .replace(/[Ww]eak policy pages \(.*?\) receive partial credit in stability scoring/i, 'Vague or incomplete policy pages only get partial credit when processors evaluate your site');
+}
+
 function InterventionBlock({ interventions, isSimulating }: { interventions: Intervention[]; isSimulating?: boolean }) {
     const [expanded, setExpanded] = useState(false);
     const visibleInterventions = expanded ? interventions : interventions.slice(0, 3);
@@ -277,7 +287,7 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
                                 </span>
                             </div>
                             <p className={`text-[11px] leading-relaxed pl-4 ${isDimmed ? 'text-slate-600' : 'text-slate-500'}`}>
-                                {intervention.rationale}
+                                {normalizeRationale(intervention.rationale)}
                             </p>
                             {isBeingSimulated && (
                                 <p className="text-[10px] text-emerald-500/60 pl-4">
@@ -843,8 +853,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                         <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                    <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">What to do now</h4>
-                                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                                    <p className="max-w-2xl text-sm leading-relaxed text-slate-400">
                                         {nextStepSummary}
                                     </p>
                                 </div>
@@ -945,7 +954,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                                 <div>
                                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Advanced detail</p>
                                     <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-                                        Need a signed export or the internal forecast inputs? Use the advanced report and confidence pages.
+                                        Need a signed export or a deeper forecast breakdown? Use the advanced report and confidence pages.
                                     </p>
                                 </div>
                                 <button
