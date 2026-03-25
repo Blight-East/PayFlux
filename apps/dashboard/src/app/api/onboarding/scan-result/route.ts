@@ -1,5 +1,6 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { resolveOrganizationContext } from '@/lib/resolve-workspace';
 
 export const runtime = 'nodejs';
 
@@ -18,16 +19,10 @@ export async function GET() {
     }
 
     try {
-        const client = await clerkClient();
-        const memberships = await client.users.getOrganizationMembershipList({ userId });
-
-        if (!memberships.data || memberships.data.length === 0) {
+        const org = await resolveOrganizationContext(userId);
+        if (!org) {
             return NextResponse.json({ scanResult: null });
         }
-
-        const org = memberships.data.sort(
-            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        )[0].organization;
 
         const meta = org.publicMetadata as Record<string, unknown> | undefined;
         const scanResult = meta?.onboardingScanResult ?? null;

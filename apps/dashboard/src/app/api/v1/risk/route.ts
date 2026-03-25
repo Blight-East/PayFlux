@@ -1,13 +1,23 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { setDefaultResultOrder } from 'node:dns';
 import dns from 'node:dns/promises';
 import net from 'node:net';
 import crypto from 'node:crypto';
 import { RateLimiter, RiskCache, ConcurrencyManager, CACHE_TTL, RiskLogger, RiskMetrics, RiskIntelligence } from '@/lib/risk-infra';
 import { resolveAccountFromAPIKey } from '@/lib/account-resolver';
 import { resolveAccountTierConfig } from '@/lib/tier-enforcement';
+import { auth } from '@clerk/nextjs/server';
 
 export const runtime = "nodejs";
+
+// Netlify's Node runtime can fail on dual-stack hosts when IPv6 is returned
+// first. Prefer IPv4 so common apex domains like example.com scan reliably.
+try {
+    setDefaultResultOrder('ipv4first');
+} catch {
+    // Non-fatal; fetch will still work on runtimes that ignore this.
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SSRF Hardening Helpers
@@ -82,10 +92,12 @@ async function validateHostname(hostname: string): Promise<{ safe: boolean; erro
 
 async function safeFetch(
     url: string,
-    maxRedirects: number = 5
+    maxRedirects: number = 5,
+    allowHttpFallback: boolean = false
 ): Promise<{ ok: boolean; response?: Response; error?: string }> {
     let currentUrl = url;
     let redirectCount = 0;
+    let httpFallbackUsed = false;
 
     while (redirectCount <= maxRedirects) {
         let parsedUrl: URL;
@@ -126,6 +138,12 @@ async function safeFetch(
 
             return { ok: true, response };
         } catch (err) {
+            if (allowHttpFallback && !httpFallbackUsed && parsedUrl.protocol === 'https:') {
+                parsedUrl.protocol = 'http:';
+                currentUrl = parsedUrl.toString();
+                httpFallbackUsed = true;
+                continue;
+            }
             return { ok: false, error: `Fetch failed: ${(err as Error).message}` };
         }
     }
@@ -161,6 +179,11 @@ function extractVisibleText(html: string): string {
 
 interface PolicyStatus { status: 'Present' | 'Weak' | 'Missing'; matches: number; }
 interface ScoreNode { name: string; stabilityPoints: number; score: number; max: number; }
+interface Finding {
+    title: string;
+    description: string;
+    severity: 'low' | 'medium' | 'high';
+}
 
 const POLICY_KEYWORDS = {
     terms: ['terms of service', 'terms and conditions', 'terms of use', 'user agreement', 'service agreement'],
@@ -213,6 +236,74 @@ function calculateDeterministicScore(text: string, industry: string, processor: 
     return { riskTier, riskLabel, stabilityScore, scoreBreakdown, policies, snippets };
 }
 
+function buildFindings(
+    policies: Record<string, PolicyStatus>,
+    industry: string,
+    processor: string
+): Finding[] {
+    const findings: Finding[] = [];
+
+    if (policies.refund.status !== 'Present') {
+        findings.push({
+            title: 'Refund policy is incomplete',
+            description: policies.refund.status === 'Weak'
+                ? 'A partial refund or cancellation policy was detected, but it is not prominent enough to reduce dispute pressure.'
+                : 'No clear refund or cancellation policy was detected. That increases chargeback and reserve-escalation risk.',
+            severity: policies.refund.status === 'Weak' ? 'medium' : 'high',
+        });
+    }
+
+    if (policies.terms.status !== 'Present') {
+        findings.push({
+            title: 'Terms of service are weak or missing',
+            description: policies.terms.status === 'Weak'
+                ? 'Terms language exists, but it is too thin to clearly define billing, cancellation, or account expectations.'
+                : 'No strong terms of service were detected. That weakens evidence quality if a processor reviews merchant practices.',
+            severity: policies.terms.status === 'Weak' ? 'medium' : 'high',
+        });
+    }
+
+    if (policies.privacy.status !== 'Present') {
+        findings.push({
+            title: 'Privacy disclosures are incomplete',
+            description: policies.privacy.status === 'Weak'
+                ? 'Privacy disclosures were found but appear incomplete.'
+                : 'No meaningful privacy policy was detected, which can trigger compliance scrutiny from processors.',
+            severity: policies.privacy.status === 'Weak' ? 'medium' : 'high',
+        });
+    }
+
+    if (policies.contact.status !== 'Present') {
+        findings.push({
+            title: 'Customer support path is unclear',
+            description: policies.contact.status === 'Weak'
+                ? 'Support contact details exist but are sparse.'
+                : 'A clear customer support or contact path was not detected. Weak support visibility tends to worsen dispute outcomes.',
+            severity: policies.contact.status === 'Weak' ? 'low' : 'medium',
+        });
+    }
+
+    const riskyIndustries = ['gambling', 'crypto', 'adult', 'firearms', 'cbd', 'cannabis'];
+    if (riskyIndustries.some((entry) => industry.toLowerCase().includes(entry))) {
+        findings.push({
+            title: 'High-risk industry classification',
+            description: `${industry} is commonly treated as a high-risk category by processors, increasing reserve and underwriting sensitivity.`,
+            severity: 'high',
+        });
+    }
+
+    const trustedProcessors = ['stripe', 'paypal', 'square', 'adyen', 'braintree'];
+    if (!trustedProcessors.some((entry) => processor.toLowerCase().includes(entry))) {
+        findings.push({
+            title: 'Processor relationship is unclear',
+            description: 'No widely recognized processor signals were detected in the submitted context, so trust assumptions are weaker.',
+            severity: 'medium',
+        });
+    }
+
+    return findings.slice(0, 5);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Gemini Integration
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,13 +328,22 @@ function createFallbackNarrative(riskLabel: string, stabilityScore: number, poli
     };
 }
 
-async function executeRiskScan(url: string, industry: string, processor: string, traceId: string, ip: string, host: string, keyId: string) {
+async function executeRiskScan(
+    url: string,
+    industry: string,
+    processor: string,
+    traceId: string,
+    ip: string,
+    host: string,
+    keyId: string,
+    allowHttpFallback: boolean
+) {
     const startTime = performance.now();
     const apiKey = process.env.GEMINI_API_KEY;
 
     // Fetch
     const fetchStart = performance.now();
-    const fetchResult = await safeFetch(url);
+    const fetchResult = await safeFetch(url, 5, allowHttpFallback);
     const fetchDuration = performance.now() - fetchStart;
 
     if (!fetchResult.ok || !fetchResult.response) {
@@ -259,6 +359,7 @@ async function executeRiskScan(url: string, industry: string, processor: string,
     if (visibleText.length < 50) return { status: 400, error: 'Insufficient content' };
 
     const { riskTier, riskLabel, stabilityScore, scoreBreakdown, policies, snippets } = calculateDeterministicScore(visibleText, industry, processor);
+    const findings = buildFindings(policies, industry, processor);
 
     let narrative = createFallbackNarrative(riskLabel, stabilityScore, policies, snippets);
     let aiProvider: 'gemini' | 'fallback' = 'fallback';
@@ -275,7 +376,7 @@ async function executeRiskScan(url: string, industry: string, processor: string,
     return {
         status: 200,
         data: {
-            url, analyzedAt: new Date().toISOString(), industry, processor, scoreBreakdown, policies, narrative,
+            url, analyzedAt: new Date().toISOString(), industry, processor, scoreBreakdown, policies, narrative, findings,
             riskTier, riskLabel, stabilityScore, meta: { aiProvider, processingTimeMs: performance.now() - startTime }
         }
     };
@@ -287,17 +388,18 @@ const RequestSchema = z.object({
     processor: z.string().default('Unknown'),
 });
 
-import { requireAuth } from '@/lib/require-auth';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Route Handler
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-    const authResult = await requireAuth();
-    if (!authResult.ok) return authResult.response;
-
-    const { userId, workspace } = authResult;
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.json(
+            { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+            { status: 401 }
+        );
+    }
 
     const traceId = crypto.randomUUID();
     const startTime = performance.now();
@@ -324,8 +426,9 @@ export async function POST(request: Request) {
     }
 
     const { url: rawUrl, industry, processor } = parseResult.data;
+    const allowHttpFallback = !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://');
     let targetUrl = rawUrl;
-    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) targetUrl = `https://${targetUrl}`;
+    if (allowHttpFallback) targetUrl = `https://${targetUrl}`;
     const normalizedUrl = RiskCache.normalizeUrl(targetUrl);
     let hostname = 'unknown';
     try { hostname = new URL(targetUrl).hostname; } catch { }
@@ -391,7 +494,7 @@ export async function POST(request: Request) {
 
     // 6. Execution
     const { result, deduped } = await ConcurrencyManager.dedupe(cacheKey, async () => {
-        return await executeRiskScan(targetUrl, industry, processor, traceId, ip, hostname, keyId);
+        return await executeRiskScan(targetUrl, industry, processor, traceId, ip, hostname, keyId, allowHttpFallback);
     });
 
     if (deduped) {

@@ -15,7 +15,7 @@ export default async function DashboardPage() {
         redirect('/sign-in');
     }
 
-    const workspace = await resolveWorkspace(userId);
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
 
     if (!workspace) {
         redirect('/scan');

@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { resolveActivationStatus } from '@/lib/activation-state';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
+import LegacyCheckoutQuerySanitizer from '@/components/LegacyCheckoutQuerySanitizer';
 
 export const runtime = 'nodejs';
 
@@ -29,6 +30,7 @@ export default async function ActivatePage() {
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
+            <LegacyCheckoutQuerySanitizer />
             <div className="max-w-lg w-full space-y-8">
 
                 {/* Icon + headline */}

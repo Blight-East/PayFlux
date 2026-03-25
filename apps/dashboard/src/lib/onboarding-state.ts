@@ -11,8 +11,7 @@
  *   "upgraded"        — paid tier (pro or enterprise)
  */
 
-import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
-import { clerkClient } from '@clerk/nextjs/server';
+import { resolveOrganizationContext, resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
 export type OnboardingStage = 'none' | 'scanned' | 'connected_free' | 'upgraded';
 
@@ -33,7 +32,7 @@ export interface OnboardingState {
  *   4. otherwise                 → "none"
  */
 export async function resolveOnboardingState(userId: string): Promise<OnboardingState> {
-    const workspace = await resolveWorkspace(userId);
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
 
     // No workspace yet — user just signed up, no org
     if (!workspace) {
@@ -62,20 +61,11 @@ export async function resolveOnboardingState(userId: string): Promise<Onboarding
     let hasScanCompleted = false;
 
     try {
-        const client = await clerkClient();
-        const memberships = await client.users.getOrganizationMembershipList({ userId });
-        if (memberships.data && memberships.data.length > 0) {
-            const oldestMembership = memberships.data.sort(
-                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            )[0];
-            // Direct fetch — always returns fresh metadata
-            const org = await client.organizations.getOrganization({
-                organizationId: oldestMembership.organization.id,
-            });
-
-            const meta = org.publicMetadata as Record<string, unknown> | undefined;
-            hasStripeConnection = typeof meta?.stripeAccountId === 'string' && meta.stripeAccountId.length > 0;
-            hasScanCompleted = meta?.onboardingScanCompleted === true;
+        const org = await resolveOrganizationContext(userId);
+        if (org) {
+            const meta = org.publicMetadata;
+            hasStripeConnection = typeof meta.stripeAccountId === 'string' && meta.stripeAccountId.length > 0;
+            hasScanCompleted = meta.onboardingScanCompleted === true;
         }
     } catch {
         // Fall through with defaults

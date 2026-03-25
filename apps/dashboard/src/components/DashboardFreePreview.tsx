@@ -31,6 +31,7 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
     const score = scanData?.data?.stabilityScore ?? scanData?.data?.riskScore ?? null;
     const label = scanData?.data?.riskLabel ?? null;
     const findings = scanData?.data?.findings ?? [];
+    const hasCompletedScan = onboardingStage !== 'none' || !!scanData;
 
     return (
         <div className="p-8 max-w-6xl mx-auto">
@@ -47,7 +48,16 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
             {onboardingStage !== 'upgraded' && (
                 <div className="mb-8 bg-slate-900/50 border border-slate-800 rounded-lg px-5 py-4 flex items-center justify-between">
                     <div>
-                        {!hasStripeConnection ? (
+                        {!hasCompletedScan ? (
+                            <>
+                                <p className="text-sm text-slate-300">
+                                    Start with a scan to see your current payment-risk profile.
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    The scan creates your first snapshot, findings list, and upgrade context.
+                                </p>
+                            </>
+                        ) : !hasStripeConnection ? (
                             <>
                                 <p className="text-sm text-slate-300">
                                     You&apos;ve completed your scan. Connect Stripe for live monitoring.
@@ -68,9 +78,11 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                         )}
                     </div>
                     <Link
-                        href={!hasStripeConnection ? '/connect' : '/upgrade'}
+                        href={!hasCompletedScan ? '/scan' : !hasStripeConnection ? '/connect' : '/upgrade'}
                         onClick={() => {
-                            if (hasStripeConnection) {
+                            if (!hasCompletedScan) {
+                                logOnboardingEventClient('scan_started', { source: 'dashboard_banner' });
+                            } else if (hasStripeConnection) {
                                 logOnboardingEventClient('upgrade_cta_clicked', { source: 'banner' });
                             } else {
                                 logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_banner' });
@@ -78,7 +90,7 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                         }}
                         className="ml-4 flex-shrink-0 px-4 py-2 bg-amber-500 text-slate-950 text-xs font-semibold rounded-lg hover:bg-amber-400 transition-all no-underline"
                     >
-                        {!hasStripeConnection ? 'Connect Stripe' : 'Upgrade'}
+                        {!hasCompletedScan ? 'Run scan' : !hasStripeConnection ? 'Connect Stripe' : 'Upgrade'}
                     </Link>
                 </div>
             )}

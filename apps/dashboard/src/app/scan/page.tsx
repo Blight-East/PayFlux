@@ -1,9 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
+
+function normalizeUrl(input: string): string {
+    let s = input.trim();
+    if (!s) return '';
+    // Strip protocol if present, we'll add it back
+    s = s.replace(/^https?:\/\//, '');
+    // Strip trailing slashes
+    s = s.replace(/\/+$/, '');
+    return s;
+}
 
 export default function ScanPage() {
     const router = useRouter();
@@ -11,38 +21,52 @@ export default function ScanPage() {
     const [scanning, setScanning] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [scanStage, setScanStage] = useState('');
+    const [scanStageIdx, setScanStageIdx] = useState(0);
+    const demoViewed = useRef(false);
 
     useEffect(() => {
         logOnboardingEventClient('scan_started');
     }, []);
 
+    // Emit scan_example_viewed once (the example result block is always visible)
+    useEffect(() => {
+        if (!demoViewed.current) {
+            demoViewed.current = true;
+            logOnboardingEventClient('scan_example_viewed');
+        }
+    }, []);
+
+    const SCAN_STAGES = [
+        { label: 'Checking processor configuration...', detail: 'Identifying your payment stack and processor relationship' },
+        { label: 'Identifying exposure points...', detail: 'Analyzing compliance gaps, dispute patterns, and risk signals' },
+        { label: 'Estimating reserve risk...', detail: 'Calculating how much capital your processor could hold' },
+    ];
+
     async function handleScan() {
-        if (!url.trim()) {
+        const domain = normalizeUrl(url);
+        if (!domain) {
             setError('Enter your website to continue.');
             return;
         }
 
         setScanning(true);
         setError(null);
+        setScanStageIdx(0);
+        setScanStage(SCAN_STAGES[0].label);
 
-        const stages = [
-            'Checking processor configuration...',
-            'Analyzing compliance signals...',
-            'Calculating risk exposure...',
-        ];
         let stageIdx = 0;
-        setScanStage(stages[0]);
         const stageTimer = setInterval(() => {
-            stageIdx = Math.min(stageIdx + 1, stages.length - 1);
-            setScanStage(stages[stageIdx]);
-        }, 3000);
+            stageIdx = Math.min(stageIdx + 1, SCAN_STAGES.length - 1);
+            setScanStageIdx(stageIdx);
+            setScanStage(SCAN_STAGES[stageIdx].label);
+        }, 4000);
 
         try {
             const response = await fetch('/api/v1/risk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    url: url.trim(),
+                    url: domain,
                     industry: 'general',
                     processor: 'stripe',
                 }),
@@ -57,7 +81,7 @@ export default function ScanPage() {
             const data = await response.json();
 
             // Store result for results page
-            sessionStorage.setItem('payflux_scan_result', JSON.stringify({ url: url.trim(), data }));
+            sessionStorage.setItem('payflux_scan_result', JSON.stringify({ url: domain, data }));
 
             // Persist scan completion + summary to Clerk org metadata
             await fetch('/api/onboarding/complete', {
@@ -66,7 +90,7 @@ export default function ScanPage() {
                 body: JSON.stringify({
                     mode: 'UI_SCAN',
                     scanResult: {
-                        url: url.trim(),
+                        url: domain,
                         riskLabel: data.riskLabel,
                         stabilityScore: data.stabilityScore ?? data.riskScore,
                         findings: data.findings,
@@ -74,16 +98,13 @@ export default function ScanPage() {
                 }),
             });
 
-            logOnboardingEventClient('scan_completed', {
-                url: url.trim(),
-                riskScore: data.stabilityScore ?? data.riskScore,
-                riskLabel: data.riskLabel,
-            });
+            // scan_completed is emitted server-side in /api/onboarding/complete
+            // (authoritative, has userId + workspace context)
 
             router.push('/scan/results');
         } catch {
             clearInterval(stageTimer);
-            setError('Scan failed. Check the URL and try again.');
+            setError('Scan failed. Check the domain and try again.');
             setScanning(false);
         }
     }
@@ -102,32 +123,97 @@ export default function ScanPage() {
                         How exposed is your payment stack?
                     </h1>
                     <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto">
-                        Enter your website. We'll analyze your processor risk, compliance gaps, and reserve exposure.
+                        Enter your domain. In 30 seconds you&apos;ll see your processor risk level, compliance gaps, and how much capital could be at risk.
                     </p>
                 </div>
 
-                {/* Scan Form */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-5">
+                {/* ── Example result preview ── */}
+                <div className="bg-slate-900/30 border border-slate-800/60 rounded-xl p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-bold">Example scan output</p>
+                        <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded-full uppercase font-bold">
+                            Elevated
+                        </span>
+                    </div>
+
+                    <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                            <div className="text-2xl font-bold text-red-400">38</div>
+                            <div className="text-[9px] text-slate-600 uppercase">Stability</div>
+                        </div>
+                        <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-red-500" style={{ width: '38%' }} />
+                        </div>
+                        <div className="flex-shrink-0 text-right">
+                            <div className="text-sm font-semibold text-white">4 findings</div>
+                            <div className="text-[9px] text-slate-600 uppercase">Detected</div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-1">
+                        <div className="flex items-start space-x-2">
+                            <div className="w-1 h-1 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-400">Missing refund policy increases dispute escalation risk</p>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                            <div className="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-400">No clear cancellation flow detected — processor flag risk</p>
+                        </div>
+                    </div>
+
+                    <p className="text-[10px] text-slate-600 pt-1 border-t border-slate-800/50">
+                        This merchant&apos;s processor could place a 10% rolling reserve on monthly volume within 60 days.
+                    </p>
+                </div>
+
+                {/* ── What you'll get ── */}
+                <div className="flex items-start space-x-6 px-2">
+                    <div className="flex-1 space-y-1">
+                        <div className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                            <p className="text-xs text-slate-300">Processor risk signals</p>
+                        </div>
+                        <p className="text-[10px] text-slate-600 ml-3.5">Dispute rates, account flags, reserve triggers</p>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                        <div className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                            <p className="text-xs text-slate-300">Compliance gaps</p>
+                        </div>
+                        <p className="text-[10px] text-slate-600 ml-3.5">Policies, disclosures, checkout signals</p>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                        <div className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                            <p className="text-xs text-slate-300">Reserve exposure</p>
+                        </div>
+                        <p className="text-[10px] text-slate-600 ml-3.5">How much capital your processor could hold</p>
+                    </div>
+                </div>
+
+                {/* ── Scan Form ── */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-4">
                     <div>
-                        <label htmlFor="url" className="block text-sm font-medium text-slate-400 mb-2">
-                            Your website
+                        <label htmlFor="url" className="block text-xs font-medium text-slate-500 mb-2">
+                            Your website or domain
                         </label>
                         <input
                             id="url"
                             type="text"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
-                            placeholder="example.com"
+                            placeholder="yourbusiness.com"
                             disabled={scanning}
+                            autoFocus
                             className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder:text-slate-600 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !scanning) {
+                                if (e.key === 'Enter' && !scanning && url.trim()) {
                                     handleScan();
                                 }
                             }}
                         />
-                        <p className="mt-2 text-xs text-slate-500">
-                            In about 30 seconds, you'll see how much capital your processor could put at risk.
+                        <p className="mt-1.5 text-[10px] text-slate-600">
+                            Just the domain — no https:// needed. Takes about 30 seconds.
                         </p>
                     </div>
 
@@ -148,19 +234,43 @@ export default function ScanPage() {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
-                                Scanning...
+                                Analyzing your exposure...
                             </span>
                         ) : (
-                            'Check my risk'
+                            'Show my risk'
                         )}
                     </button>
                 </div>
 
-                {/* Loading detail */}
+                {/* ── Scan progress ── */}
                 {scanning && (
-                    <div className="text-center space-y-2">
-                        <p className="text-sm text-slate-400">{scanStage}</p>
-                        <p className="text-xs text-slate-600">This may take up to 30 seconds</p>
+                    <div className="bg-slate-900/30 border border-slate-800/40 rounded-xl p-5 space-y-3">
+                        {SCAN_STAGES.map((stage, idx) => (
+                            <div key={idx} className="flex items-start space-x-3">
+                                <div className="mt-0.5 flex-shrink-0">
+                                    {idx < scanStageIdx ? (
+                                        <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : idx === scanStageIdx ? (
+                                        <svg className="animate-spin w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                    ) : (
+                                        <div className="w-4 h-4 rounded-full border border-slate-700" />
+                                    )}
+                                </div>
+                                <div>
+                                    <p className={`text-xs ${idx <= scanStageIdx ? 'text-slate-300' : 'text-slate-600'}`}>
+                                        {stage.label}
+                                    </p>
+                                    {idx === scanStageIdx && (
+                                        <p className="text-[10px] text-slate-500 mt-0.5">{stage.detail}</p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 

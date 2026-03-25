@@ -40,5 +40,5 @@ export async function GET() {
     console.log(`[DEV] Mock Stripe Account connected for Org: ${activeOrgId}`);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return NextResponse.redirect(new URL("/onboarding", baseUrl));
+    return NextResponse.redirect(new URL("/start", baseUrl));
 }

@@ -41,6 +41,16 @@ export default function ScanResultsPage() {
         }
     }, [loading, result, router]);
 
+    // Emit results_viewed once we have valid data
+    useEffect(() => {
+        if (!loading && result) {
+            logOnboardingEventClient('results_viewed', {
+                riskLabel: result.data.riskLabel,
+                stabilityScore: result.data.stabilityScore ?? result.data.riskScore,
+            });
+        }
+    }, [loading, result]);
+
     if (loading || !result) {
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -143,7 +153,7 @@ export default function ScanResultsPage() {
                     {/* Primary: Connect Stripe */}
                     <Link
                         href="/connect"
-                        onClick={() => logOnboardingEventClient('connect_started')}
+                        onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'scan_results' })}
                         className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
                     >
                         Connect Stripe for live monitoring

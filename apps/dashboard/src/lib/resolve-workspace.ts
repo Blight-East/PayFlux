@@ -10,6 +10,17 @@ export interface WorkspaceContext {
     tier: WorkspaceTier;
 }
 
+export interface ResolvedOrganizationContext {
+    organizationId: string;
+    organizationName: string;
+    role: WorkspaceRole;
+    publicMetadata: Record<string, unknown>;
+}
+
+export interface ResolveWorkspaceOptions {
+    allowAdminBypass?: boolean;
+}
+
 // ── Founder/operator bypass ─────────────────────────────────────
 // Two layers — user ID is immutable and checked first; email is
 // a fallback for accounts where the ID isn't known yet.
@@ -71,6 +82,74 @@ async function checkAdminBypass(userId: string): Promise<'user_id' | 'email' | n
 }
 
 /**
+ * Resolve the user's canonical Clerk organization for product routing.
+ *
+ * The oldest membership is treated as the canonical workspace and the organization
+ * is refetched directly to avoid stale embedded metadata from membership listings.
+ */
+export async function resolveOrganizationContext(
+    userId: string
+): Promise<ResolvedOrganizationContext | null> {
+    try {
+        const client = await clerkClient();
+        const memberships = await client.users.getOrganizationMembershipList({ userId });
+
+        if (!memberships.data || memberships.data.length === 0) {
+            return null;
+        }
+
+        const activeMembership = memberships.data.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )[0];
+
+        const organization = await client.organizations.getOrganization({
+            organizationId: activeMembership.organization.id,
+        });
+        const role: WorkspaceRole = activeMembership.role === 'org:admin' ? 'admin' : 'viewer';
+
+        return {
+            organizationId: organization.id,
+            organizationName: organization.name,
+            role,
+            publicMetadata: (organization.publicMetadata as Record<string, unknown>) ?? {},
+        };
+    } catch (error) {
+        console.error('[RESOLVE_ORGANIZATION_ERROR]', error);
+        return null;
+    }
+}
+
+/**
+ * Resolve the canonical organization for a user, creating one when the account
+ * does not yet belong to any Clerk org. This is used by the onboarding funnel,
+ * where a brand-new signed-in user may reach /scan before a workspace exists.
+ */
+export async function resolveOrCreateOrganizationContext(
+    userId: string
+): Promise<ResolvedOrganizationContext | null> {
+    const existing = await resolveOrganizationContext(userId);
+    if (existing) return existing;
+
+    try {
+        const client = await clerkClient();
+        const organization = await client.organizations.createOrganization({
+            name: 'Default PayFlux Org',
+            createdBy: userId,
+        });
+
+        return {
+            organizationId: organization.id,
+            organizationName: organization.name,
+            role: 'admin',
+            publicMetadata: (organization.publicMetadata as Record<string, unknown>) ?? {},
+        };
+    } catch (error) {
+        console.error('[CREATE_ORGANIZATION_ERROR]', error);
+        return null;
+    }
+}
+
+/**
  * Given a Clerk userId, resolve the active workspace, role, and tier.
  *
  * Founder bypass runs first:
@@ -79,47 +158,30 @@ async function checkAdminBypass(userId: string): Promise<'user_id' | 'email' | n
  *   3. Otherwise → normal Clerk org membership + tier logic
  */
 export async function resolveWorkspace(
-    userId: string
+    userId: string,
+    options: ResolveWorkspaceOptions = {}
 ): Promise<WorkspaceContext | null> {
+    const { allowAdminBypass = true } = options;
+
     // ── Founder bypass — before any org/tier/Stripe logic ────────
-    const bypassReason = await checkAdminBypass(userId);
-    if (bypassReason) {
-        console.info(`[WORKSPACE] Founder bypass applied via ${bypassReason}`, { userId });
-        return FOUNDER_WORKSPACE;
-    }
-
-    try {
-        const client = await clerkClient();
-
-        // Fetch user organization memberships
-        const memberships = await client.users.getOrganizationMembershipList({
-            userId,
-        });
-
-        if (!memberships.data || memberships.data.length === 0) {
-            return null;
+    if (allowAdminBypass) {
+        const bypassReason = await checkAdminBypass(userId);
+        if (bypassReason) {
+            console.info(`[WORKSPACE] Founder bypass applied via ${bypassReason}`, { userId });
+            return FOUNDER_WORKSPACE;
         }
-
-        // Pick the oldest membership deterministically if multiple exist
-        const activeMembership = memberships.data.sort(
-            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        )[0];
-
-        const organization = activeMembership.organization;
-        const role: WorkspaceRole = activeMembership.role === 'org:admin' ? 'admin' : 'viewer';
-
-        // Extract tier from public metadata, defaulting to 'free'
-        const rawTier = organization.publicMetadata?.tier;
-        const tier: WorkspaceTier = (rawTier === 'pro' || rawTier === 'enterprise') ? rawTier : 'free';
-
-        return {
-            workspaceId: organization.id,
-            workspaceName: organization.name,
-            role,
-            tier,
-        };
-    } catch (error) {
-        console.error('[RESOLVE_WORKSPACE_ERROR]', error);
-        return null;
     }
+
+    const org = await resolveOrganizationContext(userId);
+    if (!org) return null;
+
+    const rawTier = org.publicMetadata.tier;
+    const tier: WorkspaceTier = (rawTier === 'pro' || rawTier === 'enterprise') ? rawTier : 'free';
+
+    return {
+        workspaceId: org.organizationId,
+        workspaceName: org.organizationName,
+        role: org.role,
+        tier,
+    };
 }

@@ -22,7 +22,7 @@ export async function GET() {
         } else {
             // If No org exists, nothing to disconnect
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-            return NextResponse.redirect(new URL("/onboarding", baseUrl));
+            return NextResponse.redirect(new URL("/start", baseUrl));
         }
     }
 
@@ -39,5 +39,5 @@ export async function GET() {
     console.log(`[DEV] Mock Stripe Account disconnected for Org: ${activeOrgId}`);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return NextResponse.redirect(new URL("/onboarding", baseUrl));
+    return NextResponse.redirect(new URL("/start", baseUrl));
 }

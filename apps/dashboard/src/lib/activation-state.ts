@@ -12,8 +12,7 @@
  * Every field is server-side queryable and refresh-safe.
  */
 
-import { clerkClient } from '@clerk/nextjs/server';
-import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
+import { resolveOrganizationContext, resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
 export type ActivationState = 'paid_unconnected' | 'connected_generating' | 'live_monitored';
 
@@ -43,7 +42,7 @@ export interface ActivationStatus {
  * Returns null if the user is not paid (this flow is post-purchase only).
  */
 export async function resolveActivationStatus(userId: string): Promise<ActivationStatus | null> {
-    const workspace = await resolveWorkspace(userId);
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
     if (!workspace) return null;
 
     // Only applies to paid users
@@ -59,17 +58,9 @@ export async function resolveActivationStatus(userId: string): Promise<Activatio
     // user back to the Connect Stripe page.
     let orgMeta: Record<string, unknown> = {};
     try {
-        const client = await clerkClient();
-        const memberships = await client.users.getOrganizationMembershipList({ userId });
-        if (memberships.data && memberships.data.length > 0) {
-            const oldestMembership = memberships.data.sort(
-                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            )[0];
-            // Direct fetch — always returns fresh metadata
-            const org = await client.organizations.getOrganization({
-                organizationId: oldestMembership.organization.id,
-            });
-            orgMeta = (org.publicMetadata as Record<string, unknown>) || {};
+        const org = await resolveOrganizationContext(userId);
+        if (org) {
+            orgMeta = org.publicMetadata;
         }
     } catch {
         // Fall through with empty metadata — will resolve as paid_unconnected

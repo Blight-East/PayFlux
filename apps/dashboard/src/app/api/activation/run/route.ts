@@ -20,7 +20,7 @@
 
 import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { resolveOrganizationContext, resolveWorkspace } from '@/lib/resolve-workspace';
 import { RiskIntelligence } from '@/lib/risk-infra';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
@@ -46,24 +46,18 @@ export async function POST() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const workspace = await resolveWorkspace(userId);
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
     if (!workspace || (workspace.tier !== 'pro' && workspace.tier !== 'enterprise')) {
         return NextResponse.json({ error: 'Not a paid workspace' }, { status: 403 });
     }
 
     const client = await clerkClient();
-
-    // Fetch current org metadata
-    const memberships = await client.users.getOrganizationMembershipList({ userId });
-    if (!memberships.data || memberships.data.length === 0) {
+    const org = await resolveOrganizationContext(userId);
+    if (!org) {
         return NextResponse.json({ error: 'No organization found' }, { status: 404 });
     }
 
-    const org = memberships.data.sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    )[0].organization;
-
-    const meta = (org.publicMetadata as Record<string, unknown>) || {};
+    const meta = org.publicMetadata;
     const now = new Date().toISOString();
 
     const steps: { step: string; status: 'completed' | 'skipped' | 'failed'; detail?: string }[] = [];
@@ -101,7 +95,7 @@ export async function POST() {
                 riskBand = ['low', 'moderate', 'elevated', 'high', 'critical'][riskTier - 1] || 'elevated';
             }
 
-            await client.organizations.updateOrganizationMetadata(org.id, {
+            await client.organizations.updateOrganizationMetadata(org.organizationId, {
                 publicMetadata: {
                     baselineGeneratedAt: now,
                     baselineRiskSurface: {
@@ -128,7 +122,7 @@ export async function POST() {
     } else {
         try {
             // Re-read metadata (may have been updated in step 2)
-            const updatedOrg = await client.organizations.getOrganization({ organizationId: org.id });
+            const updatedOrg = await client.organizations.getOrganization({ organizationId: org.organizationId });
             const updatedMeta = (updatedOrg.publicMetadata as Record<string, unknown>) || {};
             const baseline = updatedMeta.baselineRiskSurface as Record<string, unknown> | undefined;
 
@@ -151,7 +145,7 @@ export async function POST() {
                 generatedAt: now,
             };
 
-            await client.organizations.updateOrganizationMetadata(org.id, {
+            await client.organizations.updateOrganizationMetadata(org.organizationId, {
                 publicMetadata: {
                     firstProjectionAt: now,
                     latestProjection: projection,
@@ -169,7 +163,7 @@ export async function POST() {
         steps.push({ step: 'arm_alerts', status: 'skipped', detail: 'Already armed' });
     } else {
         try {
-            await client.organizations.updateOrganizationMetadata(org.id, {
+            await client.organizations.updateOrganizationMetadata(org.organizationId, {
                 publicMetadata: {
                     alertPolicyArmed: true,
                     alertPolicyArmedAt: now,
@@ -186,7 +180,7 @@ export async function POST() {
     // ── Step 5: Mark live_monitored ────────────────────────────────────────
     if (!meta.activationCompletedAt) {
         try {
-            await client.organizations.updateOrganizationMetadata(org.id, {
+            await client.organizations.updateOrganizationMetadata(org.organizationId, {
                 publicMetadata: {
                     activationState: 'live_monitored',
                     activationCompletedAt: now,
@@ -224,26 +218,16 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const workspace = await resolveWorkspace(userId);
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
     if (!workspace || (workspace.tier !== 'pro' && workspace.tier !== 'enterprise')) {
         return NextResponse.json({ error: 'Not a paid workspace', state: 'not_paid' }, { status: 403 });
     }
 
-    const client = await clerkClient();
-    const memberships = await client.users.getOrganizationMembershipList({ userId });
-    if (!memberships.data || memberships.data.length === 0) {
+    const org = await resolveOrganizationContext(userId);
+    if (!org) {
         return NextResponse.json({ error: 'No organization' }, { status: 404 });
     }
-
-    // Direct fetch — the embedded org from membership list can be stale
-    const oldestMembership = memberships.data.sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    )[0];
-    const org = await client.organizations.getOrganization({
-        organizationId: oldestMembership.organization.id,
-    });
-
-    const meta = (org.publicMetadata as Record<string, unknown>) || {};
+    const meta = org.publicMetadata;
 
     const conditions = {
         paidTier: true,
