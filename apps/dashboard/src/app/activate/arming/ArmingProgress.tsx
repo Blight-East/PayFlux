@@ -163,7 +163,6 @@ export default function ArmingProgress() {
     // ── Completion state: show baseline numbers ─────────────────────────────
     if (isComplete) {
         const band = baseline?.riskBand || projection?.riskBand || 'elevated';
-        const tier = baseline?.riskTier || projection?.riskTier || 3;
         const trend = baseline?.trend || projection?.trend || 'STABLE';
         const trendInfo = TREND_LABELS[trend] || TREND_LABELS.STABLE;
         const bandColor = RISK_BAND_COLORS[band] || 'text-amber-400';
@@ -183,10 +182,10 @@ export default function ArmingProgress() {
                             </svg>
                         </div>
                         <h1 className="text-2xl font-semibold text-white tracking-tight">
-                            Your workspace is live.
+                            Live monitoring is on.
                         </h1>
                         <p className="text-sm text-slate-400">
-                            Here is the first live payout-risk baseline generated from your processor data.
+                            Here is the first live payout-risk view generated from your processor data.
                         </p>
                     </div>
 
@@ -200,12 +199,10 @@ export default function ArmingProgress() {
                             </h2>
                             <div className="flex items-baseline justify-between">
                                 <div>
-                                    <span className={`text-3xl font-bold tabular-nums capitalize ${bandColor}`}>
-                                        {band} risk
-                                    </span>
-                                    <span className="ml-2 text-sm font-medium text-slate-500">
-                                        Internal tier {tier}
-                                    </span>
+                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Current payout risk</span>
+                                    <p className={`text-3xl font-bold tabular-nums capitalize ${bandColor}`}>
+                                        {band}
+                                    </p>
                                 </div>
                                 <div className="text-right">
                                     <span className={`text-sm font-medium ${trendInfo.color}`}>
@@ -276,10 +273,10 @@ export default function ArmingProgress() {
                             </h2>
                             <div className="space-y-1.5">
                                 {[
-                                    'Risk tier escalation',
-                                    'Held-fund estimate jumps sharply',
+                                    'Money held back may jump sharply',
+                                    'Payout risk moves up a level',
                                     'Risk direction turns worse',
-                                    'Processor pressure moves beyond the current range',
+                                    'Processor pressure moves outside the current range',
                                 ].map((rule) => (
                                     <div key={rule} className="flex items-center space-x-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
@@ -323,7 +320,7 @@ export default function ArmingProgress() {
                         Getting PayFlux ready...
                     </h1>
                     <p className="text-sm text-slate-400">
-                        PayFlux is reading your processor activity and building the first live view of payout risk.
+                        PayFlux is reading your processor activity and building the first live view of what may happen to your payouts.
                     </p>
                 </div>
 

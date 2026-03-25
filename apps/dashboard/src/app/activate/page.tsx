@@ -41,10 +41,10 @@ export default async function ActivatePage() {
                         </svg>
                     </div>
                     <h1 className="text-2xl font-semibold text-white tracking-tight">
-                        Finish setup so PayFlux can start watching your payouts.
+                        Turn on live monitoring for your payouts.
                     </h1>
                     <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
-                        Connect your processor and PayFlux will build your first live view of payout risk, held-fund risk, and account pressure in about a minute.
+                        You have already unlocked PayFlux. This last step connects Stripe so your first live view of payout risk, held-fund risk, and account pressure can go live in about a minute.
                     </p>
                 </div>
 
@@ -68,8 +68,8 @@ export default async function ActivatePage() {
                                 <span className="text-[10px] text-amber-400 font-bold">2</span>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-200">We estimate how your processor may behave next</p>
-                                <p className="text-xs text-slate-500">Held-fund risk, payout pressure, and the warning signs pushing risk up.</p>
+                                <p className="text-sm text-slate-200">We estimate what your processor may do next</p>
+                                <p className="text-xs text-slate-500">Held-back money, slower payouts, and the warning signs pushing risk up.</p>
                             </div>
                         </div>
                         <div className="flex items-start space-x-3">
@@ -89,7 +89,7 @@ export default async function ActivatePage() {
                     href="/api/stripe/authorize"
                     className="flex items-center justify-center w-full px-6 py-4 bg-amber-500 text-slate-950 font-semibold rounded-xl hover:bg-amber-400 transition-all active:scale-[0.98] no-underline text-base"
                 >
-                    Connect Stripe safely
+                    Connect Stripe and finish setup
                 </a>
 
                 {/* Secondary */}

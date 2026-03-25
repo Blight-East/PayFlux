@@ -50,6 +50,8 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
         ? contextualHeadline(label ?? undefined, hasStripeConnection)
         : 'Start with a scan to surface your current exposure.';
 
+    const shouldConnectFirst = stage === 'scanned' && !hasStripeConnection;
+
     const handleCheckout = async () => {
         if (!workspaceId) return;
         setCheckoutLoading(true);
@@ -81,16 +83,16 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
 
                 {/* ── Resume guidance ── */}
                 {stage === 'scanned' && !hasStripeConnection && (
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-lg px-5 py-4 flex items-center justify-between">
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-lg px-5 py-4 flex items-center justify-between gap-4">
                         <div>
-                            <p className="text-sm text-slate-300">Your scan is complete but Stripe isn&apos;t connected yet.</p>
-                            <p className="text-xs text-slate-500 mt-1">Connect for live monitoring, or upgrade now for full visibility.</p>
+                            <p className="text-sm text-slate-300">Your scan is complete, but you are still on a one-time snapshot.</p>
+                            <p className="text-xs text-slate-500 mt-1">Recommended next step: connect Stripe first so Pro can start with live payout data instead of making you loop back after checkout.</p>
                         </div>
                         <Link
                             href="/connect"
                             className="ml-4 flex-shrink-0 px-3 py-1.5 border border-slate-700 text-xs text-slate-400 rounded-lg hover:text-slate-300 hover:border-slate-600 transition-all no-underline"
                         >
-                            Connect Stripe
+                            Connect first
                         </Link>
                     </div>
                 )}
@@ -105,7 +107,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             ? 'Run a first check so the upgrade path starts from your real payout-risk warning signs, not generic assumptions.'
                             : hasStripeConnection
                             ? 'Your processor is already connected. Pro turns live monitoring into an operator view of what may happen next, why it matters, and what to do before payouts are affected.'
-                            : 'Your scan found signs that could lead to held funds, slower payouts, or tighter account review. Pro helps you act before the processor moves.'
+                            : 'Your scan found signs that could lead to held funds, slower payouts, or tighter account review. Connect first if you want Pro to start from live processor data on day one.'
                         }
                     </p>
                 </div>
@@ -125,7 +127,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             {/* Score */}
                             {score !== null && (
                                 <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                                    <p className="text-[10px] text-slate-500 uppercase mb-1">Risk score</p>
+                                    <p className="text-[10px] text-slate-500 uppercase mb-1">Current risk score</p>
                                     <p className="text-sm font-bold text-white">{score}/100</p>
                                 </div>
                             )}
@@ -138,16 +140,16 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             )}
                             {/* Connection */}
                             <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                                    <p className="text-[10px] text-slate-500 uppercase mb-1">Live data</p>
+                                    <p className="text-[10px] text-slate-500 uppercase mb-1">Monitoring mode</p>
                                     <p className={`text-sm font-bold ${hasStripeConnection ? 'text-emerald-400' : 'text-slate-500'}`}>
-                                        {hasStripeConnection ? 'Live' : 'Snapshot'}
+                                        {hasStripeConnection ? 'Live data' : 'One-time snapshot'}
                                     </p>
                             </div>
                         </div>
 
                         {/* What you can see now */}
                         <div className="mt-4 pt-4 border-t border-slate-800/50">
-                            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2">What you can see now</p>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2">What you can see right now</p>
                             <div className="flex flex-wrap gap-2">
                                 <span className="text-[10px] text-slate-400 bg-slate-800/50 px-2 py-1 rounded">Risk band</span>
                                 <span className="text-[10px] text-slate-400 bg-slate-800/50 px-2 py-1 rounded">Key findings</span>
@@ -156,6 +158,31 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                                     <span className="text-[10px] text-slate-400 bg-slate-800/50 px-2 py-1 rounded">Live signals</span>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {shouldConnectFirst && (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
+                        <h2 className="text-[10px] text-amber-400 uppercase tracking-[0.2em] font-bold">Best path from here</h2>
+                        <p className="text-sm text-slate-300 leading-relaxed">
+                            If you upgrade before connecting Stripe, you will still need to connect it on the next step before PayFlux can go live. Connecting first makes the paid setup feel immediate instead of fragmented.
+                        </p>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <Link
+                                href="/connect"
+                                className="flex items-center justify-center flex-1 px-4 py-2.5 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all no-underline"
+                            >
+                                Connect Stripe first
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={handleCheckout}
+                                disabled={checkoutLoading || !workspaceId}
+                                className="flex items-center justify-center flex-1 px-4 py-2.5 border border-slate-700 text-sm text-slate-300 rounded-lg hover:border-slate-600 hover:text-white transition-all disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed"
+                            >
+                                {checkoutLoading ? 'Opening checkout...' : 'Upgrade first anyway'}
+                            </button>
                         </div>
                     </div>
                 )}
@@ -233,9 +260,9 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                     </div>
 
                     <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-6">
-                        <span>Reserve projections</span>
+                        <span>Held-back money forecasts</span>
                         <span className="text-slate-700">&middot;</span>
-                        <span>Intervention modeling</span>
+                        <span>Action checklist</span>
                         <span className="text-slate-700">&middot;</span>
                         <span>Signed evidence</span>
                         <span className="text-slate-700">&middot;</span>
@@ -256,7 +283,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
-                                Connecting to Stripe...
+                                Opening checkout...
                             </span>
                         ) : (
                             'Start Pro'

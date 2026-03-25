@@ -128,7 +128,7 @@ export default function ScanPage() {
                         Check whether your processor may start holding back money or slowing payouts.
                     </h1>
                     <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto">
-                        PayFlux gives you a fast first check of payout risk. Enter your domain and we&apos;ll show what warning signs a processor may see, why they matter, and what could happen next.
+                        PayFlux gives you a fast first check of payout risk. Enter your domain and we&apos;ll show what warning signs a processor may see, why they matter, and whether it is worth moving into live monitoring next.
                     </p>
                 </div>
 
@@ -188,7 +188,7 @@ export default function ScanPage() {
                     </div>
 
                     <p className="text-[10px] text-slate-600 pt-1 border-t border-slate-800/50">
-                        This merchant could see part of monthly sales held back within 60 days if the current pattern continues.
+                        This one-time check flags the warning. The next step is connecting live processor data so PayFlux can keep watching for real payout changes.
                     </p>
                 </div>
 
@@ -211,9 +211,9 @@ export default function ScanPage() {
                     <div className="flex-1 space-y-1">
                         <div className="flex items-center space-x-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                            <p className="text-xs text-slate-300">Next step</p>
-                        </div>
-                        <p className="text-[10px] text-slate-600 ml-3.5">A clear handoff into live monitoring if the warning signs look real</p>
+                        <p className="text-xs text-slate-300">Next step</p>
+                    </div>
+                        <p className="text-[10px] text-slate-600 ml-3.5">A clear handoff into live monitoring if the warning signs look real enough to matter</p>
                     </div>
                 </div>
 
@@ -316,10 +316,10 @@ export default function ScanPage() {
                         </Link>
                     ) : (
                         <Link
-                            href="/sign-up"
+                            href="/sign-up?redirect_url=%2Fscan"
                             className="text-[11px] text-slate-600 hover:text-slate-500 transition-colors no-underline"
                         >
-                            Create a free account to save your next check →
+                            Create a free account to keep going after the scan →
                         </Link>
                     )}
                 </div>

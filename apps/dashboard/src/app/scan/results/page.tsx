@@ -39,6 +39,17 @@ function headline(label?: string): string {
     return 'Your current payout risk looks fairly stable.';
 }
 
+function nextStepCopy(label?: string): string {
+    const l = (label ?? '').toUpperCase();
+    if (l === 'CRITICAL' || l === 'HIGH') {
+        return 'Do not stop at the snapshot. Connect live processor data so PayFlux can warn you if held funds or slower payouts start showing up for real.';
+    }
+    if (l === 'ELEVATED' || l === 'MODERATE') {
+        return 'This is the point where live monitoring matters. Connect your processor so PayFlux can tell you whether these warning signs are actually getting worse.';
+    }
+    return 'The snapshot looks calm right now. Connect live processor data if you want PayFlux to keep watching for changes instead of guessing from a one-time check.';
+}
+
 export default function ScanResultsPage() {
     const router = useRouter();
     const { userId } = useAuth();
@@ -117,6 +128,31 @@ export default function ScanResultsPage() {
                     </p>
                 </div>
 
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-[10px] text-amber-400 uppercase tracking-[0.2em] font-bold">What this result can and cannot tell you</p>
+                            <p className="mt-1 text-sm text-slate-300">
+                                This scan is a snapshot from your public site. It can flag risk, but it cannot see whether your processor is already tightening payouts or starting to hold funds.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                            <p className="text-xs font-semibold text-white">What you have now</p>
+                            <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                                A one-time view of the warning signs your site is sending to a processor.
+                            </p>
+                        </div>
+                        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                            <p className="text-xs font-semibold text-white">What live monitoring adds</p>
+                            <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                                PayFlux watches real payout behavior, held-fund risk, and account pressure so you can see if this warning is turning into a cash-flow problem.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid gap-3 md:grid-cols-3">
                     <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
                         <p className="text-xs font-semibold text-white">What is happening?</p>
@@ -175,9 +211,12 @@ export default function ScanResultsPage() {
                 )}
 
                 {/* Context line */}
-                <p className="text-xs text-slate-500 text-center">
-                    This is a one-time check. Live processor data is what turns this into an early-warning system.
-                </p>
+                <div className="text-center space-y-1">
+                    <p className="text-xs text-slate-300">{nextStepCopy(label)}</p>
+                    <p className="text-xs text-slate-500">
+                        This is a one-time check. Live processor data is what turns this into an early-warning system.
+                    </p>
+                </div>
 
                 {/* CTA ladder */}
                 <div className="space-y-3">
@@ -188,29 +227,29 @@ export default function ScanResultsPage() {
                                 onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'scan_results' })}
                                 className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
                             >
-                                Connect Stripe so PayFlux can watch payout risk live
+                                Connect Stripe and keep watching this live
                             </Link>
                             <Link
                                 href="/dashboard"
                                 onClick={() => logOnboardingEventClient('connect_skipped')}
                                 className="flex items-center justify-center w-full px-6 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors no-underline"
                             >
-                                Continue to dashboard preview
+                                Stop at the snapshot for now
                             </Link>
                         </>
                     ) : (
                         <>
                             <Link
-                                href="/sign-up"
+                                href="/sign-up?redirect_url=%2Fconnect"
                                 className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
                             >
-                                Create a free account to save this result
+                                Create a free account and continue to live monitoring
                             </Link>
                             <Link
-                                href="/sign-in"
+                                href="/sign-in?redirect_url=%2Fconnect"
                                 className="flex items-center justify-center w-full px-6 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors no-underline"
                             >
-                                Already have an account? Sign in
+                                Already have an account? Sign in and continue
                             </Link>
                         </>
                     )}

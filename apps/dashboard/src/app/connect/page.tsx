@@ -79,6 +79,24 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                         </p>
                     </div>
 
+                    <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">What changes the moment you connect</p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-lg border border-slate-800/60 bg-slate-950/40 p-3">
+                                <p className="text-[11px] font-semibold text-white">Without a connection</p>
+                                <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+                                    You only have a one-time site snapshot. Useful, but blind to what your processor is doing right now.
+                                </p>
+                            </div>
+                            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                                <p className="text-[11px] font-semibold text-white">With live processor data</p>
+                                <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
+                                    PayFlux can watch payout behavior, rising pressure, and money that may get held back before you feel it in cash flow.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="grid gap-3 sm:grid-cols-3">
                         <div className="rounded-lg border border-slate-800/60 bg-slate-900/40 p-3">
                             <p className="text-[11px] font-semibold text-white">What is happening?</p>
@@ -102,7 +120,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
 
                     {/* What we monitor */}
                     <div className="space-y-3">
-                        <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">What we monitor</h2>
+                        <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">What PayFlux starts watching</h2>
                         <ul className="space-y-2">
                             <li className="flex items-start space-x-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
@@ -131,7 +149,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                         href="/api/stripe/authorize"
                         className="flex items-center justify-center w-full px-4 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
                     >
-                        Connect Stripe safely
+                        Connect Stripe and turn on live monitoring
                     </a>
 
                     {/* Secondary: Skip */}
@@ -139,7 +157,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                         href="/dashboard"
                         className="flex items-center justify-center w-full px-4 py-2 text-sm text-slate-500 hover:text-slate-400 transition-colors no-underline"
                     >
-                        Keep using the snapshot for now
+                        Stay on the one-time snapshot for now
                     </Link>
 
                     <div className="text-center pt-2">
