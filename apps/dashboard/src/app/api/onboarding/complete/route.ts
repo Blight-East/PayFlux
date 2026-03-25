@@ -1,6 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { logStageTransition } from '@/lib/onboarding-events';
+import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
+import { resolveOrCreateOrganizationContext } from '@/lib/resolve-workspace';
 
 export const runtime = 'nodejs';
 
@@ -32,12 +33,9 @@ export async function POST(request: Request) {
 
         // Persist scan completion + summary to Clerk org publicMetadata
         const client = await clerkClient();
-        const memberships = await client.users.getOrganizationMembershipList({ userId });
+        const org = await resolveOrCreateOrganizationContext(userId);
 
-        if (memberships.data && memberships.data.length > 0) {
-            const org = memberships.data.sort(
-                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            )[0].organization;
+        if (org) {
 
             // Build scan summary for durable persistence (keeps metadata small — ~1KB)
             const scanSummary = scanResult ? {
@@ -55,9 +53,8 @@ export async function POST(request: Request) {
                 scannedAt: new Date().toISOString(),
             } : undefined;
 
-            await client.organizations.updateOrganizationMetadata(org.id, {
+            await client.organizations.updateOrganizationMetadata(org.organizationId, {
                 publicMetadata: {
-                    ...((org.publicMetadata as Record<string, unknown>) ?? {}),
                     onboardingScanCompleted: true,
                     onboardingScanCompletedAt: new Date().toISOString(),
                     onboardingScanMode: mode,
@@ -65,16 +62,14 @@ export async function POST(request: Request) {
                 },
             });
 
-            console.log(`[ONBOARDING_EVENT] ${JSON.stringify({
-                event: 'scan_completed',
+            logOnboardingEvent('scan_completed', {
                 userId,
-                workspaceId: org.id,
-                metadata: { mode },
-                timestamp: new Date().toISOString(),
-            })}`);
+                workspaceId: org.organizationId,
+                metadata: { mode, url: scanSummary?.url },
+            });
 
             // Emit stage transition: none → scanned
-            logStageTransition('none', 'scanned', { userId, workspaceId: org.id });
+            logStageTransition('none', 'scanned', { userId, workspaceId: org.organizationId });
         }
 
         return NextResponse.json({

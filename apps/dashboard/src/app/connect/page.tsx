@@ -2,7 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import SignOutLink from '@/components/SignOutLink';
-import { logOnboardingEvent } from '@/lib/onboarding-events';
+import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 export const runtime = 'nodejs';
 
@@ -44,7 +44,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
         redirect('/dashboard');
     }
 
-    logOnboardingEvent('connect_started', { userId, workspaceId: activeOrgId });
+    logOnboardingEvent('connect_page_viewed', { userId, workspaceId: activeOrgId });
 
     const errRaw = searchParams?.err;
     const err = Array.isArray(errRaw) ? errRaw[0] : errRaw;

@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { resolveOnboardingState } from '@/lib/onboarding-state';
-import { logOnboardingEvent } from '@/lib/onboarding-events';
+import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 import UpgradeClient from './UpgradeClient';
+import LegacyCheckoutQuerySanitizer from '@/components/LegacyCheckoutQuerySanitizer';
 
 export const runtime = 'nodejs';
 
@@ -43,11 +44,14 @@ export default async function UpgradePage() {
     };
 
     return (
-        <UpgradeClient
-            hasStripeConnection={scanContext.hasStripeConnection}
-            hasScanCompleted={scanContext.hasScanCompleted}
-            stage={scanContext.stage}
-            workspaceId={scanContext.workspaceId ?? null}
-        />
+        <>
+            <LegacyCheckoutQuerySanitizer />
+            <UpgradeClient
+                hasStripeConnection={scanContext.hasStripeConnection}
+                hasScanCompleted={scanContext.hasScanCompleted}
+                stage={scanContext.stage}
+                workspaceId={scanContext.workspaceId ?? null}
+            />
+        </>
     );
 }
