@@ -62,12 +62,14 @@ export default function ScanResultsPage() {
         }
     }, [loading, result, router]);
 
-    // Emit results_viewed once we have valid data
+    // Emit scan_results_viewed once we have valid data
     useEffect(() => {
         if (!loading && result) {
-            logOnboardingEventClient('results_viewed', {
-                riskLabel: result.data.riskLabel,
-                stabilityScore: result.data.stabilityScore ?? result.data.riskScore,
+            logOnboardingEventClient('scan_results_viewed', {
+                risk_score: result.data.stabilityScore ?? result.data.riskScore,
+                risk_band: result.data.riskLabel,
+                findings_count: result.data.findings?.length ?? 0,
+                source_page: 'scan_results',
             });
         }
     }, [loading, result]);
@@ -224,14 +226,29 @@ export default function ScanResultsPage() {
                         <>
                             <Link
                                 href="/connect"
-                                onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'scan_results' })}
+                                onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    source_page: 'scan_results',
+                                    destination_page: 'connect',
+                                    risk_score: score,
+                                    risk_band: label,
+                                    findings_count: findings.length,
+                                    authenticated: true,
+                                })}
                                 className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
                             >
                                 Connect Stripe and keep watching this live
                             </Link>
                             <Link
                                 href="/dashboard"
-                                onClick={() => logOnboardingEventClient('connect_skipped')}
+                                onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    source_page: 'scan_results',
+                                    destination_page: 'dashboard',
+                                    risk_score: score,
+                                    risk_band: label,
+                                    findings_count: findings.length,
+                                    authenticated: true,
+                                    skipped: true,
+                                })}
                                 className="flex items-center justify-center w-full px-6 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors no-underline"
                             >
                                 Stop at the snapshot for now
@@ -241,12 +258,28 @@ export default function ScanResultsPage() {
                         <>
                             <Link
                                 href="/sign-up?redirect_url=%2Fconnect"
+                                onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    source_page: 'scan_results',
+                                    destination_page: 'sign_up',
+                                    risk_score: score,
+                                    risk_band: label,
+                                    findings_count: findings.length,
+                                    authenticated: false,
+                                })}
                                 className="flex items-center justify-center w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
                             >
                                 Create a free account and continue to live monitoring
                             </Link>
                             <Link
                                 href="/sign-in?redirect_url=%2Fconnect"
+                                onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    source_page: 'scan_results',
+                                    destination_page: 'sign_in',
+                                    risk_score: score,
+                                    risk_band: label,
+                                    findings_count: findings.length,
+                                    authenticated: false,
+                                })}
                                 className="flex items-center justify-center w-full px-6 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors no-underline"
                             >
                                 Already have an account? Sign in and continue

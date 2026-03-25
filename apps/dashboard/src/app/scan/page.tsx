@@ -27,7 +27,7 @@ export default function ScanPage() {
     const demoViewed = useRef(false);
 
     useEffect(() => {
-        logOnboardingEventClient('scan_started');
+        logOnboardingEventClient('scan_viewed', { source_page: 'scan' });
     }, []);
 
     // Emit scan_example_viewed once (the example result block is always visible)
@@ -55,6 +55,8 @@ export default function ScanPage() {
         setError(null);
         setScanStageIdx(0);
         setScanStage(SCAN_STAGES[0].label);
+
+        logOnboardingEventClient('scan_submitted', { domain, source_page: 'scan' });
 
         let stageIdx = 0;
         const stageTimer = setInterval(() => {

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { logOnboardingEventClient } from '@/lib/onboarding-events';
 
 interface ActivationConditions {
     paidTier: boolean;
@@ -86,6 +87,16 @@ export default function ArmingProgress() {
     const [baseline, setBaseline] = useState<BaselineRiskSurface | null>(null);
     const [projection, setProjection] = useState<LatestProjection | null>(null);
 
+    const armingViewedRef = useRef(false);
+
+    // Emit activate_arming_viewed once on mount
+    useEffect(() => {
+        if (!armingViewedRef.current) {
+            armingViewedRef.current = true;
+            logOnboardingEventClient('activate_arming_viewed', { source_page: 'activate_arming' });
+        }
+    }, []);
+
     // Timer
     useEffect(() => {
         if (isComplete) return;
@@ -142,6 +153,10 @@ export default function ArmingProgress() {
                     if (data.meta?.baselineRiskSurface) setBaseline(data.meta.baselineRiskSurface);
                     if (data.meta?.latestProjection) setProjection(data.meta.latestProjection);
                     setIsComplete(true);
+                    logOnboardingEventClient('arming_completed', {
+                        source_page: 'activate_arming',
+                        elapsed_seconds: elapsedSeconds,
+                    });
                     return;
                 }
 

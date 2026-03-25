@@ -7,6 +7,7 @@ export const runtime = 'nodejs';
 /**
  * POST /api/onboarding/event
  * Receives client-side onboarding events and persists them durably.
+ * Reads pf_journey cookie to ensure journey_id is always present.
  */
 export async function POST(req: NextRequest) {
     try {
@@ -15,6 +16,15 @@ export async function POST(req: NextRequest) {
 
         const eventName = body.event;
         const metadata = body.metadata ?? {};
+
+        // Ensure journey_id is present — client should send it,
+        // but fall back to cookie if missing
+        if (!metadata.journey_id) {
+            const journeyCookie = req.cookies.get('pf_journey');
+            if (journeyCookie?.value) {
+                metadata.journey_id = journeyCookie.value;
+            }
+        }
 
         console.log(`[ONBOARDING_EVENT] ${JSON.stringify({
             event: eventName,

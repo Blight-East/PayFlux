@@ -21,12 +21,13 @@ export default async function UpgradePage() {
         redirect('/dashboard');
     }
 
-    logOnboardingEvent('upgrade_cta_clicked', {
+    logOnboardingEvent('upgrade_viewed', {
         userId,
         workspaceId: onboarding.workspace?.workspaceId,
         metadata: {
             stage: onboarding.stage,
             source: 'upgrade_page_view',
+            stripe_connected: onboarding.hasStripeConnection,
         },
     });
 

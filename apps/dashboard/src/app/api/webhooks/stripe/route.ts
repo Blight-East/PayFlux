@@ -209,7 +209,7 @@ async function handleCheckoutCompleted(session: any, eventType: string) {
         });
         console.log(`[CHECKOUT_COMPLETED] Upgraded workspace ${workspaceId} to pro`);
 
-        logOnboardingEvent('upgrade_completed', {
+        logOnboardingEvent('checkout_completed', {
             workspaceId,
             metadata: { sessionId: session.id },
         });

@@ -22,7 +22,7 @@ export default async function ActivatePage() {
     if (status.state === 'connected_generating') redirect('/activate/arming');
 
     // paid_unconnected → show activation page
-    logOnboardingEvent('onboarding_stage_changed', {
+    logOnboardingEvent('activate_viewed', {
         userId,
         workspaceId: status.workspace.workspaceId,
         metadata: { from: 'upgraded', to: 'paid_unconnected', page: 'activate' },

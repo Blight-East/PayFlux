@@ -2,6 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import SignOutLink from '@/components/SignOutLink';
+import ConnectStripeCTA from '@/components/ConnectStripeCTA';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 export const runtime = 'nodejs';
@@ -44,7 +45,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
         redirect('/dashboard');
     }
 
-    logOnboardingEvent('connect_page_viewed', { userId, workspaceId: activeOrgId });
+    logOnboardingEvent('connect_viewed', { userId, workspaceId: activeOrgId });
 
     const errRaw = searchParams?.err;
     const err = Array.isArray(errRaw) ? errRaw[0] : errRaw;
@@ -145,12 +146,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                     </div>
 
                     {/* Primary CTA */}
-                    <a
-                        href="/api/stripe/authorize"
-                        className="flex items-center justify-center w-full px-4 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] no-underline"
-                    >
-                        Connect Stripe and turn on live monitoring
-                    </a>
+                    <ConnectStripeCTA />
 
                     {/* Secondary: Skip */}
                     <Link

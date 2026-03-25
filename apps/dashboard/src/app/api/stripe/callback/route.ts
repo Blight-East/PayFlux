@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
 
         console.log(`Successfully persisted Stripe Account: ${stripeAccountId} to Clerk Org: ${activeOrgId}`);
 
-        logOnboardingEvent('connect_completed', {
+        logOnboardingEvent('stripe_connect_completed', {
             userId,
             workspaceId: activeOrgId,
             metadata: { stripeAccountId },

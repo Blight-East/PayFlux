@@ -56,7 +56,13 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
         if (!workspaceId) return;
         setCheckoutLoading(true);
         setCheckoutError(null);
-        logOnboardingEventClient('upgrade_cta_clicked', { source: 'upgrade_page_cta' });
+        logOnboardingEventClient('upgrade_checkout_clicked', {
+            source: 'upgrade_page_cta',
+            price_shown: 499,
+            plan_name: 'pro',
+            stripe_connected: hasStripeConnection,
+            checkout_entry_point: 'upgrade_page',
+        });
 
         try {
             const res = await fetch('/api/checkout/session', {
