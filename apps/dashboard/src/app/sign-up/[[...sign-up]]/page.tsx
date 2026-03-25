@@ -3,16 +3,17 @@ import { redirect } from 'next/navigation';
 import AuthStoryShell from '@/components/AuthStoryShell';
 
 type PageProps = {
-    searchParams?: Record<string, string | string[] | undefined>;
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 function firstValue(value: string | string[] | undefined) {
     return Array.isArray(value) ? value[0] : value;
 }
 
-export default function Page({ searchParams }: PageProps) {
-    const legacyRedirectTarget = firstValue(searchParams?.redirect_url);
-    const nextRedirectTarget = firstValue(searchParams?.next);
+export default async function Page({ searchParams }: PageProps) {
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const legacyRedirectTarget = firstValue(resolvedSearchParams?.redirect_url);
+    const nextRedirectTarget = firstValue(resolvedSearchParams?.next);
 
     if (legacyRedirectTarget && nextRedirectTarget !== legacyRedirectTarget) {
         redirect(`/sign-up?next=${encodeURIComponent(legacyRedirectTarget)}`);
