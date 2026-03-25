@@ -172,7 +172,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
                         <h2 className="text-[10px] text-amber-400 uppercase tracking-[0.2em] font-bold">Best path from here</h2>
                         <p className="text-sm text-slate-300 leading-relaxed">
-                            If you upgrade before connecting Stripe, you will still need to connect it on the next step before PayFlux can go live. Connecting first makes the paid setup feel immediate instead of fragmented.
+                            Connect Stripe first to unlock live monitoring and risk tracking. Otherwise you will need to connect right after checkout before anything goes live.
                         </p>
                         <div className="flex flex-col gap-2 sm:flex-row">
                             <Link
@@ -203,13 +203,13 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             <div className="w-8 h-8 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center justify-center">
                                 <TrendingUp className="w-4 h-4 text-amber-400" />
                             </div>
-                            <h3 className="text-sm font-semibold text-white">See how much money could be held back</h3>
+                            <h3 className="text-sm font-semibold text-white">See what may be at risk</h3>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            See how much of your sales your processor may decide to hold back over the next 30, 60, and 90 days based on real payment behavior.
+                            Get an estimate of where payout pressure is building and which changes matter most — over the next 30, 60, and 90 days.
                             {hasStripeConnection
-                                ? ' With Stripe connected, those estimates stay tied to live processor behavior instead of a one-time snapshot.'
-                                : ' Once you connect Stripe, these estimates are based on live processor data instead of a one-time site check.'
+                                ? ' With Stripe connected, estimates stay tied to live processor behavior.'
+                                : ' Connect Stripe so estimates are based on live processor data instead of a one-time check.'
                             }
                         </p>
                         <p className="text-xs text-slate-500">
@@ -223,13 +223,13 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             <div className="w-8 h-8 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
                                 <Shield className="w-4 h-4 text-blue-400" />
                             </div>
-                            <h3 className="text-sm font-semibold text-white">See what to do before payouts are hit</h3>
+                            <h3 className="text-sm font-semibold text-white">Know what to fix first</h3>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            Turn warnings into a practical action list. PayFlux highlights the fixes most likely to reduce payout risk before the outcome becomes real.
+                            Turn warning signs into a clear action list instead of guessing what to do next. PayFlux highlights the fixes most likely to reduce payout risk before it lands on cash flow.
                         </p>
                         <p className="text-xs text-slate-500">
-                            The job is not to admire the model. The job is to make the next processor decision less painful.
+                            Most merchants react after payouts are already affected. Pro helps you act before that happens.
                         </p>
                     </div>
 
@@ -239,13 +239,13 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                             <div className="w-8 h-8 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center">
                                 <FileCheck className="w-4 h-4 text-emerald-400" />
                             </div>
-                            <h3 className="text-sm font-semibold text-white">Keep a usable history when you need proof</h3>
+                            <h3 className="text-sm font-semibold text-white">Keep a record when it matters</h3>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            Keep timestamped records of risk changes, held-fund estimates, and what PayFlux saw over time for reporting or processor conversations.
+                            Access timestamped history and evidence for internal review or processor conversations. See what changed, when, and what PayFlux flagged at the time.
                         </p>
                         <p className="text-xs text-slate-500">
-                            Advanced trust details stay available, but they no longer have to be the first thing an operator sees.
+                            When a processor asks questions, having a timestamped record changes the conversation.
                         </p>
                     </div>
                 </div>
@@ -265,14 +265,15 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                         </div>
                     </div>
 
+                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                        One payout delay or reserve hold can cost more than a year of PayFlux.
+                    </p>
                     <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-6">
-                        <span>Held-back money forecasts</span>
+                        <span>Held-fund forecasts</span>
                         <span className="text-slate-700">&middot;</span>
-                        <span>Action checklist</span>
+                        <span>Clear next actions</span>
                         <span className="text-slate-700">&middot;</span>
-                        <span>Signed evidence</span>
-                        <span className="text-slate-700">&middot;</span>
-                        <span>Board reports</span>
+                        <span>Timestamped evidence</span>
                         <span className="text-slate-700">&middot;</span>
                         <span>Continuous monitoring</span>
                     </div>

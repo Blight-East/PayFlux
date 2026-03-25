@@ -42,12 +42,12 @@ function headline(label?: string): string {
 function nextStepCopy(label?: string): string {
     const l = (label ?? '').toUpperCase();
     if (l === 'CRITICAL' || l === 'HIGH') {
-        return 'Do not stop at the snapshot. Connect live processor data so PayFlux can warn you if held funds or slower payouts start showing up for real.';
+        return 'Do not stop at the snapshot. Connect live processor data so PayFlux can warn you when held funds or slower payouts start showing up.';
     }
     if (l === 'ELEVATED' || l === 'MODERATE') {
-        return 'This is the point where live monitoring matters. Connect your processor so PayFlux can tell you whether these warning signs are actually getting worse.';
+        return 'These warning signs can get worse without much notice. Connect your processor so PayFlux can tell you if payouts slow down or money starts getting held back.';
     }
-    return 'The snapshot looks calm right now. Connect live processor data if you want PayFlux to keep watching for changes instead of guessing from a one-time check.';
+    return 'Things look calm right now, but processors can change terms quickly. Connect live data so PayFlux can keep watching instead of relying on a one-time check.';
 }
 
 export default function ScanResultsPage() {
@@ -131,27 +131,11 @@ export default function ScanResultsPage() {
                 </div>
 
                 <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <div>
-                            <p className="text-[10px] text-amber-400 uppercase tracking-[0.2em] font-bold">What this result can and cannot tell you</p>
-                            <p className="mt-1 text-sm text-slate-300">
-                                This scan is a snapshot from your public site. It can flag risk, but it cannot see whether your processor is already tightening payouts or starting to hold funds.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                            <p className="text-xs font-semibold text-white">What you have now</p>
-                            <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-                                A one-time view of the warning signs your site is sending to a processor.
-                            </p>
-                        </div>
-                        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                            <p className="text-xs font-semibold text-white">What live monitoring adds</p>
-                            <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-                                PayFlux watches real payout behavior, held-fund risk, and account pressure so you can see if this warning is turning into a cash-flow problem.
-                            </p>
-                        </div>
+                    <div>
+                        <p className="text-[10px] text-amber-400 uppercase tracking-[0.2em] font-bold">This check is a snapshot</p>
+                        <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                            Live monitoring is what tells you when these issues are getting worse, when payouts may slow down, or when money may start getting held back.
+                        </p>
                     </div>
                 </div>
 
@@ -216,7 +200,7 @@ export default function ScanResultsPage() {
                 <div className="text-center space-y-1">
                     <p className="text-xs text-slate-300">{nextStepCopy(label)}</p>
                     <p className="text-xs text-slate-500">
-                        This is a one-time check. Live processor data is what turns this into an early-warning system.
+                        Keep watching for payout slowdowns, held funds, and rising processor pressure.
                     </p>
                 </div>
 
