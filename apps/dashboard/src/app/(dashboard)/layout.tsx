@@ -46,11 +46,13 @@ export default async function DashboardLayout({
     // The page-level component (DashboardPage) handles free vs paid rendering.
 
     return (
-        <div className="flex min-h-screen bg-slate-950 text-white">
-            <aside className="w-64 border-r border-slate-800">
+        <div className="flex min-h-screen">
+            {/* Dark sidebar */}
+            <aside className="w-64 flex-shrink-0">
                 <Sidebar workspace={onboarding.workspace} />
             </aside>
-            <main className="flex-1 p-8">
+            {/* Light main canvas */}
+            <main className="dashboard-canvas flex-1 overflow-y-auto">
                 {children}
             </main>
         </div>

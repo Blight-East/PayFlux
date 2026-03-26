@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { UserButton } from '@clerk/nextjs';
-import { Lock } from 'lucide-react';
+import { Lock, AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
 import { useScanData } from '@/lib/use-scan-data';
 import Link from 'next/link';
@@ -13,12 +13,12 @@ interface DashboardFreePreviewProps {
     onboardingStage: string;
 }
 
-function riskBandColor(label?: string) {
+function riskBandLabel(label?: string): { text: string; color: string; bgColor: string; borderColor: string } {
     const l = (label ?? '').toUpperCase();
-    if (l === 'CRITICAL' || l === 'HIGH') return 'text-red-400 bg-red-500/10 border-red-500/20';
-    if (l === 'ELEVATED') return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-    if (l === 'MODERATE') return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-    return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    if (l === 'CRITICAL' || l === 'HIGH') return { text: l, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' };
+    if (l === 'ELEVATED') return { text: 'ELEVATED', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' };
+    if (l === 'MODERATE') return { text: 'MODERATE', color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' };
+    return { text: 'LOW', color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' };
 }
 
 export default function DashboardFreePreview({ host, hasStripeConnection, onboardingStage }: DashboardFreePreviewProps) {
@@ -33,232 +33,229 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
     const findings = scanData?.data?.findings ?? [];
     const hasCompletedScan = onboardingStage !== 'none' || !!scanData;
 
+    const riskBand = riskBandLabel(label ?? undefined);
+    const hasIssues = findings.length > 0 && label && label.toUpperCase() !== 'LOW';
+
     return (
-        <div className="p-8 max-w-6xl mx-auto">
+        <div className="mx-auto max-w-5xl p-8">
             {/* Header */}
-            <div className="flex justify-between items-center mb-8">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-300 tracking-tight">Dashboard</h2>
-                    <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-                        PayFlux shows when your payment processor may start holding back money, slowing payouts, or escalating account risk, and what to do before it happens.
+                    <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+                    <p className="mt-1 text-sm text-gray-500">
+                        {host ? host : 'Your processor risk overview'}
                     </p>
                 </div>
                 <UserButton appearance={{ elements: { userButtonAvatarBox: 'w-8 h-8' } }} />
             </div>
 
-            {/* Resume / continue banner — persistent guidance */}
-            {onboardingStage !== 'upgraded' && (
-                <div className="mb-8 bg-slate-900/50 border border-slate-800 rounded-lg px-5 py-4 flex items-center justify-between">
-                    <div>
-                        {!hasCompletedScan ? (
-                            <>
-                                <p className="text-sm text-slate-300">
-                                    Start with a quick check to see whether your processor may become a cash-flow problem.
-                                </p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    The scan gives you a first snapshot, explains the warning signs, and shows what to do next.
-                                </p>
-                            </>
-                        ) : !hasStripeConnection ? (
-                            <>
-                                <p className="text-sm text-slate-300">
-                                    You&apos;ve completed the snapshot. Connect Stripe for live payout monitoring.
-                                </p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    Live data turns this from a one-time check into an early-warning system for held funds, slower payouts, and account pressure.
-                                </p>
-                            </>
+            {/* ── Status Banner ── */}
+            {hasCompletedScan && (
+                <div className={`mb-6 flex items-center justify-between rounded-lg px-5 py-3 ${hasIssues
+                    ? 'bg-amber-50 border border-amber-200'
+                    : 'bg-emerald-50 border border-emerald-200'
+                    }`}>
+                    <div className="flex items-center gap-3">
+                        {hasIssues ? (
+                            <AlertTriangle className="h-5 w-5 text-amber-500" />
                         ) : (
-                            <>
-                                <p className="text-sm text-slate-300">
-                                    You can see the current warning level. You can&apos;t yet see how much money may be affected over time.
-                                </p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    Pro unlocks the forward-looking view so you can see potential held funds and the best actions before cash flow gets hit.
-                                </p>
-                            </>
+                            <CheckCircle className="h-5 w-5 text-emerald-500" />
                         )}
-                    </div>
-                    <Link
-                        href={!hasCompletedScan ? '/scan' : !hasStripeConnection ? '/connect' : '/upgrade'}
-                        onClick={() => {
-                            if (!hasCompletedScan) {
-                                logOnboardingEventClient('scan_started', { source: 'dashboard_banner' });
-                            } else if (hasStripeConnection) {
-                                logOnboardingEventClient('upgrade_cta_clicked', { source: 'banner' });
-                            } else {
-                                logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_banner' });
-                            }
-                        }}
-                        className="ml-4 flex-shrink-0 px-4 py-2 bg-amber-500 text-slate-950 text-xs font-semibold rounded-lg hover:bg-amber-400 transition-all no-underline"
-                    >
-                        {!hasCompletedScan ? 'Run the first check' : !hasStripeConnection ? 'Connect Stripe' : 'Unlock the forecast'}
-                    </Link>
-                </div>
-            )}
-
-            {/* A. Current snapshot */}
-            {scanData && (
-                <div className="mb-8">
-                    <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-3">What PayFlux sees right now</h3>
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <p className="text-sm text-slate-400">{scanData.url}</p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    This is a first snapshot based on your public site and any connected processor data.
-                                </p>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                                {score !== null && (
-                                    <div className="text-right">
-                                        <span className="text-2xl font-bold text-white">{score}</span>
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Risk score</p>
-                                    </div>
-                                )}
-                                {label && (
-                                    <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${riskBandColor(label)}`}>
-                                        {label} payout risk
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Score bar */}
-                        {score !== null && (
-                            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-4">
-                                <div
-                                    className={`h-full rounded-full ${score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                    style={{ width: `${Math.max(score, 3)}%` }}
-                                />
-                            </div>
-                        )}
-
-                        {/* Top findings */}
-                        {findings.length > 0 && (
-                            <div className="space-y-2 mt-4">
-                                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Why this matters</p>
-                                {findings.slice(0, 3).map((f, i) => (
-                                    <div key={i} className="flex items-start space-x-2">
-                                        <div className="w-1 h-1 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                                        <div>
-                                            <p className="text-xs text-slate-300">{f.title}</p>
-                                            <p className="text-[10px] text-slate-500">{f.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* B. Monitoring status */}
-            <div className="mb-8">
-                <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-3">What happens next</h3>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                    <div className="flex items-center space-x-3">
-                        <div className={`w-2.5 h-2.5 rounded-full ${hasStripeConnection ? 'bg-emerald-500' : 'bg-slate-600'}`} />
-                        <span className="text-sm text-slate-300">
-                            {hasStripeConnection ? 'Stripe connected. PayFlux can watch payout risk live.' : 'No processor connected yet.'}
+                        <span className={`text-sm font-semibold ${hasIssues ? 'text-amber-900' : 'text-emerald-900'}`}>
+                            {hasIssues
+                                ? `${findings.length} item${findings.length !== 1 ? 's' : ''} need attention`
+                                : 'All clear — no immediate payout risk detected'}
                         </span>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500 leading-relaxed">
-                        {hasStripeConnection
-                            ? 'The next step is unlocking the forward-looking view so you can estimate how much money could be held back and what to fix first.'
-                            : 'Connect Stripe to move from a static snapshot to live monitoring for held funds, slower payouts, and warning signs from your processor.'}
-                    </p>
-                    {!hasStripeConnection && (
-                        <div className="mt-3">
-                            <Link
-                                href="/connect"
-                                className="text-xs text-amber-400 hover:text-amber-300 transition-colors no-underline"
-                            >
-                                Connect Stripe safely →
-                            </Link>
-                        </div>
+                    {hasIssues && (
+                        <span className="text-sm text-amber-700">Review below&nbsp;&darr;</span>
                     )}
                 </div>
-            </div>
+            )}
 
-            {/* C. Locked forecast */}
-            <div className="mb-8">
-                <div className="bg-slate-900/30 border border-slate-800/60 rounded-xl p-6 relative overflow-hidden">
-                    {/* Blur overlay */}
-                    <div className="absolute inset-0 backdrop-blur-sm bg-slate-950/40 z-10 flex flex-col items-center justify-center p-6">
-                        <div className="flex items-center space-x-2 mb-3">
-                            <Lock className="w-4 h-4 text-slate-500" />
-                            <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Pro</span>
-                        </div>
-                        <p className="text-sm text-slate-300 text-center max-w-sm leading-relaxed">
-                            See how much money your processor could hold back over the next 30, 60, and 90 days.
-                            This is the forward-looking view that turns risk into a cash-flow number.
+            {/* ── Resume Banner (no scan yet) ── */}
+            {!hasCompletedScan && (
+                <div className="mb-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
+                    <div>
+                        <p className="text-sm font-medium text-gray-900">
+                            Start with a quick check to see where you stand.
                         </p>
-                        <Link
-                            href="/upgrade"
-                            onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'projection_panel' })}
-                            className="mt-4 px-5 py-2 bg-amber-500 text-slate-950 text-xs font-semibold rounded-lg hover:bg-amber-400 transition-all no-underline"
-                        >
-                            Unlock the forecast
-                        </Link>
+                        <p className="mt-1 text-xs text-gray-500">
+                            The scan gives you a snapshot, explains the warning signs, and shows what to do next.
+                        </p>
                     </div>
-
-                    {/* Ghost content behind blur */}
-                    <div className="opacity-20 pointer-events-none" aria-hidden="true">
-                        <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-4">How soon this could matter</h3>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">30-day outlook</p>
-                                <p className="text-lg font-bold text-white mt-1">$—</p>
-                            </div>
-                            <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">60-day outlook</p>
-                                <p className="text-lg font-bold text-white mt-1">$—</p>
-                            </div>
-                            <div className="bg-slate-800/50 rounded-lg p-4">
-                                <p className="text-[10px] text-slate-600">90-day outlook</p>
-                                <p className="text-lg font-bold text-white mt-1">$—</p>
-                            </div>
-                        </div>
-                        <div className="mt-6 h-32 bg-slate-800/30 rounded-lg" />
-                    </div>
-                </div>
-            </div>
-
-            {/* D. Locked action plan */}
-            <div className="mb-8">
-                <div className="border border-slate-800/60 rounded-xl px-6 py-5">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            <Lock className="w-4 h-4 text-slate-600" />
-                            <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">
-                                Top actions to lower payout risk
-                            </span>
-                        </div>
-                        <span className="text-[9px] bg-amber-500/10 text-amber-400/60 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase">
-                            Pro
-                        </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                        Pro shows the top actions most likely to reduce payout risk and estimates how much they may help if they work.
-                    </p>
                     <Link
-                        href="/upgrade"
-                        onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'intervention_panel' })}
-                        className="inline-block mt-3 text-[11px] text-amber-400 hover:text-amber-300 font-medium transition-colors no-underline"
+                        href="/scan"
+                        onClick={() => logOnboardingEventClient('scan_started', { source: 'dashboard_banner' })}
+                        className="ml-4 flex-shrink-0 rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
                     >
-                        Unlock the action plan →
+                        Run a scan
                     </Link>
                 </div>
+            )}
+
+            {/* ── Action Cards (if issues exist) ── */}
+            {hasIssues && findings.length > 0 && (
+                <div className="mb-6 space-y-3">
+                    {findings.slice(0, 3).map((f, i) => (
+                        <div key={i} className="rounded-lg border border-gray-200 border-l-4 border-l-amber-400 bg-white px-5 py-4">
+                            <p className="text-sm font-semibold text-gray-900">{f.title}</p>
+                            <p className="mt-1 text-sm text-gray-600">{f.description}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── KPI Row ── */}
+            {hasCompletedScan && (
+                <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Risk Level */}
+                    <div className="rounded-lg border border-gray-200 bg-white p-5">
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Overall Risk</p>
+                        <p className={`mt-2 text-2xl font-bold ${riskBand.color}`}>{riskBand.text}</p>
+                        <p className="mt-1 text-xs text-gray-400">
+                            Based on {findings.length} signal{findings.length !== 1 ? 's' : ''}
+                        </p>
+                    </div>
+
+                    {/* Score */}
+                    <div className="rounded-lg border border-gray-200 bg-white p-5">
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Risk Score</p>
+                        <p className="mt-2 text-2xl font-bold text-gray-900">{score !== null ? `${score}/100` : '—'}</p>
+                        <p className="mt-1 text-xs text-gray-400">From latest scan</p>
+                    </div>
+
+                    {/* Stripe Connection */}
+                    <div className="rounded-lg border border-gray-200 bg-white p-5">
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Stripe</p>
+                        <p className={`mt-2 text-2xl font-bold ${hasStripeConnection ? 'text-emerald-600' : 'text-gray-400'}`}>
+                            {hasStripeConnection ? 'Connected' : 'Not connected'}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                            {hasStripeConnection ? 'Live data active' : 'Connect for live monitoring'}
+                        </p>
+                    </div>
+
+                    {/* Monitoring */}
+                    <div className="rounded-lg border border-gray-200 bg-white p-5">
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Monitoring</p>
+                        <p className="mt-2 text-2xl font-bold text-gray-400">Snapshot only</p>
+                        <p className="mt-1 text-xs text-gray-400">Upgrade for continuous</p>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Next Step + Quick Actions ── */}
+            <div className="mb-6 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+                {/* Next step card */}
+                <div className="rounded-lg border border-gray-200 bg-white p-6">
+                    <h3 className="text-sm font-semibold text-gray-900">Next step</h3>
+                    {!hasCompletedScan ? (
+                        <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                            Run a scan to see whether your processor may become a cash-flow problem. The scan checks your store for public risk signals and gives you a first snapshot.
+                        </p>
+                    ) : !hasStripeConnection ? (
+                        <>
+                            <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                                Connect Stripe to move from a one-time snapshot to live monitoring. PayFlux will watch for payout timing changes, held funds, and rising processor pressure.
+                            </p>
+                            <Link
+                                href="/connect"
+                                onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_next_step' })}
+                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
+                            >
+                                Connect Stripe <ArrowRight className="h-4 w-4" />
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                                Stripe is connected. Upgrade to Pro to unlock the forward-looking view — see how much money could be affected and what to fix first.
+                            </p>
+                            <Link
+                                href="/upgrade"
+                                onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'dashboard_next_step' })}
+                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
+                            >
+                                Upgrade to Pro <ArrowRight className="h-4 w-4" />
+                            </Link>
+                        </>
+                    )}
+                </div>
+
+                {/* Quick actions */}
+                <div className="rounded-lg border border-gray-200 bg-white p-6">
+                    <h3 className="text-sm font-semibold text-gray-900">Quick actions</h3>
+                    <div className="mt-4 space-y-2">
+                        <Link
+                            href="/scan"
+                            onClick={() => logOnboardingEventClient('scan_started', { source: 'dashboard_quick_action' })}
+                            className="block w-full rounded-lg bg-[#0A64BC] px-4 py-2.5 text-center text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
+                        >
+                            Run new scan
+                        </Link>
+                        {!hasStripeConnection && (
+                            <Link
+                                href="/connect"
+                                onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_quick_action' })}
+                                className="block w-full rounded-lg border border-gray-200 px-4 py-2.5 text-center text-sm font-medium text-gray-700 no-underline transition-colors hover:bg-gray-50"
+                            >
+                                Connect Stripe
+                            </Link>
+                        )}
+                        <Link
+                            href="/dashboard/diagnostics"
+                            className="block w-full rounded-lg border border-gray-200 px-4 py-2.5 text-center text-sm font-medium text-gray-700 no-underline transition-colors hover:bg-gray-50"
+                        >
+                            System status
+                        </Link>
+                    </div>
+                </div>
             </div>
 
-            {/* Advanced link */}
-            <div className="pt-8 pb-2">
+            {/* ── Locked Forecast (Pro upsell) ── */}
+            <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm font-semibold text-gray-900">Forward-looking forecast</span>
+                    </div>
+                    <span className="rounded bg-[#0A64BC]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0A64BC]">
+                        Pro
+                    </span>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500">
+                    See how much money your processor could hold back over the next 30, 60, and 90 days. This is the forward-looking view that turns risk into a cash-flow number.
+                </p>
                 <Link
-                    href="/dashboard/diagnostics"
-                    className="text-[10px] text-slate-800 hover:text-slate-600 transition-colors no-underline"
+                    href="/upgrade"
+                    onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'projection_panel' })}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#0A64BC] no-underline transition-colors hover:text-[#0B5BA8]"
                 >
-                    System status
+                    Unlock the forecast <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+            </div>
+
+            {/* ── Locked Action Plan ── */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm font-semibold text-gray-900">Top actions to lower payout risk</span>
+                    </div>
+                    <span className="rounded bg-[#0A64BC]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0A64BC]">
+                        Pro
+                    </span>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500">
+                    Pro shows the top actions most likely to reduce payout risk and estimates how much they may help.
+                </p>
+                <Link
+                    href="/upgrade"
+                    onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'intervention_panel' })}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#0A64BC] no-underline transition-colors hover:text-[#0B5BA8]"
+                >
+                    Unlock the action plan <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
             </div>
         </div>

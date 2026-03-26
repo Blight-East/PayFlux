@@ -3,6 +3,14 @@
 :root {
   --background: #020617;
   --foreground: #f8fafc;
+  --payflux-blue: #0A64BC;
+  --payflux-blue-hover: #0B5BA8;
+  --dashboard-bg: #F8FAFC;
+  --dashboard-card: #FFFFFF;
+  --dashboard-border: #E5E7EB;
+  --dashboard-text: #374151;
+  --dashboard-text-muted: #6B7280;
+  --dashboard-text-label: #9CA3AF;
 }
 
 @theme inline {
@@ -22,6 +30,12 @@
 .payflux-mark {
   color: #f5f5f5;
   --payflux-accent: #0A64BC;
+}
+
+/* ─── Dashboard light canvas ─── */
+.dashboard-canvas {
+  background: var(--dashboard-bg);
+  color: var(--dashboard-text);
 }
 
 /* ─── Print styles for forecast export ─── */
