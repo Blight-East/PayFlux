@@ -2,10 +2,11 @@
 
 import { useEffect } from 'react';
 import { UserButton } from '@clerk/nextjs';
-import { Lock, AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react';
+import { ArrowRight, Clock3, TrendingUp } from 'lucide-react';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
 import { useScanData } from '@/lib/use-scan-data';
 import Link from 'next/link';
+import { DashboardComposition } from '@/components/dashboard/DashboardComposition';
 
 interface DashboardFreePreviewProps {
     host: string | null;
@@ -19,6 +20,26 @@ function riskBandLabel(label?: string): { text: string; color: string; bgColor: 
     if (l === 'ELEVATED') return { text: 'ELEVATED', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' };
     if (l === 'MODERATE') return { text: 'MODERATE', color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' };
     return { text: 'LOW', color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' };
+}
+
+function normalizeActionTitle(title: string): string {
+    const lower = title.toLowerCase();
+    if (lower.includes('refund') || lower.includes('policy')) return 'Fix policy visibility';
+    if (lower.includes('support') || lower.includes('contact')) return 'Improve support visibility';
+    if (lower.includes('terms') || lower.includes('privacy')) return 'Add missing policy pages';
+    if (lower.includes('decline') || lower.includes('retry')) return 'Reduce repeated failed payments';
+    return title;
+}
+
+function normalizeActionDescription(title: string, description: string): string {
+    const lower = title.toLowerCase();
+    if (lower.includes('decline') || lower.includes('retry')) {
+        return 'Repeated failed payments can make processors look more closely at your account.';
+    }
+    if (lower.includes('refund') || lower.includes('policy')) {
+        return 'Important policy pages are missing or hard for customers to find. This often leads to more disputes and money being held back.';
+    }
+    return description;
 }
 
 export default function DashboardFreePreview({ host, hasStripeConnection, onboardingStage }: DashboardFreePreviewProps) {
@@ -36,228 +57,208 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
     const riskBand = riskBandLabel(label ?? undefined);
     const hasIssues = findings.length > 0 && label && label.toUpperCase() !== 'LOW';
 
-    return (
-        <div className="mx-auto max-w-5xl p-8">
-            {/* Header */}
-            <div className="mb-6 flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-                    <p className="mt-1 text-sm text-gray-500">
-                        {host ? host : 'Your processor risk overview'}
-                    </p>
-                </div>
-                <UserButton appearance={{ elements: { userButtonAvatarBox: 'w-8 h-8' } }} />
-            </div>
+    const actionCards = hasCompletedScan
+        ? (findings.length > 0 ? findings.slice(0, 2) : [{
+            title: 'Connect live monitoring',
+            description: 'A scan is useful, but live processor data is what shows whether payout risk is actually getting worse.',
+            severity: 'medium',
+        }]).map((finding, index) => ({
+            title: normalizeActionTitle(finding.title),
+            description: normalizeActionDescription(finding.title, finding.description),
+            riskLevel: index === 0 && hasIssues ? 'Elevated risk' : 'Needs review',
+            impact: index === 0 && hasIssues ? 'Cash-flow risk' : 'Preventative',
+            tone: index === 0 && hasIssues ? 'warning' as const : 'neutral' as const,
+            primaryAction: {
+                label: normalizeActionTitle(finding.title),
+                disabled: true,
+            },
+            secondaryAction: finding.title.toLowerCase().includes('refund') || finding.title.toLowerCase().includes('policy')
+                ? { label: 'Draft refund policy', disabled: true }
+                : undefined,
+        }))
+        : [{
+            title: 'Run the first check',
+            description: 'Start with a simple scan to see whether your processor may become a cash-flow problem.',
+            riskLevel: 'First step',
+            impact: 'Snapshot',
+            tone: 'neutral' as const,
+            primaryAction: {
+                label: 'Run a scan',
+                href: '/scan',
+                onClick: () => logOnboardingEventClient('scan_started', { source: 'dashboard_actions' }),
+            },
+        }];
 
-            {/* ── Status Banner ── */}
-            {hasCompletedScan && (
-                <div className={`mb-6 flex items-center justify-between rounded-lg px-5 py-3 ${hasIssues
-                    ? 'bg-amber-50 border border-amber-200'
-                    : 'bg-emerald-50 border border-emerald-200'
-                    }`}>
-                    <div className="flex items-center gap-3">
-                        {hasIssues ? (
-                            <AlertTriangle className="h-5 w-5 text-amber-500" />
-                        ) : (
-                            <CheckCircle className="h-5 w-5 text-emerald-500" />
-                        )}
-                        <span className={`text-sm font-semibold ${hasIssues ? 'text-amber-900' : 'text-emerald-900'}`}>
-                            {hasIssues
-                                ? `${findings.length} item${findings.length !== 1 ? 's' : ''} need attention`
-                                : 'All clear — no immediate payout risk detected'}
-                        </span>
-                    </div>
-                    {hasIssues && (
-                        <span className="text-sm text-amber-700">Review below&nbsp;&darr;</span>
-                    )}
-                </div>
-            )}
+    const statusBanner = hasCompletedScan
+        ? hasIssues
+            ? {
+                tone: 'warning' as const,
+                title: `Action Required: ${Math.min(actionCards.length, 2)} item${Math.min(actionCards.length, 2) === 1 ? '' : 's'} need attention to reduce payout risk.`,
+                body: 'Processor concern rose on the latest check. Review the top actions below.',
+            }
+            : {
+                tone: 'healthy' as const,
+                title: 'Monitoring looks calm right now.',
+                body: 'No urgent payout warning is standing out from the latest scan, but PayFlux is still pointing you to the next useful step.',
+            }
+        : {
+            tone: 'info' as const,
+            title: 'Run the first check to see where payout risk may be building.',
+            body: 'The scan gives you a snapshot of processor warning signs, then points you toward live monitoring if the pattern looks real.',
+        };
 
-            {/* ── Resume Banner (no scan yet) ── */}
-            {!hasCompletedScan && (
-                <div className="mb-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
+    const kpis = [
+        {
+            label: 'Processor risk',
+            value: hasCompletedScan ? riskBand.text : 'Unknown',
+            detail: hasCompletedScan ? `Based on ${findings.length} signal${findings.length === 1 ? '' : 's'}` : 'Run a scan first',
+            valueClassName: hasCompletedScan ? riskBand.color : 'text-slate-500',
+            icon: hasIssues ? <TrendingUp className="h-4 w-4 text-amber-500" /> : undefined,
+        },
+        {
+            label: 'Payout speed',
+            value: hasStripeConnection ? 'Watching live' : 'Not live yet',
+            detail: hasStripeConnection ? 'Processor data connected' : 'Needs live processor data',
+            detailClassName: hasStripeConnection ? 'text-emerald-600' : 'text-slate-500',
+        },
+        {
+            label: 'Funds at risk',
+            value: hasCompletedScan && hasIssues ? 'Needs live data' : 'Not estimated yet',
+            detail: hasStripeConnection ? 'Shown in the forecast below' : 'Unlock with live monitoring',
+        },
+        {
+            label: 'Monitoring',
+            value: hasStripeConnection ? 'Active' : 'Snapshot',
+            detail: hasStripeConnection ? 'Live monitoring on' : 'One-time site check',
+            detailClassName: hasStripeConnection ? 'text-emerald-600' : 'text-slate-500',
+            icon: hasStripeConnection ? (
+                <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
+                </span>
+            ) : undefined,
+        },
+    ];
+
+    const signals = hasCompletedScan
+        ? (findings.length > 0 ? findings.slice(0, 3).map((finding, index) => ({
+            title: normalizeActionTitle(finding.title),
+            detail: normalizeActionDescription(finding.title, finding.description),
+            meta: index === 0 ? 'Latest scan result' : 'Detected in the current snapshot',
+            tone: index === 0 && hasIssues ? 'warning' as const : 'neutral' as const,
+        })) : [{
+            title: 'No urgent public warning sign is dominating right now.',
+            detail: 'The scan did not find one issue that stands out above the others.',
+            meta: 'Latest scan result',
+            tone: 'info' as const,
+        }])
+        : [{
+            title: 'No scan has been run yet.',
+            detail: 'Start with the snapshot so PayFlux can explain what the processor may already be reacting to.',
+            meta: 'Waiting for first check',
+            tone: 'info' as const,
+        }];
+
+    const context = {
+        changes: hasCompletedScan ? [
+            {
+                label: 'Latest shift',
+                value: hasIssues ? `${riskBand.text} risk is showing on the latest check.` : 'No urgent payout warning is leading the latest check.',
+                detail: host ? host : 'Latest scan result',
+            },
+            {
+                label: 'Current mode',
+                value: hasStripeConnection ? 'Live processor monitoring is connected.' : 'You are still looking at a one-time snapshot.',
+            },
+        ] : [
+            {
+                label: 'Current state',
+                value: 'No processor check has been run yet.',
+                detail: 'Run the scan to create the first payout-risk snapshot.',
+            },
+        ],
+        recentChecks: [
+            {
+                label: 'Latest check',
+                value: hasCompletedScan ? 'Snapshot available' : 'No checks yet',
+                detail: host ? `Host: ${host}` : 'Run the scan to populate this',
+            },
+            {
+                label: 'Next review',
+                value: hasStripeConnection ? 'Continuous monitoring' : 'Manual until connected',
+                detail: hasStripeConnection ? 'PayFlux will keep watching automatically.' : 'Connect Stripe to turn on live monitoring.',
+            },
+        ],
+    };
+
+    const lowerSection = (
+        <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
                     <div>
-                        <p className="text-sm font-medium text-gray-900">
-                            Start with a quick check to see where you stand.
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">
-                            The scan gives you a snapshot, explains the warning signs, and shows what to do next.
+                        <h3 className="text-sm font-semibold text-slate-900">Forecast and history</h3>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                            Unlock forward-looking estimates, evidence history, and report exports once PayFlux has enough live data to move past the snapshot.
                         </p>
                     </div>
+                    <Clock3 className="h-5 w-5 text-slate-400" />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
                     <Link
-                        href="/scan"
-                        onClick={() => logOnboardingEventClient('scan_started', { source: 'dashboard_banner' })}
-                        className="ml-4 flex-shrink-0 rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
+                        href={hasStripeConnection ? '/upgrade' : '/connect'}
+                        onClick={() => {
+                            if (hasStripeConnection) {
+                                logOnboardingEventClient('upgrade_cta_clicked', { source: 'dashboard_deep_dive' });
+                            } else {
+                                logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_deep_dive' });
+                            }
+                        }}
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-medium text-white no-underline transition-colors hover:bg-[#08539e]"
                     >
-                        Run a scan
+                        {hasStripeConnection ? 'Unlock the forecast' : 'Connect Stripe'} <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
-            )}
-
-            {/* ── Action Cards (if issues exist) ── */}
-            {hasIssues && findings.length > 0 && (
-                <div className="mb-6 space-y-3">
-                    {findings.slice(0, 3).map((f, i) => (
-                        <div key={i} className="rounded-lg border border-gray-200 border-l-4 border-l-amber-400 bg-white px-5 py-4">
-                            <p className="text-sm font-semibold text-gray-900">{f.title}</p>
-                            <p className="mt-1 text-sm text-gray-600">{f.description}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* ── KPI Row ── */}
-            {hasCompletedScan && (
-                <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {/* Risk Level */}
-                    <div className="rounded-lg border border-gray-200 bg-white p-5">
-                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Overall Risk</p>
-                        <p className={`mt-2 text-2xl font-bold ${riskBand.color}`}>{riskBand.text}</p>
-                        <p className="mt-1 text-xs text-gray-400">
-                            Based on {findings.length} signal{findings.length !== 1 ? 's' : ''}
-                        </p>
-                    </div>
-
-                    {/* Score */}
-                    <div className="rounded-lg border border-gray-200 bg-white p-5">
-                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Risk Score</p>
-                        <p className="mt-2 text-2xl font-bold text-gray-900">{score !== null ? `${score}/100` : '—'}</p>
-                        <p className="mt-1 text-xs text-gray-400">From latest scan</p>
-                    </div>
-
-                    {/* Stripe Connection */}
-                    <div className="rounded-lg border border-gray-200 bg-white p-5">
-                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Stripe</p>
-                        <p className={`mt-2 text-2xl font-bold ${hasStripeConnection ? 'text-emerald-600' : 'text-gray-400'}`}>
-                            {hasStripeConnection ? 'Connected' : 'Not connected'}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-400">
-                            {hasStripeConnection ? 'Live data active' : 'Connect for live monitoring'}
-                        </p>
-                    </div>
-
-                    {/* Monitoring */}
-                    <div className="rounded-lg border border-gray-200 bg-white p-5">
-                        <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Monitoring</p>
-                        <p className="mt-2 text-2xl font-bold text-gray-400">Snapshot only</p>
-                        <p className="mt-1 text-xs text-gray-400">Upgrade for continuous</p>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Next Step + Quick Actions ── */}
-            <div className="mb-6 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-                {/* Next step card */}
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                    <h3 className="text-sm font-semibold text-gray-900">Next step</h3>
-                    {!hasCompletedScan ? (
-                        <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                            Run a scan to see whether your processor may become a cash-flow problem. The scan checks your store for public risk signals and gives you a first snapshot.
-                        </p>
-                    ) : !hasStripeConnection ? (
-                        <>
-                            <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                                Connect Stripe to move from a one-time snapshot to live monitoring. PayFlux will watch for payout timing changes, held funds, and rising processor pressure.
-                            </p>
-                            <Link
-                                href="/connect"
-                                onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_next_step' })}
-                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
-                            >
-                                Connect Stripe <ArrowRight className="h-4 w-4" />
-                            </Link>
-                        </>
-                    ) : (
-                        <>
-                            <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                                Stripe is connected. Upgrade to Pro to unlock the forward-looking view — see how much money could be affected and what to fix first.
-                            </p>
-                            <Link
-                                href="/upgrade"
-                                onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'dashboard_next_step' })}
-                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
-                            >
-                                Upgrade to Pro <ArrowRight className="h-4 w-4" />
-                            </Link>
-                        </>
-                    )}
-                </div>
-
-                {/* Quick actions */}
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                    <h3 className="text-sm font-semibold text-gray-900">Quick actions</h3>
-                    <div className="mt-4 space-y-2">
-                        <Link
-                            href="/scan"
-                            onClick={() => logOnboardingEventClient('scan_started', { source: 'dashboard_quick_action' })}
-                            className="block w-full rounded-lg bg-[#0A64BC] px-4 py-2.5 text-center text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
-                        >
-                            Run new scan
-                        </Link>
-                        {!hasStripeConnection && (
-                            <Link
-                                href="/connect"
-                                onClick={() => logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_quick_action' })}
-                                className="block w-full rounded-lg border border-gray-200 px-4 py-2.5 text-center text-sm font-medium text-gray-700 no-underline transition-colors hover:bg-gray-50"
-                            >
-                                Connect Stripe
-                            </Link>
-                        )}
-                        <Link
-                            href="/dashboard/diagnostics"
-                            className="block w-full rounded-lg border border-gray-200 px-4 py-2.5 text-center text-sm font-medium text-gray-700 no-underline transition-colors hover:bg-gray-50"
-                        >
-                            System status
-                        </Link>
-                    </div>
-                </div>
             </div>
 
-            {/* ── Locked Forecast (Pro upsell) ── */}
-            <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-semibold text-gray-900">Forward-looking forecast</span>
-                    </div>
-                    <span className="rounded bg-[#0A64BC]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0A64BC]">
-                        Pro
-                    </span>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-gray-500">
-                    See how much money your processor could hold back over the next 30, 60, and 90 days. This is the forward-looking view that turns risk into a cash-flow number.
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">Support tools</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    System status and evidence pages stay available, but they no longer have to lead the operator view.
                 </p>
-                <Link
-                    href="/upgrade"
-                    onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'projection_panel' })}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#0A64BC] no-underline transition-colors hover:text-[#0B5BA8]"
-                >
-                    Unlock the forecast <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-            </div>
-
-            {/* ── Locked Action Plan ── */}
-            <div className="rounded-lg border border-gray-200 bg-white p-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-semibold text-gray-900">Top actions to lower payout risk</span>
-                    </div>
-                    <span className="rounded bg-[#0A64BC]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0A64BC]">
-                        Pro
-                    </span>
+                <div className="mt-4 flex flex-wrap gap-2">
+                    <Link
+                        href="/dashboard/diagnostics"
+                        className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 no-underline transition-colors hover:bg-slate-50"
+                    >
+                        System status
+                    </Link>
+                    <button
+                        type="button"
+                        disabled
+                        aria-disabled="true"
+                        title="Not yet available"
+                        className="inline-flex cursor-not-allowed items-center rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400"
+                    >
+                        Draft team update
+                    </button>
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-gray-500">
-                    Pro shows the top actions most likely to reduce payout risk and estimates how much they may help.
-                </p>
-                <Link
-                    href="/upgrade"
-                    onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'intervention_panel' })}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#0A64BC] no-underline transition-colors hover:text-[#0B5BA8]"
-                >
-                    Unlock the action plan <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
             </div>
         </div>
+    );
+
+    return (
+        <DashboardComposition
+            title="Dashboard"
+            subtitle={host ? host : 'Your processor risk overview'}
+            headerSlot={<UserButton appearance={{ elements: { userButtonAvatarBox: 'h-8 w-8' } }} />}
+            statusBanner={statusBanner}
+            actions={actionCards}
+            kpis={kpis}
+            signals={signals}
+            signalActionLabel="Draft team update"
+            signalActionDisabled
+            context={context}
+            lowerSection={lowerSection}
+        />
     );
 }

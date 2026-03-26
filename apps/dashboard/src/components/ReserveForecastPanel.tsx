@@ -13,6 +13,7 @@ function track(event: string, properties?: Record<string, string>) {
         fetch('/api/v1/telemetry', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            keepalive: true,
             body: JSON.stringify({ event, properties }),
         }).catch(() => { });
     } catch {
@@ -389,7 +390,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop — hidden in print */}
             <div
-                className="absolute inset-0 bg-slate-950/70 print:hidden"
+                className="absolute inset-0 bg-slate-900/60 print:hidden"
                 onClick={onClose}
             />
 
@@ -401,7 +402,7 @@ function ForecastExportModal({ data, onClose }: { data: ForecastData; onClose: (
                     <div className="flex items-center space-x-2">
                         <button
                             onClick={handlePrint}
-                            className="flex items-center space-x-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-xs font-medium rounded-lg transition-colors"
+                            className="flex items-center space-x-2 rounded-lg bg-[#0A64BC] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#08539e]"
                         >
                             <FileDown className="w-3.5 h-3.5" />
                             <span>Export</span>

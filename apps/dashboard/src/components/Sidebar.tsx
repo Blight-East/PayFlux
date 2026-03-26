@@ -7,6 +7,7 @@ import type { WorkspaceContext, WorkspaceRole } from '@/lib/resolve-workspace';
 import type { Feature } from '@/lib/tier/features';
 import { canAccess } from '@/lib/tier/resolver';
 import { Lock } from 'lucide-react';
+import { logOnboardingEventClient } from '@/lib/onboarding-events';
 
 /**
  * Sidebar Config Model
@@ -69,13 +70,10 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
 
     const lockedItems = SIDEBAR_ITEMS.filter(item => !visibleItems.includes(item));
 
-    const tierLabel = workspace.tier === 'free' ? 'Free Plan' : workspace.tier === 'pro' ? 'Pro' : 'Enterprise';
-    const tierColor = workspace.tier === 'free' ? 'text-slate-400 bg-slate-800' : 'text-[#0A64BC] bg-[#0A64BC]/10';
-
     return (
-        <div className="flex h-screen w-64 flex-col bg-[#0F172A]">
+        <div className="flex h-screen w-64 flex-col bg-[#0F172A] text-slate-200">
             {/* Logo */}
-            <div className="border-b border-slate-800 p-6">
+            <div className="border-b border-slate-800 px-6 py-6">
                 <div className="payflux-mark">
                     <PayFluxLogo height={32} />
                 </div>
@@ -83,7 +81,10 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
 
             {/* Navigation */}
             <div className="flex-1 overflow-y-auto">
-                <nav className="space-y-0.5 p-4">
+                <div className="px-4 pt-4">
+                    <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
+                </div>
+                <nav className="space-y-1 p-4">
                     {visibleItems.map((item) => {
                         const isActive = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard');
                         const isSubordinate = item.href === '/dashboard/diagnostics' || item.href === '/dashboard/governance' || item.href === '/dashboard/verify';
@@ -91,13 +92,13 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`block rounded-md px-4 py-2 no-underline transition-colors ${isSubordinate
+                                className={`block rounded-lg px-4 py-2.5 no-underline transition-colors ${isSubordinate
                                     ? `text-xs ${isActive
-                                        ? 'border-l-[3px] border-[#0A64BC] bg-[#1E293B] text-slate-300'
-                                        : 'text-slate-500 hover:bg-[#1E293B] hover:text-slate-400'}`
+                                        ? 'bg-[#0A64BC]/15 text-[#8EC5FF]'
+                                        : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'}`
                                     : `text-sm font-medium ${isActive
-                                        ? 'border-l-[3px] border-[#0A64BC] bg-[#1E293B] text-white'
-                                        : 'text-slate-400 hover:bg-[#1E293B] hover:text-white'}`
+                                        ? 'bg-[#0A64BC]/15 text-white ring-1 ring-[#0A64BC]/30'
+                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`
                                     }`}
                             >
                                 {item.label}
@@ -108,14 +109,14 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
 
                 {lockedItems.length > 0 && (
                     <div className="mt-6 px-4">
-                        <h3 className="mb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                        <h3 className="mb-2 px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
                             Locked Features
                         </h3>
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                             {lockedItems.map((item) => (
                                 <div
                                     key={item.href}
-                                    className="group flex cursor-not-allowed items-center justify-between rounded-md px-4 py-2 text-sm font-medium text-slate-600"
+                                    className="group flex cursor-not-allowed items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600"
                                 >
                                     <span>{item.label}</span>
                                     <div className="flex items-center space-x-2">
@@ -138,25 +139,23 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                 {workspace.tier === 'free' ? (
                     <Link
                         href="/upgrade"
-                        className="block rounded-lg border border-[#0A64BC]/20 bg-[#0A64BC]/5 px-4 py-3 text-center no-underline transition-colors hover:bg-[#0A64BC]/10"
+                        onClick={() => logOnboardingEventClient('upgrade_cta_clicked', { source: 'sidebar_upgrade' })}
+                        className="block rounded-xl border border-[#0A64BC]/20 bg-[#0A64BC]/10 px-4 py-3 text-center no-underline transition-colors hover:bg-[#0A64BC]/15"
                     >
                         <p className="text-[10px] font-bold uppercase tracking-wider text-[#0A64BC]">Upgrade to Pro</p>
-                        <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">Live monitoring &amp; deeper visibility</p>
+                        <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">Live monitoring and deeper visibility</p>
                     </Link>
-                ) : (
-                    <div className="px-4 py-2">
-                        <span className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase ${tierColor}`}>
-                            {tierLabel}
-                        </span>
-                    </div>
-                )}
+                ) : null}
             </div>
 
             {/* Status + user */}
             <div className="border-t border-slate-800 p-4">
-                <div className="flex items-center space-x-2 px-4 py-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-xs text-slate-400">System Online</span>
+                <div className="rounded-lg bg-slate-800/70 px-4 py-3">
+                    <div className="flex items-center space-x-2">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                        <span className="text-xs text-slate-300">System online</span>
+                    </div>
+                    <p className="mt-1 text-[10px] text-slate-500">Operator-first view active</p>
                 </div>
             </div>
         </div>
