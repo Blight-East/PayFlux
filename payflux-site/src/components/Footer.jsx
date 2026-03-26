@@ -6,7 +6,7 @@ const Footer = () => {
         <footer className="py-12 border-t border-slate-800/50 bg-slate-950">
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                 <p className="text-slate-600 text-sm">
-                    &copy; 2026 PayFlux. Deterministic Reserve Projection Infrastructure.
+                    &copy; 2026 PayFlux.
                 </p>
 
                 <div className="flex flex-wrap justify-center md:justify-end items-center gap-x-1 text-sm text-slate-600">
