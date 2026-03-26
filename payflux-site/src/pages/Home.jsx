@@ -63,12 +63,6 @@ function logMarketingEvent(event, metadata = {}) {
     });
 
     try {
-        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-            const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
-            navigator.sendBeacon(EVENT_URL, blob);
-            return;
-        }
-
         fetch(EVENT_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -76,9 +70,17 @@ function logMarketingEvent(event, metadata = {}) {
             headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: payload,
             keepalive: true,
-        }).catch(() => {});
+        }).catch(() => {
+            if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+                const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
+                navigator.sendBeacon(EVENT_URL, blob);
+            }
+        });
     } catch {
-        // Never block navigation for telemetry
+        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+            const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
+            navigator.sendBeacon(EVENT_URL, blob);
+        }
     }
 }
 
