@@ -91,7 +91,7 @@ const pricingCards = [
         body: 'Live monitoring and deeper visibility for active merchants.',
         bullets: [
             'Live monitoring and deeper visibility',
-            'Standard plan starts at $499/month',
+            'Early warnings before payout delays and held funds',
         ],
         ctaLabel: 'Start With a Free Scan',
         ctaHref: SCAN_URL,
@@ -101,7 +101,7 @@ const pricingCards = [
         title: 'Enterprise',
         price: 'Custom',
         cadence: null,
-        body: 'Custom',
+        body: 'For larger teams with more complex operating needs.',
         bullets: [
             'Custom rollout',
             'Support for larger operating needs',
@@ -213,8 +213,8 @@ const Home = () => {
                         <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-[0_32px_80px_rgba(2,6,23,0.45)] backdrop-blur">
                             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                                 <div>
-                                    <p className="text-sm font-semibold text-white">Merchant Overview</p>
-                                    <p className="mt-1 text-sm text-slate-400">A simple view of what PayFlux helps you watch</p>
+                                    <p className="text-sm font-semibold text-white">What PayFlux Watches</p>
+                                    <p className="mt-1 text-sm text-slate-400">A clear view of the payout and account signals PayFlux tracks</p>
                                 </div>
                                 <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
                                     <AlertTriangle className="h-3.5 w-3.5" />
@@ -225,7 +225,7 @@ const Home = () => {
                             <div className="mt-5 grid gap-4">
                                 <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
                                     <p className="text-sm font-medium text-slate-400">Payout Status</p>
-                                    <p className="mt-2 text-xl font-semibold text-white">Under Watch</p>
+                                    <p className="mt-2 text-xl font-semibold text-white">Watching for Shifts</p>
                                     <p className="mt-2 text-sm leading-relaxed text-slate-500">
                                         Watch for changes in payout timing before cash flow tightens.
                                     </p>
@@ -233,7 +233,7 @@ const Home = () => {
 
                                 <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
                                     <p className="text-sm font-medium text-slate-400">Held Funds</p>
-                                    <p className="mt-2 text-xl font-semibold text-white">No Hold Detected</p>
+                                    <p className="mt-2 text-xl font-semibold text-white">No Hold Signals</p>
                                     <p className="mt-2 text-sm leading-relaxed text-slate-500">
                                         Stay ahead of the patterns that often lead to funds being held back.
                                     </p>
@@ -241,7 +241,7 @@ const Home = () => {
 
                                 <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
                                     <p className="text-sm font-medium text-slate-400">Account Pressure</p>
-                                    <p className="mt-2 text-xl font-semibold text-amber-300">Early Signs Building</p>
+                                    <p className="mt-2 text-xl font-semibold text-amber-300">Pressure Building</p>
                                     <p className="mt-2 text-sm leading-relaxed text-slate-500">
                                         See when processor pressure is moving in the wrong direction.
                                     </p>
@@ -329,7 +329,7 @@ const Home = () => {
                         </div>
 
                         <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-8">
-                            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">What Changes Right Away</p>
+                            <p className="text-sm font-semibold text-slate-400">What Changes After You Connect</p>
                             <div className="mt-8 space-y-6">
                                 {[
                                     'Move from guessing about payout issues to seeing the pressure earlier',
