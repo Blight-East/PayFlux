@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
@@ -54,6 +54,15 @@ export default function ScanResultsPage() {
     const router = useRouter();
     const { userId } = useAuth();
     const { scanData: result, loading } = useScanData();
+    const attribution = useMemo(() => {
+        if (typeof window === 'undefined') return {};
+        try {
+            const raw = sessionStorage.getItem('payflux_scan_attribution');
+            return raw ? JSON.parse(raw) : {};
+        } catch {
+            return {};
+        }
+    }, []);
 
     useEffect(() => {
         // Only redirect to /scan if loading is complete and no data exists anywhere
@@ -66,13 +75,14 @@ export default function ScanResultsPage() {
     useEffect(() => {
         if (!loading && result) {
             logOnboardingEventClient('scan_results_viewed', {
+                ...attribution,
                 risk_score: result.data.stabilityScore ?? result.data.riskScore,
                 risk_band: result.data.riskLabel,
                 findings_count: result.data.findings?.length ?? 0,
                 source_page: 'scan_results',
             });
         }
-    }, [loading, result]);
+    }, [attribution, loading, result]);
 
     if (loading || !result) {
         return (
@@ -211,6 +221,7 @@ export default function ScanResultsPage() {
                             <Link
                                 href="/connect"
                                 onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    ...attribution,
                                     source_page: 'scan_results',
                                     destination_page: 'connect',
                                     risk_score: score,
@@ -225,6 +236,7 @@ export default function ScanResultsPage() {
                             <Link
                                 href="/dashboard"
                                 onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    ...attribution,
                                     source_page: 'scan_results',
                                     destination_page: 'dashboard',
                                     risk_score: score,
@@ -243,6 +255,7 @@ export default function ScanResultsPage() {
                             <Link
                                 href="/sign-up?redirect_url=%2Fconnect"
                                 onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    ...attribution,
                                     source_page: 'scan_results',
                                     destination_page: 'sign_up',
                                     risk_score: score,
@@ -257,6 +270,7 @@ export default function ScanResultsPage() {
                             <Link
                                 href="/sign-in?redirect_url=%2Fconnect"
                                 onClick={() => logOnboardingEventClient('scan_results_continue_clicked', {
+                                    ...attribution,
                                     source_page: 'scan_results',
                                     destination_page: 'sign_in',
                                     risk_score: score,

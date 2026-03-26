@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { mode, scanResult } = body;
+        const { mode, scanResult, attribution } = body;
 
         if (!mode || !['UI_SCAN', 'API_FIRST', 'NO_SITE'].includes(mode)) {
             return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
@@ -65,7 +65,11 @@ export async function POST(request: Request) {
             logOnboardingEvent('scan_completed', {
                 userId,
                 workspaceId: org.organizationId,
-                metadata: { mode, url: scanSummary?.url },
+                metadata: {
+                    mode,
+                    url: scanSummary?.url,
+                    ...(attribution && typeof attribution === 'object' ? attribution : {}),
+                },
             });
 
             // Emit stage transition: none → scanned

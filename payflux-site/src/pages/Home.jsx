@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Activity,
     AlertTriangle,
@@ -14,6 +14,81 @@ import Footer from '../components/Footer';
 
 const SCAN_URL = 'https://app.payflux.dev/scan';
 const SIGN_IN_URL = 'https://app.payflux.dev/sign-in';
+const EVENT_URL = 'https://app.payflux.dev/api/onboarding/event';
+const JOURNEY_KEY = 'pf_journey_id';
+const COOKIE_NAME = 'pf_journey';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 90;
+
+function resolveCookieDomain() {
+    if (typeof window === 'undefined') return null;
+    const { hostname } = window.location;
+    return hostname === 'payflux.dev' || hostname.endsWith('.payflux.dev')
+        ? '.payflux.dev'
+        : null;
+}
+
+function readCookie(name) {
+    if (typeof document === 'undefined') return null;
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+function syncJourneyCookie(id) {
+    if (typeof document === 'undefined') return;
+    const domain = resolveCookieDomain();
+    const domainAttr = domain ? `; domain=${domain}` : '';
+    document.cookie = `${COOKIE_NAME}=${id}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax${domainAttr}`;
+}
+
+function getJourneyId() {
+    if (typeof window === 'undefined') return '';
+    let id = window.localStorage.getItem(JOURNEY_KEY) || readCookie(COOKIE_NAME);
+    if (!id) {
+        id = crypto.randomUUID();
+        window.localStorage.setItem(JOURNEY_KEY, id);
+    }
+    syncJourneyCookie(id);
+    return id;
+}
+
+function logMarketingEvent(event, metadata = {}) {
+    const payload = JSON.stringify({
+        event,
+        metadata: {
+            ...metadata,
+            journey_id: getJourneyId(),
+        },
+        timestamp: new Date().toISOString(),
+    });
+
+    try {
+        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+            const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
+            navigator.sendBeacon(EVENT_URL, blob);
+            return;
+        }
+
+        fetch(EVENT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            credentials: 'include',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: payload,
+            keepalive: true,
+        }).catch(() => {});
+    } catch {
+        // Never block navigation for telemetry
+    }
+}
+
+function buildScanUrl(cta) {
+    const url = new URL(SCAN_URL);
+    url.searchParams.set('source', 'marketing_home');
+    url.searchParams.set('cta', cta);
+    url.searchParams.set('journey_id', getJourneyId());
+    return url.toString();
+}
 
 const warningCards = [
     {
@@ -114,6 +189,44 @@ const pricingCards = [
 
 const Home = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [journeyId, setJourneyId] = useState('');
+
+    useEffect(() => {
+        const id = getJourneyId();
+        setJourneyId(id);
+        logMarketingEvent('marketing_home_viewed', {
+            source_page: 'marketing_home',
+            page_path: '/',
+        });
+    }, []);
+
+    const buildScanHref = (cta) => {
+        if (journeyId) {
+            const url = new URL(SCAN_URL);
+            url.searchParams.set('source', 'marketing_home');
+            url.searchParams.set('cta', cta);
+            url.searchParams.set('journey_id', journeyId);
+            return url.toString();
+        }
+        return buildScanUrl(cta);
+    };
+
+    const handleScanClick = (cta) => {
+        logMarketingEvent('marketing_scan_cta_clicked', {
+            source_page: 'marketing_home',
+            cta,
+            destination: '/scan',
+        });
+    };
+
+    const handlePricingClick = (plan, destination, cta) => {
+        logMarketingEvent('marketing_pricing_cta_clicked', {
+            source_page: 'marketing_home',
+            plan,
+            cta,
+            destination,
+        });
+    };
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#0A64BC]/30 selection:text-white">
@@ -139,7 +252,8 @@ const Home = () => {
                             Sign In
                         </a>
                         <a
-                            href={SCAN_URL}
+                            href={buildScanHref('nav_primary')}
+                            onClick={() => handleScanClick('nav_primary')}
                             className="inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-4 py-2.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#08539e]"
                         >
                             Run a Free Scan
@@ -172,9 +286,12 @@ const Home = () => {
                                 Sign In
                             </a>
                             <a
-                                href={SCAN_URL}
+                                href={buildScanHref('nav_mobile')}
                                 className="inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-4 py-3 text-center font-semibold text-white no-underline"
-                                onClick={() => setMobileMenuOpen(false)}
+                                onClick={() => {
+                                    setMobileMenuOpen(false);
+                                    handleScanClick('nav_mobile');
+                                }}
                             >
                                 Run a Free Scan
                             </a>
@@ -196,7 +313,8 @@ const Home = () => {
 
                             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                                 <a
-                                    href={SCAN_URL}
+                                    href={buildScanHref('hero_primary')}
+                                    onClick={() => handleScanClick('hero_primary')}
                                     className="inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-7 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-[#08539e]"
                                 >
                                     Run a Free Scan
@@ -381,7 +499,14 @@ const Home = () => {
                                     </ul>
                                     {card.ctaLabel && card.ctaHref && (
                                         <a
-                                            href={card.ctaHref}
+                                            href={card.title === 'Enterprise' ? '/pricing?source=marketing_home&cta=pricing_enterprise' : buildScanHref(card.title === 'Free' ? 'pricing_free' : 'pricing_pro')}
+                                            onClick={() => {
+                                                if (card.title === 'Enterprise') {
+                                                    handlePricingClick('enterprise', '/pricing', 'pricing_enterprise');
+                                                } else {
+                                                    handlePricingClick(card.title.toLowerCase(), '/scan', card.title === 'Free' ? 'pricing_free' : 'pricing_pro');
+                                                }
+                                            }}
                                             className={card.featured
                                                 ? 'mt-8 inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-5 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#08539e]'
                                                 : 'mt-8 inline-flex items-center justify-center rounded-lg border border-slate-700 px-5 py-3 text-sm font-semibold text-white no-underline transition-colors hover:border-slate-600 hover:bg-slate-900'}
@@ -403,7 +528,8 @@ const Home = () => {
                         Get ahead of held funds and payout slowdowns today. It takes less than two minutes to run a secure scan.
                     </p>
                     <a
-                        href={SCAN_URL}
+                        href={buildScanHref('final_cta')}
+                        onClick={() => handleScanClick('final_cta')}
                         className="mt-8 inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-8 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-[#08539e]"
                     >
                         Run a Free Scan

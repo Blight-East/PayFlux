@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
@@ -18,6 +18,7 @@ function normalizeUrl(input: string): string {
 
 export default function ScanPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { userId } = useAuth();
     const [url, setUrl] = useState('');
     const [scanning, setScanning] = useState(false);
@@ -25,10 +26,29 @@ export default function ScanPage() {
     const [scanStage, setScanStage] = useState('');
     const [scanStageIdx, setScanStageIdx] = useState(0);
     const demoViewed = useRef(false);
+    const entrySource = searchParams.get('source') ?? undefined;
+    const entryCta = searchParams.get('cta') ?? undefined;
+    const entryJourney = searchParams.get('journey_id') ?? undefined;
+
+    const attribution = {
+        entry_source: entrySource,
+        entry_cta: entryCta,
+        entry_journey_id: entryJourney,
+        referrer_host: typeof document !== 'undefined' && document.referrer
+            ? (() => {
+                try {
+                    return new URL(document.referrer).host;
+                } catch {
+                    return undefined;
+                }
+            })()
+            : undefined,
+    };
 
     useEffect(() => {
-        logOnboardingEventClient('scan_viewed', { source_page: 'scan' });
-    }, []);
+        sessionStorage.setItem('payflux_scan_attribution', JSON.stringify(attribution));
+        logOnboardingEventClient('scan_viewed', { source_page: 'scan', ...attribution });
+    }, [entryCta, entryJourney, entrySource]);
 
     // Emit scan_example_viewed once (the example result block is always visible)
     useEffect(() => {
@@ -56,7 +76,7 @@ export default function ScanPage() {
         setScanStageIdx(0);
         setScanStage(SCAN_STAGES[0].label);
 
-        logOnboardingEventClient('scan_submitted', { domain, source_page: 'scan' });
+        logOnboardingEventClient('scan_submitted', { domain, ...attribution });
 
         let stageIdx = 0;
         const stageTimer = setInterval(() => {
@@ -86,6 +106,10 @@ export default function ScanPage() {
 
             // Store result for results page
             sessionStorage.setItem('payflux_scan_result', JSON.stringify({ url: domain, data }));
+            sessionStorage.setItem('payflux_scan_attribution', JSON.stringify({
+                ...attribution,
+                scanned_domain: domain,
+            }));
 
             // Persist scan completion + summary when the user is signed in.
             // Anonymous users still get the result in-session via sessionStorage.
@@ -101,8 +125,18 @@ export default function ScanPage() {
                             stabilityScore: data.stabilityScore ?? data.riskScore,
                             findings: data.findings,
                         },
+                        attribution,
                     }),
                 }).catch(() => { });
+            } else {
+                logOnboardingEventClient('scan_completed', {
+                    domain,
+                    mode: 'UI_SCAN',
+                    risk_band: data.riskLabel,
+                    findings_count: data.findings?.length ?? 0,
+                    authenticated: false,
+                    ...attribution,
+                });
             }
 
             // scan_completed is emitted server-side in /api/onboarding/complete
