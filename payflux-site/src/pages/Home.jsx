@@ -72,6 +72,8 @@ const trustItems = [
 const pricingCards = [
     {
         title: 'Free',
+        price: '$0',
+        cadence: '/month',
         body: 'Start with a secure snapshot of your current exposure.',
         bullets: [
             'One-time risk scan',
@@ -84,24 +86,28 @@ const pricingCards = [
     },
     {
         title: 'Pro',
+        price: 'Starts at $499',
+        cadence: '/month',
         body: 'Live monitoring and deeper visibility for active merchants.',
         bullets: [
             'Live monitoring and deeper visibility',
-            'Volume-based pricing',
+            'Standard plan starts at $499/month',
         ],
-        ctaLabel: 'Run a Free Scan',
+        ctaLabel: 'Start With a Free Scan',
         ctaHref: SCAN_URL,
         featured: true,
     },
     {
         title: 'Enterprise',
+        price: 'Custom',
+        cadence: null,
         body: 'Custom',
         bullets: [
             'Custom rollout',
             'Support for larger operating needs',
         ],
-        ctaLabel: null,
-        ctaHref: null,
+        ctaLabel: 'Contact Sales',
+        ctaHref: '/pricing',
         featured: false,
     },
 ];
@@ -361,6 +367,12 @@ const Home = () => {
                                         </p>
                                     )}
                                     <h3 className="mt-4 text-2xl font-semibold text-white">{card.title}</h3>
+                                    <div className="mt-4 flex items-end gap-1">
+                                        <p className="text-3xl font-semibold tracking-tight text-white">{card.price}</p>
+                                        {card.cadence && (
+                                            <p className="pb-1 text-sm text-slate-400">{card.cadence}</p>
+                                        )}
+                                    </div>
                                     <p className="mt-3 text-sm leading-relaxed text-slate-300">{card.body}</p>
                                     <ul className="mt-6 space-y-3 text-sm text-slate-300">
                                         {card.bullets.map((bullet) => (
