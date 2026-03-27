@@ -42,11 +42,15 @@ export async function GET() {
         const state = await generateStateToken(activeOrgId, userId);
 
         // 4. Construct Stripe URL
-        const clientId = process.env.NEXT_PUBLIC_STRIPE_CLIENT_ID;
+        const clientId = process.env.STRIPE_CONNECT_CLIENT_ID || process.env.NEXT_PUBLIC_STRIPE_CLIENT_ID;
         if (!clientId) {
-            console.error("Missing NEXT_PUBLIC_STRIPE_CLIENT_ID");
+            console.error("Missing Stripe Connect client ID");
             throw new Error("Misconfigured Stripe Client ID");
         }
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+        const redirectUri = process.env.STRIPE_CONNECT_REDIRECT_URI
+            || (appUrl ? `${appUrl.replace(/\/$/, '')}/api/stripe/callback` : null);
 
         const params = new URLSearchParams({
             response_type: 'code',
@@ -54,6 +58,10 @@ export async function GET() {
             scope: 'read_write',
             state: state
         });
+
+        if (redirectUri) {
+            params.set('redirect_uri', redirectUri);
+        }
 
         const url = `https://connect.stripe.com/oauth/authorize?${params.toString()}`;
 

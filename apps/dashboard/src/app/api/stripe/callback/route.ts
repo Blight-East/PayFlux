@@ -34,6 +34,8 @@ export async function GET(req: NextRequest) {
     const errorDescription = searchParams.get('error_description');
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const redirectUri = process.env.STRIPE_CONNECT_REDIRECT_URI
+        || `${baseUrl.replace(/\/$/, '')}/api/stripe/callback`;
 
     if (error) {
         console.error('Stripe OAuth error:', error, errorDescription);
@@ -62,7 +64,8 @@ export async function GET(req: NextRequest) {
         const response = await stripe.oauth.token({
             grant_type: 'authorization_code',
             code,
-        });
+            redirect_uri: redirectUri,
+        } as any);
 
         const stripeAccountId = response.stripe_user_id;
         if (!stripeAccountId) {

@@ -10,6 +10,7 @@ async function main() {
     const email = process.env.INTERNAL_VERIFY_EMAIL ?? 'internal+phase2-verify@payflux.dev';
     const priceId = getEnv('STRIPE_PRICE_ID');
     const workspaceId = process.env.INTERNAL_VERIFY_WORKSPACE_ID ?? null;
+    const appUrl = (process.env.INTERNAL_VERIFY_APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.payflux.dev').replace(/\/$/, '');
     const stripe = new Stripe(getEnv('STRIPE_SECRET_KEY'), {
         apiVersion: '2026-01-28.clover',
     });
@@ -49,22 +50,21 @@ async function main() {
             account.email === email && account.metadata?.internal_verification === 'true'
         ) ??
         await stripe.accounts.create({
-            type: 'express',
+            type: 'standard',
             country: 'US',
             email,
-            capabilities: {
-                card_payments: { requested: true },
-                transfers: { requested: true },
-            },
-            business_profile: {
-                url: 'https://payflux.dev/internal-verification',
-                product_description: 'Internal PayFlux verification account',
-            },
             metadata: {
                 internal_verification: 'true',
                 ...(workspaceId ? { workspaceId } : {}),
             },
         });
+
+    const onboardingLink = await stripe.accountLinks.create({
+        account: connectedAccount.id,
+        refresh_url: `${appUrl}/connect?refresh=1`,
+        return_url: `${appUrl}/connect?return=1`,
+        type: 'account_onboarding',
+    });
 
     const platformAccount = await stripe.accounts.retrieve();
 
@@ -72,6 +72,12 @@ async function main() {
         customerId: customer.id,
         subscriptionId: subscription.id,
         connectedAccountId: connectedAccount.id,
+        connectedAccountType: connectedAccount.type,
+        connectedAccountChargesEnabled: connectedAccount.charges_enabled,
+        connectedAccountPayoutsEnabled: connectedAccount.payouts_enabled,
+        connectedAccountDetailsSubmitted: connectedAccount.details_submitted,
+        connectedAccountEmail: connectedAccount.email,
+        connectedAccountOnboardingUrl: onboardingLink.url,
         platformAccountId: platformAccount.id,
         workspaceId,
     }, null, 2));
