@@ -78,7 +78,7 @@ export default async function ActivatePage() {
                             </div>
                             <div>
                                 <p className="text-sm text-slate-200">Your workspace goes live with practical alerts turned on</p>
-                                <p className="text-xs text-slate-500">Held funds, slower payouts, rising dispute pressure, and worsening account risk.</p>
+                                <p className="text-xs text-slate-500">Your first live baseline and projection are written from connected Stripe activity.</p>
                             </div>
                         </div>
                     </div>

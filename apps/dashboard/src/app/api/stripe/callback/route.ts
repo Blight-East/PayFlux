@@ -2,6 +2,11 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
+import { mirrorWorkspaceStateToClerk } from '@/lib/clerk-mirror';
+import { ensurePendingActivationRun } from '@/lib/db/activation-runs';
+import { upsertMonitoredEntityForStripeConnection } from '@/lib/db/monitored-entities';
+import { upsertStripeProcessorConnection } from '@/lib/db/processor-connections';
+import { resolveOrCreateWorkspaceRecord, updateWorkspaceState } from '@/lib/db/workspaces';
 import { validateAndConsumeState } from '@/lib/oauth-state';
 import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
 
@@ -64,35 +69,73 @@ export async function GET(req: NextRequest) {
             throw new Error('No Stripe account ID returned from token exchange');
         }
 
-        const client = await clerkClient();
-
         // 3) Use the orgId from the validated state
         const activeOrgId = oauthState.orgId;
+        const client = await clerkClient();
+        const org = await client.organizations.getOrganization({ organizationId: activeOrgId });
+        const workspace = await resolveOrCreateWorkspaceRecord({
+            clerkOrgId: activeOrgId,
+            name: org.name,
+            ownerClerkUserId: userId,
+        });
+        const oauthScope = String((response as any).scope ?? 'unknown');
 
-        // 4) Update the organization publicMetadata
-        await client.organizations.updateOrganizationMetadata(activeOrgId, {
-            publicMetadata: {
-                stripeAccountId,
-                stripeConnectedAt: new Date().toISOString(),
-                stripeConnectionStatus: 'CONNECTED',
+        const processorConnection = await upsertStripeProcessorConnection({
+            workspaceId: workspace.id,
+            stripeAccountId,
+            oauthScope,
+            status: 'connected',
+            connectionMetadata: {
+                livemode: Boolean((response as any).livemode ?? false),
+                scope: oauthScope,
             },
         });
 
-        console.log(`Successfully persisted Stripe Account: ${stripeAccountId} to Clerk Org: ${activeOrgId}`);
+        const monitoredEntity = await upsertMonitoredEntityForStripeConnection({
+            workspaceId: workspace.id,
+            processorConnectionId: processorConnection.id,
+            primaryHost: workspace.primary_host_candidate,
+            primaryHostSource: workspace.primary_host_candidate ? 'scan' : 'unknown',
+            status: 'pending',
+        });
+
+        if (workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise') {
+            await updateWorkspaceState({
+                workspaceId: workspace.id,
+                activationState: 'ready_for_activation',
+            });
+
+            await ensurePendingActivationRun({
+                workspaceId: workspace.id,
+                processorConnectionId: processorConnection.id,
+                monitoredEntityId: monitoredEntity.id,
+                trigger: 'post_connect',
+                triggeredBy: 'user',
+            });
+        }
+
+        await mirrorWorkspaceStateToClerk(activeOrgId, {
+            stripeAccountId,
+            stripeConnectedAt: new Date().toISOString(),
+            stripeConnectionStatus: 'CONNECTED',
+            ...(workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise'
+                ? { activationState: 'ready_for_activation' }
+                : {}),
+        });
+
+        console.log(`Successfully persisted Stripe Account: ${stripeAccountId} to Workspace: ${workspace.id} (Clerk Org: ${activeOrgId})`);
 
         logOnboardingEvent('stripe_connect_completed', {
             userId,
-            workspaceId: activeOrgId,
-            metadata: { stripeAccountId },
+            workspaceId: workspace.id,
+            metadata: { stripeAccountId, clerkOrgId: activeOrgId, oauthScope },
         });
 
-        // Emit stage transition: scanned → connected_free
-        logStageTransition('scanned', 'connected_free', { userId, workspaceId: activeOrgId });
+        // Emit stage transition: scanned -> connected_free
+        logStageTransition('scanned', 'connected_free', { userId, workspaceId: workspace.id });
 
         // 5) Check if user is paid — route to activation arming if so, otherwise dashboard
-        const org = await client.organizations.getOrganization({ organizationId: activeOrgId });
-        const tier = (org.publicMetadata as Record<string, unknown>)?.tier;
-        if (tier === 'pro' || tier === 'enterprise') {
+        if (workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise') {
             return NextResponse.redirect(`${baseUrl}/activate/arming`);
         }
         return NextResponse.redirect(`${baseUrl}/dashboard`);

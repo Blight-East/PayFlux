@@ -1,44 +1,47 @@
-/**
- * POST /api/activation/run
- *
- * Idempotent activation pipeline for Phase A.
- * Runs the full activation sequence for a paid, connected workspace:
- *   1. Verify processor connection
- *   2. Generate workspace baseline (risk surface)
- *   3. Generate first reserve projection
- *   4. Arm default alert policy
- *   5. Mark workspace as live_monitored
- *
- * Safe to re-call at any point — skips already-completed steps.
- *
- * Phase A note: Steps 1-3 use real system data where available,
- * with deterministic fallback for workspaces that don't yet have
- * enough event history for full risk scoring. Step 4 arms a
- * conservative default policy. All state is persisted to Clerk
- * org publicMetadata.
- */
-
 import { NextResponse } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { resolveOrganizationContext, resolveWorkspace } from '@/lib/resolve-workspace';
-import { RiskIntelligence } from '@/lib/risk-infra';
+import { auth } from '@clerk/nextjs/server';
+import { mirrorWorkspaceStateToClerk } from '@/lib/clerk-mirror';
+import {
+    ensurePendingActivationRun,
+    getLatestActivationRunByWorkspaceId,
+    getLatestCompletedActivationRunByWorkspaceId,
+    markActivationRunCompleted,
+    markActivationRunFailed,
+    markActivationRunRunning,
+} from '@/lib/db/activation-runs';
+import { createBaselineSnapshot, getBaselineSnapshotById } from '@/lib/db/baseline-snapshots';
+import { getMonitoredEntityByWorkspaceId, markMonitoredEntityReady } from '@/lib/db/monitored-entities';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { createReserveProjection, getReserveProjectionById } from '@/lib/db/reserve-projections';
+import { findWorkspaceById, updateWorkspaceState } from '@/lib/db/workspaces';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
+import {
+    STRIPE_BASELINE_MODEL_VERSION,
+    deriveBaselineAndProjection,
+    fetchStripeActivationInputs,
+} from '@/lib/stripe-activation-contract';
 
 export const runtime = 'nodejs';
 
-/** Default alert rules — conservative, high-signal, auto-armed */
-const DEFAULT_ALERT_POLICY = {
-    rules: [
-        { id: 'tier_escalation', name: 'Risk tier escalation', trigger: 'tier_escalation', threshold: 1, channel: 'email', armed: true },
-        { id: 'reserve_spike', name: 'Reserve exposure spike (>25%)', trigger: 'reserve_spike', threshold: 0.25, channel: 'email', armed: true },
-        { id: 'trend_degradation', name: 'Trend shift to degrading', trigger: 'trend_degradation', threshold: 1, channel: 'dashboard', armed: true },
-        { id: 'projection_breach', name: 'Projection exceeds worst-case', trigger: 'projection_breach', threshold: 1, channel: 'email', armed: true },
-    ],
-};
+interface ActivationStep {
+    step: string;
+    status: 'completed' | 'skipped' | 'failed';
+    detail?: string;
+}
 
-/** Reserve rate by risk tier (matches existing projection-cadence logic) */
-const RESERVE_RATES: Record<number, number> = { 1: 0, 2: 0.05, 3: 0.10, 4: 0.15, 5: 0.25 };
-const TREND_MULTIPLIERS: Record<string, number> = { IMPROVING: 0.75, STABLE: 1.0, DEGRADING: 1.5 };
+function projectionWindowMap(projections: Array<{ windowDays: number; worstCaseTrappedBps: number }>) {
+    const byWindow = (windowDays: number) => projections.find((projection) => projection.windowDays === windowDays);
+    return {
+        t30: { trappedBps: byWindow(30)?.worstCaseTrappedBps ?? 0 },
+        t60: { trappedBps: byWindow(60)?.worstCaseTrappedBps ?? 0 },
+        t90: { trappedBps: byWindow(90)?.worstCaseTrappedBps ?? 0 },
+    };
+}
+
+function failClosedResponse(code: string, error: string, state: string, steps: ActivationStep[], status: number = 409) {
+    return NextResponse.json({ error, code, state, steps }, { status });
+}
 
 export async function POST() {
     const { userId } = await auth();
@@ -48,170 +51,191 @@ export async function POST() {
 
     const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
     if (!workspace || (workspace.tier !== 'pro' && workspace.tier !== 'enterprise')) {
-        return NextResponse.json({ error: 'Not a paid workspace' }, { status: 403 });
+        return NextResponse.json({ error: 'Not a paid workspace', state: 'not_paid' }, { status: 403 });
     }
 
-    const client = await clerkClient();
-    const org = await resolveOrganizationContext(userId);
-    if (!org) {
-        return NextResponse.json({ error: 'No organization found' }, { status: 404 });
+    const workspaceRecord = await findWorkspaceById(workspace.workspaceRecordId);
+    if (!workspaceRecord) {
+        return NextResponse.json({ error: 'Workspace missing', state: 'not_ready' }, { status: 404 });
     }
 
-    const meta = org.publicMetadata;
-    const now = new Date().toISOString();
-
-    const steps: { step: string; status: 'completed' | 'skipped' | 'failed'; detail?: string }[] = [];
-
-    // ── Step 1: Verify processor connection ────────────────────────────────
-    const stripeAccountId = meta.stripeAccountId as string | undefined;
-    if (!stripeAccountId) {
-        return NextResponse.json({
-            error: 'No processor connected',
-            state: 'paid_unconnected',
-            steps: [{ step: 'processor_check', status: 'failed', detail: 'No stripeAccountId in metadata' }],
-        }, { status: 400 });
-    }
-    steps.push({ step: 'processor_check', status: 'completed', detail: stripeAccountId });
-
-    // ── Step 2: Generate baseline ──────────────────────────────────────────
-    if (meta.baselineGeneratedAt) {
-        steps.push({ step: 'baseline_generation', status: 'skipped', detail: 'Already generated' });
-    } else {
-        try {
-            // Attempt to pull real risk data from RiskIntelligence
-            let riskTier = 3; // Default: elevated
-            let riskBand = 'elevated';
-            let stabilityScore = 55;
-            let trend = 'STABLE';
-            let eventCount = 0;
-
-            const snapshots = await RiskIntelligence.getAllSnapshots();
-            if (snapshots.length > 0) {
-                const latest = snapshots[snapshots.length - 1];
-                riskTier = latest.currentRiskTier || 3;
-                trend = latest.trend || 'STABLE';
-                stabilityScore = Math.max(10, 100 - (riskTier * 18));
-                eventCount = latest.scanCount || 0;
-                riskBand = ['low', 'moderate', 'elevated', 'high', 'critical'][riskTier - 1] || 'elevated';
-            }
-
-            await client.organizations.updateOrganizationMetadata(org.organizationId, {
-                publicMetadata: {
-                    baselineGeneratedAt: now,
-                    baselineRiskSurface: {
-                        riskTier,
-                        riskBand,
-                        stabilityScore,
-                        trend,
-                        computedAt: now,
-                        eventCount,
-                        windowDays: 90,
-                    },
-                },
-            });
-            steps.push({ step: 'baseline_generation', status: 'completed', detail: `tier=${riskTier} band=${riskBand}` });
-        } catch (err: any) {
-            steps.push({ step: 'baseline_generation', status: 'failed', detail: err.message });
-            return NextResponse.json({ state: 'connected_generating', steps }, { status: 500 });
-        }
+    const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId);
+    if (!processorConnection || processorConnection.status !== 'connected') {
+        await updateWorkspaceState({
+            workspaceId: workspace.workspaceRecordId,
+            activationState: 'paid_unconnected',
+        });
+        await mirrorWorkspaceStateToClerk(workspaceRecord.clerk_org_id, { activationState: 'paid_unconnected' });
+        return failClosedResponse(
+            'PROCESSOR_CONNECTION_REQUIRED',
+            'No processor connected',
+            'paid_unconnected',
+            [{ step: 'processor_check', status: 'failed', detail: 'No connected processor row found' }]
+        );
     }
 
-    // ── Step 3: Generate first projection ──────────────────────────────────
-    if (meta.firstProjectionAt) {
-        steps.push({ step: 'first_projection', status: 'skipped', detail: 'Already exists' });
-    } else {
-        try {
-            // Re-read metadata (may have been updated in step 2)
-            const updatedOrg = await client.organizations.getOrganization({ organizationId: org.organizationId });
-            const updatedMeta = (updatedOrg.publicMetadata as Record<string, unknown>) || {};
-            const baseline = updatedMeta.baselineRiskSurface as Record<string, unknown> | undefined;
-
-            const riskTier = Number(baseline?.riskTier || 3);
-            const trend = String(baseline?.trend || 'STABLE');
-            const baseRate = RESERVE_RATES[riskTier] ?? 0.10;
-            const trendMult = TREND_MULTIPLIERS[trend] ?? 1.0;
-            const effectiveRate = Math.min(baseRate * trendMult, 0.25);
-
-            const projection = {
-                riskTier,
-                riskBand: baseline?.riskBand || 'elevated',
-                reserveRate: effectiveRate,
-                windows: {
-                    t30: { trappedBps: Math.round(effectiveRate * 10000 * (30 / 90)) },
-                    t60: { trappedBps: Math.round(effectiveRate * 10000 * (60 / 90)) },
-                    t90: { trappedBps: Math.round(effectiveRate * 10000) },
-                },
-                trend,
-                generatedAt: now,
-            };
-
-            await client.organizations.updateOrganizationMetadata(org.organizationId, {
-                publicMetadata: {
-                    firstProjectionAt: now,
-                    latestProjection: projection,
-                },
-            });
-            steps.push({ step: 'first_projection', status: 'completed', detail: `rate=${(effectiveRate * 100).toFixed(1)}%` });
-        } catch (err: any) {
-            steps.push({ step: 'first_projection', status: 'failed', detail: err.message });
-            return NextResponse.json({ state: 'connected_generating', steps }, { status: 500 });
-        }
+    const monitoredEntity = await getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId);
+    if (!monitoredEntity) {
+        await updateWorkspaceState({
+            workspaceId: workspace.workspaceRecordId,
+            activationState: 'connection_pending_verification',
+        });
+        await mirrorWorkspaceStateToClerk(workspaceRecord.clerk_org_id, { activationState: 'connection_pending_verification' });
+        return failClosedResponse(
+            'MONITORED_ENTITY_REQUIRED',
+            'Monitored entity not ready',
+            'connected_generating',
+            [{ step: 'monitored_entity_check', status: 'failed', detail: 'No monitored entity row found' }]
+        );
     }
 
-    // ── Step 4: Arm default alerts ─────────────────────────────────────────
-    if (meta.alertPolicyArmed === true) {
-        steps.push({ step: 'arm_alerts', status: 'skipped', detail: 'Already armed' });
-    } else {
-        try {
-            await client.organizations.updateOrganizationMetadata(org.organizationId, {
-                publicMetadata: {
-                    alertPolicyArmed: true,
-                    alertPolicyArmedAt: now,
-                    defaultAlertPolicy: DEFAULT_ALERT_POLICY,
-                },
-            });
-            steps.push({ step: 'arm_alerts', status: 'completed' });
-        } catch (err: any) {
-            steps.push({ step: 'arm_alerts', status: 'failed', detail: err.message });
-            // Non-fatal — proceed anyway
-        }
-    }
-
-    // ── Step 5: Mark live_monitored ────────────────────────────────────────
-    if (!meta.activationCompletedAt) {
-        try {
-            await client.organizations.updateOrganizationMetadata(org.organizationId, {
-                publicMetadata: {
-                    activationState: 'live_monitored',
-                    activationCompletedAt: now,
-                },
-            });
-
-            logOnboardingEvent('onboarding_stage_changed', {
-                userId,
-                workspaceId: workspace.workspaceId,
-                metadata: { from: 'connected_generating', to: 'live_monitored' },
-            });
-        } catch {
-            // Non-fatal
-        }
-    }
-    steps.push({ step: 'mark_live', status: 'completed' });
-
-    return NextResponse.json({
-        state: 'live_monitored',
-        steps,
-        workspace: {
-            id: workspace.workspaceId,
-            name: workspace.workspaceName,
-            tier: workspace.tier,
-        },
+    await updateWorkspaceState({
+        workspaceId: workspace.workspaceRecordId,
+        activationState: 'ready_for_activation',
     });
+
+    const pendingRun = await ensurePendingActivationRun({
+        workspaceId: workspace.workspaceRecordId,
+        processorConnectionId: processorConnection.id,
+        monitoredEntityId: monitoredEntity.id,
+        trigger: 'manual_retry',
+        triggeredBy: 'user',
+    });
+
+    await markActivationRunRunning({
+        activationRunId: pendingRun.id,
+        processorConnectionId: processorConnection.id,
+        monitoredEntityId: monitoredEntity.id,
+    });
+
+    await updateWorkspaceState({
+        workspaceId: workspace.workspaceRecordId,
+        activationState: 'activation_in_progress',
+    });
+    await mirrorWorkspaceStateToClerk(workspaceRecord.clerk_org_id, { activationState: 'activation_in_progress' });
+
+    const steps: ActivationStep[] = [];
+
+    try {
+        const activationInputs = await fetchStripeActivationInputs(processorConnection.stripe_account_id);
+        steps.push({ step: 'processor_check', status: 'completed', detail: processorConnection.stripe_account_id });
+
+        const computed = deriveBaselineAndProjection(activationInputs);
+
+        const computedAt = new Date().toISOString();
+        const baselineSnapshot = await createBaselineSnapshot({
+            workspaceId: workspace.workspaceRecordId,
+            monitoredEntityId: monitoredEntity.id,
+            sourceProcessorConnectionId: processorConnection.id,
+            riskTier: computed.riskTier,
+            riskBand: computed.riskBand,
+            stabilityScore: computed.stabilityScore,
+            trend: computed.trend,
+            policySurface: computed.policySurface,
+            sourceSummary: computed.sourceSummary,
+            computedAt,
+        });
+        steps.push({ step: 'baseline_generation', status: 'completed', detail: `tier=${computed.riskTier} band=${computed.riskBand}` });
+
+        const reserveProjection = await createReserveProjection({
+            workspaceId: workspace.workspaceRecordId,
+            monitoredEntityId: monitoredEntity.id,
+            baselineSnapshotId: baselineSnapshot.id,
+            activationRunId: pendingRun.id,
+            modelVersion: STRIPE_BASELINE_MODEL_VERSION,
+            instabilitySignal: computed.instabilitySignal,
+            currentRiskTier: computed.riskTier,
+            trend: computed.trend,
+            tierDelta: computed.tierDelta,
+            projectionBasis: computed.projectionBasis,
+            reserveProjections: computed.reserveProjections,
+            recommendedInterventions: computed.recommendedInterventions,
+            simulationDelta: computed.simulationDelta,
+            volumeMode: 'bps_only',
+            projectedAt: computedAt,
+        });
+        steps.push({
+            step: 'first_projection',
+            status: 'completed',
+            detail: `signal=${computed.instabilitySignal} windows=${computed.reserveProjections.length}`,
+        });
+
+        await markMonitoredEntityReady({
+            workspaceId: workspace.workspaceRecordId,
+            baselineSnapshotId: baselineSnapshot.id,
+            projectionId: reserveProjection.id,
+            lastSyncAt: computedAt,
+        });
+
+        await markActivationRunCompleted({
+            activationRunId: pendingRun.id,
+            baselineSnapshotId: baselineSnapshot.id,
+            firstProjectionId: reserveProjection.id,
+        });
+
+        await updateWorkspaceState({
+            workspaceId: workspace.workspaceRecordId,
+            activationState: 'active',
+        });
+        await mirrorWorkspaceStateToClerk(workspaceRecord.clerk_org_id, {
+            activationState: 'active',
+        });
+
+        logOnboardingEvent('arming_completed', {
+            userId,
+            workspaceId: workspace.workspaceRecordId,
+            metadata: {
+                baselineSnapshotId: baselineSnapshot.id,
+                reserveProjectionId: reserveProjection.id,
+                stripeAccountId: processorConnection.stripe_account_id,
+                modelVersion: STRIPE_BASELINE_MODEL_VERSION,
+            },
+        });
+
+        return NextResponse.json({
+            state: 'live_monitored',
+            steps,
+            workspace: {
+                id: workspace.workspaceRecordId,
+                name: workspace.workspaceName,
+                tier: workspace.tier,
+            },
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'ACTIVATION_FAILED';
+        const failureCode = message === 'INSUFFICIENT_STRIPE_ACTIVITY' || message === 'PROCESSOR_ACCOUNT_NOT_READY'
+            ? message
+            : 'ACTIVATION_FAILED';
+
+        await markActivationRunFailed({
+            activationRunId: pendingRun.id,
+            failureCode,
+            failureDetail: message,
+        });
+
+        await updateWorkspaceState({
+            workspaceId: workspace.workspaceRecordId,
+            activationState: 'activation_failed',
+        });
+        await mirrorWorkspaceStateToClerk(workspaceRecord.clerk_org_id, { activationState: 'activation_failed' });
+
+        steps.push({ step: 'baseline_generation', status: 'failed', detail: message });
+
+        const status = failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY' || failureCode === 'PROCESSOR_ACCOUNT_NOT_READY' ? 409 : 500;
+        return failClosedResponse(
+            failureCode,
+            failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY'
+                ? 'Not enough recent Stripe activity to build a real baseline yet'
+                : failureCode === 'PROCESSOR_ACCOUNT_NOT_READY'
+                    ? 'Connected Stripe account is not fully ready for monitoring'
+                    : 'Activation failed',
+            'connected_generating',
+            steps,
+            status
+        );
+    }
 }
 
-/**
- * GET /api/activation/run — returns current activation status (for polling)
- */
 export async function GET() {
     const { userId } = await auth();
     if (!userId) {
@@ -223,39 +247,78 @@ export async function GET() {
         return NextResponse.json({ error: 'Not a paid workspace', state: 'not_paid' }, { status: 403 });
     }
 
-    const org = await resolveOrganizationContext(userId);
-    if (!org) {
-        return NextResponse.json({ error: 'No organization' }, { status: 404 });
+    const [workspaceRecord, processorConnection, monitoredEntity, latestActivationRun, latestCompletedActivationRun] = await Promise.all([
+        findWorkspaceById(workspace.workspaceRecordId),
+        getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+        getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId),
+        getLatestActivationRunByWorkspaceId(workspace.workspaceRecordId),
+        getLatestCompletedActivationRunByWorkspaceId(workspace.workspaceRecordId),
+    ]);
+
+    if (!workspaceRecord) {
+        return NextResponse.json({ error: 'Workspace missing' }, { status: 404 });
     }
-    const meta = org.publicMetadata;
+
+    const baselineSnapshot = latestCompletedActivationRun?.baseline_snapshot_id
+        ? await getBaselineSnapshotById(latestCompletedActivationRun.baseline_snapshot_id)
+        : null;
+    const reserveProjection = latestCompletedActivationRun?.first_projection_id
+        ? await getReserveProjectionById(latestCompletedActivationRun.first_projection_id)
+        : null;
 
     const conditions = {
         paidTier: true,
-        processorConnected: !!(meta.stripeAccountId),
-        baselineGenerated: !!(meta.baselineGeneratedAt),
-        projectionExists: !!(meta.firstProjectionAt),
-        alertsArmed: meta.alertPolicyArmed === true,
+        processorConnected: processorConnection?.status === 'connected',
+        baselineGenerated: latestCompletedActivationRun?.baseline_ready === true && Boolean(baselineSnapshot),
+        projectionExists: latestCompletedActivationRun?.first_projection_ready === true && Boolean(reserveProjection),
+        alertsArmed: false,
     };
 
-    let state: string;
-    if (conditions.processorConnected && conditions.baselineGenerated && conditions.projectionExists && conditions.alertsArmed) {
-        state = 'live_monitored';
-    } else if (conditions.processorConnected) {
+    let state = 'paid_unconnected';
+    if (conditions.processorConnected) {
         state = 'connected_generating';
-    } else {
-        state = 'paid_unconnected';
+    }
+    if (workspaceRecord.activation_state === 'active' && conditions.baselineGenerated && conditions.projectionExists) {
+        state = 'live_monitored';
     }
 
     return NextResponse.json({
         state,
         conditions,
         meta: {
-            baselineGeneratedAt: meta.baselineGeneratedAt,
-            firstProjectionAt: meta.firstProjectionAt,
-            alertPolicyArmedAt: meta.alertPolicyArmedAt,
-            activationCompletedAt: meta.activationCompletedAt,
-            latestProjection: meta.latestProjection,
-            baselineRiskSurface: meta.baselineRiskSurface,
+            baselineGeneratedAt: baselineSnapshot?.computed_at,
+            firstProjectionAt: reserveProjection?.projected_at,
+            alertPolicyArmedAt: undefined,
+            activationCompletedAt: latestCompletedActivationRun?.completed_at,
+            baselineRiskSurface: baselineSnapshot ? {
+                riskTier: baselineSnapshot.risk_tier,
+                riskBand: baselineSnapshot.risk_band,
+                stabilityScore: baselineSnapshot.stability_score,
+                trend: baselineSnapshot.trend,
+            } : undefined,
+            latestProjection: reserveProjection ? {
+                riskTier: reserveProjection.current_risk_tier,
+                riskBand: baselineSnapshot?.risk_band ?? 'elevated',
+                reserveRate: Number((reserveProjection.projection_basis as Record<string, unknown>)?.constants && ((reserveProjection.projection_basis as Record<string, any>).constants.baseReserveRate ?? 0)),
+                windows: projectionWindowMap(
+                    Array.isArray(reserveProjection.reserve_projections)
+                        ? reserveProjection.reserve_projections as Array<{ windowDays: number; worstCaseTrappedBps: number }>
+                        : []
+                ),
+                trend: reserveProjection.trend,
+            } : undefined,
         },
+        activationState: workspaceRecord.activation_state,
+        latestActivationRun: latestActivationRun ? {
+            id: latestActivationRun.id,
+            status: latestActivationRun.status,
+            failureCode: latestActivationRun.failure_code,
+            failureDetail: latestActivationRun.failure_detail,
+        } : null,
+        monitoredEntity: monitoredEntity ? {
+            id: monitoredEntity.id,
+            primaryHost: monitoredEntity.primary_host,
+            status: monitoredEntity.status,
+        } : null,
     });
 }

@@ -49,7 +49,6 @@ const STAGES = [
     { key: 'processorConnected', label: 'Pulling recent processor activity', detail: 'Retrieving the live payment and payout signals PayFlux needs to watch...' },
     { key: 'baselineGenerated', label: 'Learning your current payout risk', detail: 'Finding the warning signs most likely to raise processor concern...' },
     { key: 'projectionExists', label: 'Estimating what may happen next', detail: 'Calculating how much money could be held back over the next 30, 60, and 90 days...' },
-    { key: 'alertsArmed', label: 'Turning on practical alerts', detail: 'Preparing alerts for held funds, slower payouts, and worsening account risk...' },
 ] as const;
 
 const RISK_BAND_COLORS: Record<string, string> = {
@@ -281,17 +280,16 @@ export default function ArmingProgress() {
                             </div>
                         )}
 
-                        {/* Alerts armed */}
+                        {/* Monitoring status */}
                         <div className="px-6 py-4">
                             <h2 className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2.5">
-                                Alerts now turned on
+                                Monitoring records now created
                             </h2>
                             <div className="space-y-1.5">
                                 {[
-                                    'Money held back may jump sharply',
-                                    'Payout risk moves up a level',
-                                    'Risk direction turns worse',
-                                    'Processor pressure moves outside the current range',
+                                    'Baseline snapshot saved to the workspace',
+                                    'First reserve projection saved to the workspace',
+                                    'Future monitoring can build from these scoped records',
                                 ].map((rule) => (
                                     <div key={rule} className="flex items-center space-x-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />

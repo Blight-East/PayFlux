@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { DashboardComposition } from '@/components/dashboard/DashboardComposition';
 
 interface DashboardFreePreviewProps {
+    /** Workspace-attached scan context only. Never global shared scan state. */
     host: string | null;
     hasStripeConnection: boolean;
     onboardingStage: string;
@@ -181,7 +182,7 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
             {
                 label: 'Latest check',
                 value: hasCompletedScan ? 'Snapshot available' : 'No checks yet',
-                detail: host ? `Host: ${host}` : 'Run the scan to populate this',
+                detail: host ? `Host: ${host}` : 'Run the workspace scan to populate this',
             },
             {
                 label: 'Next review',

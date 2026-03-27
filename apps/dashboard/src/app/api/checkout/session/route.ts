@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { resolveWorkspace } from '@/lib/resolve-workspace';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
+import { createOrUpdateCheckoutPendingSubscription, getBillingCustomerByWorkspaceId, upsertBillingCustomer } from '@/lib/db/billing';
 import Stripe from 'stripe';
 
 export const runtime = 'nodejs';
@@ -49,18 +50,45 @@ export async function POST(request: Request) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.payflux.dev';
 
     try {
+        let billingCustomer = await getBillingCustomerByWorkspaceId(workspace.workspaceRecordId);
+        if (!billingCustomer) {
+            const client = await clerkClient();
+            const user = await client.users.getUser(userId);
+            const primaryEmail = user.emailAddresses?.find(
+                (email) => email.id === user.primaryEmailAddressId
+            )?.emailAddress ?? null;
+
+            const stripeCustomer = await stripe.customers.create({
+                email: primaryEmail ?? undefined,
+                name: workspace.workspaceName,
+                metadata: {
+                    workspaceId: workspace.workspaceRecordId,
+                    clerkOrgId: workspace.workspaceId,
+                },
+            });
+
+            billingCustomer = await upsertBillingCustomer({
+                workspaceId: workspace.workspaceRecordId,
+                stripeCustomerId: stripeCustomer.id,
+                email: primaryEmail,
+            });
+        }
+
         const session = await stripe.checkout.sessions.create({
             mode: 'subscription',
             line_items: [{ price: priceId, quantity: 1 }],
+            customer: billingCustomer.stripe_customer_id,
             success_url: `${appUrl}/activate`,
             cancel_url: `${appUrl}/upgrade?cancelled=true`,
             metadata: {
-                workspaceId: workspace.workspaceId,
+                workspaceId: workspace.workspaceRecordId,
+                clerkOrgId: workspace.workspaceId,
                 workspaceName: workspace.workspaceName,
             },
             subscription_data: {
                 metadata: {
-                    workspaceId: workspace.workspaceId,
+                    workspaceId: workspace.workspaceRecordId,
+                    clerkOrgId: workspace.workspaceId,
                 },
             },
         });
@@ -74,10 +102,18 @@ export async function POST(request: Request) {
         }
 
         // Emit checkout_started — user is being redirected to Stripe
+        await createOrUpdateCheckoutPendingSubscription({
+            workspaceId: workspace.workspaceRecordId,
+            billingCustomerId: billingCustomer.id,
+            checkoutSessionId: session.id,
+            stripePriceId: priceId,
+            grantsTier: 'pro',
+        });
+
         logOnboardingEvent('checkout_started', {
             userId,
-            workspaceId: workspace.workspaceId,
-            metadata: { sessionId: session.id },
+            workspaceId: workspace.workspaceRecordId,
+            metadata: { sessionId: session.id, clerkOrgId: workspace.workspaceId },
         });
 
         return NextResponse.json({ url: session.url });
