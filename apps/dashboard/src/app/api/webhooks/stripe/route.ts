@@ -1,49 +1,29 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { clerkClient } from '@clerk/nextjs/server';
-import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
 import fs from 'fs/promises';
 import path from 'path';
+import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
+import { ensurePendingActivationRun } from '@/lib/db/activation-runs';
+import {
+    deriveEffectiveWorkspaceTier,
+    findSubscriptionByStripeSubscriptionId,
+    mapStripeStatusToSubscriptionStatus,
+    mapStripeStatusToWorkspacePaymentStatus,
+    upsertBillingCustomer,
+    upsertSubscriptionFromStripe,
+} from '@/lib/db/billing';
+import { upsertMonitoredEntityForStripeConnection, getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { findWorkspaceByClerkOrgId, findWorkspaceById, updateWorkspaceState } from '@/lib/db/workspaces';
+import { mirrorWorkspaceStateToClerk } from '@/lib/clerk-mirror';
 
 const STATUS_PATH = path.join(process.cwd(), 'data', 'status.json');
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Canonical Billing State Table
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// Stripe subscription status → Clerk org metadata mapping.
-// This is the SINGLE SOURCE OF TRUTH for billing state transitions.
-//
-// | Stripe status        | tier   | paymentStatus      | User access       |
-// |----------------------|--------|--------------------|-------------------|
-// | active               | pro    | current            | Full pro          |
-// | trialing             | pro    | trialing           | Full pro          |
-// | past_due             | pro    | past_due           | Full pro (grace)  |
-// | unpaid               | free   | unpaid             | Downgraded        |
-// | canceled             | free   | canceled           | Downgraded        |
-// | incomplete           | free   | incomplete         | No pro access     |
-// | incomplete_expired   | free   | incomplete_expired | No pro access     |
-//
-// Key rule: past_due keeps tier pro. Only unpaid, canceled, incomplete,
-// incomplete_expired downgrade to free. subscription.updated and
-// subscription.deleted are the downgrade authority — never invoice events.
-// ─────────────────────────────────────────────────────────────────────────────
-
-type BillingState = { tier: 'pro' | 'free'; paymentStatus: string };
-
-const SUBSCRIPTION_STATUS_MAP: Record<string, BillingState> = {
-    active:               { tier: 'pro',  paymentStatus: 'current' },
-    trialing:             { tier: 'pro',  paymentStatus: 'trialing' },
-    past_due:             { tier: 'pro',  paymentStatus: 'past_due' },
-    unpaid:               { tier: 'free', paymentStatus: 'unpaid' },
-    canceled:             { tier: 'free', paymentStatus: 'canceled' },
-    incomplete:           { tier: 'free', paymentStatus: 'incomplete' },
-    incomplete_expired:   { tier: 'free', paymentStatus: 'incomplete_expired' },
+type BillingState = {
+    effectiveTier: 'free' | 'pro' | 'enterprise';
+    paymentStatus: 'none' | 'current' | 'trialing' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired';
+    subscriptionStatus: 'checkout_pending' | 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired';
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stripe Client (lazy)
-// ─────────────────────────────────────────────────────────────────────────────
 
 let _stripeClient: Stripe | null = null;
 
@@ -55,18 +35,12 @@ function getStripeClient(): Stripe | null {
     return _stripeClient;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Bypass is only allowed in development AND with explicit env flag
 function isTestBypassAllowed(): boolean {
     const isDev = process.env.NODE_ENV === 'development';
     const bypassEnabled = process.env.DASHBOARD_WEBHOOK_TEST_BYPASS === 'true';
     return isDev && bypassEnabled;
 }
 
-// Validate that the secret looks like a real Stripe secret
 function isValidStripeSecret(secret: string | undefined): secret is string {
     return !!secret && secret.startsWith('whsec_') && secret.length > 10;
 }
@@ -76,7 +50,6 @@ async function updateStatus() {
     await fs.writeFile(STATUS_PATH, JSON.stringify({ lastEventAt: new Date().toISOString() }));
 }
 
-// Helper: Construct and verify Stripe event
 function constructEvent(payload: string, sig: string | null, secret: string | undefined): Stripe.Event {
     if (!sig) {
         throw new Error('Missing Stripe-Signature header');
@@ -87,7 +60,6 @@ function constructEvent(payload: string, sig: string | null, secret: string | un
         throw new Error('Webhook not configured');
     }
 
-    // Test bypass: only in dev mode with explicit flag
     if (isTestBypassAllowed() && sig === 'test_bypass') {
         return JSON.parse(payload) as Stripe.Event;
     }
@@ -101,61 +73,188 @@ function constructEvent(payload: string, sig: string | null, secret: string | un
     throw new Error('Not available in this environment');
 }
 
-/**
- * Resolve workspaceId from a Stripe subscription object.
- * Checks subscription.metadata first, then falls back to retrieving
- * the subscription via Stripe API if we only have an ID.
- *
- * Returns { workspaceId, checkoutOrigin } or nulls if not resolvable.
- */
-async function resolveWorkspaceFromSubscription(
-    subscriptionOrId: any
-): Promise<{ workspaceId: string | null; checkoutOrigin: string | null }> {
-    // If we already have the full subscription object with metadata
-    if (typeof subscriptionOrId === 'object' && subscriptionOrId?.metadata) {
-        return {
-            workspaceId: subscriptionOrId.metadata.workspaceId || null,
-            checkoutOrigin: subscriptionOrId.metadata.checkoutOrigin || null,
-        };
+function normalizeStripeId(value: unknown): string | null {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object' && value !== null && 'id' in value && typeof (value as any).id === 'string') {
+        return (value as any).id;
+    }
+    return null;
+}
+
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+    return normalizeStripeId((invoice as Stripe.Invoice & { subscription?: unknown }).subscription);
+}
+
+function toIsoFromEpoch(epochSeconds?: number | null): string | null {
+    if (!epochSeconds || !Number.isFinite(epochSeconds)) return null;
+    return new Date(epochSeconds * 1000).toISOString();
+}
+
+function deriveBillingState(rawStatus: string): BillingState {
+    const subscriptionStatus = mapStripeStatusToSubscriptionStatus(rawStatus);
+    const effectiveTier = deriveEffectiveWorkspaceTier(subscriptionStatus, 'pro');
+    const paymentStatus = mapStripeStatusToWorkspacePaymentStatus(rawStatus);
+    return { effectiveTier, paymentStatus, subscriptionStatus };
+}
+
+async function resolveWorkspaceRecordIdFromMetadataValue(workspaceIdOrClerkOrgId: string | null | undefined): Promise<string | null> {
+    if (!workspaceIdOrClerkOrgId) return null;
+
+    const byId = await findWorkspaceById(workspaceIdOrClerkOrgId);
+    if (byId) return byId.id;
+
+    const byClerkOrgId = await findWorkspaceByClerkOrgId(workspaceIdOrClerkOrgId);
+    if (byClerkOrgId) return byClerkOrgId.id;
+
+    return null;
+}
+
+async function resolveWorkspaceRecordIdFromSubscription(
+    subscriptionOrId: Stripe.Subscription | string | null | undefined
+): Promise<string | null> {
+    const directId = normalizeStripeId(subscriptionOrId);
+    if (typeof subscriptionOrId === 'object' && subscriptionOrId?.metadata?.workspaceId) {
+        const resolved = await resolveWorkspaceRecordIdFromMetadataValue(subscriptionOrId.metadata.workspaceId);
+        if (resolved) return resolved;
     }
 
-    // We have a subscription ID string — retrieve from Stripe
-    const subscriptionId = typeof subscriptionOrId === 'string'
-        ? subscriptionOrId
-        : subscriptionOrId?.id;
+    if (!directId) return null;
 
-    if (!subscriptionId) return { workspaceId: null, checkoutOrigin: null };
+    const existing = await findSubscriptionByStripeSubscriptionId(directId);
+    if (existing) return existing.workspace_id;
 
     const stripe = getStripeClient();
-    if (!stripe) {
-        console.warn('[WEBHOOK] Cannot retrieve subscription — STRIPE_SECRET_KEY not configured');
-        return { workspaceId: null, checkoutOrigin: null };
-    }
+    if (!stripe) return null;
 
     try {
-        const sub = await stripe.subscriptions.retrieve(subscriptionId);
-        return {
-            workspaceId: sub.metadata?.workspaceId || null,
-            checkoutOrigin: sub.metadata?.checkoutOrigin || null,
-        };
-    } catch (err) {
-        console.warn(`[WEBHOOK] Failed to retrieve subscription ${subscriptionId}:`, err);
-        return { workspaceId: null, checkoutOrigin: null };
+        const subscription = await stripe.subscriptions.retrieve(directId);
+        const metadataWorkspaceId = subscription.metadata?.workspaceId || null;
+        return resolveWorkspaceRecordIdFromMetadataValue(metadataWorkspaceId);
+    } catch (error) {
+        console.warn('[WEBHOOK] Failed to resolve workspace from subscription', { subscriptionId: directId, error });
+        return null;
     }
 }
 
-/**
- * Structured log for every billing webhook handler.
- * Consistent shape makes billing-state debugging straightforward.
- */
+async function retrieveSubscription(subscriptionOrId: Stripe.Subscription | string | null | undefined): Promise<Stripe.Subscription | null> {
+    if (!subscriptionOrId) return null;
+    if (typeof subscriptionOrId === 'object') {
+        return subscriptionOrId as Stripe.Subscription;
+    }
+
+    const stripe = getStripeClient();
+    if (!stripe) return null;
+
+    try {
+        return await stripe.subscriptions.retrieve(subscriptionOrId);
+    } catch (error) {
+        console.warn('[WEBHOOK] Failed to retrieve subscription', { subscriptionId: subscriptionOrId, error });
+        return null;
+    }
+}
+
+async function syncWorkspaceBillingState(args: {
+    workspaceRecordId: string;
+    stripeCustomerId: string | null;
+    stripeSubscription: Stripe.Subscription | null;
+    checkoutSessionId?: string | null;
+    trigger: 'checkout_completed' | 'invoice_payment_failed' | 'invoice_payment_succeeded' | 'subscription_updated' | 'subscription_deleted';
+    eventTimestamp: string;
+}): Promise<void> {
+    const workspace = await findWorkspaceById(args.workspaceRecordId);
+    if (!workspace) {
+        console.error('[WEBHOOK] Workspace not found', { workspaceRecordId: args.workspaceRecordId });
+        return;
+    }
+
+    if (!args.stripeCustomerId) {
+        console.error('[WEBHOOK] Missing stripe customer id', { workspaceRecordId: args.workspaceRecordId });
+        return;
+    }
+
+    const billingCustomer = await upsertBillingCustomer({
+        workspaceId: workspace.id,
+        stripeCustomerId: args.stripeCustomerId,
+    });
+
+    const rawStatus = args.stripeSubscription?.status ?? (args.trigger === 'checkout_completed' ? 'active' : 'checkout_pending');
+    const billingState = deriveBillingState(rawStatus);
+
+    if (args.stripeSubscription) {
+        await upsertSubscriptionFromStripe({
+            workspaceId: workspace.id,
+            billingCustomerId: billingCustomer.id,
+            stripeSubscriptionId: args.stripeSubscription.id,
+            stripeCheckoutSessionId: args.checkoutSessionId ?? null,
+            stripePriceId: args.stripeSubscription.items.data[0]?.price?.id ?? null,
+            status: billingState.subscriptionStatus,
+            grantsTier: 'pro',
+            rawStatus,
+            currentPeriodStart: toIsoFromEpoch((args.stripeSubscription as any).current_period_start ?? null),
+            currentPeriodEnd: toIsoFromEpoch((args.stripeSubscription as any).current_period_end ?? null),
+            cancelAtPeriodEnd: args.stripeSubscription.cancel_at_period_end,
+            canceledAt: toIsoFromEpoch(args.stripeSubscription.canceled_at ?? null),
+            trialStart: toIsoFromEpoch(args.stripeSubscription.trial_start ?? null),
+            trialEnd: toIsoFromEpoch(args.stripeSubscription.trial_end ?? null),
+            latestInvoiceId: normalizeStripeId(args.stripeSubscription.latest_invoice),
+            lastWebhookEventAt: args.eventTimestamp,
+            lastReconciledAt: args.eventTimestamp,
+        });
+    }
+
+    const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspace.id);
+    let monitoredEntity = await getMonitoredEntityByWorkspaceId(workspace.id);
+    if (processorConnection && !monitoredEntity) {
+        monitoredEntity = await upsertMonitoredEntityForStripeConnection({
+            workspaceId: workspace.id,
+            processorConnectionId: processorConnection.id,
+            primaryHost: workspace.primary_host_candidate,
+            primaryHostSource: workspace.primary_host_candidate ? 'scan' : 'unknown',
+            status: 'pending',
+        });
+    }
+
+    let activationState = workspace.activation_state;
+    if (billingState.effectiveTier === 'free') {
+        activationState = 'not_started';
+    } else if (args.trigger === 'checkout_completed') {
+        activationState = processorConnection && monitoredEntity ? 'ready_for_activation' : processorConnection ? 'connection_pending_verification' : 'paid_unconnected';
+    } else if (workspace.activation_state === 'not_started') {
+        activationState = processorConnection && monitoredEntity ? 'ready_for_activation' : processorConnection ? 'connection_pending_verification' : 'paid_unconnected';
+    }
+
+    const updatedWorkspace = await updateWorkspaceState({
+        workspaceId: workspace.id,
+        entitlementTier: billingState.effectiveTier,
+        paymentStatus: billingState.paymentStatus,
+        activationState,
+    });
+
+    if (billingState.effectiveTier !== 'free' && processorConnection) {
+        await ensurePendingActivationRun({
+            workspaceId: workspace.id,
+            processorConnectionId: processorConnection.id,
+            monitoredEntityId: monitoredEntity?.id ?? null,
+            trigger: args.trigger === 'checkout_completed' ? 'post_payment' : 'system_reconcile',
+            triggeredBy: 'webhook',
+        });
+    }
+
+    await mirrorWorkspaceStateToClerk(updatedWorkspace.clerk_org_id, {
+        tier: updatedWorkspace.entitlement_tier,
+        paymentStatus: updatedWorkspace.payment_status,
+        activationState: updatedWorkspace.activation_state,
+    });
+}
+
 function logBillingEvent(
     handler: string,
     details: {
         eventType: string;
         stripeObjectId: string;
-        customer?: string;
+        customer?: string | null;
         workspaceId?: string | null;
-        checkoutOrigin?: string | null;
         resultingTier?: string;
         resultingPaymentStatus?: string;
         error?: string;
@@ -164,234 +263,179 @@ function logBillingEvent(
     console.log(`[BILLING] ${JSON.stringify({ handler, ...details, ts: new Date().toISOString() })}`);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Billing Lifecycle Handlers
-// ─────────────────────────────────────────────────────────────────────────────
-
-// IMPORTANT — Idempotent Merge Rule:
-// Every Clerk metadata write MUST use updateOrganizationMetadata() which
-// shallow-merges into publicMetadata. NEVER use updateOrganization() which
-// replaces the entire publicMetadata object, wiping stripeAccountId,
-// stripeConnectedAt, onboardingScanCompleted, activation fields, etc.
-
-/**
- * checkout.session.completed — Upgrade Clerk org tier to "pro"
- */
-async function handleCheckoutCompleted(session: any, eventType: string) {
-    const workspaceId = session.metadata?.workspaceId;
-    const checkoutOrigin = session.metadata?.checkoutOrigin || null;
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventType: string, eventTimestamp: string) {
+    const workspaceRecordId = await resolveWorkspaceRecordIdFromMetadataValue(session.metadata?.workspaceId);
+    const stripeCustomerId = normalizeStripeId(session.customer);
+    const subscription = await retrieveSubscription(normalizeStripeId(session.subscription));
 
     logBillingEvent('handleCheckoutCompleted', {
         eventType,
         stripeObjectId: session.id,
-        customer: session.customer,
-        workspaceId,
-        checkoutOrigin,
+        customer: stripeCustomerId,
+        workspaceId: workspaceRecordId,
         resultingTier: 'pro',
-        resultingPaymentStatus: 'current',
+        resultingPaymentStatus: subscription?.status ?? 'current',
     });
 
-    if (!workspaceId) {
-        // Outbound agent_flux sessions won't have workspaceId — expected, not an error
-        if (checkoutOrigin === 'agent_flux_outreach') {
-            console.log(`[CHECKOUT_COMPLETED] Outbound sale (origin: agent_flux_outreach), no workspaceId — skipping Clerk update`);
-        } else {
-            console.error('[CHECKOUT_COMPLETED] No workspaceId in session metadata');
-        }
+    if (!workspaceRecordId) {
+        console.error('[CHECKOUT_COMPLETED] No workspaceRecordId resolved from session metadata');
         return;
     }
 
-    try {
-        const clerk = await clerkClient();
-        // MERGE — preserves stripeAccountId, activation fields, onboarding flags
-        await clerk.organizations.updateOrganizationMetadata(workspaceId, {
-            publicMetadata: { tier: 'pro', paymentStatus: 'current', activationState: 'paid_unconnected' },
-        });
-        console.log(`[CHECKOUT_COMPLETED] Upgraded workspace ${workspaceId} to pro`);
+    await syncWorkspaceBillingState({
+        workspaceRecordId,
+        stripeCustomerId,
+        stripeSubscription: subscription,
+        checkoutSessionId: session.id,
+        trigger: 'checkout_completed',
+        eventTimestamp,
+    });
 
-        logOnboardingEvent('checkout_completed', {
-            workspaceId,
-            metadata: { sessionId: session.id },
-        });
+    logOnboardingEvent('checkout_completed', {
+        workspaceId: workspaceRecordId,
+        metadata: { sessionId: session.id, clerkOrgId: session.metadata?.clerkOrgId ?? null },
+    });
 
-        logStageTransition('connected_free', 'upgraded', { workspaceId });
-    } catch (err) {
-        console.error('[CHECKOUT_COMPLETED] Failed to update Clerk org tier:', err);
-    }
+    logStageTransition('connected_free', 'upgraded', { workspaceId: workspaceRecordId });
 }
 
-/**
- * invoice.payment_failed — Mark payment as past_due, keep tier pro.
- * This is a health signal, NOT a downgrade authority.
- */
-async function handleInvoicePaymentFailed(invoice: any, eventType: string) {
-    const { workspaceId, checkoutOrigin } = await resolveWorkspaceFromSubscription(invoice.subscription);
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, eventType: string, eventTimestamp: string) {
+    const invoiceSubscriptionId = getInvoiceSubscriptionId(invoice);
+    const subscription = await retrieveSubscription(invoiceSubscriptionId);
+    const workspaceRecordId = await resolveWorkspaceRecordIdFromSubscription(subscription ?? invoiceSubscriptionId);
+    const stripeCustomerId = normalizeStripeId(invoice.customer);
 
     logBillingEvent('handleInvoicePaymentFailed', {
         eventType,
         stripeObjectId: invoice.id,
-        customer: invoice.customer,
-        workspaceId,
-        checkoutOrigin,
+        customer: stripeCustomerId,
+        workspaceId: workspaceRecordId,
         resultingTier: 'pro',
         resultingPaymentStatus: 'past_due',
     });
 
-    if (!workspaceId) {
-        // Authentic event but non-actionable — return cleanly, don't trigger Stripe retries
-        console.warn(`[INVOICE_PAYMENT_FAILED] No workspaceId resolvable for invoice ${invoice.id} (customer: ${invoice.customer})`);
+    if (!workspaceRecordId) {
+        console.warn('[INVOICE_PAYMENT_FAILED] No workspace resolved', { invoiceId: invoice.id });
         return;
     }
 
-    try {
-        const clerk = await clerkClient();
-        // MERGE — set paymentStatus only, do NOT touch tier (grace period)
-        await clerk.organizations.updateOrganizationMetadata(workspaceId, {
-            publicMetadata: { paymentStatus: 'past_due' },
-        });
-        console.log(`[INVOICE_PAYMENT_FAILED] Workspace ${workspaceId} marked past_due (tier unchanged)`);
+    await syncWorkspaceBillingState({
+        workspaceRecordId,
+        stripeCustomerId,
+        stripeSubscription: subscription,
+        trigger: 'invoice_payment_failed',
+        eventTimestamp,
+    });
 
-        logOnboardingEvent('invoice_payment_failed', {
-            workspaceId,
-            metadata: { invoiceId: invoice.id, customer: invoice.customer },
-        });
-    } catch (err) {
-        console.error(`[INVOICE_PAYMENT_FAILED] Failed to update workspace ${workspaceId}:`, err);
-    }
+    logOnboardingEvent('invoice_payment_failed', {
+        workspaceId: workspaceRecordId,
+        metadata: { invoiceId: invoice.id, customer: stripeCustomerId },
+    });
 }
 
-/**
- * invoice.payment_succeeded — Confirm renewal, clear past_due flag.
- */
-async function handleInvoicePaymentSucceeded(invoice: any, eventType: string) {
-    const { workspaceId, checkoutOrigin } = await resolveWorkspaceFromSubscription(invoice.subscription);
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, eventType: string, eventTimestamp: string) {
+    const invoiceSubscriptionId = getInvoiceSubscriptionId(invoice);
+    const subscription = await retrieveSubscription(invoiceSubscriptionId);
+    const workspaceRecordId = await resolveWorkspaceRecordIdFromSubscription(subscription ?? invoiceSubscriptionId);
+    const stripeCustomerId = normalizeStripeId(invoice.customer);
 
     logBillingEvent('handleInvoicePaymentSucceeded', {
         eventType,
         stripeObjectId: invoice.id,
-        customer: invoice.customer,
-        workspaceId,
-        checkoutOrigin,
+        customer: stripeCustomerId,
+        workspaceId: workspaceRecordId,
         resultingTier: 'pro',
-        resultingPaymentStatus: 'current',
+        resultingPaymentStatus: subscription?.status ?? 'current',
     });
 
-    if (!workspaceId) {
-        console.warn(`[INVOICE_PAYMENT_SUCCEEDED] No workspaceId resolvable for invoice ${invoice.id} (customer: ${invoice.customer})`);
+    if (!workspaceRecordId) {
+        console.warn('[INVOICE_PAYMENT_SUCCEEDED] No workspace resolved', { invoiceId: invoice.id });
         return;
     }
 
-    try {
-        const clerk = await clerkClient();
-        // MERGE — confirm payment health, preserve all other fields
-        await clerk.organizations.updateOrganizationMetadata(workspaceId, {
-            publicMetadata: { paymentStatus: 'current' },
-        });
-        console.log(`[INVOICE_PAYMENT_SUCCEEDED] Workspace ${workspaceId} payment confirmed current`);
+    await syncWorkspaceBillingState({
+        workspaceRecordId,
+        stripeCustomerId,
+        stripeSubscription: subscription,
+        trigger: 'invoice_payment_succeeded',
+        eventTimestamp,
+    });
 
-        logOnboardingEvent('invoice_payment_succeeded', {
-            workspaceId,
-            metadata: { invoiceId: invoice.id, customer: invoice.customer },
-        });
-    } catch (err) {
-        console.error(`[INVOICE_PAYMENT_SUCCEEDED] Failed to update workspace ${workspaceId}:`, err);
-    }
+    logOnboardingEvent('invoice_payment_succeeded', {
+        workspaceId: workspaceRecordId,
+        metadata: { invoiceId: invoice.id, customer: stripeCustomerId },
+    });
 }
 
-/**
- * customer.subscription.updated — Sync tier and paymentStatus from canonical state table.
- * This is a DOWNGRADE AUTHORITY — subscription.status drives tier changes.
- */
-async function handleSubscriptionUpdated(subscription: any, eventType: string) {
-    const workspaceId = subscription.metadata?.workspaceId || null;
-    const checkoutOrigin = subscription.metadata?.checkoutOrigin || null;
-    const status = subscription.status as string;
-    const billingState = SUBSCRIPTION_STATUS_MAP[status];
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription, eventType: string, eventTimestamp: string) {
+    const workspaceRecordId = await resolveWorkspaceRecordIdFromSubscription(subscription);
+    const stripeCustomerId = normalizeStripeId(subscription.customer);
+    const billingState = deriveBillingState(subscription.status);
 
     logBillingEvent('handleSubscriptionUpdated', {
         eventType,
         stripeObjectId: subscription.id,
-        customer: subscription.customer,
-        workspaceId,
-        checkoutOrigin,
-        resultingTier: billingState?.tier || 'unknown',
-        resultingPaymentStatus: billingState?.paymentStatus || status,
+        customer: stripeCustomerId,
+        workspaceId: workspaceRecordId,
+        resultingTier: billingState.effectiveTier,
+        resultingPaymentStatus: billingState.paymentStatus,
     });
 
-    if (!workspaceId) {
-        console.warn(`[SUBSCRIPTION_UPDATED] No workspaceId in subscription ${subscription.id} metadata (customer: ${subscription.customer})`);
+    if (!workspaceRecordId) {
+        console.warn('[SUBSCRIPTION_UPDATED] No workspace resolved', { subscriptionId: subscription.id });
         return;
     }
 
-    if (!billingState) {
-        console.warn(`[SUBSCRIPTION_UPDATED] Unknown subscription status "${status}" for workspace ${workspaceId} — skipping`);
-        return;
-    }
+    await syncWorkspaceBillingState({
+        workspaceRecordId,
+        stripeCustomerId,
+        stripeSubscription: subscription,
+        trigger: 'subscription_updated',
+        eventTimestamp,
+    });
 
-    try {
-        const clerk = await clerkClient();
-        // MERGE — apply tier + paymentStatus from canonical table, preserve everything else
-        await clerk.organizations.updateOrganizationMetadata(workspaceId, {
-            publicMetadata: { tier: billingState.tier, paymentStatus: billingState.paymentStatus },
-        });
-        console.log(`[SUBSCRIPTION_UPDATED] Workspace ${workspaceId} → tier=${billingState.tier}, paymentStatus=${billingState.paymentStatus} (stripe status: ${status})`);
-
-        logOnboardingEvent('subscription_status_changed', {
-            workspaceId,
-            metadata: {
-                subscriptionId: subscription.id,
-                stripeStatus: status,
-                tier: billingState.tier,
-                paymentStatus: billingState.paymentStatus,
-            },
-        });
-    } catch (err) {
-        console.error(`[SUBSCRIPTION_UPDATED] Failed to update workspace ${workspaceId}:`, err);
-    }
+    logOnboardingEvent('subscription_status_changed', {
+        workspaceId: workspaceRecordId,
+        metadata: {
+            subscriptionId: subscription.id,
+            stripeStatus: subscription.status,
+            effectiveTier: billingState.effectiveTier,
+            paymentStatus: billingState.paymentStatus,
+        },
+    });
 }
 
-/**
- * customer.subscription.deleted — Hard downgrade to free.
- */
-async function handleSubscriptionDeleted(subscription: any, eventType: string) {
-    const workspaceId = subscription.metadata?.workspaceId || null;
-    const checkoutOrigin = subscription.metadata?.checkoutOrigin || null;
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription, eventType: string, eventTimestamp: string) {
+    const workspaceRecordId = await resolveWorkspaceRecordIdFromSubscription(subscription);
+    const stripeCustomerId = normalizeStripeId(subscription.customer);
 
     logBillingEvent('handleSubscriptionDeleted', {
         eventType,
         stripeObjectId: subscription.id,
-        customer: subscription.customer,
-        workspaceId,
-        checkoutOrigin,
+        customer: stripeCustomerId,
+        workspaceId: workspaceRecordId,
         resultingTier: 'free',
         resultingPaymentStatus: 'canceled',
     });
 
-    if (!workspaceId) {
-        console.warn(`[SUBSCRIPTION_DELETED] No workspaceId in subscription ${subscription.id} metadata (customer: ${subscription.customer})`);
+    if (!workspaceRecordId) {
+        console.warn('[SUBSCRIPTION_DELETED] No workspace resolved', { subscriptionId: subscription.id });
         return;
     }
 
-    try {
-        const clerk = await clerkClient();
-        // MERGE — downgrade tier, preserve stripeAccountId and other fields
-        await clerk.organizations.updateOrganizationMetadata(workspaceId, {
-            publicMetadata: { tier: 'free', paymentStatus: 'canceled' },
-        });
-        console.log(`[SUBSCRIPTION_DELETED] Downgraded workspace ${workspaceId} to free`);
+    await syncWorkspaceBillingState({
+        workspaceRecordId,
+        stripeCustomerId,
+        stripeSubscription: subscription,
+        trigger: 'subscription_deleted',
+        eventTimestamp,
+    });
 
-        logOnboardingEvent('subscription_deleted', {
-            workspaceId,
-            metadata: { subscriptionId: subscription.id, customer: subscription.customer },
-        });
-    } catch (err) {
-        console.error('[SUBSCRIPTION_DELETED] Failed to update Clerk org tier:', err);
-    }
+    logOnboardingEvent('subscription_deleted', {
+        workspaceId: workspaceRecordId,
+        metadata: { subscriptionId: subscription.id, customer: stripeCustomerId },
+    });
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PayFlux Ingest Forwarding
-// ─────────────────────────────────────────────────────────────────────────────
 
 function normalizeStripeEvent(event: Stripe.Event): any | null {
     if (event.type === 'payment_intent.payment_failed') {
@@ -404,10 +448,11 @@ function normalizeStripeEvent(event: Stripe.Event): any | null {
             payment_intent_id_hash: pi.id,
             processor: 'stripe',
             failure_category: pi.last_payment_error?.code || 'declined',
-            retry_count: pi.metadata?.retry_count ? parseInt(pi.metadata.retry_count) : 0,
+            retry_count: pi.metadata?.retry_count ? parseInt(pi.metadata.retry_count, 10) : 0,
             geo_bucket: 'US',
         };
-    } else if (event.type === 'payment_intent.succeeded') {
+    }
+    if (event.type === 'payment_intent.succeeded') {
         const pi = event.data.object as any;
         return {
             event_type: 'payment_succeeded',
@@ -432,21 +477,17 @@ async function forwardToPayFlux(payfluxEvent: any) {
             await fetch(ingestUrl, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${apiKey}`,
+                    Authorization: `Bearer ${apiKey}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(payfluxEvent),
             });
             await updateStatus();
         }
-    } catch (err) {
+    } catch {
         console.error('payflux_forward_failed');
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POST Handler
-// ─────────────────────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
     const payload = await request.text();
@@ -455,34 +496,32 @@ export async function POST(request: Request) {
 
     try {
         const event = constructEvent(payload, sig, secret);
+        const eventTimestamp = new Date(event.created * 1000).toISOString();
 
-        // Handle billing lifecycle events
         switch (event.type) {
             case 'checkout.session.completed':
-                await handleCheckoutCompleted(event.data.object, event.type);
+                await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, event.type, eventTimestamp);
                 break;
             case 'invoice.payment_failed':
-                await handleInvoicePaymentFailed(event.data.object, event.type);
+                await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, event.type, eventTimestamp);
                 break;
             case 'invoice.payment_succeeded':
-                await handleInvoicePaymentSucceeded(event.data.object, event.type);
+                await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice, event.type, eventTimestamp);
                 break;
             case 'customer.subscription.updated':
-                await handleSubscriptionUpdated(event.data.object, event.type);
+                await handleSubscriptionUpdated(event.data.object as Stripe.Subscription, event.type, eventTimestamp);
                 break;
             case 'customer.subscription.deleted':
-                await handleSubscriptionDeleted(event.data.object, event.type);
+                await handleSubscriptionDeleted(event.data.object as Stripe.Subscription, event.type, eventTimestamp);
                 break;
         }
 
-        // Forward payment events to PayFlux ingest
         const payfluxEvent = normalizeStripeEvent(event);
         if (payfluxEvent) {
             await forwardToPayFlux(payfluxEvent);
         }
 
         return NextResponse.json({ received: true });
-
     } catch (err: any) {
         if (err.message === 'Missing Stripe-Signature header' || err.message.includes('No signatures found')) {
             return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });

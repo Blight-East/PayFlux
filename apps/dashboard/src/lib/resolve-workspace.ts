@@ -1,13 +1,18 @@
 import { clerkClient } from '@clerk/nextjs/server';
+import { resolveOrCreateWorkspaceRecord } from './db/workspaces';
+import type { WorkspaceActivationState, WorkspacePaymentStatus } from './db/types';
 
 export type WorkspaceRole = 'admin' | 'viewer';
 export type WorkspaceTier = 'free' | 'pro' | 'enterprise';
 
 export interface WorkspaceContext {
     workspaceId: string;
+    workspaceRecordId: string;
     workspaceName: string;
     role: WorkspaceRole;
     tier: WorkspaceTier;
+    paymentStatus?: WorkspacePaymentStatus;
+    activationState?: WorkspaceActivationState;
 }
 
 export interface ResolvedOrganizationContext {
@@ -42,9 +47,12 @@ const ADMIN_EMAILS: Set<string> = new Set(
 
 const FOUNDER_WORKSPACE: WorkspaceContext = {
     workspaceId: 'payflux-internal',
+    workspaceRecordId: 'payflux-internal',
     workspaceName: 'PayFlux Internal',
     role: 'admin',
     tier: 'enterprise',
+    paymentStatus: 'current',
+    activationState: 'active',
 };
 
 /**
@@ -175,13 +183,19 @@ export async function resolveWorkspace(
     const org = await resolveOrganizationContext(userId);
     if (!org) return null;
 
-    const rawTier = org.publicMetadata.tier;
-    const tier: WorkspaceTier = (rawTier === 'pro' || rawTier === 'enterprise') ? rawTier : 'free';
+    const workspaceRecord = await resolveOrCreateWorkspaceRecord({
+        clerkOrgId: org.organizationId,
+        name: org.organizationName,
+        ownerClerkUserId: userId,
+    });
 
     return {
         workspaceId: org.organizationId,
-        workspaceName: org.organizationName,
+        workspaceRecordId: workspaceRecord.id,
+        workspaceName: workspaceRecord.name,
         role: org.role,
-        tier,
+        tier: workspaceRecord.entitlement_tier,
+        paymentStatus: workspaceRecord.payment_status,
+        activationState: workspaceRecord.activation_state,
     };
 }

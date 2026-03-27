@@ -1,18 +1,20 @@
 /**
- * Activation State Model — Phase A
+ * Activation State Model
  *
  * Post-purchase state machine for PayFlux Core.
- * Determines where a paid user is in the activation pipeline:
+ * Customer-critical readiness is derived from DB-backed workspace fulfillment state only.
  *
- *   paid_unconnected     → has paid tier, no processor connected
- *   connected_generating → processor connected, baseline/projection not yet complete
- *   live_monitored       → all conditions met: paid + connected + baseline + projection + alerts armed
- *
- * State is derived from Clerk org publicMetadata. No separate DB.
- * Every field is server-side queryable and refresh-safe.
+ *   paid_unconnected     → paid workspace, no verified processor connection
+ *   connected_generating → connection exists, but scoped monitored readiness is not proven yet
+ *   live_monitored       → completed activation run proves baseline + projection readiness
  */
 
-import { resolveOrganizationContext, resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
+import { getLatestActivationRunByWorkspaceId, getLatestCompletedActivationRunByWorkspaceId } from './db/activation-runs';
+import { getBaselineSnapshotById } from './db/baseline-snapshots';
+import { getMonitoredEntityByWorkspaceId } from './db/monitored-entities';
+import { getStripeProcessorConnectionByWorkspaceId } from './db/processor-connections';
+import { getReserveProjectionById } from './db/reserve-projections';
+import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
 export type ActivationState = 'paid_unconnected' | 'connected_generating' | 'live_monitored';
 
@@ -50,46 +52,56 @@ export async function resolveActivationStatus(userId: string): Promise<Activatio
         return null;
     }
 
-    // Fetch org metadata for activation conditions.
-    // IMPORTANT: Fetch the org directly via getOrganization() — do NOT rely on the
-    // embedded organization object from getOrganizationMembershipList(). The embedded
-    // copy can be stale immediately after a metadata update (e.g., callback just wrote
-    // stripeAccountId), causing the state to resolve as paid_unconnected and loop the
-    // user back to the Connect Stripe page.
-    let orgMeta: Record<string, unknown> = {};
-    try {
-        const org = await resolveOrganizationContext(userId);
-        if (org) {
-            orgMeta = org.publicMetadata;
-        }
-    } catch {
-        // Fall through with empty metadata — will resolve as paid_unconnected
-    }
+    const [processorConnection, monitoredEntity, latestActivationRun, latestCompletedActivationRun] = await Promise.all([
+        getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+        getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId),
+        getLatestActivationRunByWorkspaceId(workspace.workspaceRecordId),
+        getLatestCompletedActivationRunByWorkspaceId(workspace.workspaceRecordId),
+    ]);
+    const [baselineSnapshot, reserveProjection] = await Promise.all([
+        monitoredEntity?.current_baseline_snapshot_id ? getBaselineSnapshotById(monitoredEntity.current_baseline_snapshot_id) : Promise.resolve(null),
+        monitoredEntity?.current_projection_id ? getReserveProjectionById(monitoredEntity.current_projection_id) : Promise.resolve(null),
+    ]);
 
     const conditions = {
         paidTier: true,
-        processorConnected: typeof orgMeta.stripeAccountId === 'string' && orgMeta.stripeAccountId.length > 0,
-        baselineGenerated: typeof orgMeta.baselineGeneratedAt === 'string' && orgMeta.baselineGeneratedAt.length > 0,
-        projectionExists: typeof orgMeta.firstProjectionAt === 'string' && orgMeta.firstProjectionAt.length > 0,
-        alertsArmed: orgMeta.alertPolicyArmed === true,
+        processorConnected: processorConnection?.status === 'connected',
+        baselineGenerated: latestCompletedActivationRun?.baseline_ready === true && Boolean(baselineSnapshot),
+        projectionExists: latestCompletedActivationRun?.first_projection_ready === true && Boolean(reserveProjection),
+        alertsArmed: false,
     };
 
     const meta = {
-        stripeAccountId: orgMeta.stripeAccountId as string | undefined,
-        baselineGeneratedAt: orgMeta.baselineGeneratedAt as string | undefined,
-        firstProjectionAt: orgMeta.firstProjectionAt as string | undefined,
-        alertPolicyArmedAt: orgMeta.alertPolicyArmedAt as string | undefined,
-        activationCompletedAt: orgMeta.activationCompletedAt as string | undefined,
+        stripeAccountId: processorConnection?.stripe_account_id,
+        baselineGeneratedAt: baselineSnapshot?.computed_at ?? undefined,
+        firstProjectionAt: reserveProjection?.projected_at ?? undefined,
+        alertPolicyArmedAt: undefined,
+        activationCompletedAt: latestCompletedActivationRun?.completed_at ?? undefined,
     };
 
-    // Derive state
     let state: ActivationState;
-    if (conditions.processorConnected && conditions.baselineGenerated && conditions.projectionExists && conditions.alertsArmed) {
+    if (
+        conditions.processorConnected &&
+        Boolean(monitoredEntity?.current_baseline_snapshot_id) &&
+        Boolean(monitoredEntity?.current_projection_id) &&
+        conditions.baselineGenerated &&
+        conditions.projectionExists
+    ) {
         state = 'live_monitored';
     } else if (conditions.processorConnected) {
         state = 'connected_generating';
     } else {
         state = 'paid_unconnected';
+    }
+
+    // If activation is still running or a monitored entity has not been established,
+    // keep the workspace in the generating state rather than allowing a partial dashboard.
+    if (
+        state === 'live_monitored' &&
+        latestActivationRun &&
+        latestActivationRun.status !== 'completed'
+    ) {
+        state = 'connected_generating';
     }
 
     return { state, workspace, conditions, meta };
@@ -103,7 +115,6 @@ export function isLiveMonitored(conditions: ActivationStatus['conditions']): boo
         conditions.paidTier &&
         conditions.processorConnected &&
         conditions.baselineGenerated &&
-        conditions.projectionExists &&
-        conditions.alertsArmed
+        conditions.projectionExists
     );
 }

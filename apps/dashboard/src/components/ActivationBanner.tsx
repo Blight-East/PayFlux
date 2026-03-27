@@ -33,7 +33,7 @@ export default function ActivationBanner({ isActivated, isWarming, activationMet
                         PayFlux is now watching your processor activity live.
                     </p>
                     <p className="text-xs text-emerald-400/60 mt-1">
-                        Alerts are on for held-fund risk, worsening payout pressure, and rising account risk.
+                        Your first workspace-scoped baseline and projection are ready in the dashboard.
                     </p>
                 </div>
             </div>

@@ -1,7 +1,11 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
 import { resolveOrCreateOrganizationContext } from '@/lib/resolve-workspace';
+import { mirrorWorkspaceStateToClerk } from '@/lib/clerk-mirror';
+import { attachWorkspaceScanSummary, resolveOrCreateWorkspaceRecord } from '@/lib/db/workspaces';
+import { hydrateMonitoredEntityPrimaryHost } from '@/lib/db/monitored-entities';
+import { normalizeHostCandidate } from '@/lib/db/rows';
 
 export const runtime = 'nodejs';
 
@@ -31,12 +35,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
         }
 
-        // Persist scan completion + summary to Clerk org publicMetadata
-        const client = await clerkClient();
         const org = await resolveOrCreateOrganizationContext(userId);
 
         if (org) {
-
             // Build scan summary for durable persistence (keeps metadata small — ~1KB)
             const scanSummary = scanResult ? {
                 url: String(scanResult.url ?? '').slice(0, 200),
@@ -53,27 +54,47 @@ export async function POST(request: Request) {
                 scannedAt: new Date().toISOString(),
             } : undefined;
 
-            await client.organizations.updateOrganizationMetadata(org.organizationId, {
-                publicMetadata: {
-                    onboardingScanCompleted: true,
-                    onboardingScanCompletedAt: new Date().toISOString(),
-                    onboardingScanMode: mode,
-                    ...(scanSummary ? { onboardingScanResult: scanSummary } : {}),
-                },
+            const workspace = await resolveOrCreateWorkspaceRecord({
+                clerkOrgId: org.organizationId,
+                name: org.organizationName,
+                ownerClerkUserId: userId,
+            });
+
+            const hostCandidate = normalizeHostCandidate(scanSummary?.url ?? null);
+            await attachWorkspaceScanSummary({
+                workspaceId: workspace.id,
+                primaryHostCandidate: hostCandidate,
+                latestScanSummary: scanSummary ?? {},
+            });
+
+            if (hostCandidate) {
+                await hydrateMonitoredEntityPrimaryHost({
+                    workspaceId: workspace.id,
+                    primaryHost: hostCandidate,
+                    primaryHostSource: 'scan',
+                }).catch(() => null);
+            }
+
+            await mirrorWorkspaceStateToClerk(org.organizationId, {
+                onboardingScanCompleted: true,
+                onboardingScanCompletedAt: new Date().toISOString(),
+                onboardingScanMode: mode,
+                ...(scanSummary ? { onboardingScanResult: scanSummary } : {}),
             });
 
             logOnboardingEvent('scan_completed', {
                 userId,
-                workspaceId: org.organizationId,
+                workspaceId: workspace.id,
                 metadata: {
                     mode,
                     url: scanSummary?.url,
+                    clerkOrgId: org.organizationId,
                     ...(attribution && typeof attribution === 'object' ? attribution : {}),
                 },
             });
 
             // Emit stage transition: none → scanned
-            logStageTransition('none', 'scanned', { userId, workspaceId: org.organizationId });
+            logStageTransition('none', 'scanned', { userId, workspaceId: workspace.id });
         }
 
         return NextResponse.json({

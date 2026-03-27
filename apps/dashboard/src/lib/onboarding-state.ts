@@ -1,17 +1,18 @@
 /**
  * Onboarding State Model
  *
- * Single source of truth for where a user is in the onboarding funnel.
- * Derived from Clerk org publicMetadata + workspace tier.
+ * DB-backed source of truth for where a user is in the onboarding funnel.
  *
  * Stages (ordered):
- *   "none"            — signed up, no scan completed
- *   "scanned"         — risk scan completed, Stripe not connected
- *   "connected_free"  — Stripe connected, free tier
- *   "upgraded"        — paid tier (pro or enterprise)
+ *   "none"            — signed up, no workspace-attached scan context
+ *   "scanned"         — scan context attached, Stripe not connected
+ *   "connected_free"  — Stripe connected, still free tier
+ *   "upgraded"        — paid tier (kept for routing compatibility)
  */
 
-import { resolveOrganizationContext, resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
+import { getStripeProcessorConnectionByWorkspaceId } from './db/processor-connections';
+import { findWorkspaceById } from './db/workspaces';
+import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
 export type OnboardingStage = 'none' | 'scanned' | 'connected_free' | 'upgraded';
 
@@ -27,9 +28,9 @@ export interface OnboardingState {
  *
  * Decision tree:
  *   1. tier is pro or enterprise → "upgraded"
- *   2. stripeAccountId present   → "connected_free"
- *   3. onboardingScanCompleted   → "scanned"
- *   4. otherwise                 → "none"
+ *   2. processor connection exists → "connected_free"
+ *   3. workspace-attached scan context exists → "scanned"
+ *   4. otherwise → "none"
  */
 export async function resolveOnboardingState(userId: string): Promise<OnboardingState> {
     const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
@@ -44,31 +45,25 @@ export async function resolveOnboardingState(userId: string): Promise<Onboarding
         };
     }
 
-    // Check tier first
+    const [workspaceRecord, processorConnection] = await Promise.all([
+        findWorkspaceById(workspace.workspaceRecordId),
+        getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+    ]);
+
+    const hasStripeConnection = processorConnection?.status === 'connected';
+    const latestScanSummary = workspaceRecord?.latest_scan_summary ?? {};
+    const hasScanCompleted = Boolean(
+        workspaceRecord?.scan_attached_at ||
+        (typeof latestScanSummary.url === 'string' && latestScanSummary.url.length > 0)
+    );
+
     if (workspace.tier === 'pro' || workspace.tier === 'enterprise') {
         return {
             stage: 'upgraded',
             workspace,
-            hasStripeConnection: true,
-            hasScanCompleted: true,
+            hasStripeConnection,
+            hasScanCompleted,
         };
-    }
-
-    // Check Stripe connection from org metadata.
-    // IMPORTANT: Fetch the org directly via getOrganization() to avoid stale embedded
-    // data from getOrganizationMembershipList(). Same fix as activation-state.ts.
-    let hasStripeConnection = false;
-    let hasScanCompleted = false;
-
-    try {
-        const org = await resolveOrganizationContext(userId);
-        if (org) {
-            const meta = org.publicMetadata;
-            hasStripeConnection = typeof meta.stripeAccountId === 'string' && meta.stripeAccountId.length > 0;
-            hasScanCompleted = meta.onboardingScanCompleted === true;
-        }
-    } catch {
-        // Fall through with defaults
     }
 
     let stage: OnboardingStage = 'none';

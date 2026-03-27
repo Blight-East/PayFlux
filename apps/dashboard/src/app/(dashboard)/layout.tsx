@@ -25,20 +25,20 @@ export default async function DashboardLayout({
         redirect('/scan');
     }
 
-    // ── Activation-aware routing for paid users ────────────────────────────
-    // If user is paid but hasn't completed activation, route them into the
-    // activation flow instead of showing an empty dashboard.
+    // DB-backed activation-aware routing for paid users.
+    // Paid workspaces must not reach the dashboard until scoped monitored readiness exists.
     if (onboarding.workspace.tier === 'pro' || onboarding.workspace.tier === 'enterprise') {
         const activation = await resolveActivationStatus(userId);
-        if (activation) {
-            if (activation.state === 'paid_unconnected') {
-                redirect('/activate');
-            }
-            if (activation.state === 'connected_generating') {
-                redirect('/activate/arming');
-            }
-            // live_monitored → continue to dashboard (fall through)
+        if (!activation) {
+            redirect('/activate');
         }
+        if (activation.state === 'paid_unconnected') {
+            redirect('/activate');
+        }
+        if (activation.state === 'connected_generating') {
+            redirect('/activate/arming');
+        }
+        // live_monitored -> continue to dashboard (fall through)
     }
 
     // IMPORTANT: Free-tier users see a limited dashboard preview.
@@ -46,13 +46,11 @@ export default async function DashboardLayout({
     // The page-level component (DashboardPage) handles free vs paid rendering.
 
     return (
-        <div className="flex min-h-screen">
-            {/* Dark sidebar */}
-            <aside className="w-64 flex-shrink-0">
+        <div className="flex min-h-screen bg-[#0F172A]">
+            <aside className="w-64 flex-shrink-0 border-r border-slate-800">
                 <Sidebar workspace={onboarding.workspace} />
             </aside>
-            {/* Light main canvas */}
-            <main className="dashboard-canvas flex-1 overflow-y-auto">
+            <main className="dashboard-canvas min-h-screen flex-1 overflow-y-auto bg-[#F8FAFC]">
                 {children}
             </main>
         </div>

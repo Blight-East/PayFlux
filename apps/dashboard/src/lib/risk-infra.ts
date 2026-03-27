@@ -188,7 +188,13 @@ class RedisStore implements RiskStore {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Risk Intelligence (History & Trends) - PR #12
+// Risk Intelligence (History & Trends) - acquisition/public scan only
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// IMPORTANT:
+// - This store is for anonymous and free scan history/trends.
+// - Paid/customer-critical monitored reads must not use this store.
+// - Workspace-scoped monitored state belongs in the app DB fulfillment model.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface StoredRiskReport {

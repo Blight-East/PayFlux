@@ -7,12 +7,12 @@ import { ArrowRight, Clock3, TrendingUp } from 'lucide-react';
 import ReserveForecastPanel from '@/components/ReserveForecastPanel';
 import ProjectionTimeline from '@/components/ProjectionTimeline';
 import BoardReserveReport from '@/components/BoardReserveReport';
-import { useScanData } from '@/lib/use-scan-data';
 import { DashboardComposition } from '@/components/dashboard/DashboardComposition';
 
 interface ProjectionRootProps {
     tier: string;
     host: string | null;
+    activationReady: boolean;
 }
 
 interface ForecastSummary {
@@ -85,16 +85,15 @@ function normalizeActionDescription(title: string, description: string): string 
     return description;
 }
 
-export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
+export default function ProjectionRoot({ tier, host, activationReady }: ProjectionRootProps) {
     const isFree = tier === 'free';
-    const { scanData } = useScanData();
     const [forecast, setForecast] = useState<ForecastSummary | null>(null);
 
     useEffect(() => {
         let cancelled = false;
 
         async function loadForecast() {
-            if (!host) return;
+            if (!activationReady || !host) return;
             try {
                 const params = new URLSearchParams({ host });
                 const response = await fetch(`/api/v1/risk/forecast?${params.toString()}`);
@@ -108,26 +107,9 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
 
         loadForecast();
         return () => { cancelled = true; };
-    }, [host]);
-
-    const scanFindings = scanData?.data?.findings ?? [];
-    const loweredRiskLabel = scanData?.data?.riskLabel?.toUpperCase();
+    }, [activationReady, host]);
 
     const actions = useMemo(() => {
-        if (scanFindings.length > 0) {
-            return scanFindings.slice(0, 2).map((finding, index) => ({
-                title: normalizeActionTitle(finding.title),
-                description: normalizeActionDescription(finding.title, finding.description),
-                riskLevel: index === 0 ? 'Elevated risk' : 'Needs review',
-                impact: index === 0 ? 'Operator priority' : 'Preventative',
-                tone: index === 0 ? 'warning' as const : 'neutral' as const,
-                primaryAction: { label: normalizeActionTitle(finding.title), disabled: true },
-                secondaryAction: finding.title.toLowerCase().includes('refund') || finding.title.toLowerCase().includes('policy')
-                    ? { label: 'Draft refund policy', disabled: true }
-                    : undefined,
-            }));
-        }
-
         if (forecast?.recommendedInterventions?.length) {
             return forecast.recommendedInterventions.slice(0, 2).map((intervention, index) => ({
                 title: normalizeActionTitle(intervention.action),
@@ -150,10 +132,10 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
                 href: '#deep-dive',
             },
         }];
-    }, [forecast?.recommendedInterventions, scanFindings]);
+    }, [forecast?.recommendedInterventions]);
 
-    const highRisk = loweredRiskLabel === 'HIGH' || loweredRiskLabel === 'CRITICAL' || (forecast?.currentRiskTier ?? 0) >= 4 || forecast?.instabilitySignal === 'ACCELERATING';
-    const elevatedRisk = loweredRiskLabel === 'ELEVATED' || forecast?.instabilitySignal === 'ELEVATED' || forecast?.instabilitySignal === 'LATENT' || (forecast?.currentRiskTier ?? 0) >= 3;
+    const highRisk = (forecast?.currentRiskTier ?? 0) >= 4 || forecast?.instabilitySignal === 'ACCELERATING';
+    const elevatedRisk = forecast?.instabilitySignal === 'ELEVATED' || forecast?.instabilitySignal === 'LATENT' || (forecast?.currentRiskTier ?? 0) >= 3;
     const statusBanner = highRisk || elevatedRisk
         ? {
             tone: 'warning' as const,
@@ -177,7 +159,7 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
     const kpis = [
         {
             label: 'Processor risk',
-            value: forecast ? signalLabel(forecast.instabilitySignal) : (scanData?.data?.riskLabel ?? 'Loading...'),
+            value: forecast ? signalLabel(forecast.instabilitySignal) : 'Loading...',
             detail: forecast?.trend === 'DEGRADING'
                 ? 'Concern is rising'
                 : forecast?.trend === 'IMPROVING'
@@ -213,15 +195,6 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
     ];
 
     const signals = useMemo(() => {
-        const derivedFromScan = scanFindings.slice(0, 3).map((finding, index) => ({
-            title: normalizeActionTitle(finding.title),
-            detail: normalizeActionDescription(finding.title, finding.description),
-            meta: index === 0 ? 'Latest scan and live view' : 'Current operator signal',
-            tone: index === 0 ? 'warning' as const : 'neutral' as const,
-        }));
-
-        if (derivedFromScan.length > 0) return derivedFromScan;
-
         const derived: Array<{ title: string; detail: string; meta: string; tone: 'warning' | 'neutral' | 'info' }> = [];
         const policySurface = forecast?.projectionBasis?.inputs.policySurface;
 
@@ -259,7 +232,7 @@ export default function ProjectionRoot({ tier, host }: ProjectionRootProps) {
         }
 
         return derived.slice(0, 3);
-    }, [forecast, scanFindings]);
+    }, [forecast]);
 
     const context = {
         changes: [
