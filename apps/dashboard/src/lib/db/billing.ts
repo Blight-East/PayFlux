@@ -8,6 +8,25 @@ import type {
     WorkspaceTier,
 } from './types';
 
+let billingCustomersHasLegacyUserIdColumnPromise: Promise<boolean> | null = null;
+
+async function billingCustomersHasLegacyUserIdColumn(): Promise<boolean> {
+    if (!billingCustomersHasLegacyUserIdColumnPromise) {
+        billingCustomersHasLegacyUserIdColumnPromise = dbQuery<{ exists: boolean }>(
+            `
+            select exists(
+                select 1
+                from information_schema.columns
+                where table_schema = 'public'
+                  and table_name = 'billing_customers'
+                  and column_name = 'user_id'
+            ) as exists
+            `
+        ).then((result) => Boolean(result.rows[0]?.exists));
+    }
+    return billingCustomersHasLegacyUserIdColumnPromise;
+}
+
 export interface StripeBillingSnapshot {
     workspaceId: string;
     billingCustomerId: string;
@@ -90,19 +109,66 @@ export async function upsertBillingCustomer(args: {
     stripeCustomerId: string;
     email?: string | null;
 }): Promise<BillingCustomerRow> {
-    const result = await dbQuery(
-        `
-        INSERT INTO billing_customers (workspace_id, provider, stripe_customer_id, email)
-        VALUES ($1, 'stripe', $2, $3)
-        ON CONFLICT (workspace_id, provider) DO UPDATE
-        SET
-            stripe_customer_id = EXCLUDED.stripe_customer_id,
-            email = COALESCE(EXCLUDED.email, billing_customers.email),
-            updated_at = now()
-        RETURNING *
-        `,
-        [args.workspaceId, args.stripeCustomerId, args.email ?? null]
+    const existingByWorkspace = await dbQuery(
+        'SELECT * FROM billing_customers WHERE workspace_id = $1 AND provider = $2 LIMIT 1',
+        [args.workspaceId, 'stripe']
     );
+    if (existingByWorkspace.rows[0]) {
+        const updated = await dbQuery(
+            `
+            UPDATE billing_customers
+            SET
+                stripe_customer_id = $2,
+                email = COALESCE($3, billing_customers.email),
+                provider = 'stripe',
+                updated_at = now()
+            WHERE id = $1
+            RETURNING *
+            `,
+            [existingByWorkspace.rows[0].id, args.stripeCustomerId, args.email ?? null]
+        );
+        return mapBillingCustomerRow(updated.rows[0]);
+    }
+
+    const existingByStripeCustomer = await dbQuery(
+        'SELECT * FROM billing_customers WHERE stripe_customer_id = $1 LIMIT 1',
+        [args.stripeCustomerId]
+    );
+    if (existingByStripeCustomer.rows[0]) {
+        const updated = await dbQuery(
+            `
+            UPDATE billing_customers
+            SET
+                workspace_id = COALESCE(workspace_id, $2),
+                provider = 'stripe',
+                email = COALESCE($3, billing_customers.email),
+                updated_at = now()
+            WHERE id = $1
+            RETURNING *
+            `,
+            [existingByStripeCustomer.rows[0].id, args.workspaceId, args.email ?? null]
+        );
+        return mapBillingCustomerRow(updated.rows[0]);
+    }
+
+    const hasLegacyUserIdColumn = await billingCustomersHasLegacyUserIdColumn();
+    const result = hasLegacyUserIdColumn
+        ? await dbQuery(
+            `
+            INSERT INTO billing_customers (user_id, workspace_id, provider, stripe_customer_id, email)
+            VALUES ($1, $2, 'stripe', $3, $4)
+            RETURNING *
+            `,
+            [`workspace:${args.workspaceId}`, args.workspaceId, args.stripeCustomerId, args.email ?? null]
+        )
+        : await dbQuery(
+            `
+            INSERT INTO billing_customers (workspace_id, provider, stripe_customer_id, email)
+            VALUES ($1, 'stripe', $2, $3)
+            RETURNING *
+            `,
+            [args.workspaceId, args.stripeCustomerId, args.email ?? null]
+        );
     return mapBillingCustomerRow(result.rows[0]);
 }
 
@@ -280,4 +346,3 @@ export async function upsertSubscriptionFromStripe(args: StripeBillingSnapshot):
 
     return mapBillingSubscriptionRow(result.rows[0]);
 }
-
