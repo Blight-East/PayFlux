@@ -8,6 +8,7 @@ import Pricing from './pages/Pricing';
 import RetryStormAnalyzer from './pages/RetryStormAnalyzer';
 import ProcessorWarningEmailDecoder from './pages/ProcessorWarningEmailDecoder';
 import ReserveImpactCalculator from './pages/ReserveImpactCalculator';
+import PayoutDelayCostCalculator from './pages/PayoutDelayCostCalculator';
 import Signals from './pages/Signals';
 import Taxonomy from './pages/Taxonomy';
 import Glossary from './pages/Glossary';
@@ -36,6 +37,7 @@ const App = () => {
                 <Route path="/tools/retry-storm-analyzer" element={<RetryStormAnalyzer />} />
                 <Route path="/tools/processor-warning-email-decoder" element={<ProcessorWarningEmailDecoder />} />
                 <Route path="/tools/reserve-impact-calculator" element={<ReserveImpactCalculator />} />
+                <Route path="/tools/payout-delay-cost-calculator" element={<PayoutDelayCostCalculator />} />
                 <Route path="/signals" element={<Signals />} />
                 <Route path="/taxonomy" element={<Taxonomy />} />
                 <Route path="/glossary" element={<Glossary />} />
