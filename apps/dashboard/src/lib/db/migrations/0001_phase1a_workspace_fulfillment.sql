@@ -126,6 +126,28 @@ CREATE TABLE IF NOT EXISTS billing_customers (
     UNIQUE (workspace_id, provider)
 );
 
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'billing_customers'
+    ) AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE table_schema = 'public'
+          AND table_name = 'billing_customers'
+          AND constraint_name = 'billing_customers_workspace_fk'
+    ) THEN
+        ALTER TABLE billing_customers
+            ADD CONSTRAINT billing_customers_workspace_fk
+            FOREIGN KEY (workspace_id)
+            REFERENCES workspaces(id)
+            ON DELETE CASCADE;
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS billing_customers_workspace_idx
     ON billing_customers (workspace_id);
 

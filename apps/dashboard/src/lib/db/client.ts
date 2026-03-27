@@ -7,6 +7,12 @@ const MIGRATIONS_DIR = path.join(process.cwd(), 'src', 'lib', 'db', 'migrations'
 let pool: Pool | null = null;
 let initPromise: Promise<Pool> | null = null;
 
+function shouldAutoApplyMigrations(): boolean {
+    if (process.env.DB_AUTO_MIGRATE === 'true') return true;
+    if (process.env.DB_AUTO_MIGRATE === 'false') return false;
+    return process.env.NODE_ENV !== 'production';
+}
+
 function getDatabaseUrl(): string {
     const url = process.env.DATABASE_URL;
     if (!url) {
@@ -54,15 +60,19 @@ async function initializePool(): Promise<Pool> {
         connectionTimeoutMillis: 5000,
     });
 
-    const client = await nextPool.connect();
-    try {
-        await applyMigrations(client);
-    } finally {
-        client.release();
+    if (shouldAutoApplyMigrations()) {
+        const client = await nextPool.connect();
+        try {
+            await applyMigrations(client);
+        } finally {
+            client.release();
+        }
     }
 
     return nextPool;
 }
+
+export { applyMigrations };
 
 export async function getDbPool(): Promise<Pool> {
     if (pool) return pool;
@@ -105,4 +115,3 @@ export async function withDbTransaction<T>(
         client.release();
     }
 }
-
