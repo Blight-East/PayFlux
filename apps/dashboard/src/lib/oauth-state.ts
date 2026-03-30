@@ -7,6 +7,17 @@ interface OAuthState {
     expiresAt: number;
 }
 
+export type OAuthStateValidationReason =
+    | 'malformed'
+    | 'signature_mismatch'
+    | 'not_found'
+    | 'user_mismatch'
+    | 'expired';
+
+export type OAuthStateValidationResult =
+    | { ok: true; state: OAuthState }
+    | { ok: false; reason: OAuthStateValidationReason };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage Layer (Redis with in-memory fallback)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,43 +137,60 @@ export async function generateStateToken(orgId: string, userId: string): Promise
  * Validates a state token, checks signature, expiry, and existence in store.
  * Returns the state object if valid and deletes it from the store (one-time use).
  */
-export async function validateAndConsumeState(token: string, userId: string): Promise<OAuthState | null> {
-    const decoded = Buffer.from(token, 'base64url').toString();
+export async function validateAndConsumeStateDetailed(
+    token: string,
+    userId: string
+): Promise<OAuthStateValidationResult> {
+    let decoded = '';
+
+    try {
+        decoded = Buffer.from(token, 'base64url').toString();
+    } catch {
+        return { ok: false, reason: 'malformed' };
+    }
+
     const [payload, signature] = decoded.split('.');
     const secret = getStateSecret();
 
-    if (!payload || !signature) return null;
+    if (!payload || !signature) {
+        return { ok: false, reason: 'malformed' };
+    }
 
     // 1. Verify Signature
     const secretBuffer = Buffer.from(secret, 'utf8');
     const expectedSignature = crypto.createHmac('sha256', secretBuffer).update(payload).digest('hex');
     if (signature !== expectedSignature) {
         console.error('OAuth state signature mismatch');
-        return null;
+        return { ok: false, reason: 'signature_mismatch' };
     }
 
     // 2. Lookup in store (Redis or memory fallback)
     const state = await getAndDeleteState(token);
     if (!state) {
         console.error('OAuth state not found or already consumed');
-        return null;
+        return { ok: false, reason: 'not_found' };
     }
 
     // 3. Verify user binding
     if (state.userId !== userId) {
         console.error('OAuth state binding mismatch: user changed');
         // State already deleted by getAndDeleteState — no reuse possible
-        return null;
+        return { ok: false, reason: 'user_mismatch' };
     }
 
     // 4. Check Expiry
     if (Date.now() > state.expiresAt) {
         console.error('OAuth state expired');
-        return null;
+        return { ok: false, reason: 'expired' };
     }
 
     // 5. Consumed (already deleted in step 2)
-    return state;
+    return { ok: true, state };
+}
+
+export async function validateAndConsumeState(token: string, userId: string): Promise<OAuthState | null> {
+    const result = await validateAndConsumeStateDetailed(token, userId);
+    return result.ok ? result.state : null;
 }
 
 function cleanupExpiredStates() {

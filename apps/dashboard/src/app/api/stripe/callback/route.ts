@@ -1,16 +1,63 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from "next/server";
 import { mirrorWorkspaceStateToClerk } from '@/lib/clerk-mirror';
 import { ensurePendingActivationRun } from '@/lib/db/activation-runs';
 import { upsertMonitoredEntityForStripeConnection } from '@/lib/db/monitored-entities';
 import { upsertStripeProcessorConnection } from '@/lib/db/processor-connections';
 import { resolveOrCreateWorkspaceRecord, updateWorkspaceState } from '@/lib/db/workspaces';
-import { validateAndConsumeState } from '@/lib/oauth-state';
+import { validateAndConsumeStateDetailed } from '@/lib/oauth-state';
 import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
 
+type CallbackStage =
+    | 'entry'
+    | 'auth_ok'
+    | 'auth_missing'
+    | 'state_ok'
+    | 'state_fail'
+    | 'token_exchange_start'
+    | 'token_exchange_fail'
+    | 'org_fetch_ok'
+    | 'org_fetch_fail'
+    | 'workspace_resolved'
+    | 'workspace_resolve_fail'
+    | 'processor_upsert_ok'
+    | 'processor_upsert_fail'
+    | 'monitored_entity_upsert_ok'
+    | 'monitored_entity_upsert_fail'
+    | 'activation_enqueued'
+    | 'activation_enqueue_fail'
+    | 'post_persist_fail'
+    | 'success_redirect';
+
+function logCallbackStage(requestId: string, stage: CallbackStage, data: Record<string, unknown> = {}) {
+    console.info('[STRIPE_CALLBACK]', JSON.stringify({ requestId, stage, ...data }));
+}
+
+function getStripeErrorPayload(err: unknown): Record<string, unknown> {
+    if (!err || typeof err !== 'object') {
+        return { message: String(err) };
+    }
+
+    const stripeErr = err as {
+        type?: string;
+        code?: string;
+        statusCode?: number;
+        message?: string;
+    };
+
+    return {
+        type: stripeErr.type ?? 'unknown',
+        code: stripeErr.code ?? null,
+        statusCode: stripeErr.statusCode ?? null,
+        message: stripeErr.message ?? 'Unknown Stripe error',
+    };
+}
+
 export async function GET(req: NextRequest) {
+    const requestId = randomUUID();
     const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
     const sk = process.env.CLERK_SECRET_KEY;
     const ssk = process.env.STRIPE_SECRET_KEY;
@@ -37,6 +84,12 @@ export async function GET(req: NextRequest) {
     const redirectUri = process.env.STRIPE_CONNECT_REDIRECT_URI
         || `${baseUrl.replace(/\/$/, '')}/api/stripe/callback`;
 
+    logCallbackStage(requestId, 'entry', {
+        hasCode: Boolean(code),
+        hasState: Boolean(state),
+        hasError: Boolean(error),
+    });
+
     if (error) {
         console.error('Stripe OAuth error:', error, errorDescription);
         return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
@@ -47,43 +100,117 @@ export async function GET(req: NextRequest) {
     }
 
     // 1) Verify the request is associated with an authenticated Clerk user
-    const { userId } = await auth();
+    const { userId, orgId } = await auth();
     if (!userId) {
+        logCallbackStage(requestId, 'auth_missing', { authOrgId: orgId ?? null });
         return NextResponse.redirect(`${baseUrl}/login`);
     }
+    logCallbackStage(requestId, 'auth_ok', { userId, authOrgId: orgId ?? null });
 
     // 2) Validate state exists, not expired, matches userId, then consume it
-    const oauthState = await validateAndConsumeState(state, userId);
-    if (!oauthState) {
-        console.error('Hardened State Validation Failed');
+    const stateResult = await validateAndConsumeStateDetailed(state, userId);
+    if (!stateResult.ok) {
+        logCallbackStage(requestId, 'state_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            reason: stateResult.reason,
+        });
         return NextResponse.redirect(`${baseUrl}/connect?err=invalid_state`);
     }
+    const oauthState = stateResult.state;
+    logCallbackStage(requestId, 'state_ok', {
+        userId,
+        authOrgId: orgId ?? null,
+        stateOrgId: oauthState.orgId,
+    });
 
+    logCallbackStage(requestId, 'token_exchange_start', {
+        userId,
+        stateOrgId: oauthState.orgId,
+    });
+
+    let response;
     try {
-        // Exchange the OAuth code for a stripe_user_id
-        const response = await stripe.oauth.token({
+        response = await stripe.oauth.token({
             grant_type: 'authorization_code',
             code,
             redirect_uri: redirectUri,
         } as any);
+    } catch (err) {
+        logCallbackStage(requestId, 'token_exchange_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: oauthState.orgId,
+            ...getStripeErrorPayload(err),
+        });
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+    }
 
-        const stripeAccountId = response.stripe_user_id;
-        if (!stripeAccountId) {
-            throw new Error('No Stripe account ID returned from token exchange');
-        }
+    const stripeAccountId = response.stripe_user_id;
+    if (!stripeAccountId) {
+        logCallbackStage(requestId, 'token_exchange_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: oauthState.orgId,
+            type: 'invalid_response',
+            code: null,
+            statusCode: null,
+            message: 'No Stripe account ID returned from token exchange',
+        });
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+    }
 
-        // 3) Use the orgId from the validated state
-        const activeOrgId = oauthState.orgId;
-        const client = await clerkClient();
-        const org = await client.organizations.getOrganization({ organizationId: activeOrgId });
-        const workspace = await resolveOrCreateWorkspaceRecord({
+    // 3) Use the orgId from the validated state
+    const activeOrgId = oauthState.orgId;
+    const client = await clerkClient();
+
+    let org;
+    try {
+        org = await client.organizations.getOrganization({ organizationId: activeOrgId });
+        logCallbackStage(requestId, 'org_fetch_ok', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+        });
+    } catch (err) {
+        logCallbackStage(requestId, 'org_fetch_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            message: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+    }
+
+    let workspace;
+    try {
+        workspace = await resolveOrCreateWorkspaceRecord({
             clerkOrgId: activeOrgId,
             name: org.name,
             ownerClerkUserId: userId,
         });
-        const oauthScope = String((response as any).scope ?? 'unknown');
+        logCallbackStage(requestId, 'workspace_resolved', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+        });
+    } catch (err) {
+        logCallbackStage(requestId, 'workspace_resolve_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            message: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+    }
 
-        const processorConnection = await upsertStripeProcessorConnection({
+    const oauthScope = String((response as any).scope ?? 'unknown');
+
+    let processorConnection;
+    try {
+        processorConnection = await upsertStripeProcessorConnection({
             workspaceId: workspace.id,
             stripeAccountId,
             oauthScope,
@@ -93,16 +220,55 @@ export async function GET(req: NextRequest) {
                 scope: oauthScope,
             },
         });
+        logCallbackStage(requestId, 'processor_upsert_ok', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+        });
+    } catch (err) {
+        logCallbackStage(requestId, 'processor_upsert_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+            message: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+    }
 
-        const monitoredEntity = await upsertMonitoredEntityForStripeConnection({
+    let monitoredEntity;
+    try {
+        monitoredEntity = await upsertMonitoredEntityForStripeConnection({
             workspaceId: workspace.id,
             processorConnectionId: processorConnection.id,
             primaryHost: workspace.primary_host_candidate,
             primaryHostSource: workspace.primary_host_candidate ? 'scan' : 'unknown',
             status: 'pending',
         });
+        logCallbackStage(requestId, 'monitored_entity_upsert_ok', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+        });
+    } catch (err) {
+        logCallbackStage(requestId, 'monitored_entity_upsert_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+            message: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+    }
 
-        if (workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise') {
+    if (workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise') {
+        try {
             await updateWorkspaceState({
                 workspaceId: workspace.id,
                 activationState: 'ready_for_activation',
@@ -115,8 +281,27 @@ export async function GET(req: NextRequest) {
                 trigger: 'post_connect',
                 triggeredBy: 'user',
             });
+            logCallbackStage(requestId, 'activation_enqueued', {
+                userId,
+                authOrgId: orgId ?? null,
+                stateOrgId: activeOrgId,
+                workspaceId: workspace.id,
+                workspaceTier: workspace.entitlement_tier,
+            });
+        } catch (err) {
+            logCallbackStage(requestId, 'activation_enqueue_fail', {
+                userId,
+                authOrgId: orgId ?? null,
+                stateOrgId: activeOrgId,
+                workspaceId: workspace.id,
+                workspaceTier: workspace.entitlement_tier,
+                message: err instanceof Error ? err.message : String(err),
+            });
+            return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
         }
+    }
 
+    try {
         await mirrorWorkspaceStateToClerk(activeOrgId, {
             stripeAccountId,
             stripeConnectedAt: new Date().toISOString(),
@@ -134,17 +319,32 @@ export async function GET(req: NextRequest) {
             metadata: { stripeAccountId, clerkOrgId: activeOrgId, oauthScope },
         });
 
-        // Emit stage transition: scanned -> connected_free
         logStageTransition('scanned', 'connected_free', { userId, workspaceId: workspace.id });
 
-        // 5) Check if user is paid — route to activation arming if so, otherwise dashboard
-        if (workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise') {
-            return NextResponse.redirect(`${baseUrl}/activate/arming`);
-        }
-        return NextResponse.redirect(`${baseUrl}/dashboard`);
-    } catch (err: any) {
-        console.error('Stripe Connection Failure (Safely Logged):', err.message);
-        // 6) On any failure, redirect to /onboarding?err=stripe_connect_failed
+        const redirectTarget = workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise'
+            ? `${baseUrl}/activate/arming`
+            : `${baseUrl}/dashboard`;
+
+        logCallbackStage(requestId, 'success_redirect', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+            redirectTarget,
+        });
+
+        return NextResponse.redirect(redirectTarget);
+    } catch (err) {
+        logCallbackStage(requestId, 'post_persist_fail', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+            message: err instanceof Error ? err.message : String(err),
+            redirectTarget: `${baseUrl}/connect?err=stripe_connect_failed`,
+        });
         return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
     }
 }
