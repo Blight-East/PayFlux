@@ -9,7 +9,7 @@ import { canAccess } from '@/lib/tier/resolver';
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-    const authResult = await requireAuth();
+    const authResult = await requireAuth({ allowAdminBypass: false });
     if (!authResult.ok) return authResult.response;
 
     const { workspace } = authResult;
@@ -17,6 +17,13 @@ export async function GET(request: Request) {
         return NextResponse.json(
             { error: 'Board report requires Pro tier', code: 'UPGRADE_REQUIRED' },
             { status: 402 }
+        );
+    }
+
+    if (workspace.activationState !== 'active') {
+        return NextResponse.json(
+            { error: 'Activation not complete', code: 'ACTIVATION_NOT_READY' },
+            { status: 409 }
         );
     }
 

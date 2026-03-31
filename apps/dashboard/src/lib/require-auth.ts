@@ -2,6 +2,10 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
+interface RequireAuthOptions {
+    allowAdminBypass?: boolean;
+}
+
 /**
  * Enforced authentication and workspace resolution for API routes.
  * 
@@ -9,7 +13,7 @@ import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
  * 1. Must have a valid Clerk userId (401 Unauthorized)
  * 2. Must belong to an active workspace (403 Forbidden)
  */
-export async function requireAuth(): Promise<
+export async function requireAuth(options: RequireAuthOptions = {}): Promise<
     | { ok: true; userId: string; workspace: WorkspaceContext }
     | { ok: false; response: NextResponse }
 > {
@@ -25,7 +29,9 @@ export async function requireAuth(): Promise<
         };
     }
 
-    const workspace = await resolveWorkspace(userId);
+    const workspace = await resolveWorkspace(userId, {
+        allowAdminBypass: options.allowAdminBypass ?? true,
+    });
 
     if (!workspace) {
         return {
@@ -48,11 +54,11 @@ export async function requireAuth(): Promise<
  * 2. Must belong to an active workspace (403 Forbidden)
  * 3. Workspace must be on a paid tier — pro or enterprise (402 Payment Required)
  */
-export async function requirePaidAuth(): Promise<
+export async function requirePaidAuth(options: RequireAuthOptions = {}): Promise<
     | { ok: true; userId: string; workspace: WorkspaceContext }
     | { ok: false; response: NextResponse }
 > {
-    const result = await requireAuth();
+    const result = await requireAuth(options);
     if (!result.ok) return result;
 
     if (result.workspace.tier === 'free') {
