@@ -1,77 +1,120 @@
-'use client';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { resolveActivationStatus } from '@/lib/activation-state';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
 
-import { useState } from 'react';
+export const runtime = 'nodejs';
 
-export default function SettingsPage() {
-    const [inboundEnabled, setInboundEnabled] = useState(true);
-    const [outboundEnabled, setOutboundEnabled] = useState(true);
+function tierLabel(tier: string): string {
+    switch (tier) {
+        case 'enterprise': return 'Enterprise';
+        case 'pro': return 'Pro';
+        default: return 'Free';
+    }
+}
+
+function activationLabel(state: string | undefined): { text: string; color: string } {
+    switch (state) {
+        case 'active': return { text: 'Active', color: 'bg-emerald-500' };
+        case 'paid_unconnected': return { text: 'Awaiting processor connection', color: 'bg-amber-500' };
+        case 'connected_generating': return { text: 'Activation in progress', color: 'bg-amber-500' };
+        default: return { text: 'Not activated', color: 'bg-slate-400' };
+    }
+}
+
+function paymentLabel(status: string | undefined): { text: string; color: string } {
+    switch (status) {
+        case 'current': return { text: 'Current', color: 'text-emerald-600' };
+        case 'past_due': return { text: 'Past due', color: 'text-red-600' };
+        case 'cancelled': return { text: 'Cancelled', color: 'text-slate-500' };
+        default: return { text: 'No subscription', color: 'text-slate-500' };
+    }
+}
+
+export default async function SettingsPage() {
+    const { userId } = await auth();
+    if (!userId) redirect('/sign-in');
+
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
+    if (!workspace) redirect('/scan');
+
+    const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId);
+    const activation = await resolveActivationStatus(userId);
+
+    const tier = tierLabel(workspace.tier);
+    const activationState = activationLabel(workspace.activationState);
+    const payment = paymentLabel(workspace.paymentStatus);
 
     return (
         <div className="p-8 max-w-4xl">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white tracking-tight">System Settings</h2>
-                <p className="text-slate-500 text-sm mt-1">Global configuration and feature flags for the PayFlux control plane.</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Settings</h2>
+                <p className="text-gray-500 text-sm mt-1">Workspace configuration and subscription details.</p>
             </div>
 
             <div className="space-y-6">
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">Subscription & Tiers</h3>
-                    <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-900 rounded">
+                {/* Subscription */}
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h3 className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold mb-6">Subscription</h3>
+                    <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <p className="text-[#0A64BC] font-bold text-lg tracking-tight">Tier 2 <span className="text-slate-600 font-normal text-sm ml-2">Enterprise</span></p>
-                            <p className="text-xs text-slate-500 mt-1">Full access to Pilot warnings dashboard and outcome annotations.</p>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Plan</p>
+                            <p className="text-lg font-semibold text-gray-900">{tier}</p>
                         </div>
-                        <div className="text-xs text-slate-400">
-                            Renews: <span className="text-white">Monthly</span>
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Payment status</p>
+                            <p className={`text-lg font-semibold ${payment.color}`}>{payment.text}</p>
                         </div>
-                    </div>
-                    <div className="mt-6 flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                        <span className="text-xs text-slate-500 font-medium">Pilot Mode Enabled</span>
                     </div>
                 </div>
 
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">Local Control Flags</h3>
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-bold text-white">Disable inbound webhooks</p>
-                                <p className="text-xs text-slate-500">Stop processing events from all configured processors.</p>
+                {/* Activation state */}
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h3 className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold mb-6">Activation</h3>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                            <div className="flex items-center space-x-2">
+                                <div className={`w-2 h-2 rounded-full ${activationState.color}`} />
+                                <p className="text-sm font-medium text-gray-900">{activationState.text}</p>
                             </div>
-                            <button
-                                onClick={() => setInboundEnabled(!inboundEnabled)}
-                                className={`w-10 h-5 rounded-full transition-colors relative ${inboundEnabled ? 'bg-slate-700' : 'bg-red-900'}`}
-                            >
-                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${inboundEnabled ? 'left-6' : 'left-1'}`}></div>
-                            </button>
                         </div>
-
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-bold text-white">Disable outbound alerts</p>
-                                <p className="text-xs text-slate-500">Suppress all notifications and Slack/PagerDuty integration.</p>
-                            </div>
-                            <button
-                                onClick={() => setOutboundEnabled(!outboundEnabled)}
-                                className={`w-10 h-5 rounded-full transition-colors relative ${outboundEnabled ? 'bg-slate-700' : 'bg-red-900'}`}
-                            >
-                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${outboundEnabled ? 'left-6' : 'left-1'}`}></div>
-                            </button>
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Processor</p>
+                            <p className="text-sm font-medium text-gray-900">
+                                {processorConnection?.status === 'connected'
+                                    ? `Stripe (${processorConnection.stripe_account_id?.slice(0, 12)}...)`
+                                    : 'Not connected'}
+                            </p>
                         </div>
                     </div>
-                    <p className="mt-8 text-[10px] text-slate-600 leading-relaxed max-w-xl">
-                        Note: These toggles only affect the control-plane routing layer. They do not modify the core PayFlux scoring
-                        engine or internal verification logic. All changes are local to this instance.
-                    </p>
+                    {activation?.meta?.activationCompletedAt && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Activated at</p>
+                            <p className="text-xs text-gray-500 font-mono">
+                                {new Date(activation.meta.activationCompletedAt).toLocaleString('en-US', {
+                                    month: 'short', day: 'numeric', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
+                                })} UTC
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-6">
-                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-widest mb-4">Danger Zone</h3>
-                    <p className="text-xs text-slate-500 mb-6">Permanently delete all workspace data and disconnect all connectors.</p>
-                    <button className="px-4 py-2 bg-red-900/20 border border-red-500/30 text-red-500 text-xs font-bold rounded hover:bg-red-900/40 transition-colors">
-                        Destroy Workspace
-                    </button>
+                {/* Workspace */}
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h3 className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold mb-6">Workspace</h3>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Name</p>
+                            <p className="text-sm font-medium text-gray-900">{workspace.workspaceName}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Role</p>
+                            <p className="text-sm font-medium text-gray-900 capitalize">{workspace.role}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

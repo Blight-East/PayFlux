@@ -1,175 +1,88 @@
-'use client';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
 
-import { useState, useEffect } from 'react';
+export const runtime = 'nodejs';
 
-export default function ConnectorsPage() {
-    const [signingSecret, setSigningSecret] = useState('');
-    const [label, setLabel] = useState('Primary Stripe Account');
-    const [status, setStatus] = useState<'connected' | 'disconnected' | 'loading'>('loading');
-    const [lastEvent, setLastEvent] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
+export default async function ConnectorsPage() {
+    const { userId } = await auth();
+    if (!userId) redirect('/sign-in');
 
-    useEffect(() => {
-        async function fetchConfig() {
-            try {
-                const res = await fetch('/api/connectors/stripe');
-                if (res.ok) {
-                    const data = await res.json();
-                    setSigningSecret(data.signingSecret || '');
-                    setLabel(data.label || 'Primary Stripe Account');
-                    setStatus(data.signingSecret ? 'connected' : 'disconnected');
-                } else {
-                    setStatus('disconnected');
-                }
-            } catch (err) {
-                setStatus('disconnected');
-            }
-        }
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
+    if (!workspace) redirect('/scan');
 
-        async function fetchStatus() {
-            try {
-                const res = await fetch('/api/status');
-                if (res.ok) {
-                    const data = await res.json();
-                    setLastEvent(data.lastEventAt || null);
-                }
-            } catch (err) { }
-        }
-
-        fetchConfig();
-        fetchStatus();
-    }, []);
-
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        try {
-            const res = await fetch('/api/connectors/stripe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ signingSecret, label }),
-            });
-            if (res.ok) {
-                setStatus('connected');
-                alert('Configuration saved.');
-            }
-        } catch (err) {
-            alert('Save failed.');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const sendTestEvent = async () => {
-        try {
-            const res = await fetch('/api/webhooks/stripe/test', {
-                method: 'POST',
-            });
-            if (res.ok) {
-                alert('Test event dispatched.');
-            } else {
-                alert('Test event failed.');
-            }
-        } catch (err) {
-            alert('Test event failed.');
-        }
-    };
+    const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId);
+    const isConnected = processorConnection?.status === 'connected';
 
     return (
         <div className="p-8 max-w-4xl">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white tracking-tight">Processors & Connectors</h2>
-                <p className="text-slate-500 text-sm mt-1">Processor event configuration.</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Connectors</h2>
+                <p className="text-gray-500 text-sm mt-1">Processor connections for this workspace.</p>
             </div>
 
-            <div className="grid gap-6">
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-white rounded flex items-center justify-center font-bold text-black italic">S</div>
-                            <div>
-                                <h3 className="text-lg font-bold text-white">Stripe</h3>
-                                <div className="flex items-center space-x-2 mt-1">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-slate-600'}`}></div>
-                                    <span className="text-xs text-slate-400 capitalize">{status}</span>
-                                </div>
-                            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-[#635BFF]/10 rounded-xl flex items-center justify-center">
+                            <span className="text-[#635BFF] font-bold text-lg">S</span>
                         </div>
-                        {status === 'connected' && (
-                            <button
-                                onClick={sendTestEvent}
-                                className="px-3 py-1.5 bg-slate-900 border border-slate-800 text-slate-300 text-xs font-bold rounded hover:text-white transition-colors"
-                            >
-                                Send Test Event
-                            </button>
-                        )}
-                    </div>
-
-                    <form onSubmit={handleSave} className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                                Stripe Signing Secret (whsec_...)
-                            </label>
-                            <input
-                                type="password"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                                placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                                value={signingSecret}
-                                onChange={(e) => setSigningSecret(e.target.value)}
-                            />
-                            <p className="mt-1.5 text-[10px] text-slate-600">
-                                Stripe Dashboard → Developers → Webhooks. Add the endpoint below.
+                            <h3 className="text-base font-semibold text-gray-900">Stripe</h3>
+                            <p className="text-xs text-gray-500 mt-0.5">Connected via Stripe Connect OAuth</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                        <span className={`text-xs font-medium ${isConnected ? 'text-emerald-600' : 'text-slate-500'}`}>
+                            {isConnected ? 'Connected' : 'Not connected'}
+                        </span>
+                    </div>
+                </div>
+
+                {isConnected && processorConnection ? (
+                    <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Account ID</p>
+                            <p className="text-sm font-mono text-gray-700">
+                                {processorConnection.stripe_account_id
+                                    ? `${processorConnection.stripe_account_id.slice(0, 14)}...`
+                                    : 'Unknown'}
                             </p>
                         </div>
-
                         <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                                Account Label
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                                placeholder="e.g. Primary Production Account"
-                                value={label}
-                                onChange={(e) => setLabel(e.target.value)}
-                            />
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Connected at</p>
+                            <p className="text-sm text-gray-700">
+                                {processorConnection.connected_at
+                                    ? new Date(processorConnection.connected_at).toLocaleDateString('en-US', {
+                                        month: 'short', day: 'numeric', year: 'numeric',
+                                    })
+                                    : 'Unknown'}
+                            </p>
                         </div>
-
-                        <div className="pt-4 flex justify-between items-center">
-                            <div className="text-[10px] text-slate-500">
-                                {lastEvent ? `Last event: ${new Date(lastEvent).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })} UTC` : 'No events received'}
+                        {processorConnection.oauth_scope && (
+                            <div>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Scope</p>
+                                <p className="text-sm text-gray-700">{processorConnection.oauth_scope}</p>
                             </div>
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="bg-white text-black font-bold py-2 px-6 rounded text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
-                            >
-                                {saving ? 'Saving...' : 'Save'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <div className="bg-slate-950 border border-slate-800 border-dashed rounded-lg p-6">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Webhook Endpoint</h4>
-                    <div className="flex items-center space-x-2 bg-slate-950 border border-slate-900 rounded p-3">
-                        <code className="text-[#0A64BC] text-xs flex-1">https://app.payflux.dev/api/webhooks/stripe</code>
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText('https://app.payflux.dev/api/webhooks/stripe');
-                                alert('Copied to clipboard');
-                            }}
-                            className="text-[10px] bg-slate-900 text-slate-400 px-2 py-1 rounded hover:text-white"
-                        >
-                            Copy
-                        </button>
+                        )}
                     </div>
-                    <p className="mt-3 text-[10px] text-slate-600 leading-relaxed">
-                        Add to Stripe Dashboard. Required events:
-                        <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.payment_failed</code> and
-                        <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.succeeded</code> events.
-                    </p>
-                </div>
+                ) : (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                        <p className="text-sm text-gray-500">
+                            No processor is connected to this workspace. Complete the activation flow to connect Stripe.
+                        </p>
+                        {(workspace.tier === 'pro' || workspace.tier === 'enterprise') && (
+                            <a
+                                href="/activate"
+                                className="mt-4 inline-flex items-center rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-medium text-white no-underline transition-colors hover:bg-[#08539e]"
+                            >
+                                Connect Stripe
+                            </a>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

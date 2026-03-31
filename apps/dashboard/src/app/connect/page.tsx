@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import SignOutLink from '@/components/SignOutLink';
 import ConnectStripeCTA from '@/components/ConnectStripeCTA';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { resolveOrCreateWorkspaceRecord } from '@/lib/db/workspaces';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 export const runtime = 'nodejs';
@@ -38,14 +40,26 @@ export default async function ConnectPage({ searchParams }: PageProps) {
     const activeOrgId = await resolveActiveOrgId(client, userId, orgId ?? null);
     const organization = await client.organizations.getOrganization({ organizationId: activeOrgId });
 
-    const stripeAccountId = organization?.publicMetadata?.stripeAccountId;
-    const isConnected = typeof stripeAccountId === 'string' && stripeAccountId.length > 0;
+    const workspaceRecord = await resolveOrCreateWorkspaceRecord({
+        clerkOrgId: activeOrgId,
+        name: organization.name,
+        ownerClerkUserId: userId,
+    });
+    const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspaceRecord.id);
+    const isConnected = processorConnection?.status === 'connected';
 
     if (isConnected) {
+        if (workspaceRecord.entitlement_tier === 'pro' || workspaceRecord.entitlement_tier === 'enterprise') {
+            if (workspaceRecord.activation_state === 'active') {
+                redirect('/dashboard');
+            }
+            redirect('/activate/arming');
+        }
+
         redirect('/dashboard');
     }
 
-    logOnboardingEvent('connect_viewed', { userId, workspaceId: activeOrgId });
+    logOnboardingEvent('connect_viewed', { userId, workspaceId: workspaceRecord.id });
 
     const errRaw = searchParams?.err;
     const err = Array.isArray(errRaw) ? errRaw[0] : errRaw;

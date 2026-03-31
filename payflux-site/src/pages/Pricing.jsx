@@ -2,6 +2,9 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
 
+const DASHBOARD_URL = 'https://app.payflux.dev/dashboard';
+const APP_PRICING_URL = 'https://app.payflux.dev/pricing';
+
 const Pricing = () => {
     useEffect(() => {
         document.title = 'Pricing | PayFlux';
@@ -55,7 +58,7 @@ const Pricing = () => {
                             </ul>
                             <div className="mt-8">
                                 <a
-                                    href="https://app.payflux.dev/start"
+                                    href={DASHBOARD_URL}
                                     className="block text-center w-full py-3 border border-slate-300 text-slate-900 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors"
                                 >
                                     Get Started
@@ -81,7 +84,7 @@ const Pricing = () => {
                             </ul>
                             <div className="mt-8">
                                 <a
-                                    href="https://app.payflux.dev/start"
+                                    href={APP_PRICING_URL}
                                     className="block text-center w-full py-3 bg-slate-900 text-white text-sm font-medium rounded-md hover:bg-slate-800 transition-colors"
                                 >
                                     Start Pro

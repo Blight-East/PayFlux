@@ -398,7 +398,7 @@ export default function BoardReserveReport({ host, monthlyTPV }: { host: string 
             {error && <span className="text-[10px] text-red-400 ml-2">{error}</span>}
 
             {open && data && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 pb-8 overflow-y-auto bg-gray-900/80 print:bg-white print:static print:p-0">
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/70 px-4 pb-8 pt-8 print:static print:bg-white print:p-0">
                     <div className="relative bg-white rounded-lg shadow-2xl max-w-[850px] w-full print:shadow-none print:rounded-none">
                         {/* Controls (hidden in print) */}
                         <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 print:hidden">

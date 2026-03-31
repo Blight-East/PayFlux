@@ -1,96 +1,23 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-
 export default function ApiKeysPage() {
-    const [apiKey, setApiKey] = useState<string | null>(null);
-    const [showKey, setShowKey] = useState(false);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function fetchKey() {
-            // In a real app, this would fetch from a secure store
-            // For MVP, we'll just mock it or use the one from env if allowed to show it
-            setLoading(false);
-        }
-        fetchKey();
-    }, []);
-
-    const generateKey = () => {
-        const newKey = `pf_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`;
-        setApiKey(newKey);
-        setShowKey(true);
-    };
-
     return (
         <div className="p-8 max-w-4xl">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white tracking-tight">API Key Management</h2>
-                <p className="text-slate-500 text-sm mt-1">Control plane authentication for connectors and integrations.</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">API Keys</h2>
+                <p className="text-gray-500 text-sm mt-1">Programmatic access to your PayFlux workspace.</p>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest">Active API Key</h3>
-                    <button
-                        onClick={generateKey}
-                        className="px-3 py-1.5 bg-white text-black text-xs font-bold rounded hover:bg-slate-200 transition-colors"
-                    >
-                        Rotate Key
-                    </button>
-                </div>
-
-                {apiKey ? (
-                    <div className="space-y-4">
-                        <div className="bg-slate-950 border border-slate-900 rounded p-4 flex items-center justify-between">
-                            <code className="text-[#0A64BC] text-sm">
-                                {showKey ? apiKey : `${apiKey.substring(0, 8)}************************`}
-                            </code>
-                            <button
-                                onClick={() => setShowKey(!showKey)}
-                                className="text-xs text-slate-500 hover:text-white"
-                            >
-                                {showKey ? 'Hide' : 'Reveal'}
-                            </button>
-                        </div>
-                        <p className="text-[10px] text-slate-600 font-mono">
-                            Displayed once. Store securely.
-                        </p>
+            <div className="bg-white border border-gray-200 rounded-xl p-8">
+                <div className="text-center space-y-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-100 rounded-xl">
+                        <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                        </svg>
                     </div>
-                ) : (
-                    <div className="text-center py-12 bg-slate-950/50 border border-slate-900 border-dashed rounded">
-                        <p className="text-slate-500 text-sm mb-4">No active key.</p>
-                        <button
-                            onClick={generateKey}
-                            className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 transition-colors"
-                        >
-                            Generate Key
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            <div className="mt-8 bg-slate-950 border border-slate-800 rounded-lg p-6">
-                <h4 className="text-sm font-bold text-white mb-4">Safe Prefix Reference</h4>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                        <thead className="text-slate-500 border-b border-slate-800">
-                            <tr>
-                                <th className="pb-2">Label</th>
-                                <th className="pb-2">Prefix (First 8)</th>
-                                <th className="pb-2">Created</th>
-                                <th className="pb-2">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-slate-400">
-                            <tr>
-                                <td className="py-3 text-white font-medium">Production Key</td>
-                                <td className="py-3 font-mono">pf_a1b2c3d...</td>
-                                <td className="py-3">Jan 13, 2026</td>
-                                <td className="py-3 text-green-500 font-bold uppercase tracking-widest text-[8px]">Active</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <h3 className="text-lg font-semibold text-gray-900">Not yet available</h3>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
+                        API key management is not available yet. When it launches, you will be able to generate keys for programmatic access to your workspace data.
+                    </p>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Coming soon</p>
                 </div>
             </div>
         </div>

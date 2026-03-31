@@ -86,17 +86,17 @@ function EvidenceContent() {
         <div className="p-8 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Infrastructure Evidence</h1>
-                    <p className="text-slate-500 text-sm mt-1">Core node evidence and artifact stream.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Infrastructure Evidence</h1>
+                    <p className="text-gray-500 text-sm mt-1">Core node evidence and artifact stream.</p>
                 </div>
                 <div className="flex items-center space-x-4">
                     <div className="text-right">
-                        <div className="text-[10px] text-slate-500 uppercase tracking-widest">Last Sync</div>
-                        <div className="text-sm font-mono text-slate-300">{lastSync}</div>
+                        <div className="text-[10px] text-gray-500 uppercase tracking-widest">Last Sync</div>
+                        <div className="text-sm font-mono text-gray-700">{lastSync}</div>
                     </div>
-                    <div className="px-3 py-1 bg-slate-900 border border-slate-800 rounded flex items-center space-x-2">
+                    <div className="px-3 py-1 bg-gray-100 border border-gray-200 rounded flex items-center space-x-2">
                         <div className={`w-2 h-2 rounded-full ${status === 'OK' ? 'bg-green-500' : status === 'DEGRADED' ? 'bg-amber-500' : 'bg-red-500 pulse'}`}></div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture ? `Fixture: ${fixture}` : 'Live'}</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{fixture ? `Fixture: ${fixture}` : 'Live'}</span>
                     </div>
                 </div>
             </div>
@@ -130,31 +130,31 @@ function EvidenceContent() {
 
             {/* System Info Cards */}
             <div className="grid grid-cols-4 gap-4">
-                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Ingest Rate</div>
-                    <div className="text-xl font-bold text-white font-mono">{activeData?.payload.system.ingest_rate || '---'}</div>
+                <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Ingest Rate</div>
+                    <div className="text-xl font-bold text-gray-900 font-mono">{activeData?.payload.system.ingest_rate || '---'}</div>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Node Count</div>
-                    <div className="text-xl font-bold text-white font-mono">{activeData?.payload.system.node_count || 0}</div>
+                <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Node Count</div>
+                    <div className="text-xl font-bold text-gray-900 font-mono">{activeData?.payload.system.node_count || 0}</div>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Upstream Status</div>
-                    <div className="text-xl font-bold text-white font-mono uppercase tracking-tighter">{activeData?.meta?.sourceStatus || '---'}</div>
+                <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Upstream Status</div>
+                    <div className="text-xl font-bold text-gray-900 font-mono uppercase tracking-tighter">{activeData?.meta?.sourceStatus || '---'}</div>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Cluster</div>
-                    <div className="text-xl font-bold text-white font-mono">{activeData?.payload.system.cluster || '---'}</div>
+                <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Cluster</div>
+                    <div className="text-xl font-bold text-gray-900 font-mono">{activeData?.payload.system.cluster || '---'}</div>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
                 {/* Merchants Panel */}
-                <div className="bg-slate-950 border border-slate-900 rounded-lg overflow-hidden flex flex-col h-[400px]">
-                    <div className="px-6 py-4 border-b border-slate-900 bg-slate-900/30 font-bold text-xs uppercase tracking-widest text-slate-300">Merchants Snapshot</div>
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col h-[400px]">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 font-bold text-xs uppercase tracking-widest text-gray-700">Merchants Snapshot</div>
                     <div className="flex-1 overflow-y-auto">
                         <table className="w-full text-left text-xs">
-                            <thead className="sticky top-0 bg-slate-950 text-slate-500 border-b border-slate-900 font-medium">
+                            <thead className="sticky top-0 bg-white text-gray-500 border-b border-gray-200 font-medium">
                                 <tr>
                                     <th className="px-6 py-3">ID</th>
                                     <th className="px-6 py-3 text-right">Vol</th>
@@ -183,8 +183,8 @@ function EvidenceContent() {
                 </div>
 
                 {/* Artifacts Panel */}
-                <div className="bg-slate-950 border border-slate-900 rounded-lg overflow-hidden flex flex-col h-[400px]">
-                    <div className="px-6 py-4 border-b border-slate-900 bg-slate-900/30 font-bold text-xs uppercase tracking-widest text-slate-300">Artifact Stream</div>
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col h-[400px]">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 font-bold text-xs uppercase tracking-widest text-gray-700">Artifact Stream</div>
                     <div className="flex-1 overflow-y-auto p-6 space-y-4">
                         {activeData?.payload.artifacts.map((a: any) => (
                             <div key={a.id} className="border-l-2 border-slate-800 pl-4 space-y-2">

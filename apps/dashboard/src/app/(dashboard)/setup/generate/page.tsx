@@ -290,8 +290,8 @@ See full documentation at https://payflux.dev/docs
         return showFallback ? (
             <div className="p-8 max-w-3xl mx-auto">
                 <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-white tracking-tight">Setup State Missing</h2>
-                    <p className="text-slate-500 text-sm mt-2">
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Setup State Missing</h2>
+                    <p className="text-gray-500 text-sm mt-2">
                         Setup state not found. Session expired or browser storage cleared.
                     </p>
                     <button
@@ -305,17 +305,17 @@ See full documentation at https://payflux.dev/docs
         ) : (
             <div className="p-8 max-w-3xl mx-auto">
                 <div className="mb-8">
-                    <div className="flex items-center space-x-2 text-[10px] text-slate-500 uppercase tracking-widest mb-4">
-                        <span className="text-slate-600">Step 1</span>
+                    <div className="flex items-center space-x-2 text-[10px] text-gray-500 uppercase tracking-widest mb-4">
+                        <span className="text-gray-400">Step 1</span>
                         <span>→</span>
-                        <span className="text-slate-600">Step 2</span>
+                        <span className="text-gray-400">Step 2</span>
                         <span>→</span>
                         <span className="text-[#0A64BC]">Step 3</span>
                         <span>→</span>
                         <span>Generate Setup</span>
                     </div>
-                    <h2 className="text-2xl font-bold text-white tracking-tight">Generate Your Setup</h2>
-                    <p className="text-slate-500 text-sm mt-1">Loading...</p>
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Generate Your Setup</h2>
+                    <p className="text-gray-500 text-sm mt-1">Loading...</p>
                 </div>
             </div>
         );
@@ -324,40 +324,40 @@ See full documentation at https://payflux.dev/docs
     return (
         <div className="p-8 max-w-3xl mx-auto">
             <div className="mb-8">
-                <div className="flex items-center space-x-2 text-[10px] text-slate-500 uppercase tracking-widest mb-4">
-                    <span className="text-slate-600">Step 1</span>
+                <div className="flex items-center space-x-2 text-[10px] text-gray-500 uppercase tracking-widest mb-4">
+                    <span className="text-gray-400">Step 1</span>
                     <span>→</span>
-                    <span className="text-slate-600">Step 2</span>
+                    <span className="text-gray-400">Step 2</span>
                     <span>→</span>
                     <span className="text-[#0A64BC]">Step 3</span>
                     <span>→</span>
                     <span>Generate Setup</span>
                 </div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Generate Your Setup</h2>
-                <p className="text-slate-500 text-sm mt-1">Configuration output.</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Generate Your Setup</h2>
+                <p className="text-gray-500 text-sm mt-1">Configuration output.</p>
             </div>
 
             {/* Config Summary */}
-            <div className="bg-slate-950 border border-slate-800 rounded-lg p-6 mb-6">
-                <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4">Configuration Summary</h3>
+            <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4">Configuration Summary</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span className="text-slate-500">Processor:</span>
-                        <span className="ml-2 text-white">{config.processor === 'generic_webhook' ? 'Generic Webhook' : 'Stripe'}</span>
+                        <span className="text-gray-500">Processor:</span>
+                        <span className="ml-2 text-gray-900">{config.processor === 'generic_webhook' ? 'Generic Webhook' : 'Stripe'}</span>
                     </div>
                     <div>
-                        <span className="text-slate-500">Tier:</span>
-                        <span className="ml-2 text-white capitalize">{config.tier === 'tier2' ? 'Pro' : 'Free'}</span>
+                        <span className="text-gray-500">Tier:</span>
+                        <span className="ml-2 text-gray-900 capitalize">{config.tier === 'tier2' ? 'Pro' : 'Free'}</span>
                     </div>
                     <div>
-                        <span className="text-slate-500">Pilot Mode:</span>
-                        <span className={`ml-2 ${config.pilotMode ? 'text-green-500' : 'text-slate-400'}`}>
+                        <span className="text-gray-500">Pilot Mode:</span>
+                        <span className={`ml-2 ${config.pilotMode ? 'text-green-500' : 'text-gray-500'}`}>
                             {config.pilotMode ? 'Enabled' : 'Disabled'}
                         </span>
                     </div>
                     <div>
-                        <span className="text-slate-500">Webhook Secret:</span>
-                        <span className="ml-2 text-white font-mono text-xs">whsec_***...{config.webhookSecret.slice(-4)}</span>
+                        <span className="text-gray-500">Webhook Secret:</span>
+                        <span className="ml-2 text-gray-900 font-mono text-xs">whsec_***...{config.webhookSecret.slice(-4)}</span>
                     </div>
                 </div>
             </div>

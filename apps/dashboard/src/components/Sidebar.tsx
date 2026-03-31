@@ -25,10 +25,6 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
         href: '/dashboard',
     },
     {
-        label: 'System Status',
-        href: '/dashboard/diagnostics',
-    },
-    {
         label: 'Forecast Confidence',
         href: '/dashboard/governance',
     },
@@ -148,14 +144,12 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                 ) : null}
             </div>
 
-            {/* Status + user */}
+            {/* Workspace tier badge */}
             <div className="border-t border-slate-800 p-4">
                 <div className="rounded-lg bg-slate-800/70 px-4 py-3">
-                    <div className="flex items-center space-x-2">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                        <span className="text-xs text-slate-300">System online</span>
-                    </div>
-                    <p className="mt-1 text-[10px] text-slate-500">Operator-first view active</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {workspace.tier === 'enterprise' ? 'Enterprise' : workspace.tier === 'pro' ? 'Pro' : 'Free'} plan
+                    </p>
                 </div>
             </div>
         </div>

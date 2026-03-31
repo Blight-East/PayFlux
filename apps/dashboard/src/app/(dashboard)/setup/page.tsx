@@ -1,29 +1,36 @@
-import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { resolveActivationStatus } from '@/lib/activation-state';
 
-export default function SetupPage() {
-    return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-            <div className="max-w-md w-full space-y-8">
-                {/* Header */}
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold text-slate-900 mb-2">
-                        Risk Assessment
-                    </h1>
-                    <p className="text-slate-600">
-                        Initialize in under 3 minutes.
-                    </p>
-                </div>
+export const runtime = 'nodejs';
 
-                {/* Primary CTA */}
-                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-                    <Link
-                        href="/setup/scan"
-                        className="flex items-center justify-center w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98] no-underline"
-                    >
-                        Scan my website
-                    </Link>
-                </div>
-            </div>
-        </div>
-    );
+/**
+ * /setup — Legacy entry point.
+ *
+ * Redirects to the correct location based on current workspace state.
+ * The /setup/* sub-pages are for self-hosted Go backend configuration
+ * and should not be shown to SaaS customers in the normal flow.
+ */
+export default async function SetupPage() {
+    const { userId } = await auth();
+    if (!userId) redirect('/sign-in');
+
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
+    if (!workspace) redirect('/scan');
+
+    // Paid users go through the activation flow
+    if (workspace.tier === 'pro' || workspace.tier === 'enterprise') {
+        const activation = await resolveActivationStatus(userId);
+        if (!activation || activation.state === 'paid_unconnected') {
+            redirect('/activate');
+        }
+        if (activation.state === 'connected_generating') {
+            redirect('/activate/arming');
+        }
+        redirect('/dashboard');
+    }
+
+    // Free users go to the dashboard
+    redirect('/dashboard');
 }

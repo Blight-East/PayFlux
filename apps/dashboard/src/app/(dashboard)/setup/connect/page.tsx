@@ -49,24 +49,24 @@ export default function ConnectProcessorPage() {
     return (
         <div className="p-8 max-w-2xl mx-auto">
             <div className="mb-8">
-                <div className="flex items-center space-x-2 text-[10px] text-slate-500 uppercase tracking-widest mb-4">
+                <div className="flex items-center space-x-2 text-[10px] text-gray-500 uppercase tracking-widest mb-4">
                     <span className="text-[#0A64BC]">Step 1</span>
                     <span>→</span>
                     <span>Connect Processor</span>
                 </div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Connect Your Processor</h2>
-                <p className="text-slate-500 text-sm mt-1">Processor credentials. Browser-only — not transmitted.</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Connect Your Processor</h2>
+                <p className="text-gray-500 text-sm mt-1">Processor credentials. Browser-only — not transmitted.</p>
             </div>
 
             {/* Processor Selection Dropdown */}
             <div className="mb-6">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
                     Processor
                 </label>
                 <select
                     value={processor}
                     onChange={(e) => setProcessor(e.target.value as ProcessorType)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                 >
                     <option value="stripe">Stripe (Recommended)</option>
                     <option value="generic_webhook">Generic Webhook (Beta)</option>
@@ -76,11 +76,11 @@ export default function ConnectProcessorPage() {
             {/* Generic Webhook Helper Panel */}
             {processor === 'generic_webhook' && (
                 <div className="bg-slate-900/30 border border-slate-800 rounded-lg p-5 mb-6">
-                    <h4 className="text-sm font-medium text-slate-300 mb-2">Generic Webhook (Beta)</h4>
-                    <p className="text-sm text-slate-500 mb-3">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Generic Webhook (Beta)</h4>
+                    <p className="text-sm text-gray-500 mb-3">
                         Paddle, Braintree, Square, Adyen, Checkout.com, and others. Maps webhook payloads to PayFlux normalized event schema. Surfaces warnings and operational signals.
                     </p>
-                    <p className="text-[10px] text-slate-600 font-mono">
+                    <p className="text-[10px] text-gray-400 font-mono">
                         Observe-only. No payment flow modification.
                     </p>
                 </div>
@@ -93,7 +93,7 @@ export default function ConnectProcessorPage() {
                             <div className="w-12 h-12 bg-white rounded flex items-center justify-center font-bold text-black italic text-xl">S</div>
                             <div>
                                 <h3 className="text-lg font-bold text-white">Stripe</h3>
-                                <p className="text-xs text-slate-500">OAuth 2.0 via Stripe Connect</p>
+                                <p className="text-xs text-gray-500">OAuth 2.0 via Stripe Connect</p>
                             </div>
                         </div>
 
@@ -108,7 +108,7 @@ export default function ConnectProcessorPage() {
                                 </svg>
                                 <span>Connect with Stripe</span>
                             </button>
-                            <p className="mt-4 text-[10px] text-slate-500 text-center leading-relaxed">
+                            <p className="mt-4 text-[10px] text-gray-500 text-center leading-relaxed">
                                 Redirects to Stripe for authorization. No credentials stored.
                             </p>
                         </div>
@@ -119,12 +119,12 @@ export default function ConnectProcessorPage() {
                             <div className="w-12 h-12 bg-slate-800 rounded flex items-center justify-center font-bold text-white text-xl">W</div>
                             <div>
                                 <h3 className="text-lg font-bold text-white">Manual Webhook</h3>
-                                <p className="text-xs text-slate-500">Traditional signature-based verification</p>
+                                <p className="text-xs text-gray-500">Traditional signature-based verification</p>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
                                 Webhook Signing Secret <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -142,8 +142,8 @@ export default function ConnectProcessorPage() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                                API Key <span className="text-slate-600">(optional)</span>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
+                                API Key <span className="text-gray-400">(optional)</span>
                             </label>
                             <input
                                 type="password"
@@ -161,8 +161,8 @@ export default function ConnectProcessorPage() {
                 )}
 
                 <div className="bg-slate-900/50 border border-slate-800 rounded p-4 mt-4">
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Security Notice</h4>
-                    <ul className="text-[10px] text-slate-500 space-y-1">
+                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Security Notice</h4>
+                    <ul className="text-[10px] text-gray-500 space-y-1">
                         <li>• OAuth 2.0 connection</li>
                         <li>• Tokens stored securely. Not exposed in UI.</li>
                         <li>• Scope: read_write (event management)</li>

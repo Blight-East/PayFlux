@@ -25,15 +25,15 @@ export default function ChooseTierPage() {
     return (
         <div className="p-8 max-w-2xl mx-auto">
             <div className="mb-8">
-                <div className="flex items-center space-x-2 text-[10px] text-slate-500 uppercase tracking-widest mb-4">
-                    <span className="text-slate-600">Step 1</span>
+                <div className="flex items-center space-x-2 text-[10px] text-gray-500 uppercase tracking-widest mb-4">
+                    <span className="text-gray-400">Step 1</span>
                     <span>→</span>
                     <span className="text-[#0A64BC]">Step 2</span>
                     <span>→</span>
                     <span>Choose Tier</span>
                 </div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Choose Your Tier</h2>
-                <p className="text-slate-500 text-sm mt-1">Coverage tier selection.</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Choose Your Tier</h2>
+                <p className="text-gray-500 text-sm mt-1">Coverage tier selection.</p>
             </div>
 
             <div className="space-y-4">
@@ -41,21 +41,21 @@ export default function ChooseTierPage() {
                 <button
                     onClick={() => setSelectedTier('tier1')}
                     className={`w-full text-left p-6 rounded-lg border transition-all ${selectedTier === 'tier1'
-                            ? 'bg-slate-900 border-blue-500'
-                            : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                            ? 'bg-gray-50 border-blue-500'
+                            : 'bg-white border-gray-200 hover:border-gray-300'
                         }`}
                 >
                     <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="text-lg font-bold text-white">Free</h3>
-                            <p className="text-slate-400 text-sm mt-1">Detection Only</p>
+                            <h3 className="text-lg font-bold text-gray-900">Free</h3>
+                            <p className="text-gray-500 text-sm mt-1">Detection Only</p>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === 'tier1' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === 'tier1' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
                             }`}>
                             {selectedTier === 'tier1' && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                     </div>
-                    <ul className="mt-4 text-xs text-slate-500 space-y-1.5">
+                    <ul className="mt-4 text-xs text-gray-500 space-y-1.5">
                         <li>• Event ingestion and deduplication</li>
                         <li>• Processor-level risk scoring</li>
                         <li>• Risk band classification (normal, elevated, high, critical)</li>
@@ -67,21 +67,21 @@ export default function ChooseTierPage() {
                 <button
                     onClick={() => setSelectedTier('tier2')}
                     className={`w-full text-left p-6 rounded-lg border transition-all ${selectedTier === 'tier2'
-                            ? 'bg-slate-900 border-blue-500'
-                            : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                            ? 'bg-gray-50 border-blue-500'
+                            : 'bg-white border-gray-200 hover:border-gray-300'
                         }`}
                 >
                     <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="text-lg font-bold text-white">Pro</h3>
-                            <p className="text-slate-400 text-sm mt-1">Interpretation + Alerts</p>
+                            <h3 className="text-lg font-bold text-gray-900">Pro</h3>
+                            <p className="text-gray-500 text-sm mt-1">Interpretation + Alerts</p>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === 'tier2' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTier === 'tier2' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
                             }`}>
                             {selectedTier === 'tier2' && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                     </div>
-                    <ul className="mt-4 text-xs text-slate-500 space-y-1.5">
+                    <ul className="mt-4 text-xs text-gray-500 space-y-1.5">
                         <li>• Everything in Free</li>
                         <li>• Playbook context for elevated+ events</li>
                         <li>• Risk trajectory analysis</li>
@@ -92,15 +92,15 @@ export default function ChooseTierPage() {
 
             {/* Pilot Mode Toggle */}
             {selectedTier === 'tier2' && (
-                <div className="mt-6 bg-slate-950 border border-slate-800 rounded-lg p-4">
+                <div className="mt-6 bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-bold text-white">Enable Pilot Mode</h4>
-                            <p className="text-xs text-slate-500 mt-0.5">Warnings dashboard. Outcome annotation.</p>
+                            <h4 className="text-sm font-bold text-gray-900">Enable Pilot Mode</h4>
+                            <p className="text-xs text-gray-500 mt-0.5">Warnings dashboard. Outcome annotation.</p>
                         </div>
                         <button
                             onClick={() => setPilotMode(!pilotMode)}
-                            className={`w-10 h-5 rounded-full transition-colors relative ${pilotMode ? 'bg-blue-600' : 'bg-slate-700'
+                            className={`w-10 h-5 rounded-full transition-colors relative ${pilotMode ? 'bg-blue-600' : 'bg-gray-300'
                                 }`}
                         >
                             <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${pilotMode ? 'left-6' : 'left-1'

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --payflux-blue: #0A64BC;
   --payflux-blue-hover: #0B5BA8;
   --dashboard-bg: #F8FAFC;
@@ -22,7 +22,6 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-white;
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   }
 }

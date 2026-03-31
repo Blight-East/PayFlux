@@ -24,12 +24,12 @@ export default function VarianceBand({ data, loading }: VarianceBandProps) {
     // Loading state
     if (loading) {
         return (
-            <div className="border border-slate-800/60 rounded-xl px-6 py-5 animate-pulse">
-                <div className="h-4 w-32 bg-slate-800 rounded mb-6" />
+            <div className="border border-gray-200 rounded-xl px-6 py-5 animate-pulse">
+                <div className="h-4 w-32 bg-gray-200 rounded mb-6" />
                 <div className="grid grid-cols-3 gap-6">
-                    <div className="h-12 w-28 bg-slate-800 rounded" />
-                    <div className="h-10 w-24 bg-slate-800 rounded" />
-                    <div className="h-10 w-20 bg-slate-800 rounded" />
+                    <div className="h-12 w-28 bg-gray-200 rounded" />
+                    <div className="h-10 w-24 bg-gray-200 rounded" />
+                    <div className="h-10 w-20 bg-gray-200 rounded" />
                 </div>
             </div>
         );
@@ -43,10 +43,10 @@ export default function VarianceBand({ data, loading }: VarianceBandProps) {
     const { meanVarianceBps, medianVarianceBps, stdDevVarianceBps, totalEvaluations, window: evalWindow } = data;
 
     return (
-        <div className="border border-slate-800/60 rounded-xl px-6 py-5">
+        <div className="border border-gray-200 rounded-xl px-6 py-5">
             {/* Section Header */}
             <div className="mb-5">
-                <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">
+                <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">
                     Variance Band
                 </span>
             </div>
@@ -55,44 +55,44 @@ export default function VarianceBand({ data, loading }: VarianceBandProps) {
             <div className="grid grid-cols-3 gap-6">
                 {/* Mean Variance — Primary */}
                 <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">
                         Mean Variance
                     </span>
-                    <span className="text-4xl font-mono font-bold text-slate-100">
+                    <span className="text-4xl font-mono font-bold text-gray-900">
                         ±{meanVarianceBps}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-mono ml-1">bps</span>
+                    <span className="text-[11px] text-gray-500 font-mono ml-1">bps</span>
                 </div>
 
                 {/* Median Variance — Secondary */}
                 <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">
                         Median Variance
                     </span>
-                    <span className="text-2xl font-mono font-bold text-slate-300">
+                    <span className="text-2xl font-mono font-bold text-gray-700">
                         ±{medianVarianceBps ?? '—'}
                     </span>
                     {medianVarianceBps !== null && (
-                        <span className="text-[11px] text-slate-500 font-mono ml-1">bps</span>
+                        <span className="text-[11px] text-gray-500 font-mono ml-1">bps</span>
                     )}
                 </div>
 
                 {/* Standard Deviation — Secondary */}
                 <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">
                         Std Deviation
                     </span>
-                    <span className="text-2xl font-mono font-bold text-slate-300">
+                    <span className="text-2xl font-mono font-bold text-gray-700">
                         {stdDevVarianceBps ?? '—'}
                     </span>
                     {stdDevVarianceBps !== null && (
-                        <span className="text-[11px] text-slate-500 font-mono ml-1">bps</span>
+                        <span className="text-[11px] text-gray-500 font-mono ml-1">bps</span>
                     )}
                 </div>
             </div>
 
             {/* Footer */}
-            <p className="text-[11px] text-slate-500 font-mono mt-4">
+            <p className="text-[11px] text-gray-500 font-mono mt-4">
                 {totalEvaluations} Evaluation Pairs · {evalWindow === '8w' ? '8 Week Window' : `${evalWindow} Window`}
             </p>
         </div>
