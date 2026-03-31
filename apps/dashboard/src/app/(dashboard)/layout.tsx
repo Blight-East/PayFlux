@@ -35,7 +35,7 @@ export default async function DashboardLayout({
         if (activation.state === 'paid_unconnected') {
             redirect('/activate');
         }
-        if (activation.state === 'connected_generating') {
+        if (activation.state === 'connected_generating' || activation.state === 'activation_failed') {
             redirect('/activate/arming');
         }
         // live_monitored -> continue to dashboard (fall through)

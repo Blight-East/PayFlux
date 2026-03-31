@@ -16,7 +16,7 @@ import { getStripeProcessorConnectionByWorkspaceId } from './db/processor-connec
 import { getReserveProjectionById } from './db/reserve-projections';
 import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
-export type ActivationState = 'paid_unconnected' | 'connected_generating' | 'live_monitored';
+export type ActivationState = 'paid_unconnected' | 'connected_generating' | 'activation_failed' | 'live_monitored';
 
 export interface ActivationStatus {
     state: ActivationState;
@@ -36,6 +36,8 @@ export interface ActivationStatus {
         firstProjectionAt?: string;
         alertPolicyArmedAt?: string;
         activationCompletedAt?: string;
+        failureCode?: string;
+        failureDetail?: string;
     };
 }
 
@@ -77,10 +79,13 @@ export async function resolveActivationStatus(userId: string): Promise<Activatio
         firstProjectionAt: reserveProjection?.projected_at ?? undefined,
         alertPolicyArmedAt: undefined,
         activationCompletedAt: latestCompletedActivationRun?.completed_at ?? undefined,
+        failureCode: latestActivationRun?.status === 'failed' ? (latestActivationRun.failure_code ?? undefined) : undefined,
+        failureDetail: latestActivationRun?.status === 'failed' ? (latestActivationRun.failure_detail ?? undefined) : undefined,
     };
 
     let state: ActivationState;
     if (
+        workspace.activationState === 'active' &&
         conditions.processorConnected &&
         Boolean(monitoredEntity?.current_baseline_snapshot_id) &&
         Boolean(monitoredEntity?.current_projection_id) &&
@@ -88,6 +93,8 @@ export async function resolveActivationStatus(userId: string): Promise<Activatio
         conditions.projectionExists
     ) {
         state = 'live_monitored';
+    } else if (conditions.processorConnected && workspace.activationState === 'activation_failed') {
+        state = 'activation_failed';
     } else if (conditions.processorConnected) {
         state = 'connected_generating';
     } else {
@@ -99,7 +106,7 @@ export async function resolveActivationStatus(userId: string): Promise<Activatio
     if (
         state === 'live_monitored' &&
         latestActivationRun &&
-        latestActivationRun.status !== 'completed'
+        (latestActivationRun.status === 'pending' || latestActivationRun.status === 'running')
     ) {
         state = 'connected_generating';
     }
