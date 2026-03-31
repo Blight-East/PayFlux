@@ -277,8 +277,13 @@ export async function fetchStripeActivationInputs(stripeAccountId: string): Prom
     const stripe = getStripeClient();
     const requestOptions: StripeListOptions = { stripeAccount: stripeAccountId };
 
-    const [account, balance, charges, disputes, payouts] = await Promise.all([
-        stripe.accounts.retrieve(stripeAccountId),
+    // Fetch account first to fail fast if not ready (avoids 4 unnecessary API calls)
+    const account = await stripe.accounts.retrieve(stripeAccountId);
+    if (!account.charges_enabled || !account.payouts_enabled || !account.details_submitted) {
+        throw new Error('PROCESSOR_ACCOUNT_NOT_READY');
+    }
+
+    const [balance, charges, disputes, payouts] = await Promise.all([
         stripe.balance.retrieve(requestOptions),
         stripe.charges.list({ limit: 100 }, requestOptions),
         stripe.disputes.list({ limit: 100 }, requestOptions),

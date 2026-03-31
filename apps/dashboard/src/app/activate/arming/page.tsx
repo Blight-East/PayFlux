@@ -34,11 +34,14 @@ export default async function ArmingPage() {
             redirect('/activate');
         case 'live_monitored':
             redirect('/dashboard');
+        case 'activation_failed':
+            return <ArmingProgress initialFailure={{
+                code: status.meta.failureCode,
+                detail: status.meta.failureDetail,
+            }} />;
         case 'connected_generating':
-            // Correct state — render progress UI
             return <ArmingProgress />;
         default:
-            // Defensive fallback
             redirect('/start');
     }
 }

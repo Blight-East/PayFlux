@@ -10,7 +10,11 @@ import {
     markActivationRunRunning,
 } from '@/lib/db/activation-runs';
 import { createBaselineSnapshot, getBaselineSnapshotById } from '@/lib/db/baseline-snapshots';
-import { getMonitoredEntityByWorkspaceId, markMonitoredEntityReady } from '@/lib/db/monitored-entities';
+import {
+    getMonitoredEntityByWorkspaceId,
+    hydrateMonitoredEntityPrimaryHost,
+    markMonitoredEntityReady,
+} from '@/lib/db/monitored-entities';
 import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
 import { createReserveProjection, getReserveProjectionById } from '@/lib/db/reserve-projections';
 import { findWorkspaceById, updateWorkspaceState } from '@/lib/db/workspaces';
@@ -102,6 +106,13 @@ export async function POST() {
         triggeredBy: 'user',
     });
 
+    if (pendingRun.status === 'running') {
+        return NextResponse.json({
+            state: 'connected_generating',
+            message: 'Activation already in progress',
+        }, { status: 200 });
+    }
+
     await markActivationRunRunning({
         activationRunId: pendingRun.id,
         processorConnectionId: processorConnection.id,
@@ -120,12 +131,33 @@ export async function POST() {
         const activationInputs = await fetchStripeActivationInputs(processorConnection.stripe_account_id);
         steps.push({ step: 'processor_check', status: 'completed', detail: processorConnection.stripe_account_id });
 
+        let activationMonitoredEntity = monitoredEntity;
+        if (!activationMonitoredEntity.primary_host && activationInputs.account.businessUrl) {
+            const hydrated = await hydrateMonitoredEntityPrimaryHost({
+                workspaceId: workspace.workspaceRecordId,
+                primaryHost: activationInputs.account.businessUrl,
+                primaryHostSource: 'stripe_profile',
+            });
+            if (hydrated) {
+                activationMonitoredEntity = hydrated;
+                steps.push({
+                    step: 'monitored_host_hydration',
+                    status: 'completed',
+                    detail: activationMonitoredEntity.primary_host ?? activationInputs.account.businessUrl,
+                });
+            }
+        }
+
+        if (!activationMonitoredEntity.primary_host) {
+            throw new Error('MONITORED_ENTITY_HOST_REQUIRED');
+        }
+
         const computed = deriveBaselineAndProjection(activationInputs);
 
         const computedAt = new Date().toISOString();
         const baselineSnapshot = await createBaselineSnapshot({
             workspaceId: workspace.workspaceRecordId,
-            monitoredEntityId: monitoredEntity.id,
+            monitoredEntityId: activationMonitoredEntity.id,
             sourceProcessorConnectionId: processorConnection.id,
             riskTier: computed.riskTier,
             riskBand: computed.riskBand,
@@ -139,7 +171,7 @@ export async function POST() {
 
         const reserveProjection = await createReserveProjection({
             workspaceId: workspace.workspaceRecordId,
-            monitoredEntityId: monitoredEntity.id,
+            monitoredEntityId: activationMonitoredEntity.id,
             baselineSnapshotId: baselineSnapshot.id,
             activationRunId: pendingRun.id,
             modelVersion: STRIPE_BASELINE_MODEL_VERSION,
@@ -203,7 +235,7 @@ export async function POST() {
         });
     } catch (error) {
         const message = error instanceof Error ? error.message : 'ACTIVATION_FAILED';
-        const failureCode = message === 'INSUFFICIENT_STRIPE_ACTIVITY' || message === 'PROCESSOR_ACCOUNT_NOT_READY'
+        const failureCode = message === 'INSUFFICIENT_STRIPE_ACTIVITY' || message === 'PROCESSOR_ACCOUNT_NOT_READY' || message === 'MONITORED_ENTITY_HOST_REQUIRED'
             ? message
             : 'ACTIVATION_FAILED';
 
@@ -222,16 +254,19 @@ export async function POST() {
         steps.push({ step: 'baseline_generation', status: 'failed', detail: message });
 
         const status = failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY' || failureCode === 'PROCESSOR_ACCOUNT_NOT_READY' ? 409 : 500;
+        const responseStatus = failureCode === 'MONITORED_ENTITY_HOST_REQUIRED' ? 409 : status;
         return failClosedResponse(
             failureCode,
             failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY'
                 ? 'Not enough recent Stripe activity to build a real baseline yet'
                 : failureCode === 'PROCESSOR_ACCOUNT_NOT_READY'
                     ? 'Connected Stripe account is not fully ready for monitoring'
+                    : failureCode === 'MONITORED_ENTITY_HOST_REQUIRED'
+                        ? 'Connected Stripe account does not expose a usable business host for scoped monitoring'
                     : 'Activation failed',
             'connected_generating',
             steps,
-            status
+            responseStatus
         );
     }
 }
@@ -277,6 +312,9 @@ export async function GET() {
     let state = 'paid_unconnected';
     if (conditions.processorConnected) {
         state = 'connected_generating';
+    }
+    if (conditions.processorConnected && workspaceRecord.activation_state === 'activation_failed') {
+        state = 'activation_failed';
     }
     if (workspaceRecord.activation_state === 'active' && conditions.baselineGenerated && conditions.projectionExists) {
         state = 'live_monitored';

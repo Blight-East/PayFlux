@@ -43,6 +43,12 @@ interface ActivationResponse {
         alertPolicyArmedAt?: string;
         activationCompletedAt?: string;
     };
+    latestActivationRun?: {
+        id: string;
+        status: string;
+        failureCode?: string;
+        failureDetail?: string;
+    };
 }
 
 const STAGES = [
@@ -76,10 +82,27 @@ const TREND_LABELS: Record<string, { label: string; color: string }> = {
  * before handing off to the dashboard. The customer sees the output of
  * every step they just watched.
  */
-export default function ArmingProgress() {
+function failureMessage(code?: string): string {
+    switch (code) {
+        case 'INSUFFICIENT_STRIPE_ACTIVITY':
+            return 'PayFlux needs at least 10 charges and 2 payouts in the last 30 days to generate a baseline. Please try again once your Stripe account has more recent activity.';
+        case 'PROCESSOR_ACCOUNT_NOT_READY':
+            return 'Your Stripe account is not fully set up yet. Please check that charges and payouts are enabled in your Stripe Dashboard, then try again.';
+        case 'MONITORED_ENTITY_HOST_REQUIRED':
+            return 'Your Stripe account does not have a business URL set. Please add one in your Stripe Dashboard settings, then try again.';
+        default:
+            return 'Something went wrong during setup. You can retry below, or contact support at support@payflux.dev.';
+    }
+}
+
+interface ArmingProgressProps {
+    initialFailure?: { code?: string; detail?: string };
+}
+
+export default function ArmingProgress({ initialFailure }: ArmingProgressProps) {
     const router = useRouter();
     const [conditions, setConditions] = useState<ActivationConditions | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(initialFailure ? failureMessage(initialFailure.code) : null);
     const [activationTriggered, setActivationTriggered] = useState(false);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
@@ -115,14 +138,25 @@ export default function ArmingProgress() {
                     router.replace('/activate');
                     return;
                 }
+                if (data.code === 'INSUFFICIENT_STRIPE_ACTIVITY') {
+                    setError('PayFlux needs at least 10 charges and 2 payouts in the last 30 days to generate a baseline. Please try again once your Stripe account has more recent activity.');
+                    setActivationTriggered(false);
+                    return;
+                }
+                if (data.code === 'PROCESSOR_ACCOUNT_NOT_READY') {
+                    setError('Your Stripe account is not fully set up yet. Please check that charges and payouts are enabled in your Stripe Dashboard, then try again.');
+                    setActivationTriggered(false);
+                    return;
+                }
             }
         } catch {
             // Will be caught by polling
         }
     }, [activationTriggered, router]);
 
-    // Poll activation status
+    // Poll activation status (skip when showing error — user must click retry)
     useEffect(() => {
+        if (error) return;
         let cancelled = false;
 
         async function poll() {
@@ -147,6 +181,13 @@ export default function ArmingProgress() {
                     return;
                 }
 
+                if (data.state === 'activation_failed') {
+                    const code = data.latestActivationRun?.failureCode;
+                    setError(failureMessage(code));
+                    setActivationTriggered(false);
+                    return;
+                }
+
                 if (data.state === 'live_monitored') {
                     // Capture the real baseline and projection data before marking complete
                     if (data.meta?.baselineRiskSurface) setBaseline(data.meta.baselineRiskSurface);
@@ -158,6 +199,9 @@ export default function ArmingProgress() {
                     });
                     return;
                 }
+
+                // Clear any previous error when activation is progressing
+                if (error) setError(null);
 
                 // Trigger activation if not yet triggered and processor is connected
                 if (data.conditions.processorConnected && !activationTriggered) {
@@ -172,7 +216,7 @@ export default function ArmingProgress() {
         poll();
         const interval = setInterval(poll, 2000);
         return () => { cancelled = true; clearInterval(interval); };
-    }, [router, activationTriggered, triggerActivation]);
+    }, [router, activationTriggered, triggerActivation, error]);
 
     // ── Completion state: show baseline numbers ─────────────────────────────
     if (isComplete) {
@@ -374,10 +418,20 @@ export default function ArmingProgress() {
                     })}
                 </div>
 
-                {/* Error */}
+                {/* Error with retry */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-3">
                         <p className="text-sm text-red-400">{error}</p>
+                        <button
+                            onClick={() => {
+                                setError(null);
+                                setActivationTriggered(false);
+                                setElapsedSeconds(0);
+                            }}
+                            className="w-full px-4 py-2.5 text-sm font-medium bg-slate-800 text-slate-200 rounded-lg hover:bg-slate-700 transition-colors"
+                        >
+                            Retry activation
+                        </button>
                     </div>
                 )}
 
