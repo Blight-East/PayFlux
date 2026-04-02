@@ -34,7 +34,7 @@ const Pricing = () => {
                     <div className="mb-16 text-center">
                         <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-4">Pricing</h1>
                         <p className="text-lg text-slate-500">
-                            Three tiers. No opacity.
+                            Start with a free snapshot. Upgrade when you need live monitoring and earlier warnings.
                         </p>
                     </div>
 
@@ -43,15 +43,15 @@ const Pricing = () => {
                         <div className="flex flex-col bg-white border border-slate-200 rounded-lg p-8 h-full hover:border-slate-300 transition-colors">
                             <div className="mb-8">
                                 <div className="text-xl font-bold text-slate-900 mb-1">Free</div>
-                                <div className="text-sm text-slate-500 mb-6">Diagnostic mode</div>
+                                <div className="text-sm text-slate-500 mb-6">One-time snapshot</div>
                                 <div className="font-mono text-4xl font-bold text-slate-900 text-numeric">$0</div>
                             </div>
                             <ul className="space-y-4 text-sm text-slate-600 flex-1">
-                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Risk tier visibility</li>
-                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Trend and instability signals</li>
-                                <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No projection modeling</li>
-                                <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No intervention derivation</li>
-                                <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No ledger exports</li>
+                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> One-time processor risk snapshot</li>
+                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Visible warning signs and instability signals</li>
+                                <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No live processor monitoring</li>
+                                <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No ongoing early-warning tracking</li>
+                                <li className="flex items-start gap-3 text-slate-400"><span className="mt-0.5 opacity-50">&bull;</span> No deeper forecast or exports</li>
                             </ul>
                             <div className="mt-8">
                                 <a
@@ -67,17 +67,17 @@ const Pricing = () => {
                         <div className="flex flex-col bg-white border-2 border-slate-900 rounded-lg p-8 h-full">
                             <div className="mb-8">
                                 <div className="text-xl font-bold text-slate-900 mb-1">Pro</div>
-                                <div className="text-sm text-slate-500 mb-6">Full instrument</div>
+                                <div className="text-sm text-slate-500 mb-6">Live monitoring</div>
                                 <div className="font-mono text-4xl font-bold text-slate-900 text-numeric">
                                     $499<span className="text-sm text-slate-500 font-sans font-normal"> / month</span>
                                 </div>
                             </div>
                             <ul className="space-y-4 text-sm text-slate-900 font-medium flex-1">
-                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Full projection engine (T+90)</li>
-                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Intervention modeling</li>
-                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Signed projection ledger</li>
-                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Board reserve report</li>
-                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Rolling model accuracy</li>
+                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Live processor monitoring</li>
+                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Earlier warnings for payout delays, held funds, and rising account pressure</li>
+                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Forward-looking forecast and what-changed visibility</li>
+                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Exportable evidence and operator-ready records</li>
+                                <li className="flex items-start gap-3"><span className="text-[#0A64BC] mt-0.5">&bull;</span> Guidance on what to fix before cash flow gets squeezed</li>
                             </ul>
                             <div className="mt-8">
                                 <a
@@ -93,14 +93,14 @@ const Pricing = () => {
                         <div className="flex flex-col bg-white border border-slate-200 rounded-lg p-8 h-full hover:border-slate-300 transition-colors">
                             <div className="mb-8">
                                 <div className="text-xl font-bold text-slate-900 mb-1">Enterprise</div>
-                                <div className="text-sm text-slate-500 mb-6">Custom</div>
+                                <div className="text-sm text-slate-500 mb-6">Custom rollout</div>
                                 <div className="text-3xl font-bold text-slate-900 tracking-tight mt-1">Contact Sales</div>
                             </div>
                             <ul className="space-y-4 text-sm text-slate-600 flex-1">
-                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Higher throughput</li>
-                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Bulk exports</li>
-                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Multi-merchant aggregation</li>
-                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Processor attestation readiness</li>
+                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Multi-merchant monitoring and reporting</li>
+                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Higher throughput and custom exports</li>
+                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Custom rollout for larger payment operations</li>
+                                <li className="flex items-start gap-3"><span className="text-slate-400 mt-0.5">&bull;</span> Support for more complex processor workflows</li>
                             </ul>
                             <div className="mt-8">
                                 <Link

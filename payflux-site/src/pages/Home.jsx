@@ -73,16 +73,46 @@ const trustItems = [
     },
 ];
 
+const proofPillars = [
+    {
+        title: 'Cash-Impact Proof',
+        body: 'Show one concrete dollar story where earlier warning would have protected materially more cash than the monthly cost.',
+    },
+    {
+        title: 'Processor-Specific Credibility',
+        body: 'Show that the signal is tied to real processor behaviors like payout drift, reserve pressure, review escalation, or chargeback stress.',
+    },
+    {
+        title: 'Operator-Ready Output',
+        body: 'Show that the output is not just another dashboard. It should explain what changed, why it matters, and what to do next.',
+    },
+];
+
+const objectionItems = [
+    {
+        title: '“I’m already under cash pressure.”',
+        body: 'That is exactly why this only works if the risk prevented is worth materially more than $499 per month.',
+    },
+    {
+        title: '“How do I know this isn’t just another dashboard?”',
+        body: 'The product has to prove it changes decisions, not just visibility. Merchants need a read on what changed and what to do next.',
+    },
+    {
+        title: '“What if I pay and still get held?”',
+        body: 'The standard is not perfection. The standard is earlier warning, faster response, and clearer evidence before the problem gets worse.',
+    },
+];
+
 const pricingCards = [
     {
         title: 'Free',
         price: '$0',
         cadence: '/month',
-        body: 'Start with a secure snapshot of your current exposure.',
+        body: 'Start with a one-time snapshot of your current processor risk exposure.',
         bullets: [
-            'One-time risk scan',
-            'High-level vulnerability check',
-            'Read-only connection available',
+            'One-time processor risk snapshot',
+            'Visible warning signs and instability signals',
+            'Best for understanding where pressure may already be building',
         ],
         ctaLabel: 'Run a Free Scan',
         ctaHref: SCAN_URL,
@@ -92,10 +122,11 @@ const pricingCards = [
         title: 'Pro',
         price: 'Starts at $499',
         cadence: '/month',
-        body: 'Live monitoring and deeper visibility for active merchants.',
+        body: 'Live monitoring and earlier warnings for merchants who need to stay ahead of processor pressure.',
         bullets: [
-            'Live monitoring and deeper visibility',
-            'Early warnings before payout delays and held funds',
+            'Live processor monitoring',
+            'Earlier warnings for payout delays, held funds, and rising account pressure',
+            'Forecast visibility, exportable evidence, and guidance on what to fix first',
         ],
         ctaLabel: 'Start With a Free Scan',
         ctaHref: SCAN_URL,
@@ -105,10 +136,10 @@ const pricingCards = [
         title: 'Enterprise',
         price: 'Custom',
         cadence: null,
-        body: 'For larger teams with more complex operating needs.',
+        body: 'For larger teams that need a custom rollout across more complex payment operations.',
         bullets: [
-            'Custom rollout',
-            'Support for larger operating needs',
+            'Multi-merchant monitoring and reporting',
+            'Higher throughput, exports, and support for custom workflows',
         ],
         ctaLabel: 'Contact Sales',
         ctaHref: '/pricing',
@@ -392,12 +423,71 @@ const Home = () => {
                     </div>
                 </section>
 
+                <section className="border-y border-slate-800 bg-slate-900/30 py-24">
+                    <div className="mx-auto max-w-7xl px-6">
+                        <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#0A64BC]">
+                                    Why Merchants Pay
+                                </p>
+                                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-5xl">
+                                    This Has to Protect More Cash Than It Costs
+                                </h2>
+                                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
+                                    A merchant under payout delays or reserve pressure is not buying software. They are making a trust-and-survival decision. PayFlux has to prove it can reduce the odds, duration, or severity of a cash freeze enough to matter.
+                                </p>
+                                <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
+                                    <p className="text-sm font-semibold text-white">What closes them</p>
+                                    <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                                        Show one merchant like them, one real incident, and one concrete dollar outcome. That is when $499/month starts to feel like protection instead of another tool expense.
+                                    </p>
+                                    <a
+                                        href="/proof-asset"
+                                        className="mt-5 inline-flex items-center justify-center rounded-lg border border-slate-700 px-4 py-2.5 text-sm font-semibold text-white no-underline transition-colors hover:border-slate-600 hover:bg-slate-900"
+                                    >
+                                        See the Proof Asset
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-6">
+                                <div className="rounded-3xl border border-slate-800 bg-slate-950/60 p-8">
+                                    <p className="text-sm font-semibold text-slate-400">Proof They Need</p>
+                                    <div className="mt-6 grid gap-4">
+                                        {proofPillars.map(({ title, body }) => (
+                                            <div key={title} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+                                                <p className="text-base font-semibold text-white">{title}</p>
+                                                <p className="mt-2 text-sm leading-relaxed text-slate-400">{body}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-3xl border border-slate-800 bg-slate-950/60 p-8">
+                                    <p className="text-sm font-semibold text-slate-400">Objections You Should Expect</p>
+                                    <div className="mt-6 space-y-4">
+                                        {objectionItems.map(({ title, body }) => (
+                                            <div key={title} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+                                                <p className="text-base font-semibold text-white">{title}</p>
+                                                <p className="mt-2 text-sm leading-relaxed text-slate-400">{body}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section id="pricing" className="border-y border-slate-800 bg-slate-900/40 py-24">
                     <div className="mx-auto max-w-7xl px-6">
                         <div className="text-center">
                             <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
                                 Simple, Transparent Access
                             </h2>
+                            <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-slate-300">
+                                Start with a free snapshot. Upgrade when you need live monitoring and earlier warnings.
+                            </p>
                         </div>
 
                         <div className="mt-14 grid gap-6 lg:grid-cols-3">

@@ -1,174 +1,131 @@
-'use client';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { findWorkspaceById } from '@/lib/db/workspaces';
+import { resolveActivationStatus } from '@/lib/activation-state';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
 
-import { useState, useEffect } from 'react';
+function formatTimestamp(value: string | null | undefined): string {
+    if (!value) return 'Not available';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleString();
+}
 
-export default function ConnectorsPage() {
-    const [signingSecret, setSigningSecret] = useState('');
-    const [label, setLabel] = useState('Primary Stripe Account');
-    const [status, setStatus] = useState<'connected' | 'disconnected' | 'loading'>('loading');
-    const [lastEvent, setLastEvent] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
+function maskStripeAccountId(value: string | null | undefined): string {
+    if (!value) return 'Not connected';
+    if (value.length <= 8) return value;
+    return `${value.slice(0, 8)}...${value.slice(-4)}`;
+}
 
-    useEffect(() => {
-        async function fetchConfig() {
-            try {
-                const res = await fetch('/api/connectors/stripe');
-                if (res.ok) {
-                    const data = await res.json();
-                    setSigningSecret(data.signingSecret || '');
-                    setLabel(data.label || 'Primary Stripe Account');
-                    setStatus(data.signingSecret ? 'connected' : 'disconnected');
-                } else {
-                    setStatus('disconnected');
-                }
-            } catch (err) {
-                setStatus('disconnected');
-            }
-        }
+export const runtime = 'nodejs';
 
-        async function fetchStatus() {
-            try {
-                const res = await fetch('/api/status');
-                if (res.ok) {
-                    const data = await res.json();
-                    setLastEvent(data.lastEventAt || null);
-                }
-            } catch (err) { }
-        }
+export default async function ConnectorsPage() {
+    const { userId } = await auth();
+    if (!userId) {
+        redirect('/sign-in?redirect_url=%2Fconnectors');
+    }
 
-        fetchConfig();
-        fetchStatus();
-    }, []);
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
+    if (!workspace) {
+        redirect('/scan');
+    }
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        try {
-            const res = await fetch('/api/connectors/stripe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ signingSecret, label }),
-            });
-            if (res.ok) {
-                setStatus('connected');
-                alert('Configuration saved.');
-            }
-        } catch (err) {
-            alert('Save failed.');
-        } finally {
-            setSaving(false);
-        }
-    };
+    if (workspace.role !== 'admin') {
+        redirect('/dashboard');
+    }
 
-    const sendTestEvent = async () => {
-        try {
-            const res = await fetch('/api/webhooks/stripe/test', {
-                method: 'POST',
-            });
-            if (res.ok) {
-                alert('Test event dispatched.');
-            } else {
-                alert('Test event failed.');
-            }
-        } catch (err) {
-            alert('Test event failed.');
-        }
-    };
+    const [workspaceRecord, processorConnection, monitoredEntity, activation] = await Promise.all([
+        findWorkspaceById(workspace.workspaceRecordId),
+        getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+        getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId),
+        resolveActivationStatus(userId),
+    ]);
+
+    const stripeConnected = processorConnection?.status === 'connected';
+    const activationState = activation?.state ?? workspace.activationState ?? 'not_started';
+    const primaryHost = monitoredEntity?.primary_host ?? workspaceRecord?.primary_host_candidate ?? null;
 
     return (
-        <div className="p-8 max-w-4xl">
+        <div className="p-8 max-w-5xl">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white tracking-tight">Processors & Connectors</h2>
-                <p className="text-slate-500 text-sm mt-1">Processor event configuration.</p>
+                <h2 className="text-2xl font-bold text-white tracking-tight">Connectors</h2>
+                <p className="text-slate-500 text-sm mt-1">Connect Stripe through OAuth and let PayFlux activate live monitoring inside your workspace.</p>
             </div>
 
             <div className="grid gap-6">
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-white rounded flex items-center justify-center font-bold text-black italic">S</div>
-                            <div>
-                                <h3 className="text-lg font-bold text-white">Stripe</h3>
-                                <div className="flex items-center space-x-2 mt-1">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-slate-600'}`}></div>
-                                    <span className="text-xs text-slate-400 capitalize">{status}</span>
-                                </div>
-                            </div>
-                        </div>
-                        {status === 'connected' && (
-                            <button
-                                onClick={sendTestEvent}
-                                className="px-3 py-1.5 bg-slate-900 border border-slate-800 text-slate-300 text-xs font-bold rounded hover:text-white transition-colors"
-                            >
-                                Send Test Event
-                            </button>
-                        )}
-                    </div>
-
-                    <form onSubmit={handleSave} className="space-y-4">
+                <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                                Stripe Signing Secret (whsec_...)
-                            </label>
-                            <input
-                                type="password"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                                placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                                value={signingSecret}
-                                onChange={(e) => setSigningSecret(e.target.value)}
-                            />
-                            <p className="mt-1.5 text-[10px] text-slate-600">
-                                Stripe Dashboard → Developers → Webhooks. Add the endpoint below.
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Primary processor</p>
+                            <h3 className="mt-2 text-lg font-semibold text-white">Stripe</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                                This hosted flow is OAuth-first. Customers do not need to paste webhook secrets here for the core Stripe onboarding path.
                             </p>
                         </div>
-
-                        <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                                Account Label
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                                placeholder="e.g. Primary Production Account"
-                                value={label}
-                                onChange={(e) => setLabel(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="pt-4 flex justify-between items-center">
-                            <div className="text-[10px] text-slate-500">
-                                {lastEvent ? `Last event: ${new Date(lastEvent).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })} UTC` : 'No events received'}
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="bg-white text-black font-bold py-2 px-6 rounded text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
-                            >
-                                {saving ? 'Saving...' : 'Save'}
-                            </button>
-                        </div>
-                    </form>
+                        <a
+                            href="/api/stripe/authorize"
+                            className="inline-flex items-center justify-center rounded bg-white px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-slate-200"
+                        >
+                            {stripeConnected ? 'Reconnect Stripe' : 'Connect Stripe'}
+                        </a>
+                    </div>
                 </div>
 
-                <div className="bg-slate-950 border border-slate-800 border-dashed rounded-lg p-6">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Webhook Endpoint</h4>
-                    <div className="flex items-center space-x-2 bg-slate-950 border border-slate-900 rounded p-3">
-                        <code className="text-[#0A64BC] text-xs flex-1">https://app.payflux.dev/api/webhooks/stripe</code>
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText('https://app.payflux.dev/api/webhooks/stripe');
-                                alert('Copied to clipboard');
-                            }}
-                            className="text-[10px] bg-slate-900 text-slate-400 px-2 py-1 rounded hover:text-white"
-                        >
-                            Copy
-                        </button>
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-white">Connection state</h3>
+                        <div className="mt-4 space-y-4 text-sm">
+                            <div>
+                                <p className="text-slate-500">Status</p>
+                                <p className={stripeConnected ? 'text-emerald-400' : 'text-slate-300'}>
+                                    {stripeConnected ? 'Connected' : 'Not connected'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Stripe account</p>
+                                <p className="font-mono text-slate-300">{maskStripeAccountId(processorConnection?.stripe_account_id)}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Connected at</p>
+                                <p className="text-slate-300">{formatTimestamp(processorConnection?.connected_at)}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">OAuth scope</p>
+                                <p className="text-slate-300">{processorConnection?.oauth_scope ?? 'Not available'}</p>
+                            </div>
+                        </div>
                     </div>
-                    <p className="mt-3 text-[10px] text-slate-600 leading-relaxed">
-                        Add to Stripe Dashboard. Required events:
-                        <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.payment_failed</code> and
-                        <code className="bg-slate-900 px-1 mx-1 text-slate-400">payment_intent.succeeded</code> events.
-                    </p>
+
+                    <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-white">Activation state</h3>
+                        <div className="mt-4 space-y-4 text-sm">
+                            <div>
+                                <p className="text-slate-500">Workspace activation</p>
+                                <p className="text-slate-300">{activationState}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Primary monitored host</p>
+                                <p className="text-slate-300">{primaryHost ?? 'Not resolved yet'}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Live monitoring</p>
+                                <p className={activationState === 'live_monitored' ? 'text-emerald-400' : 'text-slate-300'}>
+                                    {activationState === 'live_monitored' ? 'Active' : 'Not live yet'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-6">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-amber-400">What this page no longer assumes</h3>
+                    <div className="mt-3 space-y-2 text-sm text-slate-300">
+                        <p>Webhook secrets are not the main self-serve path for hosted Stripe onboarding.</p>
+                        <p>The customer-facing product path is: pay, connect Stripe, let activation run, then land in the live dashboard.</p>
+                        <p>If activation is stuck, the fix is usually Stripe readiness, business URL quality, or insufficient recent activity.</p>
+                    </div>
                 </div>
             </div>
         </div>
