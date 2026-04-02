@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { resolveActivationStatus } from '@/lib/activation-state';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 import LegacyCheckoutQuerySanitizer from '@/components/LegacyCheckoutQuerySanitizer';
+import WelcomeBanner from '@/components/WelcomeBanner';
 
 export const runtime = 'nodejs';
 
@@ -32,6 +33,7 @@ export default async function ActivatePage() {
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
             <LegacyCheckoutQuerySanitizer />
             <div className="max-w-lg w-full space-y-8">
+                <WelcomeBanner />
 
                 {/* Icon + headline */}
                 <div className="text-center space-y-4">

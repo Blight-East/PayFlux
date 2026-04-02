@@ -10,9 +10,9 @@ import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 export const runtime = 'nodejs';
 
 const ERROR_MESSAGES: Record<string, string> = {
-    stripe_connect_failed: 'Stripe connection failed. Try again.',
-    invalid_state: 'Security validation failed. Try again.',
-    clerk_not_configured: 'Clerk is not configured. Contact admin.',
+    stripe_connect_failed: 'We couldn\'t connect to your Stripe account. Please try again.',
+    invalid_state: 'The connection timed out. Please try again from the beginning.',
+    clerk_not_configured: 'Your account setup is incomplete. Please contact support@payflux.dev.',
 };
 
 type PageProps = {

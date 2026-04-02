@@ -50,6 +50,13 @@ export async function POST(request: Request) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.payflux.dev';
 
     try {
+        // Pre-flight: verify billing store is writable before sending user to pay.
+        // If the database is down, we want to fail here (cheap to retry) rather than
+        // after payment (expensive support ticket).
+        const { getDbPool } = await import('@/lib/db/client');
+        const pool = await getDbPool();
+        await pool.query('SELECT 1');
+
         let billingCustomer = await getBillingCustomerByWorkspaceId(workspace.workspaceRecordId);
         if (!billingCustomer) {
             const client = await clerkClient();
@@ -119,8 +126,21 @@ export async function POST(request: Request) {
         return NextResponse.json({ url: session.url });
     } catch (err) {
         console.error('[CHECKOUT_SESSION] Failed to create Stripe checkout session:', err);
+
+        // Distinguish DB connectivity failures from Stripe failures
+        const isDatabaseError = (err as Error).message?.includes('pool') ||
+            (err as Error).message?.includes('ECONNREFUSED') ||
+            (err as Error).message?.includes('timeout');
+        
+        if (isDatabaseError) {
+            return NextResponse.json(
+                { error: 'Our billing system is temporarily unavailable. Please try again in a few minutes.' },
+                { status: 503 }
+            );
+        }
+
         return NextResponse.json(
-            { error: 'Failed to create checkout session' },
+            { error: 'Something went wrong starting payment. Please try again.' },
             { status: 502 }
         );
     }

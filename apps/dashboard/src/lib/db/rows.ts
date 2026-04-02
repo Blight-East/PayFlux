@@ -7,6 +7,7 @@ import type {
     MonitoredEntityRow,
     ProcessorConnectionRow,
     ReserveProjectionRow,
+    WorkspaceApiKeyRow,
     WorkspaceRow,
 } from './types';
 
@@ -193,5 +194,20 @@ export function mapReserveProjectionRow(row: Record<string, unknown>): ReservePr
         volume_mode: String(row.volume_mode),
         projected_at: normalizeTimestamp(row.projected_at) ?? new Date().toISOString(),
         created_at: normalizeTimestamp(row.created_at) ?? new Date().toISOString(),
+    };
+}
+
+export function mapWorkspaceApiKeyRow(row: Record<string, unknown>): WorkspaceApiKeyRow {
+    return {
+        id: String(row.id),
+        workspace_id: String(row.workspace_id),
+        label: String(row.label),
+        key_prefix: String(row.key_prefix),
+        key_hash: String(row.key_hash),
+        created_by_clerk_user_id: row.created_by_clerk_user_id ? String(row.created_by_clerk_user_id) : null,
+        last_used_at: normalizeTimestamp(row.last_used_at),
+        revoked_at: normalizeTimestamp(row.revoked_at),
+        created_at: normalizeTimestamp(row.created_at) ?? new Date().toISOString(),
+        updated_at: normalizeTimestamp(row.updated_at) ?? new Date().toISOString(),
     };
 }

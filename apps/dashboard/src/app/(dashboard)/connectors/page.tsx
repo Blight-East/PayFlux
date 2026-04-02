@@ -1,88 +1,132 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
 import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { findWorkspaceById } from '@/lib/db/workspaces';
+import { resolveActivationStatus } from '@/lib/activation-state';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
+
+function formatTimestamp(value: string | null | undefined): string {
+    if (!value) return 'Not available';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleString();
+}
+
+function maskStripeAccountId(value: string | null | undefined): string {
+    if (!value) return 'Not connected';
+    if (value.length <= 8) return value;
+    return `${value.slice(0, 8)}...${value.slice(-4)}`;
+}
 
 export const runtime = 'nodejs';
 
 export default async function ConnectorsPage() {
     const { userId } = await auth();
-    if (!userId) redirect('/sign-in');
+    if (!userId) {
+        redirect('/sign-in?redirect_url=%2Fconnectors');
+    }
 
     const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
-    if (!workspace) redirect('/scan');
+    if (!workspace) {
+        redirect('/scan');
+    }
 
-    const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId);
-    const isConnected = processorConnection?.status === 'connected';
+    if (workspace.role !== 'admin') {
+        redirect('/dashboard');
+    }
+
+    const [workspaceRecord, processorConnection, monitoredEntity, activation] = await Promise.all([
+        findWorkspaceById(workspace.workspaceRecordId),
+        getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+        getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId),
+        resolveActivationStatus(userId),
+    ]);
+
+    const stripeConnected = processorConnection?.status === 'connected';
+    const activationState = activation?.state ?? workspace.activationState ?? 'not_started';
+    const primaryHost = monitoredEntity?.primary_host ?? workspaceRecord?.primary_host_candidate ?? null;
 
     return (
-        <div className="p-8 max-w-4xl">
+        <div className="p-8 max-w-5xl">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Connectors</h2>
-                <p className="text-gray-500 text-sm mt-1">Processor connections for this workspace.</p>
+                <h2 className="text-2xl font-bold text-white tracking-tight">Connectors</h2>
+                <p className="text-slate-500 text-sm mt-1">Connect Stripe through OAuth and let PayFlux activate live monitoring inside your workspace.</p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-[#635BFF]/10 rounded-xl flex items-center justify-center">
-                            <span className="text-[#635BFF] font-bold text-lg">S</span>
-                        </div>
+            <div className="grid gap-6">
+                <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                            <h3 className="text-base font-semibold text-gray-900">Stripe</h3>
-                            <p className="text-xs text-gray-500 mt-0.5">Connected via Stripe Connect OAuth</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Primary processor</p>
+                            <h3 className="mt-2 text-lg font-semibold text-white">Stripe</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                                This hosted flow is OAuth-first. Customers do not need to paste webhook secrets here for the core Stripe onboarding path.
+                            </p>
                         </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                        <span className={`text-xs font-medium ${isConnected ? 'text-emerald-600' : 'text-slate-500'}`}>
-                            {isConnected ? 'Connected' : 'Not connected'}
-                        </span>
+                        <a
+                            href="/api/stripe/authorize"
+                            className="inline-flex items-center justify-center rounded bg-white px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-slate-200"
+                        >
+                            {stripeConnected ? 'Reconnect Stripe' : 'Connect Stripe'}
+                        </a>
                     </div>
                 </div>
 
-                {isConnected && processorConnection ? (
-                    <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 gap-6">
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Account ID</p>
-                            <p className="text-sm font-mono text-gray-700">
-                                {processorConnection.stripe_account_id
-                                    ? `${processorConnection.stripe_account_id.slice(0, 14)}...`
-                                    : 'Unknown'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Connected at</p>
-                            <p className="text-sm text-gray-700">
-                                {processorConnection.connected_at
-                                    ? new Date(processorConnection.connected_at).toLocaleDateString('en-US', {
-                                        month: 'short', day: 'numeric', year: 'numeric',
-                                    })
-                                    : 'Unknown'}
-                            </p>
-                        </div>
-                        {processorConnection.oauth_scope && (
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-white">Connection state</h3>
+                        <div className="mt-4 space-y-4 text-sm">
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Scope</p>
-                                <p className="text-sm text-gray-700">{processorConnection.oauth_scope}</p>
+                                <p className="text-slate-500">Status</p>
+                                <p className={stripeConnected ? 'text-emerald-400' : 'text-slate-300'}>
+                                    {stripeConnected ? 'Connected' : 'Not connected'}
+                                </p>
                             </div>
-                        )}
+                            <div>
+                                <p className="text-slate-500">Stripe account</p>
+                                <p className="font-mono text-slate-300">{maskStripeAccountId(processorConnection?.stripe_account_id)}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Connected at</p>
+                                <p className="text-slate-300">{formatTimestamp(processorConnection?.connected_at)}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">OAuth scope</p>
+                                <p className="text-slate-300">{processorConnection?.oauth_scope ?? 'Not available'}</p>
+                            </div>
+                        </div>
                     </div>
-                ) : (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">
-                            No processor is connected to this workspace. Complete the activation flow to connect Stripe.
-                        </p>
-                        {(workspace.tier === 'pro' || workspace.tier === 'enterprise') && (
-                            <a
-                                href="/activate"
-                                className="mt-4 inline-flex items-center rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-medium text-white no-underline transition-colors hover:bg-[#08539e]"
-                            >
-                                Connect Stripe
-                            </a>
-                        )}
+
+                    <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-white">Activation state</h3>
+                        <div className="mt-4 space-y-4 text-sm">
+                            <div>
+                                <p className="text-slate-500">Workspace activation</p>
+                                <p className="text-slate-300">{activationState}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Primary monitored host</p>
+                                <p className="text-slate-300">{primaryHost ?? 'Not resolved yet'}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Live monitoring</p>
+                                <p className={activationState === 'live_monitored' ? 'text-emerald-400' : 'text-slate-300'}>
+                                    {activationState === 'live_monitored' ? 'Active' : 'Not live yet'}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                )}
+                </div>
+
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-6">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-amber-400">What this page no longer assumes</h3>
+                    <div className="mt-3 space-y-2 text-sm text-slate-300">
+                        <p>Webhook secrets are not the main self-serve path for hosted Stripe onboarding.</p>
+                        <p>The customer-facing product path is: pay, connect Stripe, let activation run, then land in the live dashboard.</p>
+                        <p>If activation is stuck, the fix is usually Stripe readiness, business URL quality, or insufficient recent activity.</p>
+                    </div>
+                </div>
             </div>
         </div>
     );

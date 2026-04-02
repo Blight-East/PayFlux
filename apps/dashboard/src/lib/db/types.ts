@@ -179,3 +179,16 @@ export interface ReserveProjectionRow {
     projected_at: string;
     created_at: string;
 }
+
+export interface WorkspaceApiKeyRow {
+    id: string;
+    workspace_id: string;
+    label: string;
+    key_prefix: string;
+    key_hash: string;
+    created_by_clerk_user_id: string | null;
+    last_used_at: string | null;
+    revoked_at: string | null;
+    created_at: string;
+    updated_at: string;
+}

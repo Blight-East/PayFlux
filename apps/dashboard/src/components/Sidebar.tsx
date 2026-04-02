@@ -38,6 +38,11 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
         minRole: 'admin',
     },
     {
+        label: 'API Keys',
+        href: '/api-keys',
+        minRole: 'admin',
+    },
+    {
         label: 'Settings',
         href: '/settings',
         minRole: 'admin',

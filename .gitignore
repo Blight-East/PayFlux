@@ -47,3 +47,9 @@ launch_reports/
 
 # Local Netlify folder
 .netlify
+
+# Local screenshots / browser debug output
+output/
+apps/dashboard/output/
+apps/dashboard/.playwright-cli/
+payflux-site/output/

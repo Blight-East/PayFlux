@@ -6,6 +6,7 @@
  * - SQLite when no DATABASE_URL (local development)
  */
 
+import crypto from 'crypto';
 import { type Account, type PricingTier } from './tier-enforcement';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -245,6 +246,65 @@ export async function resolveAccount(userId: string | null): Promise<Account | n
  * @returns Account object or null if not found
  */
 export async function resolveAccountFromAPIKey(apiKey: string): Promise<Account | null> {
+    if (process.env.DATABASE_URL) {
+        try {
+            const { dbQuery } = await import('./db/client');
+            const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+            const { rows } = await dbQuery<{
+                key_id: string;
+                workspace_id: string;
+                entitlement_tier: string;
+            }>(
+                `
+                SELECT
+                    k.id AS key_id,
+                    w.id AS workspace_id,
+                    w.entitlement_tier
+                FROM workspace_api_keys k
+                INNER JOIN workspaces w
+                    ON w.id = k.workspace_id
+                WHERE k.key_hash = $1
+                  AND k.revoked_at IS NULL
+                  AND w.deleted_at IS NULL
+                LIMIT 1
+                `,
+                [keyHash]
+            );
+
+            const row = rows[0];
+            if (row) {
+                await dbQuery(
+                    `
+                    UPDATE workspace_api_keys
+                    SET
+                        last_used_at = now(),
+                        updated_at = now()
+                    WHERE id = $1
+                    `,
+                    [row.key_id]
+                ).catch(() => null);
+
+                const tier = validateTier(String(row.entitlement_tier));
+                return {
+                    id: `acc_workspace_${row.workspace_id}`,
+                    billingTier: tier,
+                    tierHistory: [
+                        {
+                            billingTier: tier,
+                            changedAt: new Date().toISOString(),
+                            reason: 'workspace_api_key',
+                        },
+                    ],
+                };
+            }
+
+            return null;
+        } catch (error) {
+            console.error('[API_KEY_RESOLUTION_FAILED]', error);
+            return null;
+        }
+    }
+
     const store = await getDB();
     const accountId = `acc_api_${apiKey.slice(0, 8)}`;
 

@@ -24,6 +24,7 @@ import Success from './pages/Success';
 import Cancel from './pages/Cancel';
 import Reports from './pages/Reports';
 import ReportDetail from './pages/ReportDetail';
+import ProofAsset from './pages/ProofAsset';
 
 const App = () => {
     return (
@@ -53,6 +54,7 @@ const App = () => {
                 <Route path="/cancel" element={<Cancel />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/reports/:slug" element={<ReportDetail />} />
+                <Route path="/proof-asset" element={<ProofAsset />} />
                 <Route path="*" element={<Home />} />
             </Routes>
         </BrowserRouter>

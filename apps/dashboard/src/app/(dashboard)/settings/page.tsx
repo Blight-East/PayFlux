@@ -1,122 +1,108 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { resolveWorkspace } from '@/lib/resolve-workspace';
 import { resolveActivationStatus } from '@/lib/activation-state';
+import { getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
 import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { findWorkspaceById } from '@/lib/db/workspaces';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
+import ManageBillingSection from '@/components/ManageBillingSection';
+
+function formatTimestamp(value: string | null | undefined): string {
+    if (!value) return 'Not available';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleString();
+}
 
 export const runtime = 'nodejs';
 
-function tierLabel(tier: string): string {
-    switch (tier) {
-        case 'enterprise': return 'Enterprise';
-        case 'pro': return 'Pro';
-        default: return 'Free';
-    }
-}
-
-function activationLabel(state: string | undefined): { text: string; color: string } {
-    switch (state) {
-        case 'active': return { text: 'Active', color: 'bg-emerald-500' };
-        case 'paid_unconnected': return { text: 'Awaiting processor connection', color: 'bg-amber-500' };
-        case 'connected_generating': return { text: 'Activation in progress', color: 'bg-amber-500' };
-        default: return { text: 'Not activated', color: 'bg-slate-400' };
-    }
-}
-
-function paymentLabel(status: string | undefined): { text: string; color: string } {
-    switch (status) {
-        case 'current': return { text: 'Current', color: 'text-emerald-600' };
-        case 'past_due': return { text: 'Past due', color: 'text-red-600' };
-        case 'cancelled': return { text: 'Cancelled', color: 'text-slate-500' };
-        default: return { text: 'No subscription', color: 'text-slate-500' };
-    }
-}
-
 export default async function SettingsPage() {
     const { userId } = await auth();
-    if (!userId) redirect('/sign-in');
+    if (!userId) {
+        redirect('/sign-in?redirect_url=%2Fsettings');
+    }
 
     const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
-    if (!workspace) redirect('/scan');
+    if (!workspace) {
+        redirect('/scan');
+    }
 
-    const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId);
-    const activation = await resolveActivationStatus(userId);
+    if (workspace.role !== 'admin') {
+        redirect('/dashboard');
+    }
 
-    const tier = tierLabel(workspace.tier);
-    const activationState = activationLabel(workspace.activationState);
-    const payment = paymentLabel(workspace.paymentStatus);
+    const [workspaceRecord, processorConnection, monitoredEntity, activation] = await Promise.all([
+        findWorkspaceById(workspace.workspaceRecordId),
+        getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+        getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId),
+        resolveActivationStatus(userId),
+    ]);
 
     return (
-        <div className="p-8 max-w-4xl">
+        <div className="p-8 max-w-5xl">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Settings</h2>
-                <p className="text-gray-500 text-sm mt-1">Workspace configuration and subscription details.</p>
+                <h2 className="text-2xl font-bold text-white tracking-tight">Workspace Settings</h2>
+                <p className="text-slate-500 text-sm mt-1">Truthful workspace state, billing state, and activation readiness.</p>
             </div>
 
-            <div className="space-y-6">
-                {/* Subscription */}
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                    <h3 className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold mb-6">Subscription</h3>
-                    <div className="grid grid-cols-2 gap-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+                <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-white">Workspace</h3>
+                    <div className="mt-4 space-y-4 text-sm">
                         <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Plan</p>
-                            <p className="text-lg font-semibold text-gray-900">{tier}</p>
+                            <p className="text-slate-500">Name</p>
+                            <p className="text-slate-300">{workspace.workspaceName}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Payment status</p>
-                            <p className={`text-lg font-semibold ${payment.color}`}>{payment.text}</p>
+                            <p className="text-slate-500">Tier</p>
+                            <p className="text-slate-300">{workspace.tier}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-500">Payment status</p>
+                            <p className="text-slate-300">{workspace.paymentStatus ?? 'none'}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-500">Activation state</p>
+                            <p className="text-slate-300">{activation?.state ?? workspace.activationState ?? 'not_started'}</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Activation state */}
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                    <h3 className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold mb-6">Activation</h3>
-                    <div className="grid grid-cols-2 gap-6">
+                <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-white">Monitoring readiness</h3>
+                    <div className="mt-4 space-y-4 text-sm">
                         <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Status</p>
-                            <div className="flex items-center space-x-2">
-                                <div className={`w-2 h-2 rounded-full ${activationState.color}`} />
-                                <p className="text-sm font-medium text-gray-900">{activationState.text}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Processor</p>
-                            <p className="text-sm font-medium text-gray-900">
-                                {processorConnection?.status === 'connected'
-                                    ? `Stripe (${processorConnection.stripe_account_id?.slice(0, 12)}...)`
-                                    : 'Not connected'}
+                            <p className="text-slate-500">Stripe connection</p>
+                            <p className={processorConnection?.status === 'connected' ? 'text-emerald-400' : 'text-slate-300'}>
+                                {processorConnection?.status === 'connected' ? 'Connected' : 'Not connected'}
                             </p>
                         </div>
-                    </div>
-                    {activation?.meta?.activationCompletedAt && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Activated at</p>
-                            <p className="text-xs text-gray-500 font-mono">
-                                {new Date(activation.meta.activationCompletedAt).toLocaleString('en-US', {
-                                    month: 'short', day: 'numeric', year: 'numeric',
-                                    hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
-                                })} UTC
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Workspace */}
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                    <h3 className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold mb-6">Workspace</h3>
-                    <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Name</p>
-                            <p className="text-sm font-medium text-gray-900">{workspace.workspaceName}</p>
+                            <p className="text-slate-500">Primary host</p>
+                            <p className="text-slate-300">{monitoredEntity?.primary_host ?? workspaceRecord?.primary_host_candidate ?? 'Not resolved yet'}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Role</p>
-                            <p className="text-sm font-medium text-gray-900 capitalize">{workspace.role}</p>
+                            <p className="text-slate-500">Last processor connection update</p>
+                            <p className="text-slate-300">{formatTimestamp(processorConnection?.updated_at)}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-500">Last monitoring sync</p>
+                            <p className="text-slate-300">{formatTimestamp(monitoredEntity?.last_sync_at)}</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div className="mt-6 rounded-lg border border-blue-500/20 bg-blue-500/5 p-6">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-blue-300">Self-serve posture</h3>
+                <div className="mt-3 space-y-2 text-sm text-slate-300">
+                    <p>Billing and activation state shown here now reflect real workspace data instead of pilot placeholders.</p>
+                    <p>If the workspace is paid but not live, the next self-serve move is usually connecting Stripe or retrying activation.</p>
+                    <p>High-risk destructive controls stay out of this page until they are backed by real persistence and safeguards.</p>
+                </div>
+            </div>
+
+            <ManageBillingSection tier={workspace.tier} />
         </div>
     );
 }
