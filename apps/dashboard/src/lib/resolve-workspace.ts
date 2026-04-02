@@ -89,6 +89,10 @@ async function checkAdminBypass(userId: string): Promise<'user_id' | 'email' | n
     return null;
 }
 
+export async function isInternalOperatorUser(userId: string): Promise<boolean> {
+    return (await checkAdminBypass(userId)) !== null;
+}
+
 /**
  * Resolve the user's canonical Clerk organization for product routing.
  *

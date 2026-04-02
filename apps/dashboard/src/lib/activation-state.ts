@@ -16,7 +16,12 @@ import { getStripeProcessorConnectionByWorkspaceId } from './db/processor-connec
 import { getReserveProjectionById } from './db/reserve-projections';
 import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
-export type ActivationState = 'paid_unconnected' | 'connected_generating' | 'activation_failed' | 'live_monitored';
+export type ActivationState =
+    | 'paid_unconnected'
+    | 'connected_generating'
+    | 'awaiting_activity'
+    | 'activation_failed'
+    | 'live_monitored';
 
 export interface ActivationStatus {
     state: ActivationState;
@@ -93,6 +98,12 @@ export async function resolveActivationStatus(userId: string): Promise<Activatio
         conditions.projectionExists
     ) {
         state = 'live_monitored';
+    } else if (
+        conditions.processorConnected &&
+        workspace.activationState === 'activation_failed' &&
+        meta.failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY'
+    ) {
+        state = 'awaiting_activity';
     } else if (conditions.processorConnected && workspace.activationState === 'activation_failed') {
         state = 'activation_failed';
     } else if (conditions.processorConnected) {

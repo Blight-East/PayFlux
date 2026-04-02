@@ -20,7 +20,9 @@ export default async function ActivatePage() {
     if (status.state === 'live_monitored') redirect('/dashboard');
 
     // Connected but not yet live → skip to arming
-    if (status.state === 'connected_generating') redirect('/activate/arming');
+    if (status.state === 'connected_generating' || status.state === 'awaiting_activity') {
+        redirect('/activate/arming');
+    }
 
     // paid_unconnected → show activation page
     logOnboardingEvent('activate_viewed', {

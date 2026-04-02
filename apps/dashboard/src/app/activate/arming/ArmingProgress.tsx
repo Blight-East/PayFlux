@@ -97,17 +97,24 @@ function failureMessage(code?: string): string {
 
 interface ArmingProgressProps {
     initialFailure?: { code?: string; detail?: string };
+    allowInternalVerification?: boolean;
 }
 
-export default function ArmingProgress({ initialFailure }: ArmingProgressProps) {
+export default function ArmingProgress({ initialFailure, allowInternalVerification = false }: ArmingProgressProps) {
     const router = useRouter();
     const [conditions, setConditions] = useState<ActivationConditions | null>(null);
-    const [error, setError] = useState<string | null>(initialFailure ? failureMessage(initialFailure.code) : null);
-    const [activationTriggered, setActivationTriggered] = useState(false);
+    const [failureCode, setFailureCode] = useState<string | null>(initialFailure?.code ?? null);
+    const [error, setError] = useState<string | null>(
+        initialFailure?.code && initialFailure.code !== 'INSUFFICIENT_STRIPE_ACTIVITY'
+            ? failureMessage(initialFailure.code)
+            : null
+    );
+    const [activationTriggered, setActivationTriggered] = useState(Boolean(initialFailure));
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
     const [baseline, setBaseline] = useState<BaselineRiskSurface | null>(null);
     const [projection, setProjection] = useState<LatestProjection | null>(null);
+    const [internalVerifying, setInternalVerifying] = useState(false);
 
     const armingViewedRef = useRef(false);
 
@@ -139,13 +146,18 @@ export default function ArmingProgress({ initialFailure }: ArmingProgressProps) 
                     return;
                 }
                 if (data.code === 'INSUFFICIENT_STRIPE_ACTIVITY') {
-                    setError('PayFlux needs at least 10 charges and 2 payouts in the last 30 days to generate a baseline. Please try again once your Stripe account has more recent activity.');
-                    setActivationTriggered(false);
+                    setFailureCode('INSUFFICIENT_STRIPE_ACTIVITY');
+                    setError(null);
                     return;
                 }
                 if (data.code === 'PROCESSOR_ACCOUNT_NOT_READY') {
+                    setFailureCode('PROCESSOR_ACCOUNT_NOT_READY');
                     setError('Your Stripe account is not fully set up yet. Please check that charges and payouts are enabled in your Stripe Dashboard, then try again.');
-                    setActivationTriggered(false);
+                    return;
+                }
+                if (data.code === 'MONITORED_ENTITY_HOST_REQUIRED') {
+                    setFailureCode('MONITORED_ENTITY_HOST_REQUIRED');
+                    setError(failureMessage(data.code));
                     return;
                 }
             }
@@ -153,6 +165,31 @@ export default function ArmingProgress({ initialFailure }: ArmingProgressProps) 
             // Will be caught by polling
         }
     }, [activationTriggered, router]);
+
+    const runInternalVerification = useCallback(async () => {
+        setInternalVerifying(true);
+        try {
+            const res = await fetch('/api/activation/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: 'internal_demo' }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Internal verification failed');
+            }
+
+            setFailureCode(null);
+            setError(null);
+            setActivationTriggered(true);
+            setElapsedSeconds(0);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Internal verification failed');
+        } finally {
+            setInternalVerifying(false);
+        }
+    }, []);
 
     // Poll activation status (skip when showing error — user must click retry)
     useEffect(() => {
@@ -183,8 +220,16 @@ export default function ArmingProgress({ initialFailure }: ArmingProgressProps) 
 
                 if (data.state === 'activation_failed') {
                     const code = data.latestActivationRun?.failureCode;
-                    setError(failureMessage(code));
-                    setActivationTriggered(false);
+                    setFailureCode(code ?? null);
+                    setError(code === 'INSUFFICIENT_STRIPE_ACTIVITY' ? null : failureMessage(code));
+                    setActivationTriggered(true);
+                    return;
+                }
+
+                if (data.state === 'awaiting_activity') {
+                    setFailureCode('INSUFFICIENT_STRIPE_ACTIVITY');
+                    setError(null);
+                    setActivationTriggered(true);
                     return;
                 }
 
@@ -192,6 +237,8 @@ export default function ArmingProgress({ initialFailure }: ArmingProgressProps) 
                     // Capture the real baseline and projection data before marking complete
                     if (data.meta?.baselineRiskSurface) setBaseline(data.meta.baselineRiskSurface);
                     if (data.meta?.latestProjection) setProjection(data.meta.latestProjection);
+                    setFailureCode(null);
+                    setError(null);
                     setIsComplete(true);
                     logOnboardingEventClient('arming_completed', {
                         source_page: 'activate_arming',
@@ -217,6 +264,8 @@ export default function ArmingProgress({ initialFailure }: ArmingProgressProps) 
         const interval = setInterval(poll, 2000);
         return () => { cancelled = true; clearInterval(interval); };
     }, [router, activationTriggered, triggerActivation, error]);
+
+    const isAwaitingActivity = failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY' && !isComplete;
 
     // ── Completion state: show baseline numbers ─────────────────────────────
     if (isComplete) {
@@ -419,11 +468,56 @@ export default function ArmingProgress({ initialFailure }: ArmingProgressProps) 
                 </div>
 
                 {/* Error with retry */}
+                {isAwaitingActivity && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 space-y-3">
+                        <p className="text-sm text-amber-300">
+                            Stripe is connected, but PayFlux needs more recent live activity before it can generate your first real baseline.
+                        </p>
+                        <div className="space-y-1 text-xs text-slate-400">
+                            <p>Required before live monitoring can arm:</p>
+                            <p>- At least 10 recent charges in the last 30 days</p>
+                            <p>- At least 2 recent payouts in the last 30 days</p>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <button
+                                onClick={() => {
+                                    setFailureCode(null);
+                                    setError(null);
+                                    setActivationTriggered(false);
+                                    setElapsedSeconds(0);
+                                }}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium bg-slate-800 text-slate-200 rounded-lg hover:bg-slate-700 transition-colors"
+                            >
+                                Check again
+                            </button>
+                            <button
+                                onClick={() => router.push('/connectors')}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium bg-slate-800 text-slate-200 rounded-lg hover:bg-slate-700 transition-colors"
+                            >
+                                Review Stripe connection
+                            </button>
+                        </div>
+                        {allowInternalVerification ? (
+                            <div className="pt-2 border-t border-amber-500/10 space-y-2">
+                                <p className="text-[11px] uppercase tracking-widest text-slate-500">Internal operator tools</p>
+                                <button
+                                    onClick={runInternalVerification}
+                                    disabled={internalVerifying}
+                                    className="w-full px-4 py-2.5 text-sm font-medium bg-white text-slate-950 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-60"
+                                >
+                                    {internalVerifying ? 'Running internal verification...' : 'Run internal verification demo'}
+                                </button>
+                            </div>
+                        ) : null}
+                    </div>
+                )}
+
                 {error && (
                     <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-3">
                         <p className="text-sm text-red-400">{error}</p>
                         <button
                             onClick={() => {
+                                setFailureCode(null);
                                 setError(null);
                                 setActivationTriggered(false);
                                 setElapsedSeconds(0);
@@ -432,6 +526,15 @@ export default function ArmingProgress({ initialFailure }: ArmingProgressProps) 
                         >
                             Retry activation
                         </button>
+                        {allowInternalVerification ? (
+                            <button
+                                onClick={runInternalVerification}
+                                disabled={internalVerifying}
+                                className="w-full px-4 py-2.5 text-sm font-medium bg-white text-slate-950 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-60"
+                            >
+                                {internalVerifying ? 'Running internal verification...' : 'Run internal verification demo'}
+                            </button>
+                        ) : null}
                     </div>
                 )}
 

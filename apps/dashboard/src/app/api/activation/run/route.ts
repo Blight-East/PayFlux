@@ -19,12 +19,16 @@ import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-co
 import { createReserveProjection, getReserveProjectionById } from '@/lib/db/reserve-projections';
 import { findWorkspaceById, updateWorkspaceState } from '@/lib/db/workspaces';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
-import { resolveWorkspace } from '@/lib/resolve-workspace';
+import { isInternalOperatorUser, resolveWorkspace } from '@/lib/resolve-workspace';
 import {
     STRIPE_BASELINE_MODEL_VERSION,
     deriveBaselineAndProjection,
     fetchStripeActivationInputs,
 } from '@/lib/stripe-activation-contract';
+import {
+    INTERNAL_ACTIVATION_MODEL_VERSION,
+    buildInternalActivationDemo,
+} from '@/lib/internal-activation-demo';
 
 export const runtime = 'nodejs';
 
@@ -47,11 +51,29 @@ function failClosedResponse(code: string, error: string, state: string, steps: A
     return NextResponse.json({ error, code, state, steps }, { status });
 }
 
-export async function POST() {
+function fallbackInternalHost(workspaceName: string): string {
+    const slug = workspaceName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 32);
+
+    return `${slug || 'internal-verification'}.payflux.internal`;
+}
+
+export async function POST(request: Request) {
     const { userId } = await auth();
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    let requestedMode: 'live' | 'internal_demo' = 'live';
+    try {
+        const body = await request.json();
+        if (body?.mode === 'internal_demo') {
+            requestedMode = 'internal_demo';
+        }
+    } catch {}
 
     const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
     if (!workspace || (workspace.tier !== 'pro' && workspace.tier !== 'enterprise')) {
@@ -61,6 +83,14 @@ export async function POST() {
     const workspaceRecord = await findWorkspaceById(workspace.workspaceRecordId);
     if (!workspaceRecord) {
         return NextResponse.json({ error: 'Workspace missing', state: 'not_ready' }, { status: 404 });
+    }
+
+    const allowInternalVerification = requestedMode === 'internal_demo'
+        ? await isInternalOperatorUser(userId)
+        : false;
+
+    if (requestedMode === 'internal_demo' && !allowInternalVerification) {
+        return NextResponse.json({ error: 'Forbidden', code: 'INTERNAL_VERIFICATION_FORBIDDEN' }, { status: 403 });
     }
 
     const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId);
@@ -128,11 +158,16 @@ export async function POST() {
     const steps: ActivationStep[] = [];
 
     try {
-        const activationInputs = await fetchStripeActivationInputs(processorConnection.stripe_account_id);
         steps.push({ step: 'processor_check', status: 'completed', detail: processorConnection.stripe_account_id });
 
         let activationMonitoredEntity = monitoredEntity;
-        if (!activationMonitoredEntity.primary_host && activationInputs.account.businessUrl) {
+        let activationInputs = null;
+
+        if (requestedMode === 'live') {
+            activationInputs = await fetchStripeActivationInputs(processorConnection.stripe_account_id);
+        }
+
+        if (!activationMonitoredEntity.primary_host && activationInputs?.account.businessUrl) {
             const hydrated = await hydrateMonitoredEntityPrimaryHost({
                 workspaceId: workspace.workspaceRecordId,
                 primaryHost: activationInputs.account.businessUrl,
@@ -148,11 +183,33 @@ export async function POST() {
             }
         }
 
+        if (!activationMonitoredEntity.primary_host && requestedMode === 'internal_demo') {
+            const hydrated = await hydrateMonitoredEntityPrimaryHost({
+                workspaceId: workspace.workspaceRecordId,
+                primaryHost: workspaceRecord.primary_host_candidate || fallbackInternalHost(workspace.workspaceName),
+                primaryHostSource: workspaceRecord.primary_host_candidate ? 'scan' : 'manual',
+            });
+            if (hydrated) {
+                activationMonitoredEntity = hydrated;
+                steps.push({
+                    step: 'monitored_host_hydration',
+                    status: 'completed',
+                    detail: activationMonitoredEntity.primary_host ?? fallbackInternalHost(workspace.workspaceName),
+                });
+            }
+        }
+
         if (!activationMonitoredEntity.primary_host) {
             throw new Error('MONITORED_ENTITY_HOST_REQUIRED');
         }
 
-        const computed = deriveBaselineAndProjection(activationInputs);
+        const computed = requestedMode === 'internal_demo'
+            ? buildInternalActivationDemo({
+                workspaceName: workspace.workspaceName,
+                stripeAccountId: processorConnection.stripe_account_id,
+                primaryHost: activationMonitoredEntity.primary_host,
+            })
+            : deriveBaselineAndProjection(activationInputs!);
 
         const computedAt = new Date().toISOString();
         const baselineSnapshot = await createBaselineSnapshot({
@@ -174,7 +231,9 @@ export async function POST() {
             monitoredEntityId: activationMonitoredEntity.id,
             baselineSnapshotId: baselineSnapshot.id,
             activationRunId: pendingRun.id,
-            modelVersion: STRIPE_BASELINE_MODEL_VERSION,
+            modelVersion: requestedMode === 'internal_demo'
+                ? INTERNAL_ACTIVATION_MODEL_VERSION
+                : STRIPE_BASELINE_MODEL_VERSION,
             instabilitySignal: computed.instabilitySignal,
             currentRiskTier: computed.riskTier,
             trend: computed.trend,
@@ -220,7 +279,10 @@ export async function POST() {
                 baselineSnapshotId: baselineSnapshot.id,
                 reserveProjectionId: reserveProjection.id,
                 stripeAccountId: processorConnection.stripe_account_id,
-                modelVersion: STRIPE_BASELINE_MODEL_VERSION,
+                modelVersion: requestedMode === 'internal_demo'
+                    ? INTERNAL_ACTIVATION_MODEL_VERSION
+                    : STRIPE_BASELINE_MODEL_VERSION,
+                mode: requestedMode,
             },
         });
 
@@ -264,7 +326,7 @@ export async function POST() {
                     : failureCode === 'MONITORED_ENTITY_HOST_REQUIRED'
                         ? 'Connected Stripe account does not expose a usable business host for scoped monitoring'
                     : 'Activation failed',
-            'connected_generating',
+            failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY' ? 'awaiting_activity' : 'connected_generating',
             steps,
             responseStatus
         );
@@ -313,7 +375,14 @@ export async function GET() {
     if (conditions.processorConnected) {
         state = 'connected_generating';
     }
-    if (conditions.processorConnected && workspaceRecord.activation_state === 'activation_failed') {
+    if (
+        conditions.processorConnected &&
+        workspaceRecord.activation_state === 'activation_failed' &&
+        latestActivationRun?.failure_code === 'INSUFFICIENT_STRIPE_ACTIVITY'
+    ) {
+        state = 'awaiting_activity';
+    }
+    if (conditions.processorConnected && workspaceRecord.activation_state === 'activation_failed' && state !== 'awaiting_activity') {
         state = 'activation_failed';
     }
     if (workspaceRecord.activation_state === 'active' && conditions.baselineGenerated && conditions.projectionExists) {

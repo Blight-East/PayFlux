@@ -25,7 +25,7 @@ export default async function SetupPage() {
         if (!activation || activation.state === 'paid_unconnected') {
             redirect('/activate');
         }
-        if (activation.state === 'connected_generating') {
+        if (activation.state === 'connected_generating' || activation.state === 'awaiting_activity' || activation.state === 'activation_failed') {
             redirect('/activate/arming');
         }
         redirect('/dashboard');

@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { resolveActivationStatus } from '@/lib/activation-state';
+import { isInternalOperatorUser } from '@/lib/resolve-workspace';
 import ArmingProgress from './ArmingProgress';
 
 export const runtime = 'nodejs';
@@ -23,7 +24,10 @@ export default async function ArmingPage() {
     const { userId } = await auth();
     if (!userId) redirect('/sign-in?redirect_url=%2Factivate%2Farming');
 
-    const status = await resolveActivationStatus(userId);
+    const [status, allowInternalVerification] = await Promise.all([
+        resolveActivationStatus(userId),
+        isInternalOperatorUser(userId),
+    ]);
 
     // Not paid → this flow is post-purchase only
     if (!status) redirect('/start');
@@ -34,13 +38,24 @@ export default async function ArmingPage() {
             redirect('/activate');
         case 'live_monitored':
             redirect('/dashboard');
+        case 'awaiting_activity':
+            return <ArmingProgress
+                initialFailure={{
+                    code: status.meta.failureCode,
+                    detail: status.meta.failureDetail,
+                }}
+                allowInternalVerification={allowInternalVerification}
+            />;
         case 'activation_failed':
-            return <ArmingProgress initialFailure={{
-                code: status.meta.failureCode,
-                detail: status.meta.failureDetail,
-            }} />;
+            return <ArmingProgress
+                initialFailure={{
+                    code: status.meta.failureCode,
+                    detail: status.meta.failureDetail,
+                }}
+                allowInternalVerification={allowInternalVerification}
+            />;
         case 'connected_generating':
-            return <ArmingProgress />;
+            return <ArmingProgress allowInternalVerification={allowInternalVerification} />;
         default:
             redirect('/start');
     }
