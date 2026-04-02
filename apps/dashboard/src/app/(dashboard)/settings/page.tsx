@@ -1,79 +1,108 @@
-'use client';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { resolveActivationStatus } from '@/lib/activation-state';
+import { getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { findWorkspaceById } from '@/lib/db/workspaces';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
+import ManageBillingSection from '@/components/ManageBillingSection';
 
-import { useState } from 'react';
+function formatTimestamp(value: string | null | undefined): string {
+    if (!value) return 'Not available';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Not available';
+    return date.toLocaleString();
+}
 
-export default function SettingsPage() {
-    const [inboundEnabled, setInboundEnabled] = useState(true);
-    const [outboundEnabled, setOutboundEnabled] = useState(true);
+export const runtime = 'nodejs';
+
+export default async function SettingsPage() {
+    const { userId } = await auth();
+    if (!userId) {
+        redirect('/sign-in?redirect_url=%2Fsettings');
+    }
+
+    const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
+    if (!workspace) {
+        redirect('/scan');
+    }
+
+    if (workspace.role !== 'admin') {
+        redirect('/dashboard');
+    }
+
+    const [workspaceRecord, processorConnection, monitoredEntity, activation] = await Promise.all([
+        findWorkspaceById(workspace.workspaceRecordId),
+        getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+        getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId),
+        resolveActivationStatus(userId),
+    ]);
 
     return (
-        <div className="p-8 max-w-4xl">
+        <div className="p-8 max-w-5xl">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white tracking-tight">System Settings</h2>
-                <p className="text-slate-500 text-sm mt-1">Global configuration and feature flags for the PayFlux control plane.</p>
+                <h2 className="text-2xl font-bold text-white tracking-tight">Workspace Settings</h2>
+                <p className="text-slate-500 text-sm mt-1">Truthful workspace state, billing state, and activation readiness.</p>
             </div>
 
-            <div className="space-y-6">
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">Subscription & Tiers</h3>
-                    <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-900 rounded">
+            <div className="grid gap-6 lg:grid-cols-2">
+                <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-white">Workspace</h3>
+                    <div className="mt-4 space-y-4 text-sm">
                         <div>
-                            <p className="text-[#0A64BC] font-bold text-lg tracking-tight">Tier 2 <span className="text-slate-600 font-normal text-sm ml-2">Enterprise</span></p>
-                            <p className="text-xs text-slate-500 mt-1">Full access to Pilot warnings dashboard and outcome annotations.</p>
+                            <p className="text-slate-500">Name</p>
+                            <p className="text-slate-300">{workspace.workspaceName}</p>
                         </div>
-                        <div className="text-xs text-slate-400">
-                            Renews: <span className="text-white">Monthly</span>
+                        <div>
+                            <p className="text-slate-500">Tier</p>
+                            <p className="text-slate-300">{workspace.tier}</p>
                         </div>
-                    </div>
-                    <div className="mt-6 flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                        <span className="text-xs text-slate-500 font-medium">Pilot Mode Enabled</span>
+                        <div>
+                            <p className="text-slate-500">Payment status</p>
+                            <p className="text-slate-300">{workspace.paymentStatus ?? 'none'}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-500">Activation state</p>
+                            <p className="text-slate-300">{activation?.state ?? workspace.activationState ?? 'not_started'}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">Local Control Flags</h3>
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-bold text-white">Disable inbound webhooks</p>
-                                <p className="text-xs text-slate-500">Stop processing events from all configured processors.</p>
-                            </div>
-                            <button
-                                onClick={() => setInboundEnabled(!inboundEnabled)}
-                                className={`w-10 h-5 rounded-full transition-colors relative ${inboundEnabled ? 'bg-slate-700' : 'bg-red-900'}`}
-                            >
-                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${inboundEnabled ? 'left-6' : 'left-1'}`}></div>
-                            </button>
+                <div className="rounded-lg border border-slate-800 bg-slate-950 p-6">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-white">Monitoring readiness</h3>
+                    <div className="mt-4 space-y-4 text-sm">
+                        <div>
+                            <p className="text-slate-500">Stripe connection</p>
+                            <p className={processorConnection?.status === 'connected' ? 'text-emerald-400' : 'text-slate-300'}>
+                                {processorConnection?.status === 'connected' ? 'Connected' : 'Not connected'}
+                            </p>
                         </div>
-
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-bold text-white">Disable outbound alerts</p>
-                                <p className="text-xs text-slate-500">Suppress all notifications and Slack/PagerDuty integration.</p>
-                            </div>
-                            <button
-                                onClick={() => setOutboundEnabled(!outboundEnabled)}
-                                className={`w-10 h-5 rounded-full transition-colors relative ${outboundEnabled ? 'bg-slate-700' : 'bg-red-900'}`}
-                            >
-                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${outboundEnabled ? 'left-6' : 'left-1'}`}></div>
-                            </button>
+                        <div>
+                            <p className="text-slate-500">Primary host</p>
+                            <p className="text-slate-300">{monitoredEntity?.primary_host ?? workspaceRecord?.primary_host_candidate ?? 'Not resolved yet'}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-500">Last processor connection update</p>
+                            <p className="text-slate-300">{formatTimestamp(processorConnection?.updated_at)}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-500">Last monitoring sync</p>
+                            <p className="text-slate-300">{formatTimestamp(monitoredEntity?.last_sync_at)}</p>
                         </div>
                     </div>
-                    <p className="mt-8 text-[10px] text-slate-600 leading-relaxed max-w-xl">
-                        Note: These toggles only affect the control-plane routing layer. They do not modify the core PayFlux scoring
-                        engine or internal verification logic. All changes are local to this instance.
-                    </p>
-                </div>
-
-                <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-6">
-                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-widest mb-4">Danger Zone</h3>
-                    <p className="text-xs text-slate-500 mb-6">Permanently delete all workspace data and disconnect all connectors.</p>
-                    <button className="px-4 py-2 bg-red-900/20 border border-red-500/30 text-red-500 text-xs font-bold rounded hover:bg-red-900/40 transition-colors">
-                        Destroy Workspace
-                    </button>
                 </div>
             </div>
+
+            <div className="mt-6 rounded-lg border border-blue-500/20 bg-blue-500/5 p-6">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-blue-300">Self-serve posture</h3>
+                <div className="mt-3 space-y-2 text-sm text-slate-300">
+                    <p>Billing and activation state shown here now reflect real workspace data instead of pilot placeholders.</p>
+                    <p>If the workspace is paid but not live, the next self-serve move is usually connecting Stripe or retrying activation.</p>
+                    <p>High-risk destructive controls stay out of this page until they are backed by real persistence and safeguards.</p>
+                </div>
+            </div>
+
+            <ManageBillingSection tier={workspace.tier} />
         </div>
     );
 }

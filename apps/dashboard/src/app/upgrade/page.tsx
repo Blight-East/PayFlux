@@ -21,6 +21,21 @@ export default async function UpgradePage() {
         redirect('/dashboard');
     }
 
+    // Reconciliation sweep: if the user has a workspace but is showing as not-upgraded,
+    // check Stripe directly for orphaned active subscriptions (e.g. webhook missed).
+    if (onboarding.workspace) {
+        try {
+            const { reconcileOrphanedSubscription } = await import('@/lib/reconcile-subscription');
+            const healed = await reconcileOrphanedSubscription(onboarding.workspace.workspaceRecordId);
+            if (healed) {
+                redirect('/activate');
+            }
+        } catch (error) {
+            console.error('[UPGRADE] Reconciliation sweep failed:', (error as Error).message);
+            // Non-fatal — continue showing upgrade page
+        }
+    }
+
     logOnboardingEvent('upgrade_viewed', {
         userId,
         workspaceId: onboarding.workspace?.workspaceId,
