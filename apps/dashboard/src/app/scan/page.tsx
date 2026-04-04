@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
+import { writeStoredScanAttribution, writeStoredScanResult } from '@/lib/scan-storage';
 
 function normalizeUrl(input: string): string {
     let s = input.trim();
@@ -46,7 +47,7 @@ export default function ScanPage() {
     };
 
     useEffect(() => {
-        sessionStorage.setItem('payflux_scan_attribution', JSON.stringify(attribution));
+        writeStoredScanAttribution(attribution);
         logOnboardingEventClient('scan_viewed', { source_page: 'scan', ...attribution });
     }, [entryCta, entryJourney, entrySource]);
 
@@ -105,11 +106,11 @@ export default function ScanPage() {
             const data = await response.json();
 
             // Store result for results page
-            sessionStorage.setItem('payflux_scan_result', JSON.stringify({ url: domain, data }));
-            sessionStorage.setItem('payflux_scan_attribution', JSON.stringify({
+            writeStoredScanResult({ url: domain, data });
+            writeStoredScanAttribution({
                 ...attribution,
                 scanned_domain: domain,
-            }));
+            });
 
             // Persist scan completion + summary when the user is signed in.
             // Anonymous users still get the result in-session via sessionStorage.

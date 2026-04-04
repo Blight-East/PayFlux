@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
 import { useScanData } from '@/lib/use-scan-data';
+import { readStoredScanAttribution } from '@/lib/scan-storage';
 
 const SEVERITY_STYLE: Record<string, string> = {
     high: 'bg-red-500/10 text-red-400 border-red-500/20',
@@ -55,13 +56,7 @@ export default function ScanResultsPage() {
     const { userId } = useAuth();
     const { scanData: result, loading } = useScanData();
     const attribution = useMemo(() => {
-        if (typeof window === 'undefined') return {};
-        try {
-            const raw = sessionStorage.getItem('payflux_scan_attribution');
-            return raw ? JSON.parse(raw) : {};
-        } catch {
-            return {};
-        }
+        return readStoredScanAttribution<Record<string, unknown>>();
     }, []);
 
     useEffect(() => {

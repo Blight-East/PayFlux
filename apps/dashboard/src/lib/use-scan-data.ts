@@ -1,20 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-export interface ScanData {
-    url: string;
-    data: {
-        riskLabel?: string;
-        riskScore?: number;
-        stabilityScore?: number;
-        findings?: Array<{
-            title: string;
-            description: string;
-            severity?: string;
-        }>;
-    };
-}
+import { readStoredScanResult, writeStoredScanResult, type ScanData } from '@/lib/scan-storage';
 
 /**
  * Load scan data from sessionStorage (fast) with API fallback (durable).
@@ -33,16 +20,13 @@ export function useScanData(): { scanData: ScanData | null; loading: boolean } {
         let cancelled = false;
 
         // 1. Try sessionStorage first
-        const stored = sessionStorage.getItem('payflux_scan_result');
+        const stored = readStoredScanResult();
         if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (!cancelled) {
-                    setScanData(parsed);
-                    setLoading(false);
-                }
-                return;
-            } catch { /* fall through to API */ }
+            if (!cancelled) {
+                setScanData(stored);
+                setLoading(false);
+            }
+            return;
         }
 
         // 2. Fetch from API (durable persistence)
@@ -62,7 +46,7 @@ export function useScanData(): { scanData: ScanData | null; loading: boolean } {
                     };
                     setScanData(result);
                     // Cache in sessionStorage for subsequent reads
-                    sessionStorage.setItem('payflux_scan_result', JSON.stringify(result));
+                    writeStoredScanResult(result);
                 }
                 setLoading(false);
             })
