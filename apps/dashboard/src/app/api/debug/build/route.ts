@@ -26,7 +26,7 @@ function withProvenanceHeaders(res: NextResponse) {
 }
 
 export async function GET(req: Request) {
-    if (process.env.NODE_ENV !== 'development') {
+    if (process.env.NODE_ENV !== 'development' || process.env.DASHBOARD_DEBUG_ROUTES !== 'true') {
         return new NextResponse('Not Found', { status: 404 });
     }
 

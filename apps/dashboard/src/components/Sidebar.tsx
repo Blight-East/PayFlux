@@ -19,18 +19,10 @@ type SidebarItem = {
     requiredFeature?: Feature;
 };
 
-const SIDEBAR_ITEMS: SidebarItem[] = [
+const PRIMARY_ITEMS: SidebarItem[] = [
     {
         label: 'Dashboard',
         href: '/dashboard',
-    },
-    {
-        label: 'Forecast Confidence',
-        href: '/dashboard/governance',
-    },
-    {
-        label: 'Check Export',
-        href: '/dashboard/verify',
     },
     {
         label: 'Connectors',
@@ -49,6 +41,17 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     },
 ];
 
+const TECHNICAL_ITEMS: SidebarItem[] = [
+    {
+        label: 'Forecast Confidence',
+        href: '/dashboard/governance',
+    },
+    {
+        label: 'Check Export',
+        href: '/dashboard/verify',
+    },
+];
+
 /**
  * Gating Logic
  */
@@ -64,12 +67,19 @@ function roleAllowed(
 export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) {
     const pathname = usePathname();
 
-    const visibleItems = SIDEBAR_ITEMS.filter(item =>
+    const visiblePrimaryItems = PRIMARY_ITEMS.filter(item =>
         roleAllowed(workspace.role, item.minRole) &&
         (!item.requiredFeature || canAccess(workspace.tier, item.requiredFeature))
     );
 
-    const lockedItems = SIDEBAR_ITEMS.filter(item => !visibleItems.includes(item));
+    const visibleTechnicalItems = TECHNICAL_ITEMS.filter(item =>
+        roleAllowed(workspace.role, item.minRole) &&
+        (!item.requiredFeature || canAccess(workspace.tier, item.requiredFeature))
+    );
+
+    const lockedItems = [...PRIMARY_ITEMS, ...TECHNICAL_ITEMS].filter(
+        item => !visiblePrimaryItems.includes(item) && !visibleTechnicalItems.includes(item)
+    );
 
     return (
         <div className="flex h-screen w-64 flex-col bg-[#0F172A] text-slate-200">
@@ -86,27 +96,45 @@ export default function Sidebar({ workspace }: { workspace: WorkspaceContext }) 
                     <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
                 </div>
                 <nav className="space-y-1 p-4">
-                    {visibleItems.map((item) => {
+                    {visiblePrimaryItems.map((item) => {
                         const isActive = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard');
-                        const isSubordinate = item.href === '/dashboard/diagnostics' || item.href === '/dashboard/governance' || item.href === '/dashboard/verify';
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`block rounded-lg px-4 py-2.5 no-underline transition-colors ${isSubordinate
-                                    ? `text-xs ${isActive
-                                        ? 'bg-[#0A64BC]/15 text-[#8EC5FF]'
-                                        : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'}`
-                                    : `text-sm font-medium ${isActive
-                                        ? 'bg-[#0A64BC]/15 text-white ring-1 ring-[#0A64BC]/30'
-                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`
-                                    }`}
+                                className={`block rounded-lg px-4 py-2.5 no-underline transition-colors text-sm font-medium ${isActive
+                                    ? 'bg-[#0A64BC]/15 text-white ring-1 ring-[#0A64BC]/30'
+                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
                             >
                                 {item.label}
                             </Link>
                         );
                     })}
                 </nav>
+
+                {visibleTechnicalItems.length > 0 && (
+                    <>
+                        <div className="px-4 pt-2">
+                            <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Technical</p>
+                        </div>
+                        <nav className="space-y-1 p-4 pt-2">
+                            {visibleTechnicalItems.map((item) => {
+                                const isActive = pathname === item.href;
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`block rounded-lg px-4 py-2.5 no-underline transition-colors text-xs ${isActive
+                                            ? 'bg-[#0A64BC]/15 text-[#8EC5FF]'
+                                            : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'}`}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                );
+                            })}
+                        </nav>
+                    </>
+                )}
 
                 {lockedItems.length > 0 && (
                     <div className="mt-6 px-4">

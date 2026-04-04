@@ -70,6 +70,9 @@ export default async function StartPage() {
                     <p className="mt-4 text-sm text-slate-500">
                         No credit card. Read-only access. Takes 60 seconds.
                     </p>
+                    <p className="mt-2 text-sm text-slate-400">
+                        Pro starts at <span className="font-semibold text-white">$499/month</span> for live monitoring.
+                    </p>
 
                     {/* Product mockup */}
                     <div className="mx-auto mt-12 max-w-lg rounded-xl border border-slate-800 bg-slate-900/60 p-6">
@@ -203,6 +206,7 @@ export default async function StartPage() {
                     <div className="mx-auto grid max-w-2xl gap-4 px-6 md:grid-cols-2">
                         <div className="rounded-lg border border-slate-800 p-6">
                             <p className="text-lg font-semibold text-white">Free</p>
+                            <p className="mt-1 text-sm text-slate-500">$0</p>
                             <ul className="mt-3 space-y-2 text-sm text-slate-400">
                                 <li>One-time scan</li>
                                 <li>Basic findings</li>
@@ -211,6 +215,7 @@ export default async function StartPage() {
                         </div>
                         <div className="rounded-lg border border-[#0A64BC]/30 bg-[#0A64BC]/5 p-6">
                             <p className="text-lg font-semibold text-white">Pro</p>
+                            <p className="mt-1 text-sm text-slate-300">$499 / month</p>
                             <ul className="mt-3 space-y-2 text-sm text-slate-400">
                                 <li>Live monitoring</li>
                                 <li>Ongoing alerts</li>

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-    if (process.env.NODE_ENV !== 'development') {
+    if (process.env.NODE_ENV !== 'development' || process.env.DASHBOARD_DEBUG_ROUTES !== 'true') {
         return new NextResponse('Not Found', { status: 404 });
     }
 

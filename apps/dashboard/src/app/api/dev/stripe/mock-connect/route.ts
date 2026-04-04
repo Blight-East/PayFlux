@@ -2,7 +2,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV !== "development" || process.env.DASHBOARD_DEV_ROUTES !== 'true') {
         return new NextResponse("Not Found", { status: 404 });
     }
 

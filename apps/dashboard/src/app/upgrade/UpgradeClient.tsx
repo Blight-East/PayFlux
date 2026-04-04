@@ -190,7 +190,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                         {!hasActualScan
                             ? 'Run a first check so the upgrade path starts from your real payout-risk warning signs, not generic assumptions.'
                             : hasStripeConnection
-                            ? 'Your processor is already connected. Pro turns live monitoring into an operator view of what may happen next, why it matters, and what to do before payouts are affected.'
+                            ? 'Your processor is already connected. Pro turns live monitoring into a clear view of what may happen next, why it matters, and what to do before payouts are affected.'
                             : 'Your scan found signs that could lead to held funds, slower payouts, or tighter account review. Connect first if you want Pro to start from live processor data on day one.'
                         }
                     </p>
