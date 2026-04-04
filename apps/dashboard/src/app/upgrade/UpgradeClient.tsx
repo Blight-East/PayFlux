@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, Shield, FileCheck } from 'lucide-react';
 import { logOnboardingEventClient } from '@/lib/onboarding-events';
@@ -11,6 +11,33 @@ interface UpgradeClientProps {
     hasScanCompleted: boolean;
     stage: string;
     workspaceId: string | null;
+}
+
+interface ActivationPreflightBlocker {
+    code: 'CONNECT_STRIPE' | 'STRIPE_ACCOUNT_SETUP' | 'BUSINESS_HOST_REQUIRED' | 'LOW_STRIPE_ACTIVITY';
+    title: string;
+    detail: string;
+    hardBlockCheckout: boolean;
+}
+
+interface ActivationPreflight {
+    status: 'ready' | 'connect_required' | 'account_setup_required' | 'host_required' | 'activity_low' | 'review';
+    summary: string;
+    recommendedNextStep: string;
+    hardBlockCheckout: boolean;
+    blockers: ActivationPreflightBlocker[];
+    checks: {
+        processorConnected: boolean;
+        accountReady: boolean | null;
+        hostReady: boolean;
+        activityReady: boolean | null;
+    };
+    activity: {
+        recentChargeCount30d: number | null;
+        recentPayoutCount30d: number | null;
+        minimumChargeCount30d: number;
+        minimumPayoutCount30d: number;
+    };
 }
 
 function riskBandStyle(label?: string) {
@@ -39,6 +66,9 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
     const { scanData } = useScanData();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [preflight, setPreflight] = useState<ActivationPreflight | null>(null);
+    const [preflightLoading, setPreflightLoading] = useState(false);
+    const [preflightError, setPreflightError] = useState<string | null>(null);
 
     const score = scanData?.data?.stabilityScore ?? scanData?.data?.riskScore ?? null;
     const label = scanData?.data?.riskLabel ?? null;
@@ -51,9 +81,53 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
         : 'Start with a scan to surface your current exposure.';
 
     const shouldConnectFirst = stage === 'scanned' && !hasStripeConnection;
+    const hardCheckoutBlock = Boolean(preflight?.hardBlockCheckout);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadPreflight() {
+            if (!workspaceId || !hasStripeConnection) {
+                setPreflight(null);
+                setPreflightError(null);
+                setPreflightLoading(false);
+                return;
+            }
+
+            setPreflightLoading(true);
+            setPreflightError(null);
+            try {
+                const res = await fetch('/api/activation/preflight');
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Unable to check activation readiness');
+                }
+                if (!cancelled) {
+                    setPreflight(data);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setPreflightError(error instanceof Error ? error.message : 'Unable to check activation readiness');
+                }
+            } finally {
+                if (!cancelled) {
+                    setPreflightLoading(false);
+                }
+            }
+        }
+
+        loadPreflight();
+        return () => {
+            cancelled = true;
+        };
+    }, [workspaceId, hasStripeConnection]);
 
     const handleCheckout = async () => {
         if (!workspaceId) return;
+        if (hardCheckoutBlock) {
+            setCheckoutError(preflight?.summary ?? 'Fix the activation blockers before starting Pro.');
+            return;
+        }
         setCheckoutLoading(true);
         setCheckoutError(null);
         logOnboardingEventClient('upgrade_checkout_clicked', {
@@ -75,7 +149,11 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                 window.location.href = data.url;
             } else {
                 setCheckoutLoading(false);
-                setCheckoutError(data.error || 'Unable to start checkout. Please try again.');
+                setCheckoutError(
+                    data.nextStep
+                        ? `${data.error || 'Unable to start checkout.'} ${data.nextStep}`
+                        : (data.error || 'Unable to start checkout. Please try again.')
+                );
             }
         } catch {
             setCheckoutLoading(false);
@@ -165,6 +243,67 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                                 )}
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {hasStripeConnection && (
+                    <div className={`rounded-xl border p-5 space-y-3 ${
+                        preflight?.status === 'ready'
+                            ? 'border-emerald-500/20 bg-emerald-500/5'
+                            : preflight?.hardBlockCheckout
+                                ? 'border-red-500/20 bg-red-500/5'
+                                : 'border-amber-500/20 bg-amber-500/5'
+                    }`}>
+                        <h2 className={`text-[10px] uppercase tracking-[0.2em] font-bold ${
+                            preflight?.status === 'ready'
+                                ? 'text-emerald-400'
+                                : preflight?.hardBlockCheckout
+                                    ? 'text-red-400'
+                                    : 'text-amber-400'
+                        }`}>
+                            Activation readiness
+                        </h2>
+
+                        {preflightLoading ? (
+                            <p className="text-sm text-slate-400">Checking Stripe readiness before checkout…</p>
+                        ) : preflightError ? (
+                            <p className="text-sm text-red-400">{preflightError}</p>
+                        ) : preflight ? (
+                            <>
+                                <p className="text-sm text-slate-300 leading-relaxed">{preflight.summary}</p>
+                                <p className="text-xs text-slate-500">{preflight.recommendedNextStep}</p>
+
+                                {preflight.blockers.length > 0 && (
+                                    <div className="space-y-2 pt-2">
+                                        {preflight.blockers.map((blocker) => (
+                                            <div key={blocker.code} className="rounded-lg border border-slate-800/80 bg-slate-950/60 px-4 py-3">
+                                                <p className="text-sm font-semibold text-white">{blocker.title}</p>
+                                                <p className="mt-1 text-xs leading-relaxed text-slate-400">{blocker.detail}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {preflight.activity.recentChargeCount30d !== null && preflight.activity.recentPayoutCount30d !== null && (
+                                    <div className="grid grid-cols-2 gap-3 pt-2">
+                                        <div className="rounded-lg bg-slate-950/60 px-4 py-3">
+                                            <p className="text-[10px] uppercase tracking-wider text-slate-500">Recent charges</p>
+                                            <p className="mt-1 text-sm font-semibold text-white">
+                                                {preflight.activity.recentChargeCount30d} / {preflight.activity.minimumChargeCount30d}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-lg bg-slate-950/60 px-4 py-3">
+                                            <p className="text-[10px] uppercase tracking-wider text-slate-500">Recent payouts</p>
+                                            <p className="mt-1 text-sm font-semibold text-white">
+                                                {preflight.activity.recentPayoutCount30d} / {preflight.activity.minimumPayoutCount30d}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-sm text-slate-400">Connect Stripe to check activation readiness before checkout.</p>
+                        )}
                     </div>
                 )}
 
@@ -281,7 +420,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                     {/* ── E. CTA ── */}
                     <button
                         onClick={handleCheckout}
-                        disabled={checkoutLoading || !workspaceId}
+                        disabled={checkoutLoading || !workspaceId || hardCheckoutBlock}
                         className="w-full px-6 py-3 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-all active:scale-[0.98] disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed"
                     >
                         {checkoutLoading ? (
@@ -293,7 +432,7 @@ export default function UpgradeClient({ hasStripeConnection, hasScanCompleted, s
                                 Opening checkout...
                             </span>
                         ) : (
-                            'Start Pro'
+                            hardCheckoutBlock ? 'Fix blockers before checkout' : 'Start Pro'
                         )}
                     </button>
 

@@ -3,6 +3,10 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { resolveWorkspace } from '@/lib/resolve-workspace';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 import { createOrUpdateCheckoutPendingSubscription, getBillingCustomerByWorkspaceId, upsertBillingCustomer } from '@/lib/db/billing';
+import { findWorkspaceById } from '@/lib/db/workspaces';
+import { getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
+import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { resolveStripeActivationPreflight } from '@/lib/stripe-activation-preflight';
 import Stripe from 'stripe';
 
 export const runtime = 'nodejs';
@@ -56,6 +60,31 @@ export async function POST(request: Request) {
         const { getDbPool } = await import('@/lib/db/client');
         const pool = await getDbPool();
         await pool.query('SELECT 1');
+
+        const [workspaceRecord, monitoredEntity, processorConnection] = await Promise.all([
+            findWorkspaceById(workspace.workspaceRecordId),
+            getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId),
+            getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
+        ]);
+
+        if (processorConnection?.status === 'connected') {
+            const preflight = await resolveStripeActivationPreflight({
+                stripeAccountId: processorConnection.stripe_account_id,
+                knownPrimaryHost: monitoredEntity?.primary_host ?? workspaceRecord?.primary_host_candidate ?? null,
+            });
+
+            if (preflight.hardBlockCheckout) {
+                return NextResponse.json(
+                    {
+                        error: preflight.summary,
+                        code: 'ACTIVATION_PREFLIGHT_BLOCKED',
+                        blockers: preflight.blockers,
+                        nextStep: preflight.recommendedNextStep,
+                    },
+                    { status: 409 }
+                );
+            }
+        }
 
         let billingCustomer = await getBillingCustomerByWorkspaceId(workspace.workspaceRecordId);
         if (!billingCustomer) {

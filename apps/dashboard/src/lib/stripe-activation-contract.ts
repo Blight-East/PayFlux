@@ -4,8 +4,8 @@ export const STRIPE_BASELINE_MODEL_VERSION = 'stripe-baseline-v1.0.0';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RECENT_WINDOW_DAYS = 30;
 const PRIOR_WINDOW_DAYS = 60;
-const MIN_RECENT_CHARGES = 10;
-const MIN_RECENT_PAYOUTS = 2;
+export const MIN_RECENT_CHARGES = 10;
+export const MIN_RECENT_PAYOUTS = 2;
 
 type StripeListOptions = { stripeAccount: string };
 
