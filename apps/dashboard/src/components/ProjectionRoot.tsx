@@ -117,7 +117,7 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
                 riskLevel: index === 0 ? 'Top fix' : 'Suggested fix',
                 impact: index === 0 ? 'Reduce payout risk' : 'Preventative',
                 tone: intervention.priority === 'critical' || intervention.priority === 'high' ? 'warning' as const : 'neutral' as const,
-                primaryAction: { label: normalizeActionTitle(intervention.action), disabled: true },
+                primaryAction: { label: 'See details', href: '#deep-dive' },
             }));
         }
 
@@ -336,8 +336,8 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
             actions={actions}
             kpis={kpis}
             signals={signals}
-            signalActionLabel="Draft team update"
-            signalActionDisabled
+            signalActionLabel=""
+            signalActionDisabled={false}
             context={context}
             lowerSection={lowerSection}
         />

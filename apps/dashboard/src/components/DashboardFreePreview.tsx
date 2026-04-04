@@ -224,7 +224,7 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h3 className="text-sm font-semibold text-slate-900">Support tools</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    System status and evidence pages stay available, but they no longer have to lead the operator view.
+                    System status and diagnostics are available for when you need a deeper look.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                     <Link
@@ -233,15 +233,7 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                     >
                         System status
                     </Link>
-                    <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        title="Not yet available"
-                        className="inline-flex cursor-not-allowed items-center rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400"
-                    >
-                        Draft team update
-                    </button>
+
                 </div>
             </div>
         </div>
@@ -256,8 +248,8 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
             actions={actionCards}
             kpis={kpis}
             signals={signals}
-            signalActionLabel="Draft team update"
-            signalActionDisabled
+            signalActionLabel=""
+            signalActionDisabled={false}
             context={context}
             lowerSection={lowerSection}
         />

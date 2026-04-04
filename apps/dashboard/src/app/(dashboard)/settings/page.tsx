@@ -14,6 +14,41 @@ function formatTimestamp(value: string | null | undefined): string {
     return date.toLocaleString();
 }
 
+function humanizeTier(tier: string): string {
+    switch (tier) {
+        case 'pro': return 'Pro';
+        case 'enterprise': return 'Enterprise';
+        case 'free': return 'Free';
+        default: return tier.charAt(0).toUpperCase() + tier.slice(1);
+    }
+}
+
+function humanizePaymentStatus(status: string | null | undefined): string {
+    switch (status) {
+        case 'active': return 'Active';
+        case 'trialing': return 'Trial';
+        case 'past_due': return 'Past due';
+        case 'canceled': return 'Canceled';
+        case 'unpaid': return 'Unpaid';
+        case 'incomplete': return 'Incomplete';
+        case null: case undefined: case 'none': return 'No subscription';
+        default: return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+}
+
+function humanizeActivationState(state: string | null | undefined): string {
+    switch (state) {
+        case 'live_monitored': return 'Live monitoring active';
+        case 'connected_generating': return 'Setting up monitoring';
+        case 'paid_unconnected': return 'Awaiting Stripe connection';
+        case 'awaiting_activity': return 'Waiting for Stripe activity';
+        case 'activation_failed': return 'Setup needs attention';
+        case 'not_started': return 'Not started';
+        case null: case undefined: return 'Not started';
+        default: return state.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+}
+
 export const runtime = 'nodejs';
 
 export default async function SettingsPage() {
@@ -42,7 +77,7 @@ export default async function SettingsPage() {
         <div className="p-8 max-w-5xl">
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white tracking-tight">Workspace Settings</h2>
-                <p className="text-slate-500 text-sm mt-1">Truthful workspace state, billing state, and activation readiness.</p>
+                <p className="text-slate-500 text-sm mt-1">Your workspace details, billing status, and monitoring readiness.</p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
@@ -55,15 +90,15 @@ export default async function SettingsPage() {
                         </div>
                         <div>
                             <p className="text-slate-500">Tier</p>
-                            <p className="text-slate-300">{workspace.tier}</p>
+                            <p className="text-slate-300">{humanizeTier(workspace.tier)}</p>
                         </div>
                         <div>
                             <p className="text-slate-500">Payment status</p>
-                            <p className="text-slate-300">{workspace.paymentStatus ?? 'none'}</p>
+                            <p className="text-slate-300">{humanizePaymentStatus(workspace.paymentStatus)}</p>
                         </div>
                         <div>
                             <p className="text-slate-500">Activation state</p>
-                            <p className="text-slate-300">{activation?.state ?? workspace.activationState ?? 'not_started'}</p>
+                            <p className="text-slate-300">{humanizeActivationState(activation?.state ?? workspace.activationState)}</p>
                         </div>
                     </div>
                 </div>
@@ -93,14 +128,7 @@ export default async function SettingsPage() {
                 </div>
             </div>
 
-            <div className="mt-6 rounded-lg border border-blue-500/20 bg-blue-500/5 p-6">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-blue-300">Self-serve posture</h3>
-                <div className="mt-3 space-y-2 text-sm text-slate-300">
-                    <p>Billing and activation state shown here now reflect real workspace data instead of pilot placeholders.</p>
-                    <p>If the workspace is paid but not live, the next self-serve move is usually connecting Stripe or retrying activation.</p>
-                    <p>High-risk destructive controls stay out of this page until they are backed by real persistence and safeguards.</p>
-                </div>
-            </div>
+
 
             <ManageBillingSection tier={workspace.tier} />
         </div>

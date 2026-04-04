@@ -78,7 +78,7 @@ export function DashboardComposition({
                     <div>
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-900">Deep dive</h2>
                         <p className="mt-1 text-sm text-slate-600">
-                            Forecast detail, history, exports, and supporting evidence live below the operator summary.
+                            Forecast detail, history, exports, and supporting evidence.
                         </p>
                     </div>
                     {lowerSection}

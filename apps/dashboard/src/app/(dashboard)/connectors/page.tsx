@@ -103,7 +103,17 @@ export default async function ConnectorsPage() {
                         <div className="mt-4 space-y-4 text-sm">
                             <div>
                                 <p className="text-slate-500">Workspace activation</p>
-                                <p className="text-slate-300">{activationState}</p>
+                                <p className="text-slate-300">{(() => {
+                                switch (activationState) {
+                                    case 'live_monitored': return 'Live monitoring active';
+                                    case 'connected_generating': return 'Setting up monitoring';
+                                    case 'paid_unconnected': return 'Awaiting Stripe connection';
+                                    case 'awaiting_activity': return 'Waiting for Stripe activity';
+                                    case 'activation_failed': return 'Setup needs attention';
+                                    case 'not_started': return 'Not started';
+                                    default: return activationState.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                }
+                            })()}</p>
                             </div>
                             <div>
                                 <p className="text-slate-500">Primary monitored host</p>
@@ -119,14 +129,7 @@ export default async function ConnectorsPage() {
                     </div>
                 </div>
 
-                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-6">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-amber-400">What this page no longer assumes</h3>
-                    <div className="mt-3 space-y-2 text-sm text-slate-300">
-                        <p>Webhook secrets are not the main self-serve path for hosted Stripe onboarding.</p>
-                        <p>The customer-facing product path is: pay, connect Stripe, let activation run, then land in the live dashboard.</p>
-                        <p>If activation is stuck, the fix is usually Stripe readiness, business URL quality, or insufficient recent activity.</p>
-                    </div>
-                </div>
+
             </div>
         </div>
     );

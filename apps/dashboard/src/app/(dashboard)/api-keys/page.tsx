@@ -32,13 +32,17 @@ export default function ApiKeysPage() {
         setError(null);
         try {
             const res = await fetch('/api/api-keys');
-            const data = await res.json();
             if (!res.ok) {
-                throw new Error(data.error || 'Failed to load API keys');
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Unable to load API keys. Please try again.');
+            }
+            const data = await res.json().catch(() => null);
+            if (!data) {
+                throw new Error('Unable to load API keys. Please try again.');
             }
             setKeys(data.keys || []);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load API keys');
+            setError(err instanceof Error ? err.message : 'Unable to load API keys. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -58,15 +62,15 @@ export default function ApiKeysPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ label }),
             });
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to create API key');
+            const data = await res.json().catch(() => null);
+            if (!res.ok || !data) {
+                throw new Error(data?.error || 'Unable to create API key. Please try again.');
             }
             setPlaintextKey(data.plaintextKey || null);
             setLabel('Primary key');
             await loadKeys();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create API key');
+            setError(err instanceof Error ? err.message : 'Unable to create API key. Please try again.');
         } finally {
             setCreating(false);
         }
@@ -79,13 +83,13 @@ export default function ApiKeysPage() {
             const res = await fetch(`/api/api-keys/${id}`, {
                 method: 'DELETE',
             });
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to revoke API key');
+            const data = await res.json().catch(() => null);
+            if (!res.ok || !data) {
+                throw new Error(data?.error || 'Unable to revoke API key. Please try again.');
             }
             await loadKeys();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to revoke API key');
+            setError(err instanceof Error ? err.message : 'Unable to revoke API key. Please try again.');
         } finally {
             setRevokingId(null);
         }

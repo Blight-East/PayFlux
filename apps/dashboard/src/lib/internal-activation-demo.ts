@@ -59,13 +59,13 @@ export function buildInternalActivationDemo(args: {
         },
         recommendedInterventions: [
             {
-                action: 'Verify the real Stripe account with recent live volume before using this as customer proof.',
-                rationale: 'This activation path is for internal product verification only and should not replace live merchant evidence.',
+                action: 'Improve refund and cancellation policy visibility on your site.',
+                rationale: 'Clear, easy-to-find refund and cancellation policies reduce dispute pressure and make processors more comfortable with your account.',
                 priority: 'high',
             },
             {
-                action: 'Use the live flow once the account has real payment history.',
-                rationale: 'A live baseline is still required to validate the production risk model end to end.',
+                action: 'Review your customer support contact paths.',
+                rationale: 'Visible support channels give processors confidence that customer issues are being handled before they escalate to chargebacks.',
                 priority: 'moderate',
             },
         ],
