@@ -14,6 +14,10 @@ function isPilotAllowed(): boolean {
     return process.env.DASHBOARD_ALLOW_PILOT_ENDPOINTS === 'true';
 }
 
+function allowDevelopmentProxyFallback(): boolean {
+    return process.env.NODE_ENV !== 'production' && process.env.DASHBOARD_ALLOW_PROXY_MOCKS === 'true';
+}
+
 export async function GET(
     request: Request,
     { params }: any
@@ -69,8 +73,8 @@ export async function GET(
         return NextResponse.json(data);
     } catch (err) {
         console.error('Remote endpoint unreachable', err);
-        // Mock data for development if PayFlux is down
-        if (targetPath === 'pilot/warnings') {
+        // Development-only mock fallback for local UI work.
+        if (targetPath === 'pilot/warnings' && allowDevelopmentProxyFallback()) {
             return NextResponse.json([
                 {
                     warning_id: 'w_mock_1',
@@ -91,7 +95,10 @@ export async function GET(
                 }
             ]);
         }
-        return NextResponse.json({ error: 'Connection failed' }, { status: 502 });
+        return NextResponse.json(
+            { error: 'Upstream PayFlux service is unavailable', code: 'UPSTREAM_UNAVAILABLE' },
+            { status: 502 }
+        );
     }
 }
 

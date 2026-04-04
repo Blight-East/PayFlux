@@ -1,10 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { RiskIntelligence } from '../../../../../../lib/risk-infra';
-import { auth } from '@clerk/nextjs/server';
-
 export const dynamic = 'force-dynamic';
 
 import { requireAuth } from '@/lib/require-auth';
+import { isInternalOperatorUser } from '@/lib/resolve-workspace';
 
 export async function POST(request: NextRequest) {
     // 0. Security Gates
@@ -15,6 +14,21 @@ export async function POST(request: NextRequest) {
 
     if (process.env.EVIDENCE_SEED_ENABLED !== 'true') {
         return NextResponse.json({ error: 'SEEDING_DISABLED' }, { status: 403 });
+    }
+
+    if (workspace.role !== 'admin') {
+        return NextResponse.json(
+            { error: 'Forbidden', code: 'ADMIN_REQUIRED_FOR_SEED' },
+            { status: 403 }
+        );
+    }
+
+    const isInternal = await isInternalOperatorUser(userId);
+    if (!isInternal) {
+        return NextResponse.json(
+            { error: 'Forbidden', code: 'INTERNAL_OPERATOR_REQUIRED' },
+            { status: 403 }
+        );
     }
 
     try {
