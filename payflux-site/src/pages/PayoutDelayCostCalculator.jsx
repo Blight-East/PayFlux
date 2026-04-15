@@ -445,7 +445,7 @@ const PayoutDelayCostCalculator = () => {
                     </section>
                 </main>
 
-                <Footer />
+                <Footer variant="dark" />
             </div>
         </div>
     );

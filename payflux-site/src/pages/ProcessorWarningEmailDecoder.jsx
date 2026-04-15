@@ -264,7 +264,7 @@ const ProcessorWarningEmailDecoder = () => {
                     </section>
                 </main>
 
-                <Footer />
+                <Footer variant="dark" />
             </div>
         </div>
     );

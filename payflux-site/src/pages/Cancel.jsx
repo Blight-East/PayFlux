@@ -47,7 +47,7 @@ const Cancel = () => {
                 </div>
             </main>
 
-            <Footer />
+            <Footer variant="dark" />
         </div>
     );
 };

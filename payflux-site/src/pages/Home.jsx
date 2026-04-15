@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Activity,
-    AlertTriangle,
-    Clock3,
-    Eye,
-    FileText,
-    Lock,
-    Menu,
-    ShieldCheck,
-    X,
-} from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Footer from '../components/Footer';
 import { logMarketingEvent, buildScanUrl as _buildScanUrl, getJourneyId, SCAN_URL } from '../lib/tracking';
 
@@ -19,87 +9,90 @@ function buildScanUrl(cta) {
     return _buildScanUrl('marketing_home', cta);
 }
 
-const warningCards = [
+const warningFilings = [
     {
-        icon: Clock3,
+        severity: 'High',
+        severityClass: 'text-[#BC620A] border-[#BC620A]/30 bg-[#BC620A]/[0.06]',
+        accentBar: 'bg-[#BC620A]',
         title: 'Payout Slowdowns',
-        body: 'See when payout timing starts to drift so you can react before delayed settlement starts to squeeze your operating cash.',
+        body: 'Payout timing drift is the earliest observable symptom of processor pressure. PayFlux logs the shift the moment it crosses your merchant baseline.',
     },
     {
-        icon: Lock,
+        severity: 'Critical',
+        severityClass: 'text-red-600 border-red-600/30 bg-red-600/[0.06]',
+        accentBar: 'bg-red-600',
         title: 'Held Funds',
-        body: 'Spot the patterns that often show up before a processor begins holding part of your sales back.',
+        body: 'Reserve escalations rarely arrive as a single event. They emerge as a pattern — and the pattern is readable before the first hold posts.',
     },
     {
-        icon: Activity,
+        severity: 'Watch',
+        severityClass: 'text-slate-600 border-slate-300 bg-slate-50',
+        accentBar: 'bg-slate-400',
         title: 'Account Pressure',
-        body: 'Track the signals that often lead processors to look more closely at your account, so you can act before pressure gets worse.',
+        body: 'Chargeback ratio, refund velocity, review escalation — the composite that precedes a full underwriting re-look.',
     },
 ];
 
 const steps = [
     {
-        step: '1',
-        title: 'Run a Free Scan',
-        body: 'Start with a simple scan to surface visible warning signs that may increase processor pressure.',
+        step: '01',
+        title: 'Run a free scan',
+        body: 'Surface visible warning signs from your recent processor behavior. Takes under two minutes. No connection required.',
     },
     {
-        step: '2',
-        title: 'Connect Stripe for Live Monitoring',
-        body: 'Add a read-only connection so PayFlux can watch payout behavior and account pressure over time.',
+        step: '02',
+        title: 'Connect Stripe read-only',
+        body: 'PayFlux observes payout cadence and account signals over time. No write access. No flow changes.',
     },
     {
-        step: '3',
-        title: 'Get Early Warnings',
-        body: 'See what changed, why it matters, and what to do next before payout issues become a cash-flow problem.',
+        step: '03',
+        title: 'Receive early warnings',
+        body: 'When a signal crosses threshold, you receive a filing — what changed, why it matters, what to do next.',
     },
 ];
 
 const trustItems = [
     {
-        icon: Eye,
-        title: 'Read-only connection',
-        body: 'PayFlux reads payout and account signals without changing your processor settings or payment flow.',
+        label: 'Read-only connection',
+        body: 'PayFlux observes. It does not write, route, or modify.',
     },
     {
-        icon: ShieldCheck,
-        title: 'No payment flow changes',
-        body: 'Your checkout stays exactly where it is. Monitoring does not reroute payments or add new approval logic.',
+        label: 'No payment flow changes',
+        body: 'Your checkout stays exactly where it is today.',
     },
     {
-        icon: FileText,
-        title: 'Exportable records',
-        body: 'Keep clear records of what changed so your team can review, share, or escalate issues when needed.',
+        label: 'Exportable records',
+        body: 'Every filing is downloadable for your team, your lender, or your ops log.',
     },
 ];
 
 const proofPillars = [
     {
-        title: 'Cash-Impact Proof',
-        body: 'Show one concrete dollar story where earlier warning would have protected materially more cash than the monthly cost.',
+        label: 'Cash-Impact Proof',
+        body: 'A single documented incident where earlier warning protected materially more cash than the monthly cost.',
     },
     {
-        title: 'Processor-Specific Credibility',
-        body: 'Show that the signal is tied to real processor behaviors like payout drift, reserve pressure, review escalation, or chargeback stress.',
+        label: 'Processor-Specific Credibility',
+        body: 'Signals are tied to observable processor behaviors — payout drift, reserve pressure, review escalation, chargeback stress.',
     },
     {
-        title: 'Operator-Ready Output',
-        body: 'Show that the output is not just another dashboard. It should explain what changed, why it matters, and what to do next.',
+        label: 'Operator-Ready Output',
+        body: 'Filings explain what changed, why it matters, and what to do next. Not another dashboard to interpret.',
     },
 ];
 
-const objectionItems = [
+const objections = [
     {
-        title: '“I’m already under cash pressure.”',
-        body: 'That is exactly why this only works if the risk prevented is worth materially more than $499 per month.',
+        q: '“I\u2019m already under cash pressure.”',
+        a: 'That is exactly the bar. PayFlux only earns its place if the risk prevented is worth materially more than $499 per month.',
     },
     {
-        title: '“How do I know this isn’t just another dashboard?”',
-        body: 'The product has to prove it changes decisions, not just visibility. Merchants need a read on what changed and what to do next.',
+        q: '“How is this different from a dashboard?”',
+        a: 'A dashboard shows you data. PayFlux files a record: what changed, why it matters, what to do. You read the filing, not the charts.',
     },
     {
-        title: '“What if I pay and still get held?”',
-        body: 'The standard is not perfection. The standard is earlier warning, faster response, and clearer evidence before the problem gets worse.',
+        q: '“What if I pay and still get held?”',
+        a: 'The standard is not perfection. The standard is earlier warning, faster response, and clearer evidence when pressure is building.',
     },
 ];
 
@@ -107,45 +100,55 @@ const pricingCards = [
     {
         title: 'Free',
         price: '$0',
-        cadence: '/month',
-        body: 'Start with a one-time snapshot of your current processor risk exposure.',
+        cadence: 'one-time scan',
+        body: 'A snapshot of your current processor risk exposure.',
         bullets: [
-            'One-time processor risk snapshot',
-            'Visible warning signs and instability signals',
-            'Best for understanding where pressure may already be building',
+            'Processor risk snapshot',
+            'Visible warning signs',
+            'Instability signal surface',
         ],
-        ctaLabel: 'Run a Free Scan',
+        ctaLabel: 'Run a free scan',
         ctaHref: SCAN_URL,
         featured: false,
+        plan: 'free',
+        cta: 'pricing_free',
     },
     {
         title: 'Pro',
-        price: 'Starts at $499',
-        cadence: '/month',
-        body: 'Live monitoring and earlier warnings for merchants who need to stay ahead of processor pressure.',
+        price: '$499',
+        cadence: 'per month',
+        body: 'Live monitoring and earlier warnings for merchants who need to stay ahead.',
         bullets: [
             'Live processor monitoring',
-            'Earlier warnings for payout delays, held funds, and rising account pressure',
-            'Forecast visibility, exportable evidence, and guidance on what to fix first',
+            'Earlier warnings on payout delays, holds, and pressure',
+            'Forward-looking forecast and exportable evidence',
         ],
-        ctaLabel: 'Start With a Free Scan',
+        ctaLabel: 'Start with a free scan',
         ctaHref: SCAN_URL,
         featured: true,
+        plan: 'pro',
+        cta: 'pricing_pro',
     },
     {
         title: 'Enterprise',
         price: 'Custom',
-        cadence: null,
-        body: 'For larger teams that need a custom rollout across more complex payment operations.',
+        cadence: 'contact sales',
+        body: 'For larger teams and complex payment operations.',
         bullets: [
-            'Multi-merchant monitoring and reporting',
-            'Higher throughput, exports, and support for custom workflows',
+            'Multi-merchant monitoring',
+            'Higher throughput and custom exports',
+            'Support for complex workflows',
         ],
-        ctaLabel: 'Contact Sales',
+        ctaLabel: 'Contact sales',
         ctaHref: '/pricing',
         featured: false,
+        plan: 'enterprise',
+        cta: 'pricing_enterprise',
     },
 ];
+
+const today = new Date();
+const todayIso = `${today.getFullYear()}\u2013${String(today.getMonth() + 1).padStart(2, '0')}\u2013${String(today.getDate()).padStart(2, '0')}`;
 
 const Home = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -189,370 +192,382 @@ const Home = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#0A64BC]/30 selection:text-white">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(circle_at_top,rgba(10,100,188,0.18),rgba(2,6,23,0)_62%)]" />
+        <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-[#0A64BC]/20">
+            {/* ————— MASTHEAD NAV ————— */}
+            <nav className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
+                <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-6 md:px-8">
+                    <a href="/" className="flex items-center gap-2.5 no-underline">
+                        <span className="block h-5 w-5 bg-[#0A64BC]" aria-hidden />
+                        <span className="text-[15px] font-semibold tracking-tight text-slate-900">PayFlux</span>
+                        <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-slate-400 md:inline">
+                            Intelligence Desk
+                        </span>
+                    </a>
 
-            <nav className="fixed inset-x-0 top-0 z-50 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur">
-                <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-6">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0A64BC] text-sm font-semibold text-white">
-                            PF
-                        </div>
-                        <span className="text-2xl font-semibold tracking-tight text-white">PayFlux</span>
+                    <div className="hidden items-center gap-8 md:flex">
+                        <a
+                            href="#filings"
+                            className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-500 no-underline transition-colors hover:text-slate-900"
+                        >
+                            Filings
+                        </a>
+                        <a
+                            href="#how-it-works"
+                            className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-500 no-underline transition-colors hover:text-slate-900"
+                        >
+                            Method
+                        </a>
+                        <a
+                            href="#pricing"
+                            className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-500 no-underline transition-colors hover:text-slate-900"
+                        >
+                            Pricing
+                        </a>
                     </div>
 
-                    <div className="hidden items-center gap-8 text-sm font-medium text-slate-400 md:flex">
-                        <a href="#problem" className="no-underline transition-colors hover:text-white">The Problem</a>
-                        <a href="#how-it-works" className="no-underline transition-colors hover:text-white">How It Works</a>
-                        <a href="#pricing" className="no-underline transition-colors hover:text-white">Pricing</a>
-                    </div>
-
-                    <div className="hidden items-center gap-3 md:flex">
-                        <a href={SIGN_IN_URL} className="text-sm font-medium text-slate-300 no-underline transition-colors hover:text-white">
-                            Sign In
+                    <div className="hidden items-center gap-4 md:flex">
+                        <a
+                            href={SIGN_IN_URL}
+                            className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-500 no-underline transition-colors hover:text-slate-900"
+                        >
+                            Sign in
                         </a>
                         <a
                             href={buildScanHref('nav_primary')}
                             onClick={() => handleScanClick('nav_primary')}
-                            className="inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-4 py-2.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#08539e]"
+                            className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-[13px] font-medium text-white no-underline transition-colors hover:bg-slate-950"
                         >
-                            Run a Free Scan
+                            Run a free scan
                         </a>
                     </div>
 
                     <button
                         type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-800 text-slate-300 md:hidden"
-                        onClick={() => setMobileMenuOpen((open) => !open)}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-700 md:hidden"
+                        onClick={() => setMobileMenuOpen((v) => !v)}
                         aria-label="Toggle navigation"
                     >
-                        {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                     </button>
                 </div>
 
                 {mobileMenuOpen && (
-                    <div className="border-t border-slate-800 bg-slate-950 px-6 py-5 md:hidden">
-                        <div className="flex flex-col gap-4 text-sm font-medium text-slate-300">
-                            <a href="#problem" className="no-underline" onClick={() => setMobileMenuOpen(false)}>
-                                The Problem
-                            </a>
-                            <a href="#how-it-works" className="no-underline" onClick={() => setMobileMenuOpen(false)}>
-                                How It Works
-                            </a>
-                            <a href="#pricing" className="no-underline" onClick={() => setMobileMenuOpen(false)}>
-                                Pricing
-                            </a>
-                            <a href={SIGN_IN_URL} className="no-underline" onClick={() => setMobileMenuOpen(false)}>
-                                Sign In
-                            </a>
+                    <div className="border-t border-slate-200 bg-white px-6 py-6 md:hidden">
+                        <div className="flex flex-col gap-4 font-mono text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                            <a href="#filings" className="no-underline hover:text-slate-900" onClick={() => setMobileMenuOpen(false)}>Filings</a>
+                            <a href="#how-it-works" className="no-underline hover:text-slate-900" onClick={() => setMobileMenuOpen(false)}>Method</a>
+                            <a href="#pricing" className="no-underline hover:text-slate-900" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+                            <a href={SIGN_IN_URL} className="no-underline hover:text-slate-900" onClick={() => setMobileMenuOpen(false)}>Sign in</a>
                             <a
                                 href={buildScanHref('nav_mobile')}
-                                className="inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-4 py-3 text-center font-semibold text-white no-underline"
+                                className="mt-2 inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-3 font-sans text-[13px] font-medium tracking-normal text-white no-underline"
                                 onClick={() => {
                                     setMobileMenuOpen(false);
                                     handleScanClick('nav_mobile');
                                 }}
                             >
-                                Run a Free Scan
+                                Run a free scan
                             </a>
                         </div>
                     </div>
                 )}
             </nav>
 
-            <main className="pt-18">
-                <section className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:pt-28">
-                    <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
-                        <div className="max-w-2xl">
-                            <h1 className="text-5xl font-semibold tracking-tight text-white md:text-6xl md:leading-[1.05]">
-                                See Processor Risk Before It Turns Into a Cash-Flow Problem
-                            </h1>
-                            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300 md:text-xl">
-                                PayFlux helps merchants spot payout slowdowns, held funds, and rising processor pressure before the damage hits your business.
-                            </p>
-
-                            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                                <a
-                                    href={buildScanHref('hero_primary')}
-                                    onClick={() => handleScanClick('hero_primary')}
-                                    className="inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-7 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-[#08539e]"
-                                >
-                                    Run a Free Scan
-                                </a>
-                                <a
-                                    href="#how-it-works"
-                                    className="inline-flex items-center justify-center rounded-lg border border-slate-700 px-7 py-3.5 text-base font-semibold text-slate-200 no-underline transition-colors hover:border-slate-600 hover:bg-slate-900"
-                                >
-                                    See How It Works
-                                </a>
-                            </div>
+            <main className="pt-16">
+                {/* ————— HERO — EDITORIAL FILING ————— */}
+                <section className="border-b border-slate-200">
+                    <div className="mx-auto max-w-[1120px] px-6 pt-20 pb-20 md:px-8 md:pt-28 md:pb-28">
+                        <div className="flex flex-wrap items-center gap-4 text-slate-500">
+                            <span className="dateline text-[#0A64BC]">Filing &middot; {todayIso}</span>
+                            <span className="hidden h-3 w-px bg-slate-300 md:block" />
+                            <span className="dateline text-slate-400">Stripe Operators &middot; Issue 01</span>
                         </div>
 
-                        <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-[0_32px_80px_rgba(2,6,23,0.45)] backdrop-blur">
-                            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                                <div>
-                                    <p className="text-sm font-semibold text-white">What PayFlux Watches</p>
-                                    <p className="mt-1 text-sm text-slate-400">A clear view of the payout and account signals PayFlux tracks</p>
-                                </div>
-                                <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
-                                    <AlertTriangle className="h-3.5 w-3.5" />
-                                    Needs Attention
-                                </div>
-                            </div>
+                        <h1 className="mt-8 max-w-[860px] text-[40px] font-semibold leading-[1.05] tracking-tight text-slate-900 md:text-[56px]">
+                            Capital at risk is visible <span className="text-[#0A64BC]">weeks</span> before a payout slows down. PayFlux files it the moment it moves.
+                        </h1>
 
-                            <div className="mt-5 grid gap-4">
-                                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-                                    <p className="text-sm font-medium text-slate-400">Payout Status</p>
-                                    <p className="mt-2 text-xl font-semibold text-white">Watching for Shifts</p>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                                        Watch for changes in payout timing before cash flow tightens.
-                                    </p>
-                                </div>
+                        <p className="mt-8 max-w-[640px] text-lg leading-relaxed text-slate-600 md:text-xl">
+                            An intelligence desk for Stripe operators. PayFlux observes payout cadence, reserve pressure, and account-review signals — and files an institutional record the moment the pressure is readable.
+                        </p>
 
-                                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-                                    <p className="text-sm font-medium text-slate-400">Held Funds</p>
-                                    <p className="mt-2 text-xl font-semibold text-white">No Hold Signals</p>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                                        Stay ahead of the patterns that often lead to funds being held back.
-                                    </p>
-                                </div>
-
-                                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-                                    <p className="text-sm font-medium text-slate-400">Account Pressure</p>
-                                    <p className="mt-2 text-xl font-semibold text-amber-300">Pressure Building</p>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                                        See when processor pressure is moving in the wrong direction.
-                                    </p>
-                                </div>
-                            </div>
+                        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <a
+                                href={buildScanHref('hero_primary')}
+                                onClick={() => handleScanClick('hero_primary')}
+                                className="inline-flex items-center justify-center rounded-md bg-slate-900 px-6 py-3 text-[14px] font-medium text-white no-underline transition-colors hover:bg-slate-950"
+                            >
+                                Run a free scan
+                            </a>
+                            <a
+                                href="#how-it-works"
+                                className="inline-flex items-center justify-center rounded-md border border-slate-300 px-6 py-3 text-[14px] font-medium text-slate-900 no-underline transition-colors hover:border-slate-900"
+                            >
+                                Read the method
+                            </a>
+                            <span className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-slate-400 sm:mt-0 sm:ml-2">
+                                ~2 min &middot; read-only &middot; no card
+                            </span>
                         </div>
                     </div>
                 </section>
 
-                <section id="problem" className="border-y border-slate-800 bg-slate-900/40 py-24">
-                    <div className="mx-auto max-w-5xl px-6 text-center">
-                        <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                            Most Merchants Don&apos;t See Risk Building Until Payouts Slow Down
-                        </h2>
-                        <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-slate-300">
-                            By the time your processor sends an email about held funds or an account review, the pressure has already been building for weeks. Waiting for the alert means waiting until your cash flow is already restricted.
-                        </p>
-                    </div>
-                </section>
-
-                <section className="mx-auto max-w-7xl px-6 py-24">
-                    <div className="max-w-3xl">
-                        <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                            Catch the Warning Signs Early
-                        </h2>
-                        <p className="mt-4 text-lg leading-relaxed text-slate-300">
-                            PayFlux monitors the signals that often show up before payouts slow down, funds get held back, or processor pressure rises.
-                        </p>
-                    </div>
-
-                    <div className="mt-12 grid gap-6 md:grid-cols-3">
-                        {warningCards.map(({ icon: Icon, title, body }) => (
-                            <div key={title} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
-                                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-slate-800 bg-slate-950 text-[#0A64BC]">
-                                    <Icon className="h-5 w-5" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-white">{title}</h3>
-                                <p className="mt-3 text-sm leading-relaxed text-slate-400">{body}</p>
+                {/* ————— NUMERIC ANCHOR / INSTRUMENT PANEL ————— */}
+                <section className="border-b border-slate-200 bg-slate-50/60">
+                    <div className="mx-auto grid max-w-[1120px] gap-px bg-slate-200 px-0 md:grid-cols-3">
+                        <div className="bg-slate-50/60 px-6 py-10 md:px-10 md:py-12">
+                            <div className="dateline text-slate-500">Signals Tracked</div>
+                            <div className="numeric-mono mt-5 text-[48px] font-medium leading-none text-slate-900 md:text-[56px]">
+                                47
                             </div>
-                        ))}
+                            <div className="mt-3 text-[14px] leading-relaxed text-slate-500">
+                                Processor behaviors observed per merchant — from payout timing to review-queue velocity.
+                            </div>
+                        </div>
+                        <div className="bg-slate-50/60 px-6 py-10 md:px-10 md:py-12">
+                            <div className="dateline text-slate-500">Lead Time</div>
+                            <div className="numeric-mono mt-5 text-[48px] font-medium leading-none text-slate-900 md:text-[56px]">
+                                14<span className="text-slate-400">d</span>
+                            </div>
+                            <div className="mt-3 text-[14px] leading-relaxed text-slate-500">
+                                Median advance notice before a payout slowdown becomes visible to the merchant.
+                            </div>
+                        </div>
+                        <div className="bg-slate-50/60 px-6 py-10 md:px-10 md:py-12">
+                            <div className="dateline text-slate-500">Threshold</div>
+                            <div className="numeric-mono mt-5 text-[48px] font-medium leading-none text-slate-900 md:text-[56px]">
+                                &gt;$499
+                            </div>
+                            <div className="mt-3 text-[14px] leading-relaxed text-slate-500">
+                                Minimum monthly risk-prevented value for a filing to justify the subscription.
+                            </div>
+                        </div>
                     </div>
                 </section>
 
-                <section id="how-it-works" className="border-y border-slate-800 bg-slate-900/30 py-24">
-                    <div className="mx-auto max-w-7xl px-6">
-                        <div className="text-center">
-                            <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                                Clear Visibility in Minutes
+                {/* ————— FILINGS / WARNING CLASSES ————— */}
+                <section id="filings" className="border-b border-slate-200">
+                    <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-28">
+                        <div className="grid gap-12 md:grid-cols-[0.9fr_2.1fr] md:gap-16">
+                            <div>
+                                <div className="dateline text-[#0A64BC]">Filing Classes</div>
+                                <h2 className="mt-3 text-[32px] font-semibold leading-[1.15] tracking-tight text-slate-900 md:text-[40px]">
+                                    Three filings we watch for — every one of them is readable before it posts.
+                                </h2>
+                            </div>
+                            <div className="divide-y divide-slate-200 border-t border-slate-200">
+                                {warningFilings.map(({ severity, severityClass, accentBar, title, body }) => (
+                                    <article key={title} className="group grid grid-cols-[4px_1fr] gap-6 py-8 first:pt-10">
+                                        <div className={`${accentBar} w-[3px]`} />
+                                        <div>
+                                            <div className="mb-3 flex items-center gap-3">
+                                                <span className={`severity-pill ${severityClass}`}>{severity}</span>
+                                                <span className="dateline-sm text-slate-400">Processor Signal</span>
+                                            </div>
+                                            <h3 className="text-[22px] font-semibold leading-tight tracking-tight text-slate-900">
+                                                {title}
+                                            </h3>
+                                            <p className="mt-3 max-w-[540px] text-[15px] leading-relaxed text-slate-600">
+                                                {body}
+                                            </p>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ————— METHOD / STEPS ————— */}
+                <section id="how-it-works" className="border-b border-slate-200 bg-slate-50/60">
+                    <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-28">
+                        <div className="max-w-[640px]">
+                            <div className="dateline text-[#0A64BC]">Method</div>
+                            <h2 className="mt-3 text-[32px] font-semibold leading-[1.15] tracking-tight text-slate-900 md:text-[40px]">
+                                Read-only observation, institutional filings, no theater.
                             </h2>
+                            <p className="mt-5 text-lg leading-relaxed text-slate-600">
+                                PayFlux connects once and observes. When a signal crosses threshold, we file a record — not a notification.
+                            </p>
                         </div>
 
-                        <div className="mt-14 grid gap-6 md:grid-cols-3">
+                        <div className="mt-16 grid gap-8 md:grid-cols-3 md:gap-12">
                             {steps.map(({ step, title, body }) => (
-                                <div key={step} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-8 text-center">
-                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#0A64BC]/40 bg-slate-950 text-base font-semibold text-[#0A64BC]">
+                                <div key={step} className="border-t border-slate-300 pt-6">
+                                    <div className="numeric-mono text-[32px] font-medium leading-none text-[#0A64BC]">
                                         {step}
                                     </div>
-                                    <h3 className="mt-6 text-xl font-semibold text-white">{title}</h3>
-                                    <p className="mt-3 text-sm leading-relaxed text-slate-400">{body}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="mx-auto max-w-7xl px-6 py-24">
-                    <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-                        <div>
-                            <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                                Get Ahead of Processor Pressure
-                            </h2>
-                            <div className="mt-8 space-y-6">
-                                {trustItems.map(({ icon: Icon, title, body }) => (
-                                    <div key={title} className="flex gap-4">
-                                        <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A64BC]/15 text-[#0A64BC] ring-1 ring-[#0A64BC]/20">
-                                            <Icon className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-base font-semibold text-white">{title}</p>
-                                            <p className="mt-2 text-sm leading-relaxed text-slate-400">{body}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-8">
-                            <p className="text-sm font-semibold text-slate-400">What Changes After You Connect</p>
-                            <div className="mt-8 space-y-6">
-                                {[
-                                    'Move from guessing about payout issues to seeing the pressure earlier',
-                                    'Connect your processor without changing how payments move',
-                                    'Keep a clean record of what changed and what your team saw',
-                                ].map((item) => (
-                                    <div key={item} className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-sm leading-relaxed text-slate-300">
-                                        {item}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="border-y border-slate-800 bg-slate-900/30 py-24">
-                    <div className="mx-auto max-w-7xl px-6">
-                        <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
-                            <div>
-                                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#0A64BC]">
-                                    Why Merchants Pay
-                                </p>
-                                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                                    This Has to Protect More Cash Than It Costs
-                                </h2>
-                                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
-                                    A merchant under payout delays or reserve pressure is not buying software. They are making a trust-and-survival decision. PayFlux has to prove it can reduce the odds, duration, or severity of a cash freeze enough to matter.
-                                </p>
-                                <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
-                                    <p className="text-sm font-semibold text-white">What closes them</p>
-                                    <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                                        Show one merchant like them, one real incident, and one concrete dollar outcome. That is when $499/month starts to feel like protection instead of another tool expense.
+                                    <h3 className="mt-6 text-[18px] font-semibold leading-tight tracking-tight text-slate-900">
+                                        {title}
+                                    </h3>
+                                    <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
+                                        {body}
                                     </p>
-                                    <a
-                                        href="/proof-asset"
-                                        className="mt-5 inline-flex items-center justify-center rounded-lg border border-slate-700 px-4 py-2.5 text-sm font-semibold text-white no-underline transition-colors hover:border-slate-600 hover:bg-slate-900"
-                                    >
-                                        See the Proof Asset
-                                    </a>
                                 </div>
-                            </div>
-
-                            <div className="grid gap-6">
-                                <div className="rounded-3xl border border-slate-800 bg-slate-950/60 p-8">
-                                    <p className="text-sm font-semibold text-slate-400">Proof They Need</p>
-                                    <div className="mt-6 grid gap-4">
-                                        {proofPillars.map(({ title, body }) => (
-                                            <div key={title} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-                                                <p className="text-base font-semibold text-white">{title}</p>
-                                                <p className="mt-2 text-sm leading-relaxed text-slate-400">{body}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="rounded-3xl border border-slate-800 bg-slate-950/60 p-8">
-                                    <p className="text-sm font-semibold text-slate-400">Objections You Should Expect</p>
-                                    <div className="mt-6 space-y-4">
-                                        {objectionItems.map(({ title, body }) => (
-                                            <div key={title} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-                                                <p className="text-base font-semibold text-white">{title}</p>
-                                                <p className="mt-2 text-sm leading-relaxed text-slate-400">{body}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section id="pricing" className="border-y border-slate-800 bg-slate-900/40 py-24">
-                    <div className="mx-auto max-w-7xl px-6">
-                        <div className="text-center">
-                            <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                                Simple, Transparent Access
-                            </h2>
-                            <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-slate-300">
-                                Start with a free snapshot. Upgrade when you need live monitoring and earlier warnings.
-                            </p>
+                            ))}
                         </div>
 
-                        <div className="mt-14 grid gap-6 lg:grid-cols-3">
-                            {pricingCards.map((card) => (
-                                <div
-                                    key={card.title}
-                                    className={card.featured
-                                        ? 'rounded-2xl border border-[#0A64BC]/50 bg-[#0A64BC]/10 p-8 shadow-[0_20px_60px_rgba(10,100,188,0.18)]'
-                                        : 'rounded-2xl border border-slate-800 bg-slate-950/70 p-8'}
-                                >
-                                    {card.featured && (
-                                        <p className="inline-flex rounded-full bg-[#0A64BC] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">
-                                            Pro
-                                        </p>
-                                    )}
-                                    <h3 className="mt-4 text-2xl font-semibold text-white">{card.title}</h3>
-                                    <div className="mt-4 flex items-end gap-1">
-                                        <p className="text-3xl font-semibold tracking-tight text-white">{card.price}</p>
-                                        {card.cadence && (
-                                            <p className="pb-1 text-sm text-slate-400">{card.cadence}</p>
-                                        )}
-                                    </div>
-                                    <p className="mt-3 text-sm leading-relaxed text-slate-300">{card.body}</p>
-                                    <ul className="mt-6 space-y-3 text-sm text-slate-300">
-                                        {card.bullets.map((bullet) => (
-                                            <li key={bullet}>{bullet}</li>
-                                        ))}
-                                    </ul>
-                                    {card.ctaLabel && card.ctaHref && (
-                                        <a
-                                            href={card.title === 'Enterprise' ? '/pricing?source=marketing_home&cta=pricing_enterprise' : buildScanHref(card.title === 'Free' ? 'pricing_free' : 'pricing_pro')}
-                                            onClick={() => {
-                                                if (card.title === 'Enterprise') {
-                                                    handlePricingClick('enterprise', '/pricing', 'pricing_enterprise');
-                                                } else {
-                                                    handlePricingClick(card.title.toLowerCase(), '/scan', card.title === 'Free' ? 'pricing_free' : 'pricing_pro');
-                                                }
-                                            }}
-                                            className={card.featured
-                                                ? 'mt-8 inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-5 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#08539e]'
-                                                : 'mt-8 inline-flex items-center justify-center rounded-lg border border-slate-700 px-5 py-3 text-sm font-semibold text-white no-underline transition-colors hover:border-slate-600 hover:bg-slate-900'}
-                                        >
-                                            {card.ctaLabel}
-                                        </a>
-                                    )}
+                        <div className="mt-16 grid gap-6 border-t border-slate-200 pt-10 md:grid-cols-3">
+                            {trustItems.map(({ label, body }) => (
+                                <div key={label}>
+                                    <div className="dateline-sm text-slate-500">{label}</div>
+                                    <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
+                                        {body}
+                                    </p>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                <section className="mx-auto max-w-4xl px-6 py-24 text-center">
-                    <h2 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                        Stop Waiting for the Processor to Act
-                    </h2>
-                    <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
-                        Get ahead of held funds and payout slowdowns today. It takes less than two minutes to run a secure scan.
-                    </p>
-                    <a
-                        href={buildScanHref('final_cta')}
-                        onClick={() => handleScanClick('final_cta')}
-                        className="mt-8 inline-flex items-center justify-center rounded-lg bg-[#0A64BC] px-8 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-[#08539e]"
-                    >
-                        Run a Free Scan
-                    </a>
+                {/* ————— PROOF / THESIS ————— */}
+                <section className="border-b border-slate-200">
+                    <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-28">
+                        <div className="grid gap-12 md:grid-cols-[0.9fr_2.1fr] md:gap-16">
+                            <div>
+                                <div className="dateline text-[#0A64BC]">Thesis</div>
+                                <h2 className="mt-3 text-[32px] font-semibold leading-[1.15] tracking-tight text-slate-900 md:text-[40px]">
+                                    This has to protect more cash than it costs.
+                                </h2>
+                                <p className="mt-5 text-[15px] leading-relaxed text-slate-600">
+                                    A merchant under payout delays or reserve pressure is not buying software. They are making a trust-and-survival decision. PayFlux earns its place only by reducing the odds, duration, or severity of a cash freeze enough to matter.
+                                </p>
+                                <a
+                                    href="/proof-asset"
+                                    className="mt-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-slate-900 no-underline hover:text-[#0A64BC]"
+                                >
+                                    See the proof asset <span aria-hidden>&rarr;</span>
+                                </a>
+                            </div>
+
+                            <div className="grid gap-8 md:grid-cols-3">
+                                {proofPillars.map(({ label, body }) => (
+                                    <div key={label} className="border-t border-slate-300 pt-6">
+                                        <div className="dateline-sm text-[#0A64BC]">{label}</div>
+                                        <p className="mt-4 text-[15px] leading-relaxed text-slate-700">
+                                            {body}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ————— OBJECTIONS / Q&A ————— */}
+                <section className="border-b border-slate-200 bg-slate-50/60">
+                    <div className="mx-auto max-w-[960px] px-6 py-20 md:px-8 md:py-28">
+                        <div className="dateline text-[#0A64BC]">Objections on file</div>
+                        <h2 className="mt-3 text-[32px] font-semibold leading-[1.15] tracking-tight text-slate-900 md:text-[40px]">
+                            The questions merchants ask before they sign.
+                        </h2>
+
+                        <dl className="mt-12 divide-y divide-slate-200 border-y border-slate-200">
+                            {objections.map(({ q, a }) => (
+                                <div key={q} className="grid gap-4 py-8 md:grid-cols-[0.9fr_2.1fr] md:gap-12">
+                                    <dt className="text-[16px] font-semibold leading-snug text-slate-900">
+                                        {q}
+                                    </dt>
+                                    <dd className="text-[15px] leading-relaxed text-slate-600">
+                                        {a}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </div>
+                </section>
+
+                {/* ————— PRICING ————— */}
+                <section id="pricing" className="border-b border-slate-200">
+                    <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-28">
+                        <div className="max-w-[640px]">
+                            <div className="dateline text-[#0A64BC]">Pricing</div>
+                            <h2 className="mt-3 text-[32px] font-semibold leading-[1.15] tracking-tight text-slate-900 md:text-[40px]">
+                                One price. Filed monthly. Cancel in one click.
+                            </h2>
+                        </div>
+
+                        <div className="mt-14 grid gap-px border border-slate-200 bg-slate-200 md:grid-cols-3">
+                            {pricingCards.map((card) => {
+                                const href = card.title === 'Enterprise'
+                                    ? '/pricing?source=marketing_home&cta=pricing_enterprise'
+                                    : buildScanHref(card.cta);
+                                return (
+                                    <div
+                                        key={card.title}
+                                        className={`flex flex-col bg-white px-8 py-10 ${card.featured ? 'ring-1 ring-[#0A64BC] ring-inset' : ''}`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="dateline text-slate-500">{card.title}</div>
+                                            {card.featured && (
+                                                <span className="dateline-sm text-[#0A64BC]">Recommended</span>
+                                            )}
+                                        </div>
+                                        <div className="mt-6 flex items-baseline gap-2">
+                                            <span className="numeric-mono text-[40px] font-medium leading-none text-slate-900">
+                                                {card.price}
+                                            </span>
+                                            <span className="text-[13px] text-slate-500">{card.cadence}</span>
+                                        </div>
+                                        <p className="mt-5 text-[14px] leading-relaxed text-slate-600">
+                                            {card.body}
+                                        </p>
+                                        <ul className="mt-6 space-y-3 border-t border-slate-200 pt-6">
+                                            {card.bullets.map((b) => (
+                                                <li key={b} className="flex gap-3 text-[14px] leading-relaxed text-slate-700">
+                                                    <span className="mt-[7px] inline-block h-[3px] w-[3px] flex-shrink-0 bg-[#0A64BC]" />
+                                                    {b}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <div className="mt-8 pt-4">
+                                            <a
+                                                href={href}
+                                                onClick={() => {
+                                                    if (card.title === 'Enterprise') {
+                                                        handlePricingClick('enterprise', '/pricing', 'pricing_enterprise');
+                                                    } else {
+                                                        handlePricingClick(card.plan, '/scan', card.cta);
+                                                    }
+                                                }}
+                                                className={card.featured
+                                                    ? 'inline-flex w-full items-center justify-center rounded-md bg-[#0A64BC] px-5 py-3 text-[14px] font-medium text-white no-underline transition-colors hover:bg-[#08539E]'
+                                                    : 'inline-flex w-full items-center justify-center rounded-md border border-slate-300 px-5 py-3 text-[14px] font-medium text-slate-900 no-underline transition-colors hover:border-slate-900'}
+                                            >
+                                                {card.ctaLabel}
+                                            </a>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ————— CLOSING FILING ————— */}
+                <section className="bg-white">
+                    <div className="mx-auto max-w-[960px] px-6 py-24 md:px-8 md:py-32">
+                        <div className="dateline text-[#0A64BC]">Closing</div>
+                        <h2 className="mt-4 text-[32px] font-semibold leading-[1.1] tracking-tight text-slate-900 md:text-[48px]">
+                            Stop waiting for the processor to act.
+                        </h2>
+                        <p className="mt-6 max-w-[580px] text-lg leading-relaxed text-slate-600">
+                            Payout pressure is observable before it becomes your problem. File the scan today; read the record tomorrow.
+                        </p>
+
+                        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <a
+                                href={buildScanHref('final_cta')}
+                                onClick={() => handleScanClick('final_cta')}
+                                className="inline-flex items-center justify-center rounded-md bg-slate-900 px-6 py-3 text-[14px] font-medium text-white no-underline transition-colors hover:bg-slate-950"
+                            >
+                                Run a free scan
+                            </a>
+                            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-slate-400">
+                                ~2 min &middot; no card required
+                            </span>
+                        </div>
+                    </div>
                 </section>
             </main>
 

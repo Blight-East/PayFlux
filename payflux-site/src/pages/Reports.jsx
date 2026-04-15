@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, AlertTriangle, TrendingUp } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import Footer from '../components/Footer';
 
 const API_BASE = 'https://api.payflux.dev';
 
 const riskColors = {
-    critical: 'text-red-400 bg-red-500/10 border-red-500/20',
-    high: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
-    medium: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-    low: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
+    critical: 'text-red-400 border-red-500/30 bg-red-500/[0.08]',
+    high: 'text-[#E0923F] border-[#BC620A]/40 bg-[#BC620A]/[0.08]',
+    medium: 'text-yellow-300 border-yellow-500/30 bg-yellow-500/[0.06]',
+    low: 'text-slate-400 border-white/10 bg-white/[0.03]',
 };
 
 const Reports = () => {
@@ -18,7 +18,7 @@ const Reports = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        document.title = 'Intelligence Reports | PayFlux';
+        document.title = 'Intelligence Desk | PayFlux';
 
         fetch(`${API_BASE}/intelligence/reports`)
             .then(res => res.json())
@@ -26,126 +26,173 @@ const Reports = () => {
                 setReports(data.reports || []);
                 setLoading(false);
             })
-            .catch(err => {
-                setError('Unable to load reports');
+            .catch(() => {
+                setError('Unable to load filings');
                 setLoading(false);
             });
     }, []);
 
-    const formatDate = (dateStr) => {
+    const formatFilingDate = (dateStr) => {
         if (!dateStr) return '';
         const d = new Date(dateStr);
-        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        return `${d.getFullYear()}\u2013${String(d.getMonth() + 1).padStart(2, '0')}\u2013${String(d.getDate()).padStart(2, '0')}`;
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-300 font-sans">
-            <nav className="fixed top-0 w-full z-50 bg-slate-950/90 backdrop-blur-md border-b border-white/[0.06] h-16">
-                <div className="max-w-[960px] mx-auto px-8 h-full flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3">
-                        <div className="w-7 h-7 bg-[#0A64BC] rounded-sm" />
-                        <span className="font-semibold tracking-tight text-lg text-white">PayFlux</span>
+        <div className="min-h-screen bg-[#0A0B0E] font-sans text-[#A1A7B3] selection:bg-[#0A64BC]/30 selection:text-white">
+            {/* ————— NAV ————— */}
+            <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-[#0A0B0E]/90 backdrop-blur">
+                <div className="mx-auto flex h-16 max-w-[960px] items-center justify-between px-6 md:px-8">
+                    <Link to="/" className="flex items-center gap-2.5 no-underline">
+                        <span className="block h-5 w-5 bg-[#0A64BC]" aria-hidden />
+                        <span className="text-[15px] font-semibold tracking-tight text-white">PayFlux</span>
+                        <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872] md:inline">
+                            Intelligence Desk
+                        </span>
                     </Link>
                     <div className="flex items-center gap-6">
-                        <Link to="/pricing" className="text-[13px] text-slate-500 hover:text-white transition-colors">
-                            Pricing
-                        </Link>
-                        <Link to="/" className="text-[13px] text-slate-500 hover:text-white transition-colors">
+                        <Link
+                            to="/"
+                            className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#636872] no-underline hover:text-white"
+                        >
                             Home
+                        </Link>
+                        <Link
+                            to="/pricing"
+                            className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#636872] no-underline hover:text-white"
+                        >
+                            Pricing
                         </Link>
                     </div>
                 </div>
             </nav>
 
-            <main className="max-w-[960px] mx-auto px-8 pt-32 pb-20">
-                <div className="mb-16">
-                    <div className="text-[11px] uppercase tracking-[0.3em] text-[#0A64BC] font-medium mb-4">
-                        Merchant Intelligence
+            <main className="mx-auto max-w-[960px] px-6 pt-28 pb-24 md:px-8 md:pt-32">
+                {/* ————— HEADER ————— */}
+                <div className="mb-14">
+                    <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#0A64BC]">
+                        Intelligence Desk
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4">
-                        Intelligence Reports
+                    <h1 className="mt-4 text-[32px] font-semibold tracking-tight leading-[1.1] text-white md:text-[40px]">
+                        Filings
                     </h1>
-                    <p className="text-lg text-slate-400 max-w-2xl">
-                        AI-generated market intelligence reports derived from real-time payment processor distress signals. Updated every 6 hours.
+                    <p className="mt-5 max-w-[620px] text-[15px] leading-relaxed text-[#A1A7B3]">
+                        Automated market intelligence derived from real-time payment processor distress signals. Each filing is a record: what changed, why it matters, what to do next. Refreshed every six hours.
                     </p>
+
+                    <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-white/[0.06] pt-6">
+                        <div>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872]">Cadence</div>
+                            <div className="mt-1.5 font-mono text-[14px] text-white tabular-nums">06h</div>
+                        </div>
+                        <div>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872]">On File</div>
+                            <div className="mt-1.5 font-mono text-[14px] text-white tabular-nums">
+                                {loading ? '—' : String(reports.length).padStart(2, '0')}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872]">Source</div>
+                            <div className="mt-1.5 font-mono text-[14px] text-white">Stripe · Adyen · Braintree</div>
+                        </div>
+                    </div>
                 </div>
 
+                {/* ————— STATE: LOADING ————— */}
                 {loading && (
-                    <div className="text-center py-20">
-                        <div className="text-slate-500 text-sm">Loading reports...</div>
+                    <div className="border-t border-white/[0.06] py-24 text-center">
+                        <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#636872]">
+                            Loading filings…
+                        </div>
                     </div>
                 )}
 
+                {/* ————— STATE: ERROR ————— */}
                 {error && (
-                    <div className="text-center py-20">
-                        <div className="text-red-400 text-sm">{error}</div>
+                    <div className="border-t border-white/[0.06] py-24 text-center">
+                        <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#BC620A]">
+                            {error}
+                        </div>
                     </div>
                 )}
 
+                {/* ————— STATE: EMPTY ————— */}
                 {!loading && !error && reports.length === 0 && (
-                    <div className="text-center py-20 border border-slate-800 rounded-lg">
-                        <FileText className="w-10 h-10 text-slate-600 mx-auto mb-4" />
-                        <div className="text-slate-400 text-sm mb-2">No reports published yet</div>
-                        <div className="text-slate-600 text-xs">Reports are generated automatically when significant distress patterns emerge.</div>
+                    <div className="border-t border-white/[0.06] py-24 text-center">
+                        <FileText className="mx-auto mb-5 h-8 w-8 text-[#636872]" />
+                        <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-white">
+                            No filings on record
+                        </div>
+                        <div className="mt-3 text-[13px] text-[#636872]">
+                            Filings are published when material distress patterns emerge.
+                        </div>
                     </div>
                 )}
 
-                <div className="space-y-4">
-                    {reports.map((report) => (
-                        <Link
-                            key={report.slug}
-                            to={`/reports/${report.slug}`}
-                            className="block group"
-                        >
-                            <article className="border border-slate-800 rounded-lg p-6 hover:border-slate-700 transition-colors">
-                                <div className="flex items-start justify-between gap-4 mb-3">
-                                    <div className="flex items-center gap-3">
-                                        {report.risk_level && (
-                                            <span className={`text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded border ${riskColors[report.risk_level] || riskColors.low}`}>
-                                                {report.risk_level}
-                                            </span>
-                                        )}
-                                        {report.processor && (
-                                            <span className="text-[10px] uppercase tracking-wider text-slate-500">
-                                                {report.processor}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className="text-[11px] text-slate-600 whitespace-nowrap">
-                                        {formatDate(report.created_at)}
-                                    </span>
-                                </div>
+                {/* ————— FILING TABLE ————— */}
+                {!loading && !error && reports.length > 0 && (
+                    <div className="border-t border-white/[0.10]">
+                        <div className="hidden grid-cols-[120px_1fr_120px_120px] gap-6 border-b border-white/[0.06] py-3 md:grid">
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872]">Filed</div>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872]">Title</div>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872]">Processor</div>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-right text-[#636872]">Severity</div>
+                        </div>
 
-                                <h2 className="text-lg font-semibold text-white group-hover:text-[#0A64BC] transition-colors mb-2">
-                                    {report.title}
-                                </h2>
-
-                                {report.executive_summary && (
-                                    <p className="text-sm text-slate-400 leading-relaxed line-clamp-2">
-                                        {report.executive_summary}
-                                    </p>
-                                )}
-
-                                <div className="flex items-center gap-4 mt-4">
-                                    {report.cluster_size && (
-                                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                                            <TrendingUp className="w-3 h-3" />
-                                            {report.cluster_size} signals
+                        <div>
+                            {reports.map((report) => (
+                                <Link
+                                    key={report.slug}
+                                    to={`/reports/${report.slug}`}
+                                    className="filing-row group block border-b border-white/[0.06] no-underline"
+                                >
+                                    <article className="grid grid-cols-1 gap-3 px-1 py-5 md:grid-cols-[120px_1fr_120px_120px] md:items-baseline md:gap-6">
+                                        {/* Date */}
+                                        <div className="font-mono text-[12px] tracking-[0.05em] text-[#636872] tabular-nums md:text-[13px]">
+                                            {formatFilingDate(report.created_at)}
                                         </div>
-                                    )}
-                                    {report.industry && (
-                                        <div className="text-[11px] text-slate-500">
-                                            {report.industry}
+
+                                        {/* Title + deck */}
+                                        <div>
+                                            <h2 className="text-[15px] font-medium leading-snug text-white transition-colors group-hover:text-[#0A64BC] md:text-[16px]">
+                                                {report.title}
+                                            </h2>
+                                            {report.executive_summary && (
+                                                <p className="mt-1 text-[13px] leading-relaxed text-[#636872] line-clamp-1">
+                                                    {report.executive_summary}
+                                                </p>
+                                            )}
+                                            {report.industry && (
+                                                <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[#636872]">
+                                                    {report.industry}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            </article>
-                        </Link>
-                    ))}
-                </div>
+
+                                        {/* Processor */}
+                                        <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-[#A1A7B3] md:text-[12px]">
+                                            {report.processor || '—'}
+                                        </div>
+
+                                        {/* Severity */}
+                                        <div className="md:text-right">
+                                            {report.risk_level ? (
+                                                <span className={`severity-pill ${riskColors[report.risk_level] || riskColors.low}`}>
+                                                    {report.risk_level}
+                                                </span>
+                                            ) : (
+                                                <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-[#636872]">—</span>
+                                            )}
+                                        </div>
+                                    </article>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </main>
 
-            <Footer />
+            <Footer variant="dark" />
         </div>
     );
 };

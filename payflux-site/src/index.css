@@ -9,36 +9,55 @@
 }
 
 @layer base {
+    html {
+        font-family: 'Inter', sans-serif;
+    }
+
     body {
         font-family: 'Inter', sans-serif;
         scroll-behavior: smooth;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background-color: #020617;
-        color: #1e293b;
+        background-color: #ffffff;
+        color: #0f172a;
+        font-feature-settings: "cv11", "ss01";
     }
 
     ::selection {
-        background-color: rgba(10, 100, 188, 0.3);
+        background-color: rgba(10, 100, 188, 0.2);
+        color: #0f172a;
     }
 }
 
 @layer components {
-    /* Engineering Paper Background — Light */
-    .bg-engineering {
-        background-color: #ffffff;
-        background-image:
-            linear-gradient(rgba(51, 65, 85, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(51, 65, 85, 0.03) 1px, transparent 1px);
-        background-size: 24px 24px;
+    /* ————————————————————————————
+       Filing Desk primitives
+       ———————————————————————————— */
+
+    /* Mono UPPERCASE dateline that opens every major section. */
+    .dateline {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
     }
 
-    /* Engineering Grid — Dark */
-    .bg-grid-dark {
-        background-image:
-            linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-        background-size: 24px 24px;
+    .dateline-sm {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10px;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+
+    /* Tabular financial numerics — always mono, always aligned. */
+    .numeric-mono {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
     }
 
     .text-numeric {
@@ -46,36 +65,68 @@
         letter-spacing: -0.02em;
     }
 
-    /* Shadows */
-    .shadow-elevation-subtle {
-        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 0 3px rgba(15, 23, 42, 0.02);
+    /* Hairline rules replace cards and shadows. */
+    .ink-rule-light {
+        border-top: 1px solid #e2e8f0;
     }
 
-    .shadow-document {
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02), 0 10px 40px -10px rgba(0,0,0,0.04);
+    .ink-rule-dark {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .shadow-document-float {
-        box-shadow:
-            0 4px 20px rgba(0,0,0,0.3),
-            0 20px 60px -10px rgba(0,0,0,0.4);
+    /* Editorial drop paragraph (WIRED-style lead). */
+    .editorial-drop::first-letter {
+        font-size: 1.15em;
+        font-weight: 600;
     }
 
+    .editorial-drop p:first-child {
+        font-size: 1.125rem;
+        line-height: 1.7;
+    }
+
+    /* Filing-row hover state for the Reports list. */
+    .filing-row {
+        transition: background-color 160ms ease;
+    }
+
+    .filing-row:hover {
+        background-color: #0f1116;
+    }
+
+    /* Filing-row for light environment tables. */
+    .filing-row-light:hover {
+        background-color: #f8fafc;
+    }
+
+    /* Severity pill base — apply color variant via utility. */
+    .severity-pill {
+        display: inline-flex;
+        align-items: center;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10px;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 2px;
+        border-width: 1px;
+        border-style: solid;
+    }
+
+    /* Subtle fade-in on mount — used sparingly. */
     .animate-fade-in {
-        animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         opacity: 0;
     }
 
     .delay-100 { animation-delay: 100ms; }
     .delay-200 { animation-delay: 200ms; }
     .delay-300 { animation-delay: 300ms; }
-
-    .animate-in {
-        animation: fade-in 0.6s ease-out forwards;
-    }
 }
 
 @keyframes fade-in {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }

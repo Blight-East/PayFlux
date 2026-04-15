@@ -208,7 +208,7 @@ const ProofAsset = () => {
                 </section>
             </main>
 
-            <Footer />
+            <Footer variant="dark" />
         </div>
     );
 };

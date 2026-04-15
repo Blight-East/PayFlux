@@ -58,7 +58,7 @@ const Success = () => {
                 </div>
             </main>
 
-            <Footer />
+            <Footer variant="dark" />
         </div>
     );
 };

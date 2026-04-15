@@ -414,7 +414,7 @@ const ReserveImpactCalculator = () => {
                     </section>
                 </main>
 
-                <Footer />
+                <Footer variant="dark" />
             </div>
         </div>
     );
