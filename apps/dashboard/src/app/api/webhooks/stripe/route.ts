@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import { logOnboardingEvent, logStageTransition } from '@/lib/onboarding-events-server';
@@ -16,6 +17,7 @@ import { upsertMonitoredEntityForStripeConnection, getMonitoredEntityByWorkspace
 import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
 import { findWorkspaceByClerkOrgId, findWorkspaceById, updateWorkspaceState } from '@/lib/db/workspaces';
 import { mirrorWorkspaceStateToClerk } from '@/lib/clerk-mirror';
+import { resolveMerchantContextFromEvent } from '@/lib/stripe/resolveMerchantContextFromEvent';
 
 const STATUS_PATH = path.join(process.cwd(), 'data', 'status.json');
 
@@ -437,55 +439,131 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, even
     });
 }
 
-function normalizeStripeEvent(event: Stripe.Event): any | null {
-    if (event.type === 'payment_intent.payment_failed') {
-        const pi = event.data.object as any;
-        return {
-            event_type: 'payment_failed',
-            event_timestamp: new Date(event.created * 1000).toISOString(),
-            event_id: event.id,
-            merchant_id_hash: pi.metadata?.merchant_id || 'unknown',
-            payment_intent_id_hash: pi.id,
-            processor: 'stripe',
-            failure_category: pi.last_payment_error?.code || 'declined',
-            retry_count: pi.metadata?.retry_count ? parseInt(pi.metadata.retry_count, 10) : 0,
-            geo_bucket: 'US',
-        };
-    }
-    if (event.type === 'payment_intent.succeeded') {
-        const pi = event.data.object as any;
-        return {
-            event_type: 'payment_succeeded',
-            event_timestamp: new Date(event.created * 1000).toISOString(),
-            event_id: event.id,
-            merchant_id_hash: pi.metadata?.merchant_id || 'unknown',
-            payment_intent_id_hash: pi.id,
-            processor: 'stripe',
-            retry_count: 0,
-            geo_bucket: 'US',
-        };
-    }
-    return null;
+// PayFlux ingest event shape — kept loose until the Go side advertises a
+// versioned schema. `merchant_id_hash` is the workspace UUID, not a hash, but
+// we keep the legacy field name so the Go decoder doesn't have to change.
+type PayFluxEvent =
+    | {
+          event_type: 'payment_failed';
+          event_timestamp: string;
+          event_id: string;
+          merchant_id_hash: string;
+          payment_intent_id_hash: string;
+          processor: 'stripe';
+          failure_category: string;
+          retry_count: number;
+          geo_bucket: string | null;
+      }
+    | {
+          event_type: 'payment_succeeded';
+          event_timestamp: string;
+          event_id: string;
+          merchant_id_hash: string;
+          payment_intent_id_hash: string;
+          processor: 'stripe';
+          retry_count: number;
+          geo_bucket: string | null;
+      };
+
+// Go's /v1/events/payment_exhaust validates `event_id` as a UUID and dedups
+// on it. Stripe ids are `evt_…` not UUIDs, so we map them to a deterministic
+// UUIDv5 (DNS namespace) — same evt_id always produces the same UUID, which
+// preserves Go-side idempotency across webhook retries.
+const EVENT_NS_BYTES = Buffer.from('6ba7b8109dad11d180b400c04fd430c8', 'hex');
+
+function stripeEventIdToUuid(stripeEventId: string): string {
+    const hash = createHash('sha1');
+    hash.update(EVENT_NS_BYTES);
+    hash.update(stripeEventId);
+    const bytes = hash.digest().subarray(0, 16);
+    bytes[6] = (bytes[6] & 0x0f) | 0x50; // version 5
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // RFC 4122 variant
+    const hex = bytes.toString('hex');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
-async function forwardToPayFlux(payfluxEvent: any) {
-    try {
-        const ingestUrl = process.env.PAYFLUX_INGEST_URL;
-        const apiKey = process.env.PAYFLUX_API_KEY;
+async function normalizeStripeEvent(event: Stripe.Event): Promise<PayFluxEvent | null> {
+    if (event.type !== 'payment_intent.payment_failed' && event.type !== 'payment_intent.succeeded') {
+        return null;
+    }
 
-        if (ingestUrl && apiKey) {
-            await fetch(ingestUrl, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payfluxEvent),
+    // Connect events carry the connected acct_… in event.account. Without it we
+    // can't attribute the event to a workspace, and we'd rather drop than send
+    // anonymous junk to Go.
+    const merchant = await resolveMerchantContextFromEvent(event);
+    if (!merchant) {
+        return null;
+    }
+
+    const pi = event.data.object as Stripe.PaymentIntent;
+    const eventTimestamp = new Date(event.created * 1000).toISOString();
+
+    const eventUuid = stripeEventIdToUuid(event.id);
+
+    if (event.type === 'payment_intent.payment_failed') {
+        const lastError = (pi as Stripe.PaymentIntent & { last_payment_error?: { code?: string | null } }).last_payment_error;
+        const retryRaw = pi.metadata?.retry_count;
+        return {
+            event_type: 'payment_failed',
+            event_timestamp: eventTimestamp,
+            event_id: eventUuid,
+            merchant_id_hash: merchant.workspaceId,
+            payment_intent_id_hash: pi.id,
+            processor: 'stripe',
+            failure_category: lastError?.code || 'declined',
+            retry_count: retryRaw ? parseInt(retryRaw, 10) || 0 : 0,
+            geo_bucket: merchant.geoBucket,
+        };
+    }
+
+    return {
+        event_type: 'payment_succeeded',
+        event_timestamp: eventTimestamp,
+        event_id: eventUuid,
+        merchant_id_hash: merchant.workspaceId,
+        payment_intent_id_hash: pi.id,
+        processor: 'stripe',
+        retry_count: 0,
+        geo_bucket: merchant.geoBucket,
+    };
+}
+
+async function forwardToPayFlux(payfluxEvent: PayFluxEvent) {
+    const ingestUrl = process.env.PAYFLUX_INGEST_URL;
+    const apiKey = process.env.PAYFLUX_API_KEY;
+
+    if (!ingestUrl || !apiKey) {
+        // Forwarding is opt-in. Until both vars are set, normalize-and-drop is
+        // the intended behaviour — see .env.example for the cutover note.
+        return;
+    }
+
+    try {
+        const res = await fetch(ingestUrl, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payfluxEvent),
+        });
+
+        if (!res.ok) {
+            console.error('payflux_forward_non_2xx', {
+                status: res.status,
+                event_type: payfluxEvent.event_type,
+                event_id: payfluxEvent.event_id,
             });
-            await updateStatus();
+            return;
         }
-    } catch {
-        console.error('payflux_forward_failed');
+
+        await updateStatus();
+    } catch (err) {
+        console.error('payflux_forward_failed', {
+            event_type: payfluxEvent.event_type,
+            event_id: payfluxEvent.event_id,
+            message: err instanceof Error ? err.message : String(err),
+        });
     }
 }
 
@@ -516,7 +594,7 @@ export async function POST(request: Request) {
                 break;
         }
 
-        const payfluxEvent = normalizeStripeEvent(event);
+        const payfluxEvent = await normalizeStripeEvent(event);
         if (payfluxEvent) {
             await forwardToPayFlux(payfluxEvent);
         }

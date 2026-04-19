@@ -25,6 +25,23 @@ export async function getStripeProcessorConnectionByStripeAccountId(
     return result.rows[0] ? mapProcessorConnectionRow(result.rows[0]) : null;
 }
 
+// Shallow-merge keys into connection_metadata without overwriting unrelated
+// keys. Used by the lazy country lookup in resolveMerchantContextFromEvent so
+// the first webhook for a merchant pays the Stripe API roundtrip and every
+// subsequent webhook reads from cache.
+export async function mergeStripeProcessorConnectionMetadata(
+    connectionId: string,
+    patch: JsonObject
+): Promise<void> {
+    await dbQuery(
+        `UPDATE processor_connections
+         SET connection_metadata = COALESCE(connection_metadata, '{}'::jsonb) || $2::jsonb,
+             updated_at = now()
+         WHERE id = $1`,
+        [connectionId, JSON.stringify(patch)]
+    );
+}
+
 export async function upsertStripeProcessorConnection(args: {
     workspaceId: string;
     stripeAccountId: string;
