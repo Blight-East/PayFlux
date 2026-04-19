@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { generateStateToken } from '@/lib/oauth-state';
-import { resolveOrCreateActiveWorkspace } from '@/lib/active-workspace';
+import { resolveWorkspace } from '@/lib/resolve-workspace';
 import { requireAdmin } from '@/lib/guards';
 
 export async function GET() {
@@ -11,13 +11,15 @@ export async function GET() {
 
     try {
         // 1. Auth Check
-        const { userId, orgId } = await auth();
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        await clerkClient();
-        const workspace = await resolveOrCreateActiveWorkspace(userId, orgId || null);
+        const workspace = await resolveWorkspace(userId);
+        if (!workspace) {
+            return new NextResponse('Workspace not found', { status: 404 });
+        }
         requireAdmin(workspace);
 
         // 3. Generate Secure State
