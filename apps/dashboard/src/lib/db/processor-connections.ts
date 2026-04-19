@@ -12,6 +12,19 @@ export async function getStripeProcessorConnectionByWorkspaceId(
     return result.rows[0] ? mapProcessorConnectionRow(result.rows[0]) : null;
 }
 
+// Reverse lookup: given a Stripe connected-account id (acct_…) from an inbound
+// Connect webhook event, find the workspace that owns it. The stripe_account_id
+// column is UNIQUE, so this is the inverse of upsertStripeProcessorConnection.
+export async function getStripeProcessorConnectionByStripeAccountId(
+    stripeAccountId: string
+): Promise<ProcessorConnectionRow | null> {
+    const result = await dbQuery(
+        'SELECT * FROM processor_connections WHERE provider = $1 AND stripe_account_id = $2 LIMIT 1',
+        ['stripe', stripeAccountId]
+    );
+    return result.rows[0] ? mapProcessorConnectionRow(result.rows[0]) : null;
+}
+
 export async function upsertStripeProcessorConnection(args: {
     workspaceId: string;
     stripeAccountId: string;
