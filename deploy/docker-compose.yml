@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Redis with AOF persistence
   redis:
@@ -33,7 +31,8 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env  # Optional: copy .env.example to .env and configure
+      - path: .env
+        required: false
     environment:
       # These can be overridden by .env file
       PAYFLUX_API_KEY: "${PAYFLUX_API_KEY:-your-api-key-here}"

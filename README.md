@@ -18,7 +18,7 @@ Teams operating real payment systems who need observability buffers for traffic 
 
 **Key design tradeoff:**
 
-Events are acknowledged (ACK) in Redis **before** export. Export is best-effort and non-blocking. For durable storage, use `PAYFLUX_EXPORT_MODE=stdout` piped to a log shipper with disk buffering. This architecture favors throughput and operational simplicity over in-app durability guarantees.
+Events are acknowledged (ACK) in Redis **after** export succeeds. If export fails, the message remains pending for retry. For durable long-term storage, use `PAYFLUX_EXPORT_MODE=stdout` piped to a log shipper with disk buffering. This architecture improves loss visibility but still does not turn PayFlux into a permanent system of record.
 
 ⸻
 
@@ -496,7 +496,7 @@ After successful processing, PayFlux exports events as line-delimited JSON to st
 - `file`: Append to `PAYFLUX_EXPORT_FILE`
 - `both`: Write to both stdout and file
 
-Export is best-effort after ACK; if export fails, events are still acknowledged.
+Export must succeed before ACK; if export fails, the message remains pending for retry.
 
 **Example exported event:**
 ```json
@@ -864,4 +864,3 @@ Contact
 
 📧 hello@payflux.dev
 🌐 https://payflux.dev
-

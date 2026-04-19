@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -462,13 +463,18 @@ func initializePrometheus() {
 
 // setupRedis initializes Redis client and global rate limiter
 func setupRedis(redisAddr string) {
-	rdb = redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:         redisAddr,
+		Password:     os.Getenv("REDIS_PASSWORD"),
 		DB:           0,
 		DialTimeout:  2 * time.Second,
 		ReadTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
-	})
+	}
+	if os.Getenv("REDIS_TLS") == "true" {
+		opts.TLSConfig = &tls.Config{}
+	}
+	rdb = redis.NewClient(opts)
 
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		log.Fatalf("Redis connection failed: %v", err)
@@ -561,7 +567,9 @@ func registerPilotRoutes(mux *http.ServeMux) {
 // Helper: Register evidence console routes
 func registerEvidenceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/evidence", corsMiddleware(authMiddleware(handleEvidence)))
-	mux.HandleFunc("/api/evidence/health", corsMiddleware(authMiddleware(handleEvidenceHealth)))
+	// /api/evidence/health is a liveness probe (degraded counts, last-good timestamp,
+	// uptime) consumed by Fly's healthcheck — no auth so the platform can reach it.
+	mux.HandleFunc("/api/evidence/health", corsMiddleware(handleEvidenceHealth))
 
 	if payfluxEnv == "dev" {
 		mux.HandleFunc("/api/evidence/fixtures/", corsMiddleware(authMiddleware(handleEvidenceFixture)))

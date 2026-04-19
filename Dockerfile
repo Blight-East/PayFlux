@@ -12,6 +12,7 @@ RUN go mod download
 
 # Copy source code
 COPY *.go ./
+COPY internal/ ./internal/
 
 # Build binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o payflux .
@@ -30,6 +31,9 @@ RUN addgroup -g 1000 payflux && \
 
 # Copy binary from builder
 COPY --from=builder /app/payflux .
+
+# Copy runtime config files
+COPY config/ ./config/
 
 # Expose port
 EXPOSE 8080

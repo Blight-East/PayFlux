@@ -2,6 +2,8 @@ package startup
 
 import (
 	"context"
+	"crypto/tls"
+	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -24,6 +26,9 @@ func NewGoRedisConn(addr, password string, db int) *GoRedisConn {
 		ReadTimeout:  depDialTimeout,
 		WriteTimeout: depDialTimeout,
 		PoolSize:     1,
+	}
+	if os.Getenv("REDIS_TLS") == "true" {
+		opts.TLSConfig = &tls.Config{}
 	}
 	return &GoRedisConn{client: redis.NewClient(opts)}
 }
