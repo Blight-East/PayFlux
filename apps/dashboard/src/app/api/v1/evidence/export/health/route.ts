@@ -4,10 +4,10 @@ import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 
 export async function GET(request: NextRequest) {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;

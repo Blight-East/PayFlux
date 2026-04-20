@@ -94,11 +94,11 @@ function createDegradedEnvelope(error: string, diagnostics: string[] = [], statu
     };
 }
 
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 import { canAccess } from '@/lib/tier/resolver';
 
 export async function GET(request: Request) {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;

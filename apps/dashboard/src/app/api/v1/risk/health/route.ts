@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { RiskMetrics } from '../../../../../lib/risk-infra';
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 
 export const runtime = "nodejs";
 
@@ -9,7 +9,7 @@ export const runtime = "nodejs";
  * Returns operational telemetry for the Risk API.
  */
 export async function GET() {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;

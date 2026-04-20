@@ -2,12 +2,12 @@ import { NextResponse, NextRequest } from 'next/server';
 import { RiskIntelligence } from '../../../../../../lib/risk-infra';
 export const dynamic = 'force-dynamic';
 
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 import { isInternalOperatorUser } from '@/lib/resolve-workspace';
 
 export async function POST(request: NextRequest) {
     // 0. Security Gates
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;

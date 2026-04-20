@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 import { canAccess } from '@/lib/tier/resolver';
 import type { Feature } from '@/lib/tier/features';
 
@@ -22,7 +22,7 @@ export async function GET(
     request: Request,
     { params }: any
 ) {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
     const { workspace } = authResult;
 
@@ -106,7 +106,7 @@ export async function POST(
     request: Request,
     { params }: any
 ) {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
     const { workspace } = authResult;
 

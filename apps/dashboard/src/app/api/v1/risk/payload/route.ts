@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 
 /**
  * POST /api/v1/risk/payload
@@ -20,7 +20,7 @@ interface PayloadRequest {
 }
 
 export async function POST(request: Request) {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 import { RiskIntelligence } from '@/lib/risk-infra';
 import { ProjectionLedger } from '@/lib/projection-ledger';
 
@@ -27,7 +27,7 @@ const MIN_EVALUATIONS = 20;
  * Returns null metrics if below statistical significance threshold.
  */
 export async function GET() {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const snapshots = await RiskIntelligence.getAllSnapshots();

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { requirePaidAuth } from '@/lib/require-auth';
 
 export async function GET() {
+    const authResult = await requirePaidAuth();
+    if (!authResult.ok) return authResult.response;
+
     const prometheusUrl = process.env.PROMETHEUS_URL || 'http://localhost:19090';
 
     try {

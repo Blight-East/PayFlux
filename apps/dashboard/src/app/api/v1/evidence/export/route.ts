@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
 import { canAccess } from '@/lib/tier/resolver';
 
 function deterministicJSON(obj: any): any {
@@ -52,7 +52,7 @@ function deterministicJSON(obj: any): any {
 
 export async function GET(request: NextRequest) {
     // 0. Internal Authorization Gate
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
 
 export async function HEAD(request: NextRequest) {
     // 0. Internal Authorization Gate
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;
