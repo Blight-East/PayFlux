@@ -48,9 +48,35 @@ if [[ "$touches_dashboard" == "0" ]]; then
     exit 0
 fi
 
-echo "pre-push: building apps/dashboard (set PAYFLUX_SKIP_PREPUSH=1 to bypass)…"
+echo "pre-push: building apps/dashboard against HEAD (set PAYFLUX_SKIP_PREPUSH=1 to bypass)…"
 
 repo_root=$(git rev-parse --show-toplevel)
+
+# Build against exactly what's being pushed — HEAD with no untracked or
+# modified files in the way. Netlify sees only what's committed; the gate
+# should match. We stash any working-tree differences and pop them back at
+# the end (including on failure), so the developer's WIP is preserved.
+stash_label="payflux-pre-push-$(date +%s)"
+stashed=0
+if ! git -C "$repo_root" diff --quiet HEAD || [[ -n "$(git -C "$repo_root" ls-files --others --exclude-standard)" ]]; then
+    if git -C "$repo_root" stash push --include-untracked --quiet -m "$stash_label" 2>/dev/null; then
+        stashed=1
+    else
+        echo "pre-push: failed to stash working tree — push blocked."
+        echo "  Commit or stash your changes manually, then retry."
+        exit 1
+    fi
+fi
+
+restore_stash() {
+    if [[ "$stashed" == "1" ]]; then
+        # The stash we created should be on top; pop quietly.
+        git -C "$repo_root" stash pop --quiet >/dev/null 2>&1 || \
+            echo "pre-push: WARNING — failed to auto-pop stash '$stash_label'; run \`git stash list\` and pop manually."
+    fi
+}
+trap restore_stash EXIT
+
 cd "$repo_root/apps/dashboard"
 
 if ! npm run build --silent; then
