@@ -81,6 +81,43 @@ async function resolveCountryBucket(
 }
 
 /**
+ * Reason codes emitted on the `payflux_event_dropped` counter when a Connect
+ * event can't be attributed. Kept narrow so dashboards can group cleanly:
+ *
+ *   - connection_not_found:   acct_… has never been seen — likely an
+ *                             arrived-before-OAuth-callback race.
+ *   - connection_disconnected: workspace explicitly disconnected this account.
+ *   - workspace_not_found:    connection row points at a workspace that no
+ *                             longer exists (data drift / hard delete).
+ *   - workspace_deleted:      workspace soft-deleted but connection still live.
+ *
+ * The "no event.account" branch is intentionally NOT counted — most Stripe
+ * platform events legitimately have no account, and counting them would drown
+ * the signal.
+ */
+type DropReason =
+    | 'connection_not_found'
+    | 'connection_disconnected'
+    | 'workspace_not_found'
+    | 'workspace_deleted';
+
+function recordDroppedEvent(
+    event: Stripe.Event,
+    stripeAccountId: string,
+    reason: DropReason
+): void {
+    // Structured single-line log — operators can grep `payflux_event_dropped`
+    // and break down by reason. Promotion to a Prometheus counter happens
+    // upstream of this file when metrics infra lands.
+    console.warn('payflux_event_dropped', {
+        reason,
+        stripe_account_id: stripeAccountId,
+        event_type: event.type,
+        event_id: event.id,
+    });
+}
+
+/**
  * Resolve the merchant context behind a Connect-flavoured Stripe event.
  *
  * Stripe stamps Connect events with `event.account = "acct_…"` — that field is
@@ -92,10 +129,10 @@ async function resolveCountryBucket(
  *
  * Returns null when:
  *   - The event has no `event.account` (platform-only events such as the
- *     dashboard's own billing webhooks live in this branch).
- *   - The connected account isn't recognised — this can happen if a workspace
- *     disconnected, or if the event arrived before the OAuth callback finished
- *     persisting the connection.
+ *     dashboard's own billing webhooks live in this branch). Silent drop.
+ *   - The connected account isn't recognised — see DropReason for the four
+ *     cases. These are counted via `payflux_event_dropped` so the operator
+ *     can see when a workspace silently stops attributing.
  *
  * Callers should treat a null return as "not a per-merchant Connect event"
  * and skip merchant-attributed forwarding rather than fall back to
@@ -110,12 +147,22 @@ export async function resolveMerchantContextFromEvent(
     }
 
     const connection = await getStripeProcessorConnectionByStripeAccountId(stripeAccountId);
-    if (!connection || connection.status !== 'connected') {
+    if (!connection) {
+        recordDroppedEvent(event, stripeAccountId, 'connection_not_found');
+        return null;
+    }
+    if (connection.status !== 'connected') {
+        recordDroppedEvent(event, stripeAccountId, 'connection_disconnected');
         return null;
     }
 
     const workspace = await findWorkspaceById(connection.workspace_id);
-    if (!workspace || workspace.deleted_at) {
+    if (!workspace) {
+        recordDroppedEvent(event, stripeAccountId, 'workspace_not_found');
+        return null;
+    }
+    if (workspace.deleted_at) {
+        recordDroppedEvent(event, stripeAccountId, 'workspace_deleted');
         return null;
     }
 
