@@ -6,13 +6,13 @@
  * These helpers determine whether a user needs to complete onboarding
  * before accessing protected dashboard routes.
  * 
- * NOTE: Onboarding completion is enforced at the UI/middleware level.
- * Persistence will be added once database infrastructure exists.
+ * NOTE: Onboarding completion persists in the account store and
+ * the primary dashboard surfaces now enforce setup for new accounts.
  * 
  * Current behavior:
- * - All users are grandfathered (account resolver returns no onboarding field)
- * - Middleware enforcement is active but relies on mock resolver
- * - Onboarding state does NOT persist across sessions
+ * - Existing accounts without onboarding field are grandfathered
+ * - New persisted onboarding completions survive refreshes and follow-up requests
+ * - Dashboard routes redirect incomplete accounts into setup
  */
 
 import { type Account } from './tier-enforcement';
@@ -48,6 +48,7 @@ export function requiresOnboarding(account: Account | null): boolean {
 export function isProtectedRoute(pathname: string): boolean {
     const protectedPrefixes = [
         '/dashboard',
+        '/dashboard-v2',
         '/evidence',
         '/risk',
         '/settings',

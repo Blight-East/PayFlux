@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveAccountTierConfig, type Account } from '@/lib/tier-enforcement';
 import { RateLimiter } from '@/lib/risk-infra';
-import { requireAuth } from '@/lib/require-auth';
+import { requirePaidAuth } from '@/lib/require-auth';
+import { recordAccountAPIActivity } from '@/lib/account-resolver';
 
 /**
  * POST /api/v1/ingest
@@ -15,7 +16,7 @@ import { requireAuth } from '@/lib/require-auth';
  * 4. Forward to Go backend with numeric headers
  */
 export async function POST(request: NextRequest) {
-    const authResult = await requireAuth();
+    const authResult = await requirePaidAuth();
     if (!authResult.ok) return authResult.response;
 
     const { userId, workspace } = authResult;
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.text();
 
-        const goResponse = await fetch(`${GO_BACKEND_URL}/ingest`, {
+        const goResponse = await fetch(`${GO_BACKEND_URL}/v1/events/payment_exhaust`, {
             method: 'POST',
             headers: {
                 // Numeric config only (no tier strings/enums)
@@ -132,6 +133,17 @@ export async function POST(request: NextRequest) {
         });
 
         const responseData = await goResponse.text();
+
+        if (goResponse.ok) {
+            try {
+                await recordAccountAPIActivity(userId);
+            } catch (activityError) {
+                console.error('[INGEST_ACTIVITY_RECORD_FAILED]', {
+                    accountId: account.id,
+                    error: activityError instanceof Error ? activityError.message : String(activityError),
+                });
+            }
+        }
 
         // Merge rate limit headers with Go response headers
         const responseHeaders = new Headers(goResponse.headers);

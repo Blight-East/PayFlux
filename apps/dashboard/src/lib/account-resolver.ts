@@ -17,12 +17,30 @@ interface AccountRow {
     id: string;
     tier: string;
     created_at: string;
+    onboarding_completed?: number | boolean | null;
+    onboarding_step?: string | null;
+    onboarding_completed_at?: string | null;
+    onboarding_mode?: string | null;
+    last_api_activity_at?: string | null;
 }
+
+type OnboardingStep = 'IDENTIFIED' | 'ACTION_SELECTED' | 'VALUE_REALIZED';
+type OnboardingMode = 'UI_SCAN' | 'API_FIRST' | 'NO_SITE';
 
 interface DB {
     init(): Promise<void>;
     getAccount(id: string): Promise<AccountRow | null>;
     createAccount(id: string, tier: string): Promise<AccountRow>;
+    updateOnboarding(
+        id: string,
+        onboarding: {
+            completed: boolean;
+            step: OnboardingStep;
+            completedAt?: string;
+            mode?: OnboardingMode;
+        }
+    ): Promise<AccountRow>;
+    recordAPIActivity(id: string, at: string): Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,15 +75,39 @@ class SQLiteDB implements DB {
             CREATE TABLE IF NOT EXISTS accounts (
                 id TEXT PRIMARY KEY,
                 tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free','pro','enterprise')),
+                onboarding_completed INTEGER,
+                onboarding_step TEXT,
+                onboarding_completed_at TEXT,
+                onboarding_mode TEXT,
+                last_api_activity_at TEXT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         `);
+
+        const columns = db.prepare(`PRAGMA table_info(accounts)`).all() as Array<{ name: string }>;
+        const existingColumns = new Set(columns.map((column) => column.name));
+        const migrations = [
+            ['onboarding_completed', 'ALTER TABLE accounts ADD COLUMN onboarding_completed INTEGER'],
+            ['onboarding_step', 'ALTER TABLE accounts ADD COLUMN onboarding_step TEXT'],
+            ['onboarding_completed_at', 'ALTER TABLE accounts ADD COLUMN onboarding_completed_at TEXT'],
+            ['onboarding_mode', 'ALTER TABLE accounts ADD COLUMN onboarding_mode TEXT'],
+            ['last_api_activity_at', 'ALTER TABLE accounts ADD COLUMN last_api_activity_at TEXT'],
+        ] as const;
+
+        for (const [column, sql] of migrations) {
+            if (!existingColumns.has(column)) {
+                db.exec(sql);
+            }
+        }
     }
 
     async getAccount(id: string): Promise<AccountRow | null> {
         const db = await this.getDB();
         const row = db.prepare(
-            'SELECT id, tier, created_at FROM accounts WHERE id = ?'
+            `SELECT id, tier, created_at, onboarding_completed, onboarding_step,
+                    onboarding_completed_at, onboarding_mode, last_api_activity_at
+             FROM accounts
+             WHERE id = ?`
         ).get(id) as AccountRow | undefined;
         return row ?? null;
     }
@@ -74,11 +116,52 @@ class SQLiteDB implements DB {
         const now = new Date().toISOString();
         const db = await this.getDB();
         db.prepare(
-            'INSERT INTO accounts (id, tier, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING'
-        ).run(id, tier, now);
+            `INSERT INTO accounts (
+                id, tier, onboarding_completed, onboarding_step, created_at
+            )
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO NOTHING`
+        ).run(id, tier, 0, 'IDENTIFIED', now);
         // Re-fetch to handle concurrent insert (ON CONFLICT)
         const row = await this.getAccount(id);
         return row!;
+    }
+
+    async updateOnboarding(
+        id: string,
+        onboarding: {
+            completed: boolean;
+            step: OnboardingStep;
+            completedAt?: string;
+            mode?: OnboardingMode;
+        }
+    ): Promise<AccountRow> {
+        const db = await this.getDB();
+        db.prepare(
+            `UPDATE accounts
+             SET onboarding_completed = ?,
+                 onboarding_step = ?,
+                 onboarding_completed_at = ?,
+                 onboarding_mode = ?
+             WHERE id = ?`
+        ).run(
+            onboarding.completed ? 1 : 0,
+            onboarding.step,
+            onboarding.completedAt ?? null,
+            onboarding.mode ?? null,
+            id
+        );
+        const row = await this.getAccount(id);
+        return row!;
+    }
+
+    async recordAPIActivity(id: string, at: string): Promise<void> {
+        const db = await this.getDB();
+        db.prepare(
+            `UPDATE accounts
+             SET last_api_activity_at = ?
+             WHERE id = ?`
+        ).run(at, id);
     }
 }
 
@@ -114,21 +197,50 @@ class PostgresDB implements DB {
             CREATE TABLE IF NOT EXISTS accounts (
                 id TEXT PRIMARY KEY,
                 tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free','pro','enterprise')),
+                onboarding_completed BOOLEAN,
+                onboarding_step TEXT,
+                onboarding_completed_at TIMESTAMPTZ,
+                onboarding_mode TEXT,
+                last_api_activity_at TIMESTAMPTZ,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
+        `);
+        await pool.query(`
+            ALTER TABLE accounts
+            ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN,
+            ADD COLUMN IF NOT EXISTS onboarding_step TEXT,
+            ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ,
+            ADD COLUMN IF NOT EXISTS onboarding_mode TEXT,
+            ADD COLUMN IF NOT EXISTS last_api_activity_at TIMESTAMPTZ
         `);
     }
 
     async getAccount(id: string): Promise<AccountRow | null> {
         const pool = await this.getPool();
         const { rows } = await pool.query(
-            'SELECT id, tier, created_at FROM accounts WHERE id = $1',
+            `SELECT id, tier, created_at, onboarding_completed, onboarding_step,
+                    onboarding_completed_at, onboarding_mode, last_api_activity_at
+             FROM accounts
+             WHERE id = $1`,
             [id]
         );
         if (rows.length === 0) return null;
         return {
             id: rows[0].id,
             tier: rows[0].tier,
+            onboarding_completed: rows[0].onboarding_completed,
+            onboarding_step: rows[0].onboarding_step,
+            onboarding_completed_at: rows[0].onboarding_completed_at instanceof Date
+                ? rows[0].onboarding_completed_at.toISOString()
+                : rows[0].onboarding_completed_at
+                    ? String(rows[0].onboarding_completed_at)
+                    : null,
+            onboarding_mode: rows[0].onboarding_mode,
+            last_api_activity_at: rows[0].last_api_activity_at instanceof Date
+                ? rows[0].last_api_activity_at.toISOString()
+                : rows[0].last_api_activity_at
+                    ? String(rows[0].last_api_activity_at)
+                    : null,
             created_at: rows[0].created_at instanceof Date
                 ? rows[0].created_at.toISOString()
                 : String(rows[0].created_at),
@@ -138,10 +250,12 @@ class PostgresDB implements DB {
     async createAccount(id: string, tier: string): Promise<AccountRow> {
         const pool = await this.getPool();
         const { rows } = await pool.query(
-            `INSERT INTO accounts (id, tier) VALUES ($1, $2)
+            `INSERT INTO accounts (id, tier, onboarding_completed, onboarding_step)
+             VALUES ($1, $2, $3, $4)
              ON CONFLICT (id) DO NOTHING
-             RETURNING id, tier, created_at`,
-            [id, tier]
+             RETURNING id, tier, onboarding_completed, onboarding_step,
+                       onboarding_completed_at, onboarding_mode, last_api_activity_at, created_at`,
+            [id, tier, false, 'IDENTIFIED']
         );
         // If ON CONFLICT fired, RETURNING is empty — re-fetch
         if (rows.length === 0) {
@@ -151,10 +265,56 @@ class PostgresDB implements DB {
         return {
             id: rows[0].id,
             tier: rows[0].tier,
+            onboarding_completed: rows[0].onboarding_completed,
+            onboarding_step: rows[0].onboarding_step,
+            onboarding_completed_at: rows[0].onboarding_completed_at instanceof Date
+                ? rows[0].onboarding_completed_at.toISOString()
+                : rows[0].onboarding_completed_at
+                    ? String(rows[0].onboarding_completed_at)
+                    : null,
+            onboarding_mode: rows[0].onboarding_mode,
+            last_api_activity_at: rows[0].last_api_activity_at instanceof Date
+                ? rows[0].last_api_activity_at.toISOString()
+                : rows[0].last_api_activity_at
+                    ? String(rows[0].last_api_activity_at)
+                    : null,
             created_at: rows[0].created_at instanceof Date
                 ? rows[0].created_at.toISOString()
                 : String(rows[0].created_at),
         };
+    }
+
+    async updateOnboarding(
+        id: string,
+        onboarding: {
+            completed: boolean;
+            step: OnboardingStep;
+            completedAt?: string;
+            mode?: OnboardingMode;
+        }
+    ): Promise<AccountRow> {
+        const pool = await this.getPool();
+        await pool.query(
+            `UPDATE accounts
+             SET onboarding_completed = $2,
+                 onboarding_step = $3,
+                 onboarding_completed_at = $4,
+                 onboarding_mode = $5
+             WHERE id = $1`,
+            [id, onboarding.completed, onboarding.step, onboarding.completedAt ?? null, onboarding.mode ?? null]
+        );
+        const row = await this.getAccount(id);
+        return row!;
+    }
+
+    async recordAPIActivity(id: string, at: string): Promise<void> {
+        const pool = await this.getPool();
+        await pool.query(
+            `UPDATE accounts
+             SET last_api_activity_at = $2
+             WHERE id = $1`,
+            [id, at]
+        );
     }
 }
 
@@ -188,6 +348,19 @@ async function getDB(): Promise<DB> {
 
 function rowToAccount(row: AccountRow): Account {
     const tier = validateTier(row.tier);
+    const onboardingStep = validateOnboardingStep(row.onboarding_step);
+    const onboarding =
+        row.onboarding_completed === null ||
+        row.onboarding_completed === undefined ||
+        onboardingStep === null
+            ? undefined
+            : {
+                completed: Boolean(row.onboarding_completed),
+                step: onboardingStep,
+                completedAt: row.onboarding_completed_at ?? undefined,
+                mode: validateOnboardingMode(row.onboarding_mode) ?? undefined,
+            };
+
     return {
         id: row.id,
         billingTier: tier,
@@ -198,6 +371,7 @@ function rowToAccount(row: AccountRow): Account {
                 reason: 'initial',
             },
         ],
+        onboarding,
     };
 }
 
@@ -206,6 +380,24 @@ function validateTier(tier: string): PricingTier {
         return tier;
     }
     return 'free';
+}
+
+function validateOnboardingStep(step: unknown): OnboardingStep | null {
+    if (step === 'IDENTIFIED' || step === 'ACTION_SELECTED' || step === 'VALUE_REALIZED') {
+        return step;
+    }
+    return null;
+}
+
+function validateOnboardingMode(mode: unknown): OnboardingMode | null {
+    if (mode === 'UI_SCAN' || mode === 'API_FIRST' || mode === 'NO_SITE') {
+        return mode;
+    }
+    return null;
+}
+
+function accountIdForUser(userId: string): string {
+    return `acc_${userId}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -226,7 +418,7 @@ export async function resolveAccount(userId: string | null): Promise<Account | n
     }
 
     const store = await getDB();
-    const accountId = `acc_${userId}`;
+    const accountId = accountIdForUser(userId);
 
     const existing = await store.getAccount(accountId);
     if (existing) {
@@ -315,6 +507,48 @@ export async function resolveAccountFromAPIKey(apiKey: string): Promise<Account 
 
     const created = await store.createAccount(accountId, 'free');
     return rowToAccount(created);
+}
+
+export async function completeOnboarding(
+    userId: string,
+    mode: OnboardingMode
+): Promise<Account['onboarding']> {
+    const store = await getDB();
+    const accountId = accountIdForUser(userId);
+    const existing = await store.getAccount(accountId);
+
+    if (!existing) {
+        await store.createAccount(accountId, 'free');
+    }
+
+    const completedAt = new Date().toISOString();
+    const updated = await store.updateOnboarding(accountId, {
+        completed: true,
+        step: 'VALUE_REALIZED',
+        completedAt,
+        mode,
+    });
+
+    return rowToAccount(updated).onboarding!;
+}
+
+export async function recordAccountAPIActivity(userId: string): Promise<void> {
+    const store = await getDB();
+    const accountId = accountIdForUser(userId);
+    const existing = await store.getAccount(accountId);
+
+    if (!existing) {
+        await store.createAccount(accountId, 'free');
+    }
+
+    await store.recordAPIActivity(accountId, new Date().toISOString());
+}
+
+export async function hasAccountAPIActivity(userId: string): Promise<boolean> {
+    const store = await getDB();
+    const accountId = accountIdForUser(userId);
+    const existing = await store.getAccount(accountId);
+    return Boolean(existing?.last_api_activity_at);
 }
 
 /**
