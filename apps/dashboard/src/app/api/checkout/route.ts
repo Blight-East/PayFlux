@@ -6,7 +6,6 @@ import { NextResponse } from 'next/server';
 
 import { getAppUrl } from '@/lib/app-url';
 import { createCheckoutSession } from '@/lib/billing/createCheckoutSession';
-import { getUserSubscription, hasActiveSubscription } from '@/lib/billing/subscriptions';
 import { resolveOrCreateActiveWorkspace } from '@/lib/active-workspace';
 
 type CheckoutPlan = 'pro';
@@ -47,10 +46,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Stripe price is not configured' }, { status: 500 });
         }
 
-        const existingSubscription = await getUserSubscription(userId);
-        if (hasActiveSubscription(existingSubscription?.status)) {
-            return NextResponse.json({ error: 'Subscription already active' }, { status: 409 });
-        }
+        // No client-side subscription preflight: Stripe enforces customer-
+        // level uniqueness on checkout, and the workspace-centric source of
+        // truth lives in lib/db/billing.ts (written by the tracked Phase 2
+        // webhook handler). The user-centric cache this used to read is no
+        // longer kept in sync with prod, so checking it would give stale
+        // answers — Stripe's own validation is the right gate.
 
         const client = await clerkClient();
         const user = await client.users.getUser(userId);
