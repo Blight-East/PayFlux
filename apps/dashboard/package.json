@@ -7,7 +7,7 @@
     "dev": "next dev",
     "prebuild": "node scripts/guard-fixtures.cjs",
     "check:fixtures": "node scripts/check-dev-fixtures.mjs",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint ."
   },

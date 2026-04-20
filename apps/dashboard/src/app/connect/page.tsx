@@ -16,7 +16,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 type PageProps = {
-    searchParams?: Record<string, string | string[] | undefined>;
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 async function resolveActiveOrgId(client: any, userId: string, orgId: string | null) {
@@ -61,7 +61,8 @@ export default async function ConnectPage({ searchParams }: PageProps) {
 
     logOnboardingEvent('connect_viewed', { userId, workspaceId: workspaceRecord.id });
 
-    const errRaw = searchParams?.err;
+    const resolvedSearchParams = (await searchParams) ?? {};
+    const errRaw = resolvedSearchParams.err;
     const err = Array.isArray(errRaw) ? errRaw[0] : errRaw;
     const errorMessage = err ? ERROR_MESSAGES[err] : null;
 
