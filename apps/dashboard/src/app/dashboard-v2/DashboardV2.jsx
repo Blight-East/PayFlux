@@ -184,12 +184,12 @@ export default function DashboardPage() {
                     <div>
                         {hasEvents ? (
                             <div className="flex flex-col">
-                                <h1 className="text-sm font-medium text-white tracking-tight">Risk ledger active</h1>
-                                <span className="text-[10px] text-subtle">First observable state change recorded.</span>
+                                <h1 className="text-sm font-medium text-white tracking-tight">Derived signal feed active</h1>
+                                <span className="text-[10px] text-subtle">First stored state change recorded.</span>
                             </div>
                         ) : (
                             <div className="flex flex-col opacity-50">
-                                <h1 className="text-sm font-medium text-white tracking-tight">Ledger standby</h1>
+                                <h1 className="text-sm font-medium text-white tracking-tight">Signal feed standby</h1>
                                 <span className="text-[10px] text-subtle">Awaiting signal acquisition...</span>
                             </div>
                         )}

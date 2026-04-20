@@ -36,10 +36,10 @@ export default function CompletePage() {
 
     if (!result) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="flex min-h-screen items-center justify-center p-6">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-                    <p className="mt-4 text-slate-600">Loading results...</p>
+                    <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--pf-accent)]"></div>
+                    <p className="mt-4 text-[var(--pf-text-soft)]">Loading results...</p>
                 </div>
             </div>
         );
@@ -51,54 +51,54 @@ export default function CompletePage() {
     const riskScore = data.riskScore || 0;
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+        <div className="flex min-h-screen flex-col items-center justify-center p-6">
             <div className="max-w-3xl w-full space-y-6">
-                {/* Header */}
                 <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(126,207,195,0.12)]">
+                        <svg className="h-8 w-8 text-[var(--pf-cool)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-900 mb-2">
-                        Risk Analysis Complete
+                    <h1 className="pf-editorial mb-2 text-3xl text-[var(--pf-paper)] md:text-[3rem]">
+                        First scan complete
                     </h1>
-                    <p className="text-slate-600">
-                        Here's what we found for {url}
+                    <p className="text-[var(--pf-text-soft)]">
+                        Here&apos;s the first pass for {url}
                     </p>
                 </div>
 
-                {/* Risk Summary Card */}
-                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+                <div className="pf-panel rounded-[2rem] p-8">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900">{url}</h2>
-                            <p className="text-slate-600 mt-1">Risk Assessment</p>
+                            <h2 className="text-2xl font-bold text-[var(--pf-paper)]">{url}</h2>
+                            <p className="mt-1 text-[var(--pf-text-soft)]">Risk assessment</p>
                         </div>
                         <div className="text-right">
-                            <div className="text-3xl font-bold text-indigo-600">{riskScore}</div>
-                            <div className="text-sm text-slate-600 uppercase tracking-wide">{riskLabel}</div>
+                            <div className="text-3xl font-bold text-[var(--pf-accent)]">{riskScore}</div>
+                            <div className="text-sm uppercase tracking-wide text-[var(--pf-text-soft)]">{riskLabel}</div>
                         </div>
                     </div>
 
-                    {/* Findings */}
                     {findings.length > 0 && (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-slate-900">Key Findings</h3>
+                            <h3 className="text-lg font-semibold text-[var(--pf-paper)]">Key findings</h3>
                             <ul className="space-y-3">
                                 {findings.slice(0, 3).map((finding, idx) => (
-                                    <li key={idx} className="bg-slate-50 rounded-lg p-4">
+                                    <li key={idx} className="rounded-[1.25rem] border border-white/8 bg-black/18 p-4">
                                         <div className="flex items-start space-x-3">
-                                            <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center mt-0.5">
-                                                <span className="text-xs font-semibold text-indigo-600">{idx + 1}</span>
+                                            <div className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(233,181,117,0.12)]">
+                                                <span className="text-xs font-semibold text-[var(--pf-accent)]">{idx + 1}</span>
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-slate-900">{finding.title}</h4>
-                                                <p className="text-sm text-slate-600 mt-1">{finding.description}</p>
+                                                <h4 className="font-semibold text-[var(--pf-paper)]">{finding.title}</h4>
+                                                <p className="mt-1 text-sm text-[var(--pf-text-soft)]">{finding.description}</p>
                                                 {finding.severity && (
-                                                    <span className={`inline-block mt-2 px-2 py-1 text-xs font-medium rounded ${finding.severity === 'high' ? 'bg-red-100 text-red-800' :
-                                                            finding.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                                'bg-green-100 text-green-800'
+                                                    <span className={`mt-2 inline-block rounded px-2 py-1 text-xs font-medium ${
+                                                        finding.severity === 'high'
+                                                            ? 'bg-red-500/12 text-red-300'
+                                                            : finding.severity === 'medium'
+                                                              ? 'bg-[rgba(233,181,117,0.12)] text-[var(--pf-accent-soft)]'
+                                                              : 'bg-[rgba(126,207,195,0.12)] text-[var(--pf-cool)]'
                                                         }`}>
                                                         {finding.severity}
                                                     </span>
@@ -112,24 +112,23 @@ export default function CompletePage() {
                     )}
 
                     {findings.length === 0 && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <p className="text-sm text-green-800">
+                        <div className="rounded-lg border border-[rgba(126,207,195,0.2)] bg-[rgba(126,207,195,0.08)] p-4">
+                            <p className="text-sm text-[var(--pf-cool)]">
                                 No significant risk signals detected. Your site appears to be in good standing.
                             </p>
                         </div>
                     )}
                 </div>
 
-                {/* CTA */}
                 <div className="text-center">
                     <Link
-                        href="/dashboard"
-                        className="inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98] no-underline"
+                        href="/pricing"
+                        className="inline-flex items-center justify-center rounded-full bg-[var(--pf-accent)] px-8 py-4 text-lg font-semibold text-[var(--pf-ink)] transition-all active:scale-[0.98] no-underline hover:opacity-95"
                     >
-                        Go to Dashboard
+                        Continue to Billing
                     </Link>
-                    <p className="mt-4 text-sm text-slate-600">
-                        Your dashboard is now unlocked
+                    <p className="mt-4 text-sm text-[var(--pf-text-soft)]">
+                        Your workspace is set up. Start your plan next to unlock the dashboard.
                     </p>
                 </div>
             </div>

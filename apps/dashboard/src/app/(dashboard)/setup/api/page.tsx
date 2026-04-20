@@ -3,9 +3,9 @@ import { redirect } from 'next/navigation';
 /**
  * /setup/api - DISABLED
  * 
- * This path requires database persistence for onboarding completion
- * and event log querying for API activity detection.
- * Redirecting to /setup until database infrastructure is available.
+ * API-first onboarding is still intentionally folded back into /setup.
+ * Persistence now exists, but the dedicated API-first workflow screens
+ * have not been rebuilt around the current product surface yet.
  */
 export default function APIFirstPage() {
     redirect('/setup');

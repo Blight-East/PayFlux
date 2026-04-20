@@ -11,8 +11,8 @@ type PayFluxLogoProps = {
  *
  * --- REQUIRED GLOBAL CSS (layout/root) ---
  * .payflux-mark {
- *   color: #f5f5f5;
- *   --payflux-accent: #2d5f4f;
+ *   color: var(--pf-paper);
+ *   --payflux-accent: var(--pf-accent);
  * }
  *
  * --- USAGE EXAMPLES ---
@@ -66,22 +66,15 @@ export default function PayFluxLogo({
                 preserveAspectRatio="xMinYMid meet"
             >
                 <style>{`
-          .pf-wm { font-family: 'Inter', sans-serif; font-size: 80px; letter-spacing: -0.02em; fill: currentColor; }
-          .pf-pay { font-weight: 500; }
-          .pf-flux { font-weight: 700; }
-          .pf-flow { fill: var(--payflux-accent, #2d5f4f); }
+          .pf-wm { font-family: 'Avenir Next', 'IBM Plex Sans', sans-serif; font-size: 80px; letter-spacing: -0.045em; }
+          .pf-pay { font-weight: 600; fill: currentColor; }
+          .pf-flux { font-weight: 700; fill: var(--payflux-accent, #e9b575); }
         `}</style>
 
                 <text className="pf-wm" x="0" y="88">
                     <tspan className="pf-pay">Pay</tspan>
                     <tspan className="pf-flux">Flux</tspan>
                 </text>
-
-                <g className="pf-flow" transform="translate(260, 112)">
-                    <rect x="0" y="0" width="14" height="4" rx="1" />
-                    <rect x="22" y="0" width="28" height="4" rx="1" />
-                    <rect x="58" y="0" width="46" height="4" rx="1" />
-                </g>
             </svg>
         );
     }
@@ -102,9 +95,9 @@ export default function PayFluxLogo({
             preserveAspectRatio="xMinYMid meet"
         >
             <style>{`
-        .pfm-wm { font-family: 'Inter', sans-serif; font-size: 80px; letter-spacing: -0.02em; fill: currentColor; }
-        .pfm-pay { font-weight: 500; }
-        .pfm-flux { font-weight: 700; }
+        .pfm-wm { font-family: 'Avenir Next', 'IBM Plex Sans', sans-serif; font-size: 80px; letter-spacing: -0.045em; }
+        .pfm-pay { font-weight: 600; fill: currentColor; }
+        .pfm-flux { font-weight: 700; fill: var(--payflux-accent, #e9b575); }
       `}</style>
 
             <text className="pfm-wm" x="0" y="80">

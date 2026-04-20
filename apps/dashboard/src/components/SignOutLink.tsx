@@ -7,7 +7,7 @@ export default function SignOutLink() {
         <SignOutButton>
             <button
                 type="button"
-                className="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors bg-transparent border-none cursor-pointer"
+                className="bg-transparent border-none cursor-pointer text-sm font-medium text-[var(--pf-text-soft)] hover:text-[var(--pf-paper)] transition-colors"
             >
                 Sign out
             </button>
