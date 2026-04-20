@@ -79,11 +79,26 @@ trap restore_stash EXIT
 
 cd "$repo_root/apps/dashboard"
 
-if ! npm run build --silent; then
-    echo
-    echo "pre-push: dashboard build failed — push blocked."
-    echo "  Fix the build, or re-run with PAYFLUX_SKIP_PREPUSH=1 if you know what you're doing."
-    exit 1
+# Use `netlify build --offline` when the CLI is available — it runs the same
+# plugin pipeline Netlify CI runs (including @netlify/plugin-nextjs), which
+# catches a class of failures that `npm run build` alone misses (e.g. missing
+# middleware artifacts the plugin expects). Falls back to npm run build if
+# the CLI is missing.
+if command -v netlify >/dev/null 2>&1; then
+    if ! netlify build --offline >/dev/null 2>&1; then
+        echo
+        echo "pre-push: \`netlify build --offline\` failed — push blocked."
+        echo "  Re-run \`netlify build --offline\` from apps/dashboard to see the error."
+        echo "  Or bypass with PAYFLUX_SKIP_PREPUSH=1 if you know what you're doing."
+        exit 1
+    fi
+else
+    if ! npm run build --silent; then
+        echo
+        echo "pre-push: dashboard build failed — push blocked."
+        echo "  Fix the build, or re-run with PAYFLUX_SKIP_PREPUSH=1 if you know what you're doing."
+        exit 1
+    fi
 fi
 
 echo "pre-push: build ok"
