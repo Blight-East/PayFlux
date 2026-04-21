@@ -1,0 +1,20 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#0B0E12"/>
+  <g transform="translate(180 250)">
+    <circle cx="106" cy="106" r="102" fill="#12161D" stroke="#2A2F37" stroke-width="6"/>
+    <circle cx="106" cy="106" r="58" stroke="#F7EFDE" stroke-width="18"/>
+    <circle cx="106" cy="106" r="16" fill="#E9B575"/>
+    <path d="M47 98C66 74 91 62 122 62C152 62 178 75 197 101" stroke="#7ECFC3" stroke-width="10" stroke-linecap="round"/>
+    <path d="M47 122C66 146 91 158 122 158C152 158 178 145 197 119" stroke="#F3D2A6" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <text x="410" y="405" fill="#F7EFDE" font-family="Iowan Old Style, Georgia, serif" font-size="220" font-weight="600" letter-spacing="-5">PayFlux</text>
+  <path d="M420 453H1336" stroke="url(#line)" stroke-width="6" stroke-linecap="round"/>
+  <text x="418" y="532" fill="#B8AA93" font-family="IBM Plex Sans, Avenir Next, sans-serif" font-size="38" font-weight="600" letter-spacing="14">RESERVE VISIBILITY · CLEAR REPORTING · NO PAYMENT FLOW CHANGES</text>
+  <defs>
+    <linearGradient id="line" x1="420" y1="453" x2="1336" y2="453" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E9B575"/>
+      <stop offset="0.52" stop-color="#F7EFDE"/>
+      <stop offset="1" stop-color="#7ECFC3"/>
+    </linearGradient>
+  </defs>
+</svg>

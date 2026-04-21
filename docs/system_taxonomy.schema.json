@@ -1,0 +1,215 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "PayFlux System Taxonomy Schema",
+    "type": "object",
+    "required": [
+        "schema_version",
+        "system",
+        "domains",
+        "primitives",
+        "artifacts"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "const": "1.0"
+        },
+        "system": {
+            "type": "object",
+            "required": [
+                "name",
+                "version",
+                "generated_at"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "version": {
+                    "type": "string",
+                    "pattern": "^v?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                },
+                "generated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                }
+            }
+        },
+        "domains": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "layer",
+                    "path",
+                    "purpose",
+                    "depends_on"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "layer": {
+                        "type": "string",
+                        "enum": [
+                            "foundation",
+                            "core",
+                            "interface",
+                            "support",
+                            "external"
+                        ]
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "purpose": {
+                        "type": "string"
+                    },
+                    "depends_on": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "primitives": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "layer",
+                    "responsibility",
+                    "inputs",
+                    "outputs",
+                    "determinism",
+                    "bounded",
+                    "hash"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "layer": {
+                        "type": "string"
+                    },
+                    "responsibility": {
+                        "type": "string"
+                    },
+                    "inputs": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "outputs": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "determinism": {
+                        "type": "string",
+                        "enum": [
+                            "deterministic",
+                            "conditional",
+                            "time_deterministic",
+                            "non_deterministic"
+                        ]
+                    },
+                    "bounded": {
+                        "type": "boolean"
+                    },
+                    "file": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "hash": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                    }
+                }
+            }
+        },
+        "artifacts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "type",
+                    "source",
+                    "schema"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "schema": {
+                        "type": "string",
+                        "pattern": "^\\{.*\\}$"
+                    }
+                }
+            }
+        },
+        "constraints": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "no_ml": {
+                    "type": "boolean"
+                },
+                "bounded_memory": {
+                    "type": "boolean"
+                },
+                "deterministic_scoring": {
+                    "type": "boolean"
+                },
+                "no_auto_execution": {
+                    "type": "boolean"
+                },
+                "audit_required": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "extension_rules": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "rule",
+                    "enforced_by"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "rule": {
+                        "type": "string"
+                    },
+                    "enforced_by": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

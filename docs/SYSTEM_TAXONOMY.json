@@ -1,0 +1,560 @@
+{
+    "schema_version": "1.0",
+    "system": {
+        "name": "PayFlux",
+        "version": "1.0.0",
+        "generated_at": "2026-02-16T20:59:59Z"
+    },
+    "domains": [
+        {
+            "name": "Persistence",
+            "layer": "foundation",
+            "path": "internal/logsafe/, Redis, filesystem",
+            "purpose": "PII redaction, Redis Streams, atomic file writes",
+            "depends_on": []
+        },
+        {
+            "name": "Config",
+            "layer": "foundation",
+            "path": "internal/config/, config/",
+            "purpose": "Signal resolution, runtime overrides, audit logging, runtime JSON configs",
+            "depends_on": []
+        },
+        {
+            "name": "Observability",
+            "layer": "foundation",
+            "path": "internal/metrics/",
+            "purpose": "Prometheus metrics for signals, tiers, enforcement, entitlements",
+            "depends_on": []
+        },
+        {
+            "name": "Rate Limiting",
+            "layer": "foundation",
+            "path": "internal/ratelimit/",
+            "purpose": "Atomic token-bucket rate limiter (Redis Lua)",
+            "depends_on": []
+        },
+        {
+            "name": "Runtime",
+            "layer": "core",
+            "path": "internal/runtime/",
+            "purpose": "Decision engine, adaptive baseline, causal analysis, deployment safety loop",
+            "depends_on": []
+        },
+        {
+            "name": "Risk",
+            "layer": "core",
+            "path": "risk_score.go, warnings.go",
+            "purpose": "Sliding-window risk scoring, risk band classification, warning store",
+            "depends_on": []
+        },
+        {
+            "name": "Tiers",
+            "layer": "core",
+            "path": "internal/tiers/",
+            "purpose": "Tier registry, tier-to-signal mapping, wildcard pattern matching",
+            "depends_on": []
+        },
+        {
+            "name": "Entitlements",
+            "layer": "core",
+            "path": "internal/entitlements/",
+            "purpose": "Tier entitlements registry, enforcement middleware, concurrency limiter, retention enforcement",
+            "depends_on": []
+        },
+        {
+            "name": "Evidence",
+            "layer": "core",
+            "path": "internal/evidence/",
+            "purpose": "Evidence envelope generation, canonicalization, deterministic JSON output",
+            "depends_on": []
+        },
+        {
+            "name": "API",
+            "layer": "interface",
+            "path": "main.go, evidence_handler.go, pilot_dashboard.go",
+            "purpose": "HTTP ingest, evidence export, pilot dashboard, health endpoints",
+            "depends_on": []
+        },
+        {
+            "name": "Admin",
+            "layer": "interface",
+            "path": "internal/admin/",
+            "purpose": "Internal signal override API handlers",
+            "depends_on": []
+        },
+        {
+            "name": "CLI",
+            "layer": "interface",
+            "path": "cmd/",
+            "purpose": "Binary entry points: consumer, decision-engine, signalctl, test-runner, generators",
+            "depends_on": []
+        },
+        {
+            "name": "Specs",
+            "layer": "support",
+            "path": "internal/specs/",
+            "purpose": "Signal registry schema, registry validation",
+            "depends_on": []
+        },
+        {
+            "name": "Test Harness",
+            "layer": "support",
+            "path": "internal/testharness/",
+            "purpose": "Anomaly detection testing, merchant simulation, telemetry analysis",
+            "depends_on": []
+        },
+        {
+            "name": "Infrastructure",
+            "layer": "support",
+            "path": "deploy/, Dockerfile, scripts/",
+            "purpose": "Docker, docker-compose, k8s, systemd, Vector, deployment scripts",
+            "depends_on": []
+        },
+        {
+            "name": "Dashboard",
+            "layer": "external",
+            "path": "apps/dashboard/",
+            "purpose": "Next.js-based trust dashboard (separate TypeScript application)",
+            "depends_on": []
+        },
+        {
+            "name": "Architecture",
+            "layer": "support",
+            "path": "internal/archscanner/",
+            "purpose": "Static architecture contract enforcement",
+            "depends_on": []
+        }
+    ],
+    "primitives": [
+        {
+            "name": "RiskScorer",
+            "layer": "Risk",
+            "responsibility": "Sliding-window per-processor risk scoring with weighted multi-component model",
+            "inputs": [
+                "Event (event_type, processor, failure_origin, retry_count, geo_bucket, result)"
+            ],
+            "outputs": [
+                "RiskResult (score, band, drivers, trajectory)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "3324be6c5e386532e97186357af41f6c5a80035cd33df264b23057aab6887af6",
+            "file": "risk_score.go",
+            "notes": "Same event sequence over same window produces identical score. Fixed-size bucket array per processor, score clamped to [0, 1]."
+        },
+        {
+            "name": "WarningStore",
+            "layer": "Risk",
+            "responsibility": "LRU-bounded in-memory storage of risk warnings with outcome annotation",
+            "inputs": [
+                "Warning (risk score, band, drivers, processor, merchant, event metadata)"
+            ],
+            "outputs": [
+                "[]*Warning (filtered, ordered, with outcome fields)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "459c19bffcd1d66082f968e0e68118f01b3002a68b070f3a262b91c22f64008d",
+            "file": "warnings.go",
+            "notes": "LRU eviction is ordered, outcome annotation is idempotent. Fixed capacity, oldest entries evicted."
+        },
+        {
+            "name": "AdaptiveBaseline",
+            "layer": "Runtime",
+            "responsibility": "Exponential-smoothing baseline learning for error rate, P95 latency, and memory",
+            "inputs": [
+                "Metrics (ErrorRate, P95, MemoryMB)"
+            ],
+            "outputs": [
+                "snapshot (means and variances for all metrics)",
+                "deviation score (float64)"
+            ],
+            "determinism": "conditional",
+            "bounded": true,
+            "hash": "3b183fb40b6c4111563d78af78502fb13985dc3100e19ff66faf6a3ef8661e7f",
+            "file": "internal/runtime/guardian/baseline.go",
+            "notes": "deviationScore() and z() are pure functions. Update() is deterministic given identical input order, but output depends on accumulated state history. Replay of the same metric sequence from the same initial snapshot produces identical results. Sample count capped at 100,000."
+        },
+        {
+            "name": "TierRegistry",
+            "layer": "Tiers",
+            "responsibility": "Precompiled tier-to-signal mapping with O(1) exact-match and O(n) wildcard lookup",
+            "inputs": [
+                "TierConfig (JSON mapping of tier to signal patterns)"
+            ],
+            "outputs": [
+                "bool (IsSignalAllowed)",
+                "[]string (GetAllowedSignals)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "2eed1bd6ed95ea01e78cb6968841093cfd7bf604652e295202e1f8dd768850ea",
+            "file": "internal/tiers/tier_registry.go",
+            "notes": "Compiled from static JSON config, atomic.Value for lock-free reads. Four tiers (baseline, proof, shield, fortress), finite signal set."
+        },
+        {
+            "name": "EntitlementsRegistry",
+            "layer": "Entitlements",
+            "responsibility": "Tier-specific capability and limit management with fail-closed defaults",
+            "inputs": [
+                "EntitlementsConfig (JSON mapping of tier to entitlement values)"
+            ],
+            "outputs": [
+                "Entitlements (retention_days, alert_routing, SLA, max_concurrent, export_formats)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "1edcf9af30ef7b9cfb9a789236265044204fa91e0cfb004325004cd4d07e8aac",
+            "file": "internal/entitlements/entitlements.go",
+            "notes": "O(1) lookup via atomic.Value, fail-closed on unknown tier. Four tiers, validated ranges for all fields."
+        },
+        {
+            "name": "OverrideStore",
+            "layer": "Config",
+            "responsibility": "Thread-safe copy-on-write storage for runtime signal overrides",
+            "inputs": [
+                "SignalOverride (enabled, severity, threshold, expires_at, reason_code)"
+            ],
+            "outputs": [
+                "SignalOverride",
+                "map[string]SignalOverride"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "70960d3afb0a82d061103a0c179e38809a3d75530b3e7a8671dfb4740e6ede44",
+            "file": "internal/config/signal_overrides.go",
+            "notes": "Copy-on-write semantics, atomic.Value for lock-free reads. Bounded by signal count, overrides expire via TTL."
+        },
+        {
+            "name": "GenerateEnvelope",
+            "layer": "Evidence",
+            "responsibility": "Deterministic evidence assembly: Filter → Normalize → Stabilize → Sort → Clamp → Canonicalize",
+            "inputs": [
+                "[]Merchant",
+                "[]ArtifactSource",
+                "[]Narrative",
+                "SystemState",
+                "*Meta"
+            ],
+            "outputs": [
+                "Envelope (schemaVersion, generatedAt, meta, payload)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "20c6ab003c1755139a942e40ce39b8bfa574e6b742d6bc214ce13dea2c35b7fd",
+            "file": "internal/evidence/evidence.go",
+            "notes": "Key sorting, severity coercion, forbidden key stripping, deterministic JSON. Output clamped, artifacts filtered by retention."
+        },
+        {
+            "name": "ConcurrencyLimiter",
+            "layer": "Entitlements",
+            "responsibility": "Per-tier atomic concurrent request limiting",
+            "inputs": [
+                "tier (string)",
+                "limit (int)"
+            ],
+            "outputs": [
+                "bool (TryAcquire)",
+                "int64 (GetActive)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "317d8de730870ff48de014ea7aa49c3b1c0d01d1dc03317650fdacc195471e7f",
+            "file": "internal/entitlements/limiter.go",
+            "notes": "Atomic int64 increment/decrement. Limited by max_concurrent_requests per tier."
+        },
+        {
+            "name": "TraceLog",
+            "layer": "Runtime",
+            "responsibility": "Fixed-size ring buffer for Decision Engine evaluation traces, supporting deterministic replay",
+            "inputs": [
+                "Trace (timestamp, metrics, baseline, score, decision, invariant)"
+            ],
+            "outputs": [
+                "[]Trace (Snapshot, ordered oldest-first)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "59f5a8ccfa56910bd96ba0c0fc408866a7c731209dde35eaa944708111815171",
+            "file": "internal/runtime/guardian/trace.go",
+            "notes": "Ring buffer index is sequential, snapshot ordering is deterministic. Default size 500, max load size 10 MB."
+        },
+        {
+            "name": "Timeline",
+            "layer": "Runtime",
+            "responsibility": "Bounded ring-buffer for decision history entries",
+            "inputs": [
+                "TimelineEntry (timestamp, status, score, cause)"
+            ],
+            "outputs": [
+                "[]TimelineEntry (Snapshot, ordered oldest-first)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "ad776f3a6d657159e18b27b0b73d31a8d1c99c20327083064cac25c8a312c127",
+            "file": "internal/runtime/guardian/timeline.go",
+            "notes": "Ring buffer append is sequential. Default size 300."
+        },
+        {
+            "name": "logsafe",
+            "layer": "Persistence",
+            "responsibility": "PII redaction via denylist of sensitive keys and allowlist of safe keys",
+            "inputs": [
+                "[]byte (raw JSON)",
+                "map[string]any (parsed payload)"
+            ],
+            "outputs": [
+                "[]byte (redacted JSON)",
+                "map[string]any (safe fields only)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "7ca511d74f46a4c49dbd096554313d47eb5607fd1cd6168254e5b360eb5350c5",
+            "file": "internal/logsafe/logsafe.go",
+            "notes": "Denylist/allowlist are static. Recursive traversal depth bounded by input structure."
+        },
+        {
+            "name": "ratelimit.Limiter",
+            "layer": "Rate Limiting",
+            "responsibility": "Atomic token-bucket rate limiting via Redis Lua script",
+            "inputs": [
+                "accountID (string)",
+                "Config (capacity, refillRate, window)"
+            ],
+            "outputs": [
+                "Result (allowed, remaining, reset)"
+            ],
+            "determinism": "time_deterministic",
+            "bounded": true,
+            "hash": "78ba70c5c55f04ef690706161aae34b821905c1dac086ebe6d61d2c8ec15d833",
+            "file": "internal/ratelimit/ratelimit.go",
+            "notes": "Given identical (now, state, config) tuple, the Lua script produces identical output. Non-determinism arises only from wall-clock reads and concurrent Redis state."
+        },
+        {
+            "name": "DecisionEngine",
+            "layer": "Runtime",
+            "responsibility": "Top-level orchestrator: collects metrics, computes deviation score, evaluates thresholds, emits Decision, coordinates baseline learning, invariant checking, causal analysis, timeline, and trace persistence",
+            "inputs": [
+                "Config (MetricsURL, HealthURL, OutputFile, BaselinePath, TimelinePath, TracePath, Interval)"
+            ],
+            "outputs": [
+                "Decision (status, confidence, reason, cause, timestamp, deploy_age_sec, version)"
+            ],
+            "determinism": "conditional",
+            "bounded": true,
+            "hash": "2ecd1ce84cd982c2d8596abde85ef778a2c4fce70777f89e664af9e9d822d354",
+            "file": "internal/runtime/guardian/guardian.go",
+            "notes": "evaluate() is a pure function of (score, age); the full loop depends on external HTTP metrics and wall clock. Single-instance via flock, fixed evaluation interval, bounded sub-components."
+        },
+        {
+            "name": "InvariantValidator",
+            "layer": "Runtime",
+            "responsibility": "Pure-function validation that Decision Engine outputs satisfy mathematical and logical invariants",
+            "inputs": [
+                "Metrics",
+                "score (float64)",
+                "Decision",
+                "age (int64)"
+            ],
+            "outputs": [
+                "InvariantReport (valid, violations)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "7dd5354265b6ae7b4bbcb9e12913ac66b98935b5c85ef552c28f6e2938b6d4e2",
+            "file": "internal/runtime/guardian/invariants.go",
+            "notes": "Same inputs produce same report. O(1), no IO, no time.Now(), no randomness. Fixed set of 7 invariant checks."
+        },
+        {
+            "name": "CausalAnalyzer",
+            "layer": "Runtime",
+            "responsibility": "Root-cause attribution via z-score comparison of live metrics against learned baseline, weighted by deploy age",
+            "inputs": [
+                "Metrics",
+                "snapshot (baseline)",
+                "deployAge (int64)"
+            ],
+            "outputs": [
+                "CauseReport (primary cause, confidence, contributor map)"
+            ],
+            "determinism": "deterministic",
+            "bounded": true,
+            "hash": "177e3d22fbaba54115206337b379d8cca6254293ddb64755314747e9f951ba69",
+            "file": "internal/runtime/guardian/causal.go",
+            "notes": "Pure function of inputs. Cause enum is closed (traffic_spike, memory_leak, slow_dependency, cold_start, deploy_impact, unknown). Confidence clamped to [0, 1]."
+        },
+        {
+            "name": "MetricsCollector",
+            "layer": "Runtime",
+            "responsibility": "HTTP scraping of Prometheus exposition metrics and health endpoint; parses error rate, P95 latency, and memory usage",
+            "inputs": [
+                "Config (MetricsURL, HealthURL)"
+            ],
+            "outputs": [
+                "Metrics (ErrorRate, P95, MemoryMB)",
+                "unhealthy (bool)"
+            ],
+            "determinism": "non_deterministic",
+            "bounded": true,
+            "hash": "2ecd1ce84cd982c2d8596abde85ef778a2c4fce70777f89e664af9e9d822d354",
+            "file": "internal/runtime/guardian/guardian.go",
+            "notes": "Depends on external HTTP responses. 5s HTTP timeout, fixed metric key set."
+        }
+    ],
+    "artifacts": [
+        {
+            "name": "Decision",
+            "type": "JSON object",
+            "source": "DecisionEngine → guardian.Decision",
+            "schema": "{status, confidence, reason, cause, timestamp, deploy_age_sec, version}"
+        },
+        {
+            "name": "Trace",
+            "type": "JSON object",
+            "source": "TraceLog -> guardian.Trace",
+            "schema": "{timestamp, metrics, baseline, score, decision, invariant?}"
+        },
+        {
+            "name": "TimelineEntry",
+            "type": "JSON object",
+            "source": "guardian.TimelineEntry",
+            "schema": "{timestamp, status, score, cause}"
+        },
+        {
+            "name": "CauseReport",
+            "type": "JSON object",
+            "source": "CausalAnalyzer -> guardian.CauseReport",
+            "schema": "{primary, confidence, contributors}"
+        },
+        {
+            "name": "InvariantReport",
+            "type": "JSON object",
+            "source": "InvariantValidator -> guardian.InvariantReport",
+            "schema": "{valid, violations?}"
+        },
+        {
+            "name": "RiskResult",
+            "type": "JSON object",
+            "source": "RiskScorer -> main.RiskResult",
+            "schema": "{processor_risk_score, processor_risk_band, processor_risk_drivers}"
+        },
+        {
+            "name": "Warning",
+            "type": "JSON object",
+            "source": "WarningStore -> main.Warning",
+            "schema": "{warning_id, event_id, processor, merchant_id_hash, risk_score, risk_band, risk_drivers, outcome_*}"
+        },
+        {
+            "name": "Envelope",
+            "type": "JSON object",
+            "source": "GenerateEnvelope -> evidence.Envelope",
+            "schema": "{schemaVersion, generatedAt, meta, payload{merchants, artifacts, narratives, system}}"
+        },
+        {
+            "name": "ArtifactRecord",
+            "type": "JSON object",
+            "source": "GenerateEnvelope -> evidence.ArtifactRecord",
+            "schema": "{id, timestamp, entity, data, severity}"
+        },
+        {
+            "name": "Narrative",
+            "type": "JSON object",
+            "source": "GenerateEnvelope -> evidence.Narrative",
+            "schema": "{id, timestamp, type, desc, entityId}"
+        },
+        {
+            "name": "Metrics snapshot",
+            "type": "In-memory struct",
+            "source": "MetricsCollector -> guardian.Metrics",
+            "schema": "{ErrorRate, P95, MemoryMB}"
+        },
+        {
+            "name": "Baseline snapshot",
+            "type": "JSON file",
+            "source": "AdaptiveBaseline -> guardian.snapshot",
+            "schema": "{Samples, ErrMean, ErrVar, P95Mean, P95Var, MemMean, MemVar}"
+        },
+        {
+            "name": "AuditEntry",
+            "type": "JSONL line",
+            "source": "OverrideStore -> config.AuditEntry",
+            "schema": "{timestamp, operator, signal_id, action, old_value?, new_value?, metadata?}"
+        },
+        {
+            "name": "PilotOutcomeAnnotation",
+            "type": "JSON object",
+            "source": "RiskScorer -> main.PilotOutcomeAnnotation",
+            "schema": "{type, warning_id, processor, event_id, outcome_type, outcome_timestamp, outcome_source, outcome_notes?, lead_time_seconds?, annotated_at}"
+        },
+        {
+            "name": "ExportHealthResponse",
+            "type": "JSON object",
+            "source": "MetricsCollector -> main.handleEvidenceHealth",
+            "schema": "{status, lastGoodAt, uptime, errorCounts{degraded, drop, contractViolation}}"
+        },
+        {
+            "name": "Prometheus metrics",
+            "type": "Prometheus exposition format",
+            "source": "MetricsCollector -> main.go, internal/metrics/",
+            "schema": "{metrics: [counters, gauges, histograms]}"
+        }
+    ],
+    "constraints": {
+        "no_ml": true,
+        "bounded_memory": true,
+        "deterministic_scoring": true,
+        "no_auto_execution": true,
+        "audit_required": true
+    },
+    "extension_rules": [
+        {
+            "rule": "New signals must be added to config/signals.runtime.json with deterministic flag, type, and enabled state, and registered in internal/specs/signal-registry.v1.json",
+            "enforced_by": "specs/validate_registry.go"
+        },
+        {
+            "rule": "New signals must be assigned to at least one tier in config/tiers.runtime.json",
+            "enforced_by": "tiers/tier_registry.go"
+        },
+        {
+            "rule": "New tiers must be added to config/tier_entitlements.runtime.json and validated against JSON Schema with monotonic tier progression",
+            "enforced_by": "entitlements/validation.go"
+        },
+        {
+            "rule": "New signal types must work with the existing OverrideStore resolution chain (tier check → runtime override → canonical spec)",
+            "enforced_by": "config/signal_resolution.go"
+        },
+        {
+            "rule": "Override mutations must flow through SetOverrideWithAudit or DeleteOverrideWithAudit to produce an AuditEntry",
+            "enforced_by": "config/audit_log.go"
+        },
+        {
+            "rule": "New runtime buffers or stores must declare a fixed capacity; unbounded growth is prohibited",
+            "enforced_by": "code review + schema validation"
+        },
+        {
+            "rule": "Files written by runtime processes must use the tmp + fsync + rename pattern",
+            "enforced_by": "code review"
+        },
+        {
+            "rule": "Each signal must declare deterministic: true or deterministic: false",
+            "enforced_by": "specs/validate_registry.go"
+        },
+        {
+            "rule": "No external ML dependencies; scoring must use arithmetic on counters and fixed weights",
+            "enforced_by": "go.mod review + CI"
+        },
+        {
+            "rule": "Runtime decisions (Decision Engine, risk scoring) are advisory; no auto-execution of external actions",
+            "enforced_by": "code review"
+        },
+        {
+            "rule": "Payloads logged or persisted must pass through logsafe.RedactJSON or logsafe.SafeFieldsFromWebhook",
+            "enforced_by": "logsafe package + code review"
+        },
+        {
+            "rule": "New subsystems must expose relevant Prometheus counters, gauges, or histograms with payflux_ prefix",
+            "enforced_by": "code review + metrics initialization"
+        }
+    ]
+}

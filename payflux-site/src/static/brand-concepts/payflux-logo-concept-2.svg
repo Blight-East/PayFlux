@@ -1,0 +1,13 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#0B0E12"/>
+  <g transform="translate(180 228)">
+    <rect x="0" y="0" width="264" height="264" rx="68" fill="#12161D" stroke="#F3D2A6" stroke-width="10"/>
+    <path d="M64 189V74H150C196 74 224 97 224 138C224 181 196 205 150 205H112" stroke="#F7EFDE" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M112 138H194" stroke="#E9B575" stroke-width="26" stroke-linecap="round"/>
+    <path d="M30 214C72 194 114 186 160 190C202 194 240 213 284 214" stroke="#7ECFC3" stroke-width="8" stroke-linecap="round"/>
+    <path d="M34 238C74 222 114 216 155 220C198 223 235 240 276 240" stroke="#F3D2A6" stroke-width="5" stroke-linecap="round" opacity="0.92"/>
+  </g>
+  <text x="514" y="435" fill="#F7EFDE" font-family="Avenir Next, IBM Plex Sans, sans-serif" font-size="228" font-weight="700" letter-spacing="-8">PayFlux</text>
+  <text x="521" y="510" fill="#B8AA93" font-family="IBM Plex Sans, Avenir Next, sans-serif" font-size="40" font-weight="600" letter-spacing="16">PAYMENT RISK CLARITY</text>
+  <text x="522" y="582" fill="#E9B575" font-family="Iowan Old Style, Georgia, serif" font-size="72" font-weight="600">See Payment Risk Sooner</text>
+</svg>

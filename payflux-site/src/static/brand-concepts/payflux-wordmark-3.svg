@@ -1,0 +1,6 @@
+<svg width="1600" height="600" viewBox="0 0 1600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="600" fill="#0B0E12"/>
+  <text x="130" y="360" fill="#F7EFDE" font-family="Avenir Next, IBM Plex Sans, sans-serif" font-size="236" font-weight="600" letter-spacing="-8">Pay</text>
+  <text x="594" y="360" fill="#F7EFDE" font-family="Avenir Next, IBM Plex Sans, sans-serif" font-size="236" font-weight="600" letter-spacing="-8">Flux</text>
+  <path d="M952 141C982 141 1006 165 1006 195C1006 225 982 249 952 249C922 249 898 225 898 195C898 165 922 141 952 141Z" fill="#7ECFC3"/>
+</svg>

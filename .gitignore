@@ -62,4 +62,5 @@ launch_reports/
 output/
 apps/dashboard/output/
 apps/dashboard/.playwright-cli/
+.playwright-cli/
 payflux-site/output/

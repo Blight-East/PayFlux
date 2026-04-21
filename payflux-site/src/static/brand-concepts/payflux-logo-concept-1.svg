@@ -1,0 +1,13 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#0B0E12"/>
+  <g opacity="0.9">
+    <circle cx="244" cy="450" r="94" stroke="#F3D2A6" stroke-width="10"/>
+    <circle cx="244" cy="450" r="26" fill="#E9B575"/>
+    <path d="M220 371C278 355 331 380 357 430" stroke="#7ECFC3" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <text x="392" y="494" fill="#F7EFDE" font-family="Avenir Next, IBM Plex Sans, sans-serif" font-size="212" font-weight="700" letter-spacing="-7">Pay</text>
+  <text x="758" y="494" fill="#E9B575" font-family="Avenir Next, IBM Plex Sans, sans-serif" font-size="212" font-weight="700" letter-spacing="-7">Flux</text>
+  <path d="M774 561C844 527 915 517 989 531C1059 543 1126 582 1198 583C1258 584 1319 561 1382 510" stroke="#7ECFC3" stroke-width="8" stroke-linecap="round"/>
+  <path d="M790 589C853 560 919 552 985 565C1052 579 1119 615 1188 615C1247 615 1307 594 1371 549" stroke="#F3D2A6" stroke-opacity="0.88" stroke-width="5" stroke-linecap="round"/>
+  <text x="768" y="628" fill="#B8AA93" font-family="IBM Plex Sans, Avenir Next, sans-serif" font-size="34" font-weight="600" letter-spacing="12">SEE PAYMENT RISK EARLIER</text>
+</svg>
