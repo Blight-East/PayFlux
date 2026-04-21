@@ -37,6 +37,16 @@ scripts/audit_*.sh
 apps/dashboard/src/data/docs.json
 test-runner
 
+# Compiled Go binaries / scratch
+/guardian
+/guardian-observer
+/signalctl
+/payflux-prod
+/payflux-test
+/payment-node-go-tmp-umask
+dist/
+*.backup
+
 # Obsidian knowledge vault (local only)
 payflux-knowledge/
 node_modules/
