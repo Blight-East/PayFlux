@@ -13,6 +13,7 @@ RUN go mod download
 # Copy source code
 COPY *.go ./
 COPY internal/ ./internal/
+COPY pg/ ./pg/
 
 # Build binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o payflux .
