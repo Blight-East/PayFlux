@@ -16,7 +16,7 @@ export async function GET() {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const workspace = await resolveWorkspace(userId);
+        const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
         if (!workspace) {
             return new NextResponse('Workspace not found', { status: 404 });
         }
