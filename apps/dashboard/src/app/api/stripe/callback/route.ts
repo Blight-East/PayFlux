@@ -138,26 +138,23 @@ export async function GET(req: NextRequest) {
         } as any);
     } catch (err) {
         logCallbackStage(requestId, 'token_exchange_fail', {
-            userId,
-            authOrgId: orgId ?? null,
-            stateOrgId: oauthState.orgId,
-            ...getStripeErrorPayload(err),
-        });
-        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId,
+        authOrgId: orgId ?? null,
+        stateOrgId: oauthState.orgId,
+        ...getStripeErrorPayload(err),
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=token_exchange_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
     const stripeAccountId = response.stripe_user_id;
     if (!stripeAccountId) {
         logCallbackStage(requestId, 'token_exchange_fail', {
-            userId,
-            authOrgId: orgId ?? null,
-            stateOrgId: oauthState.orgId,
-            type: 'invalid_response',
-            code: null,
-            statusCode: null,
-            message: 'No Stripe account ID returned from token exchange',
-        });
-        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId,
+        authOrgId: orgId ?? null,
+        stateOrgId: oauthState.orgId,
+        ...getStripeErrorPayload(err),
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=token_exchange_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
     // 3) Use the orgId from the validated state
@@ -174,12 +171,9 @@ export async function GET(req: NextRequest) {
         });
     } catch (err) {
         logCallbackStage(requestId, 'org_fetch_fail', {
-            userId,
-            authOrgId: orgId ?? null,
-            stateOrgId: activeOrgId,
-            message: err instanceof Error ? err.message : String(err),
-        });
-        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=org_fetch_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
     let workspace;
@@ -198,12 +192,9 @@ export async function GET(req: NextRequest) {
         });
     } catch (err) {
         logCallbackStage(requestId, 'workspace_resolve_fail', {
-            userId,
-            authOrgId: orgId ?? null,
-            stateOrgId: activeOrgId,
-            message: err instanceof Error ? err.message : String(err),
-        });
-        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=workspace_resolve_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
     const oauthScope = String((response as any).scope ?? 'unknown');
@@ -234,14 +225,9 @@ export async function GET(req: NextRequest) {
         });
     } catch (err) {
         logCallbackStage(requestId, 'processor_upsert_fail', {
-            userId,
-            authOrgId: orgId ?? null,
-            stateOrgId: activeOrgId,
-            workspaceId: workspace.id,
-            workspaceTier: workspace.entitlement_tier,
-            message: err instanceof Error ? err.message : String(err),
-        });
-        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, workspaceId: workspace.id, workspaceTier: workspace.entitlement_tier, message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=processor_upsert_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
     let monitoredEntity;
@@ -262,14 +248,9 @@ export async function GET(req: NextRequest) {
         });
     } catch (err) {
         logCallbackStage(requestId, 'monitored_entity_upsert_fail', {
-            userId,
-            authOrgId: orgId ?? null,
-            stateOrgId: activeOrgId,
-            workspaceId: workspace.id,
-            workspaceTier: workspace.entitlement_tier,
-            message: err instanceof Error ? err.message : String(err),
-        });
-        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, workspaceId: workspace.id, workspaceTier: workspace.entitlement_tier, message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=monitored_entity_upsert_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
     if (workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise') {
@@ -295,14 +276,9 @@ export async function GET(req: NextRequest) {
             });
         } catch (err) {
             logCallbackStage(requestId, 'activation_enqueue_fail', {
-                userId,
-                authOrgId: orgId ?? null,
-                stateOrgId: activeOrgId,
-                workspaceId: workspace.id,
-                workspaceTier: workspace.entitlement_tier,
-                message: err instanceof Error ? err.message : String(err),
-            });
-            return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, workspaceId: workspace.id, workspaceTier: workspace.entitlement_tier, message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=activation_enqueue_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
         }
     }
 
@@ -342,14 +318,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(redirectTarget);
     } catch (err) {
         logCallbackStage(requestId, 'post_persist_fail', {
-            userId,
-            authOrgId: orgId ?? null,
-            stateOrgId: activeOrgId,
-            workspaceId: workspace.id,
-            workspaceTier: workspace.entitlement_tier,
-            message: err instanceof Error ? err.message : String(err),
-            redirectTarget: `${baseUrl}/connect?err=stripe_connect_failed`,
-        });
-        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed`);
+        userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, workspaceId: workspace.id, workspaceTier: workspace.entitlement_tier, message: err instanceof Error ? err.message : String(err), redirectTarget: `${baseUrl}/connect?err=stripe_connect_failed`,
+    });
+    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=post_persist_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 }
