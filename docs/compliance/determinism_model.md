@@ -22,7 +22,7 @@ To ensure code has not drifted from the determinism contract, every primitive is
 ### Current Validated Hashes
 | Primitive | Hash |
 |---|---|
-| RiskScorer | `3324be6c...` |
+| RiskScorer | `46745d35...` |
 | WarningStore | `459c19bf...` |
 | EntitlementsRegistry | `1edcf9af...` |
 | GenerateEnvelope | `20c6ab00...` |

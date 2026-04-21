@@ -1,3 +1,10 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const isE2EMode = process.env.PAYFLUX_E2E_MODE === '1';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
@@ -17,6 +24,26 @@ const nextConfig = {
         ];
     },
     serverExternalPackages: ['better-sqlite3'],
+    webpack(config) {
+        if (isE2EMode) {
+            // E2E-only: swap Clerk for local mocks that (a) read a test
+            // identity cookie on the server and (b) render pass-through
+            // components on the client. Never active in production builds.
+            config.resolve = config.resolve ?? {};
+            config.resolve.alias = {
+                ...(config.resolve.alias ?? {}),
+                '@clerk/nextjs/server$': path.resolve(
+                    __dirname,
+                    'src/test-helpers/clerk-nextjs-server-mock.ts'
+                ),
+                '@clerk/nextjs$': path.resolve(
+                    __dirname,
+                    'src/test-helpers/clerk-nextjs-client-mock.tsx'
+                ),
+            };
+        }
+        return config;
+    },
 };
 
 export default nextConfig;
