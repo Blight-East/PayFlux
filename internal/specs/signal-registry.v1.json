@@ -1,0 +1,1214 @@
+{
+    "metadata": {
+        "extraction_date": "2026-02-14T14:37:00Z",
+        "codebase": "PayFlux",
+        "repository": "/Users/ct/payment-node",
+        "files_scanned": 8,
+        "total_lines_analyzed": 3142,
+        "extraction_method": "static_analysis"
+    },
+    "signals": [
+        {
+            "id": "sig_001_auth_missing_bearer",
+            "source_file": "main.go",
+            "line_number": "823",
+            "type": "validation",
+            "trigger_condition": "!strings.HasPrefix(auth, \"Bearer \")",
+            "input_fields": [
+                "Authorization"
+            ],
+            "output_fields": [
+                "authDenied",
+                "http_401"
+            ],
+            "severity_levels": [
+                "missing_key"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if !strings.HasPrefix(auth, \"Bearer \") { authDenied.WithLabelValues(\"missing_key\").Inc(); http.Error(w, \"unauthorized\", http.StatusUnauthorized); return }",
+            "upstream_dependencies": [
+                "Authorization_header"
+            ],
+            "downstream_consumers": [
+                "authDenied_metric",
+                "http_response"
+            ],
+            "severity": "missing_key",
+            "trigger": "!strings.HasPrefix(auth, \"Bearer \")"
+        },
+        {
+            "id": "sig_002_auth_revoked_key",
+            "source_file": "main.go",
+            "line_number": "833",
+            "type": "rejection",
+            "trigger_condition": "subtle.ConstantTimeCompare([]byte(token), []byte(key)) == 1",
+            "input_fields": [
+                "Authorization",
+                "revokedAPIKeys"
+            ],
+            "output_fields": [
+                "authDenied",
+                "http_401"
+            ],
+            "severity_levels": [
+                "revoked_key"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "for _, key := range revokedAPIKeys { if subtle.ConstantTimeCompare([]byte(token), []byte(key)) == 1 { authDenied.WithLabelValues(\"revoked_key\").Inc(); http.Error(w, \"unauthorized\", http.StatusUnauthorized); return } }",
+            "upstream_dependencies": [
+                "revokedAPIKeys_config",
+                "Authorization_header"
+            ],
+            "downstream_consumers": [
+                "authDenied_metric",
+                "http_response"
+            ],
+            "severity": "revoked_key",
+            "trigger": "subtle.ConstantTimeCompare([]byte(token), []byte(key)) == 1"
+        },
+        {
+            "id": "sig_003_auth_invalid_key",
+            "source_file": "main.go",
+            "line_number": "849",
+            "type": "rejection",
+            "trigger_condition": "!valid",
+            "input_fields": [
+                "Authorization",
+                "validAPIKeys"
+            ],
+            "output_fields": [
+                "authDenied",
+                "http_401"
+            ],
+            "severity_levels": [
+                "invalid_key"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if !valid { authDenied.WithLabelValues(\"invalid_key\").Inc(); http.Error(w, \"unauthorized\", http.StatusUnauthorized); return }",
+            "upstream_dependencies": [
+                "validAPIKeys_config",
+                "Authorization_header"
+            ],
+            "downstream_consumers": [
+                "authDenied_metric",
+                "http_response"
+            ],
+            "severity": "invalid_key",
+            "trigger": "!valid"
+        },
+        {
+            "id": "sig_004_rate_limit_exceeded_atomic",
+            "source_file": "main.go",
+            "line_number": "1001",
+            "type": "threshold",
+            "trigger_condition": "!result.Allowed",
+            "input_fields": [
+                "accountID",
+                "capacity",
+                "refillRate",
+                "window"
+            ],
+            "output_fields": [
+                "rateLimitExceeded",
+                "http_429"
+            ],
+            "severity_levels": [],
+            "deterministic": false,
+            "description_verbatim_code": "if !result.Allowed { slog.Warn(\"rate_limit_exceeded\", \"account_id\", accountID, \"limit\", refillRate); rateLimitExceeded.Inc(); http.Error(w, \"Rate limit exceeded\", http.StatusTooManyRequests); return }",
+            "upstream_dependencies": [
+                "globalRateLimiter",
+                "redis_lua_script"
+            ],
+            "downstream_consumers": [
+                "rateLimitExceeded_metric",
+                "http_response"
+            ],
+            "severity": "",
+            "trigger": "!result.Allowed"
+        },
+        {
+            "id": "sig_005_event_uuid_invalid",
+            "source_file": "main.go",
+            "line_number": "1043",
+            "type": "validation",
+            "trigger_condition": "uuid.Parse(e.EventID) returns error",
+            "input_fields": [
+                "event_id"
+            ],
+            "output_fields": [
+                "ingestRejected",
+                "http_400"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "if _, err := uuid.Parse(e.EventID); err != nil { return fmt.Errorf(\"event_id must be valid UUID: %w\", err) }",
+            "upstream_dependencies": [
+                "Event.EventID"
+            ],
+            "downstream_consumers": [
+                "validateEvent_return",
+                "ingestRejected_metric"
+            ],
+            "severity": "",
+            "trigger": "uuid.Parse(e.EventID) returns error"
+        },
+        {
+            "id": "sig_006_event_timestamp_invalid",
+            "source_file": "main.go",
+            "line_number": "1048",
+            "type": "validation",
+            "trigger_condition": "time.Parse(time.RFC3339, e.EventTimestamp) returns error",
+            "input_fields": [
+                "event_timestamp"
+            ],
+            "output_fields": [
+                "ingestRejected",
+                "http_400"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "if _, err := time.Parse(time.RFC3339, e.EventTimestamp); err != nil { return fmt.Errorf(\"event_timestamp must be RFC3339 format: %w\", err) }",
+            "upstream_dependencies": [
+                "Event.EventTimestamp"
+            ],
+            "downstream_consumers": [
+                "validateEvent_return",
+                "ingestRejected_metric"
+            ],
+            "severity": "",
+            "trigger": "time.Parse(time.RFC3339, e.EventTimestamp) returns error"
+        },
+        {
+            "id": "sig_007_processor_invalid",
+            "source_file": "main.go",
+            "line_number": "1061",
+            "type": "validation",
+            "trigger_condition": "!validProcessors[e.Processor]",
+            "input_fields": [
+                "processor"
+            ],
+            "output_fields": [
+                "ingestRejected",
+                "http_400"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "validProcessors := map[string]bool{\"stripe\": true, \"adyen\": true, \"checkout\": true, \"internal\": true}; if !validProcessors[e.Processor] { return fmt.Errorf(\"invalid processor: %s (must be stripe, adyen, checkout, or internal)\", e.Processor) }",
+            "upstream_dependencies": [
+                "Event.Processor"
+            ],
+            "downstream_consumers": [
+                "validateEvent_return",
+                "ingestRejected_metric"
+            ],
+            "severity": "",
+            "trigger": "!validProcessors[e.Processor]"
+        },
+        {
+            "id": "sig_008_deduplication_detected",
+            "source_file": "main.go",
+            "line_number": "1199",
+            "type": "integrity",
+            "trigger_condition": "!wasSet",
+            "input_fields": [
+                "event_id"
+            ],
+            "output_fields": [
+                "ingestDuplicate",
+                "http_202"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "dedupKey := fmt.Sprintf(\"dedup:%s\", e.EventID); wasSet, err := rdb.SetNX(ctx, dedupKey, \"1\", dedupTTL).Result(); if !wasSet { ingestDuplicate.Inc(); w.WriteHeader(http.StatusAccepted); return }",
+            "upstream_dependencies": [
+                "Event.EventID",
+                "redis_setnx"
+            ],
+            "downstream_consumers": [
+                "ingestDuplicate_metric",
+                "http_response"
+            ],
+            "severity": "",
+            "trigger": "!wasSet"
+        },
+        {
+            "id": "sig_009_risk_insufficient_data",
+            "source_file": "risk_score.go",
+            "line_number": "292",
+            "type": "threshold",
+            "trigger_condition": "stats.TotalEvents < 5",
+            "input_fields": [
+                "stats.TotalEvents"
+            ],
+            "output_fields": [
+                "RiskResult"
+            ],
+            "severity_levels": [
+                "insufficient_data"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if stats.TotalEvents < 5 { return RiskResult{Score: 0, Band: \"low\", Drivers: []string{\"insufficient_data\"}} }",
+            "upstream_dependencies": [
+                "aggregateHistory"
+            ],
+            "downstream_consumers": [
+                "RiskResult_return"
+            ],
+            "severity": "insufficient_data",
+            "trigger": "stats.TotalEvents < 5"
+        },
+        {
+            "id": "sig_010_risk_cardinality_limit",
+            "source_file": "risk_score.go",
+            "line_number": "85",
+            "type": "threshold",
+            "trigger_condition": "len(s.history) >= 100",
+            "input_fields": [
+                "s.history"
+            ],
+            "output_fields": [
+                "RiskResult"
+            ],
+            "severity_levels": [
+                "insufficient_data"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if len(s.history) >= 100 { return RiskResult{Score: 0, Band: \"low\", Drivers: []string{\"insufficient_data\"}} }",
+            "upstream_dependencies": [
+                "RiskScorer.history"
+            ],
+            "downstream_consumers": [
+                "RiskResult_return"
+            ],
+            "severity": "insufficient_data",
+            "trigger": "len(s.history) >= 100"
+        },
+        {
+            "id": "sig_011_risk_band_elevated",
+            "source_file": "risk_score.go",
+            "line_number": "220",
+            "type": "threshold",
+            "trigger_condition": "score >= s.elevated",
+            "input_fields": [
+                "score",
+                "s.elevated"
+            ],
+            "output_fields": [
+                "band"
+            ],
+            "severity_levels": [
+                "elevated"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "else if score >= s.elevated { return \"elevated\" }",
+            "upstream_dependencies": [
+                "calculateWeightedScore",
+                "riskThresholds"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Band"
+            ],
+            "severity": "elevated",
+            "trigger": "score >= s.elevated"
+        },
+        {
+            "id": "sig_012_risk_band_high",
+            "source_file": "risk_score.go",
+            "line_number": "218",
+            "type": "threshold",
+            "trigger_condition": "score >= s.high",
+            "input_fields": [
+                "score",
+                "s.high"
+            ],
+            "output_fields": [
+                "band"
+            ],
+            "severity_levels": [
+                "high"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "else if score >= s.high { return \"high\" }",
+            "upstream_dependencies": [
+                "calculateWeightedScore",
+                "riskThresholds"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Band"
+            ],
+            "severity": "high",
+            "trigger": "score >= s.high"
+        },
+        {
+            "id": "sig_013_risk_band_critical",
+            "source_file": "risk_score.go",
+            "line_number": "216",
+            "type": "threshold",
+            "trigger_condition": "score >= s.critical",
+            "input_fields": [
+                "score",
+                "s.critical"
+            ],
+            "output_fields": [
+                "band"
+            ],
+            "severity_levels": [
+                "critical"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if score >= s.critical { return \"critical\" }",
+            "upstream_dependencies": [
+                "calculateWeightedScore",
+                "riskThresholds"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Band"
+            ],
+            "severity": "critical",
+            "trigger": "score >= s.critical"
+        },
+        {
+            "id": "sig_014_anomaly_high_failure_rate",
+            "source_file": "risk_score.go",
+            "line_number": "228",
+            "type": "anomaly",
+            "trigger_condition": "c.FailRate > 0.4",
+            "input_fields": [
+                "c.FailRate"
+            ],
+            "output_fields": [
+                "drivers"
+            ],
+            "severity_levels": [
+                "high_failure_rate"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if c.FailRate > 0.4 { drivers = append(drivers, \"high_failure_rate\") }",
+            "upstream_dependencies": [
+                "computeComponentScores"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Drivers"
+            ],
+            "severity": "high_failure_rate",
+            "trigger": "c.FailRate > 0.4"
+        },
+        {
+            "id": "sig_015_anomaly_retry_pressure",
+            "source_file": "risk_score.go",
+            "line_number": "231",
+            "type": "anomaly",
+            "trigger_condition": "c.RetryPressure > 0.5",
+            "input_fields": [
+                "c.RetryPressure"
+            ],
+            "output_fields": [
+                "drivers"
+            ],
+            "severity_levels": [
+                "retry_pressure_spike"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if c.RetryPressure > 0.5 { drivers = append(drivers, \"retry_pressure_spike\") }",
+            "upstream_dependencies": [
+                "computeComponentScores"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Drivers"
+            ],
+            "severity": "retry_pressure_spike",
+            "trigger": "c.RetryPressure > 0.5"
+        },
+        {
+            "id": "sig_016_anomaly_timeout_clustering",
+            "source_file": "risk_score.go",
+            "line_number": "234",
+            "type": "anomaly",
+            "trigger_condition": "c.TimeoutMix > 0.5",
+            "input_fields": [
+                "c.TimeoutMix"
+            ],
+            "output_fields": [
+                "drivers"
+            ],
+            "severity_levels": [
+                "timeout_clustering"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if c.TimeoutMix > 0.5 { drivers = append(drivers, \"timeout_clustering\") }",
+            "upstream_dependencies": [
+                "computeComponentScores"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Drivers"
+            ],
+            "severity": "timeout_clustering",
+            "trigger": "c.TimeoutMix > 0.5"
+        },
+        {
+            "id": "sig_017_anomaly_traffic_spike",
+            "source_file": "risk_score.go",
+            "line_number": "237",
+            "type": "anomaly",
+            "trigger_condition": "c.TrafficSpike > 0.5",
+            "input_fields": [
+                "c.TrafficSpike"
+            ],
+            "output_fields": [
+                "drivers"
+            ],
+            "severity_levels": [
+                "traffic_volatility"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if c.TrafficSpike > 0.5 { drivers = append(drivers, \"traffic_volatility\") }",
+            "upstream_dependencies": [
+                "computeComponentScores"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Drivers"
+            ],
+            "severity": "traffic_volatility",
+            "trigger": "c.TrafficSpike > 0.5"
+        },
+        {
+            "id": "sig_018_anomaly_geo_entropy",
+            "source_file": "risk_score.go",
+            "line_number": "243",
+            "type": "anomaly",
+            "trigger_condition": "c.GeoEntropy > 0.5",
+            "input_fields": [
+                "c.GeoEntropy"
+            ],
+            "output_fields": [
+                "drivers"
+            ],
+            "severity_levels": [
+                "geo_entropy_increase"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if c.GeoEntropy > 0.5 { drivers = append(drivers, \"geo_entropy_increase\") }",
+            "upstream_dependencies": [
+                "computeComponentScores"
+            ],
+            "downstream_consumers": [
+                "RiskResult.Drivers"
+            ],
+            "severity": "geo_entropy_increase",
+            "trigger": "c.GeoEntropy > 0.5"
+        },
+        {
+            "id": "sig_019_transform_forbidden_key_strip",
+            "source_file": "internal/evidence/evidence.go",
+            "line_number": "172",
+            "type": "transformation",
+            "trigger_condition": "!IsForbiddenKey(kStr)",
+            "input_fields": [
+                "map_keys"
+            ],
+            "output_fields": [
+                "filtered_keys"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "for _, key := range v.MapKeys() { kStr := key.String(); if !IsForbiddenKey(kStr) { keys = append(keys, kStr) } }",
+            "upstream_dependencies": [
+                "forbiddenKeys_map"
+            ],
+            "downstream_consumers": [
+                "canonicalizeValue_map_output"
+            ],
+            "severity": "",
+            "trigger": "!IsForbiddenKey(kStr)"
+        },
+        {
+            "id": "sig_020_transform_key_sort",
+            "source_file": "internal/evidence/evidence.go",
+            "line_number": "176",
+            "type": "transformation",
+            "trigger_condition": "ALWAYS",
+            "input_fields": [
+                "keys"
+            ],
+            "output_fields": [
+                "sorted_keys"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "sort.Strings(keys)",
+            "upstream_dependencies": [
+                "filtered_keys"
+            ],
+            "downstream_consumers": [
+                "canonical_json_output"
+            ],
+            "severity": "",
+            "trigger": "ALWAYS"
+        },
+        {
+            "id": "sig_021_transform_severity_coerce",
+            "source_file": "internal/evidence/evidence.go",
+            "line_number": "39",
+            "type": "transformation",
+            "trigger_condition": "ALWAYS",
+            "input_fields": [
+                "severity_string"
+            ],
+            "output_fields": [
+                "normalized_severity"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "func coerceSeverity(s string) string { normalized := strings.ToLower(strings.TrimSpace(s)); if allowedSeverities[normalized] { return normalized }; return \"neutral\" }",
+            "upstream_dependencies": [
+                "allowedSeverities_map"
+            ],
+            "downstream_consumers": [
+                "Merchant.Severity",
+                "ArtifactRecord.Severity"
+            ],
+            "severity": "",
+            "trigger": "ALWAYS"
+        },
+        {
+            "id": "sig_022_transform_merchant_sort",
+            "source_file": "internal/evidence/evidence.go",
+            "line_number": "337",
+            "type": "transformation",
+            "trigger_condition": "ALWAYS",
+            "input_fields": [
+                "filteredMerchants"
+            ],
+            "output_fields": [
+                "sorted_merchants"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "sort.SliceStable(filteredMerchants, func(i, j int) bool { return filteredMerchants[i].ID < filteredMerchants[j].ID })",
+            "upstream_dependencies": [
+                "filtered_merchants"
+            ],
+            "downstream_consumers": [
+                "Envelope.Payload.Merchants"
+            ],
+            "severity": "",
+            "trigger": "ALWAYS"
+        },
+        {
+            "id": "sig_023_transform_artifact_sort",
+            "source_file": "internal/evidence/evidence.go",
+            "line_number": "380",
+            "type": "transformation",
+            "trigger_condition": "ALWAYS",
+            "input_fields": [
+                "processedArtifacts"
+            ],
+            "output_fields": [
+                "sorted_artifacts"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "sort.SliceStable(processedArtifacts, func(i, j int) bool { if processedArtifacts[i].Timestamp != processedArtifacts[j].Timestamp { return processedArtifacts[i].Timestamp > processedArtifacts[j].Timestamp }; return processedArtifacts[i].ID > processedArtifacts[j].ID })",
+            "upstream_dependencies": [
+                "processed_artifacts"
+            ],
+            "downstream_consumers": [
+                "Envelope.Payload.Artifacts"
+            ],
+            "severity": "",
+            "trigger": "ALWAYS"
+        },
+        {
+            "id": "sig_024_transform_canonicalize",
+            "source_file": "internal/evidence/evidence.go",
+            "line_number": "376",
+            "type": "transformation",
+            "trigger_condition": "ALWAYS",
+            "input_fields": [
+                "a.Data"
+            ],
+            "output_fields": [
+                "canonical_json"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "Data: Canonicalize(a.Data)",
+            "upstream_dependencies": [
+                "ArtifactSource.Data"
+            ],
+            "downstream_consumers": [
+                "ArtifactRecord.Data"
+            ],
+            "severity": "",
+            "trigger": "ALWAYS"
+        },
+        {
+            "id": "sig_025_telemetry_stream_length",
+            "source_file": "main.go",
+            "line_number": "1110",
+            "type": "telemetry",
+            "trigger_condition": "ticker fires every 10s",
+            "input_fields": [
+                "streamKey"
+            ],
+            "output_fields": [
+                "streamLength_gauge"
+            ],
+            "severity_levels": [],
+            "deterministic": false,
+            "description_verbatim_code": "length, err := rdb.XLen(ctx, streamKey).Result(); if err == nil { streamLength.Set(float64(length)) }",
+            "upstream_dependencies": [
+                "redis_xlen"
+            ],
+            "downstream_consumers": [
+                "streamLength_metric"
+            ],
+            "severity": "",
+            "trigger": "ticker fires every 10s"
+        },
+        {
+            "id": "sig_026_telemetry_pending_count",
+            "source_file": "main.go",
+            "line_number": "1118",
+            "type": "telemetry",
+            "trigger_condition": "ticker fires every 10s",
+            "input_fields": [
+                "streamKey",
+                "groupName"
+            ],
+            "output_fields": [
+                "pendingCount_gauge",
+                "consumerLagMessages_gauge"
+            ],
+            "severity_levels": [],
+            "deterministic": false,
+            "description_verbatim_code": "pending, err := rdb.XPending(ctx, streamKey, groupName).Result(); if err == nil { pendingCountVal = pending.Count; pendingCount.Set(float64(pendingCountVal)); consumerLagMessages.Set(float64(pendingCountVal)) }",
+            "upstream_dependencies": [
+                "redis_xpending"
+            ],
+            "downstream_consumers": [
+                "pendingCount_metric",
+                "consumerLagMessages_metric"
+            ],
+            "severity": "",
+            "trigger": "ticker fires every 10s"
+        },
+        {
+            "id": "sig_027_telemetry_backpressure_warning",
+            "source_file": "main.go",
+            "line_number": "1129",
+            "type": "telemetry",
+            "trigger_condition": "length > backpressureThreshold",
+            "input_fields": [
+                "length",
+                "backpressureThreshold"
+            ],
+            "output_fields": [
+                "slog_warn"
+            ],
+            "severity_levels": [
+                "warning"
+            ],
+            "deterministic": true,
+            "description_verbatim_code": "if length > backpressureThreshold { slog.Warn(\"stream_backpressure\", \"stream_depth\", length, \"pending_messages\", pendingCountVal, \"threshold\", backpressureThreshold) }",
+            "upstream_dependencies": [
+                "streamLength",
+                "backpressureThreshold_config"
+            ],
+            "downstream_consumers": [
+                "structured_log"
+            ],
+            "severity": "warning",
+            "trigger": "length > backpressureThreshold"
+        },
+        {
+            "id": "sig_028_telemetry_export_success",
+            "source_file": "main.go",
+            "line_number": "1692",
+            "type": "telemetry",
+            "trigger_condition": "stdout write succeeds",
+            "input_fields": [],
+            "output_fields": [
+                "exportLastSuccessStdout_atomic",
+                "exportLastSuccess_gauge"
+            ],
+            "severity_levels": [],
+            "deterministic": false,
+            "description_verbatim_code": "now := time.Now().Unix(); atomic.StoreInt64(&exportLastSuccessStdout, now); exportLastSuccess.WithLabelValues(\"stdout\").Set(float64(now))",
+            "upstream_dependencies": [
+                "os.Stdout.Write"
+            ],
+            "downstream_consumers": [
+                "exportLastSuccessStdout_atomic",
+                "exportLastSuccess_metric"
+            ],
+            "severity": "",
+            "trigger": "stdout write succeeds"
+        },
+        {
+            "id": "sig_029_telemetry_degraded_count",
+            "source_file": "internal/evidence/stats.go",
+            "line_number": "9",
+            "type": "telemetry",
+            "trigger_condition": "atomic increment",
+            "input_fields": [],
+            "output_fields": [
+                "DegradedCount"
+            ],
+            "severity_levels": [],
+            "deterministic": false,
+            "description_verbatim_code": "atomic.AddUint64(&DegradedCount, 1)",
+            "upstream_dependencies": [],
+            "downstream_consumers": [
+                "evidence_health_endpoint"
+            ],
+            "severity": "",
+            "trigger": "atomic increment"
+        },
+        {
+            "id": "sig_030_telemetry_last_good_at",
+            "source_file": "internal/evidence/stats.go",
+            "line_number": "23",
+            "type": "telemetry",
+            "trigger_condition": "meta.SourceStatus == OK",
+            "input_fields": [
+                "time.Time"
+            ],
+            "output_fields": [
+                "LastGoodAt_atomic"
+            ],
+            "severity_levels": [],
+            "deterministic": false,
+            "description_verbatim_code": "func SetLastGoodAt(t time.Time) { LastGoodAt.Store(t) }",
+            "upstream_dependencies": [
+                "meta.SourceStatus"
+            ],
+            "downstream_consumers": [
+                "evidence_health_endpoint"
+            ],
+            "severity": "",
+            "trigger": "meta.SourceStatus == OK"
+        },
+        {
+            "id": "sig_031_contract_forbidden_key",
+            "source_file": "internal/evidence/evidence.go",
+            "line_number": "35",
+            "type": "contract",
+            "trigger_condition": "forbiddenKeys[s]",
+            "input_fields": [
+                "key_string"
+            ],
+            "output_fields": [
+                "boolean"
+            ],
+            "severity_levels": [],
+            "deterministic": true,
+            "description_verbatim_code": "func IsForbiddenKey(s string) bool { return forbiddenKeys[s] }",
+            "upstream_dependencies": [
+                "forbiddenKeys_map"
+            ],
+            "downstream_consumers": [
+                "canonicalize_filter",
+                "merchant_filter",
+                "artifact_filter"
+            ],
+            "severity": "",
+            "trigger": "forbiddenKeys[s]"
+        }
+    ],
+    "scoring_systems": [
+        {
+            "file": "risk_score.go",
+            "function": "calculateWeightedScore",
+            "inputs": [
+                "c.FailRate",
+                "c.RetryPressure",
+                "c.TimeoutMix",
+                "c.TrafficSpike",
+                "c.AuthFailMix",
+                "c.GeoEntropy"
+            ],
+            "formula_raw": "score := (0.25 * c.FailRate) + (0.20 * clamp(c.RetryPressure)) + (0.15 * clamp(c.TimeoutMix)) + (0.15 * clamp(c.TrafficSpike)) + (0.10 * clamp(c.AuthFailMix)) + (0.15 * clamp(c.GeoEntropy)); return clamp(score)",
+            "caps_or_clamps": "clamp(v) returns 0 if v<0, 1 if v>1, else v; final score clamped to [0,1]",
+            "ordering_rules": "N/A - weighted sum"
+        },
+        {
+            "file": "risk_score.go",
+            "function": "mapScoreToBand",
+            "inputs": [
+                "score",
+                "s.elevated",
+                "s.high",
+                "s.critical"
+            ],
+            "formula_raw": "if score >= s.critical { return \"critical\" } else if score >= s.high { return \"high\" } else if score >= s.elevated { return \"elevated\" }; return \"low\"",
+            "caps_or_clamps": "thresholds default [0.3, 0.6, 0.8]; configurable via PAYFLUX_RISK_SCORE_THRESHOLDS",
+            "ordering_rules": "descending threshold check (critical > high > elevated > low)"
+        },
+        {
+            "file": "risk_score.go",
+            "function": "calculateTrajectory",
+            "inputs": [
+                "hist",
+                "currentIdx"
+            ],
+            "formula_raw": "curFR = currentBucket.Failures / currentBucket.TotalEvents; baseFR = otherFailures / otherEvents; multiplier = curFR / baseFR if baseFR > 0.01 else (10.0 if curFR > 0.1 else 1.0); multiplier = round(multiplier*10)/10; direction = 'accelerating' if multiplier >= 2.0 else ('decelerating' if multiplier <= 0.5 && baseFR > 0.05 else 'stable')",
+            "caps_or_clamps": "multiplier rounded to 1 decimal place; minimum baseFR threshold 0.01",
+            "ordering_rules": "N/A"
+        },
+        {
+            "file": "risk_score.go",
+            "function": "computeComponentScores",
+            "inputs": [
+                "stats",
+                "currentBucket"
+            ],
+            "formula_raw": "FailRate = Failures/TotalEvents; RetryPressure = (RetrySum/TotalEvents)/3.0; TimeoutMix = Timeouts/Failures; AuthFailMix = AuthFails/Failures; TrafficSpike = (currentRate / avgOtherRate) / 2.0; GeoEntropy = GeoCount / 10.0",
+            "caps_or_clamps": "avgOtherRate minimum 1.0; all components implicitly clamped in weighted score",
+            "ordering_rules": "N/A"
+        }
+    ],
+    "pipelines": [
+        {
+            "name": "evidence_envelope_generation",
+            "stages": [
+                {
+                    "stage_name": "merchant_filter",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "filter forbidden keys"
+                    ],
+                    "reject_conditions": [
+                        "IsForbiddenKey(m.ID)"
+                    ],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "merchant_normalize",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "m.Severity = coerceSeverity(m.Severity)"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": [
+                        "severity_coercion"
+                    ]
+                },
+                {
+                    "stage_name": "merchant_sort",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "sort.SliceStable by ID ASC"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "merchant_clamp",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "limit to 5000"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "artifact_filter",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "filter forbidden keys"
+                    ],
+                    "reject_conditions": [
+                        "IsForbiddenKey(a.ID) || IsForbiddenKey(a.Entity)"
+                    ],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "artifact_normalize_timestamp",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "time.Parse(time.RFC3339, a.Timestamp)"
+                    ],
+                    "reject_conditions": [
+                        "err != nil"
+                    ],
+                    "mutations": [
+                        "meta.SourceStatus = DEGRADED",
+                        "atomic.AddUint64(&DropCount, 1)",
+                        "append diagnostic",
+                        "slog.Error"
+                    ]
+                },
+                {
+                    "stage_name": "artifact_stabilize",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "Data: Canonicalize(a.Data)",
+                        "Severity: coerceSeverity(a.Severity)"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "artifact_sort",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "sort by timestamp DESC, then ID DESC"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "artifact_clamp",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "limit to 5000"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "narrative_filter",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "filter forbidden keys"
+                    ],
+                    "reject_conditions": [
+                        "IsForbiddenKey(n.ID) || IsForbiddenKey(n.EntityID)"
+                    ],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "narrative_normalize",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "time.Parse(time.RFC3339, n.Timestamp)",
+                        "n.Type = coerceSeverity(n.Type)"
+                    ],
+                    "reject_conditions": [
+                        "timestamp parse error"
+                    ],
+                    "mutations": [
+                        "meta.SourceStatus = DEGRADED",
+                        "atomic.AddUint64(&DropCount, 1)"
+                    ]
+                },
+                {
+                    "stage_name": "narrative_sort",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "sort by timestamp DESC, then ID DESC"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": []
+                },
+                {
+                    "stage_name": "narrative_clamp",
+                    "file": "internal/evidence/evidence.go",
+                    "transformations": [
+                        "limit to 5000"
+                    ],
+                    "reject_conditions": [],
+                    "mutations": []
+                }
+            ]
+        }
+    ],
+    "validators": [
+        {
+            "file": "main.go",
+            "schema_type": "Event",
+            "failure_conditions": [
+                "uuid.Parse(e.EventID) fails",
+                "time.Parse(time.RFC3339, e.EventTimestamp) fails",
+                "strings.TrimSpace(e.EventType) == \"\"",
+                "!validProcessors[e.Processor]",
+                "len(e.MerchantIDHash) > 100",
+                "len(e.PaymentIntentIDHash) > 100",
+                "len(e.FailureCategory) > 100",
+                "len(e.GeoBucket) > 20",
+                "e.RetryCount < 0 || e.RetryCount > 100"
+            ],
+            "error_outputs": [
+                "validation error: {specific message}"
+            ]
+        },
+        {
+            "file": "warnings.go",
+            "schema_type": "OutcomeType",
+            "failure_conditions": [
+                "!ValidOutcomeType(t)"
+            ],
+            "error_outputs": [
+                "false"
+            ]
+        },
+        {
+            "file": "warnings.go",
+            "schema_type": "OutcomeSource",
+            "failure_conditions": [
+                "!ValidOutcomeSource(s)"
+            ],
+            "error_outputs": [
+                "false"
+            ]
+        },
+        {
+            "file": "internal/evidence/evidence.go",
+            "schema_type": "Severity",
+            "failure_conditions": [
+                "!allowedSeverities[normalized]"
+            ],
+            "error_outputs": [
+                "neutral"
+            ]
+        },
+        {
+            "file": "internal/evidence/evidence.go",
+            "schema_type": "ForbiddenKey",
+            "failure_conditions": [
+                "forbiddenKeys[s]"
+            ],
+            "error_outputs": [
+                "true"
+            ]
+        },
+        {
+            "file": "internal/ratelimit/ratelimit.go",
+            "schema_type": "Config",
+            "failure_conditions": [
+                "c.Capacity <= 0",
+                "c.RefillRate <= 0",
+                "c.Window <= 0"
+            ],
+            "error_outputs": [
+                "capacity/refillRate/window must be > 0"
+            ]
+        }
+    ],
+    "health_states": [
+        {
+            "state": "redis_unavailable",
+            "trigger_logic": "rdb.Ping(ctx).Err() != nil",
+            "source_file": "main.go"
+        },
+        {
+            "state": "export_degraded_stdout",
+            "trigger_logic": "atomic.LoadInt64(&exportLastErrorStdout) > atomic.LoadInt64(&exportLastSuccessStdout)",
+            "source_file": "main.go"
+        },
+        {
+            "state": "export_degraded_file",
+            "trigger_logic": "atomic.LoadInt64(&exportLastErrorFile) > atomic.LoadInt64(&exportLastSuccessFile)",
+            "source_file": "main.go"
+        },
+        {
+            "state": "evidence_degraded",
+            "trigger_logic": "atomic.LoadUint64(&evidence.DegradedCount) > 0",
+            "source_file": "evidence_handler.go"
+        },
+        {
+            "state": "backpressure_warning",
+            "trigger_logic": "length > backpressureThreshold",
+            "source_file": "main.go"
+        },
+        {
+            "state": "consumer_panic",
+            "trigger_logic": "recover() != nil in consumeEvents",
+            "source_file": "main.go"
+        },
+        {
+            "state": "warning_store_nil",
+            "trigger_logic": "warningStore == nil",
+            "source_file": "evidence_handler.go"
+        }
+    ],
+    "integrity_systems": [
+        {
+            "file": "internal/evidence/evidence.go",
+            "hash_function": "Canonicalize",
+            "signed_payload_source": "ArtifactRecord.Data",
+            "mismatch_conditions": [
+                "forbidden keys present in input",
+                "non-deterministic key ordering",
+                "non-canonical JSON formatting"
+            ]
+        },
+        {
+            "file": "main.go",
+            "hash_function": "SetNX",
+            "signed_payload_source": "Event.EventID",
+            "mismatch_conditions": [
+                "duplicate event_id within dedupTTL window"
+            ]
+        },
+        {
+            "file": "main.go",
+            "hash_function": "subtle.ConstantTimeCompare",
+            "signed_payload_source": "Authorization token",
+            "mismatch_conditions": [
+                "token not in validAPIKeys",
+                "token in revokedAPIKeys"
+            ]
+        }
+    ],
+    "failure_modes": [
+        {
+            "file": "main.go",
+            "condition": "panicMode == 'crash' && recover() != nil",
+            "system_behavior": "log.Fatal(\"consumer_panic_exit\")"
+        },
+        {
+            "file": "main.go",
+            "condition": "panicMode == 'recover' && recover() != nil",
+            "system_behavior": "time.Sleep(5 * time.Second); log.Println(\"consumer_restarting\"); go consumeEvents()"
+        },
+        {
+            "file": "main.go",
+            "condition": "retryCount > maxRetries",
+            "system_behavior": "sendToDlq(msg, \"max_retries_exceeded\")"
+        },
+        {
+            "file": "main.go",
+            "condition": "json.Unmarshal(dataStr, &event) fails",
+            "system_behavior": "sendToDlq(msg, \"unmarshal_failed\")"
+        },
+        {
+            "file": "main.go",
+            "condition": "!ingestEnabled",
+            "system_behavior": "http.Error(w, \"event ingestion temporarily disabled\", http.StatusServiceUnavailable)"
+        },
+        {
+            "file": "main.go",
+            "condition": "!warningsEnabled && pilotModeEnabled && res.Band != 'low'",
+            "system_behavior": "warningsSuppressed.Inc(); skip warning creation"
+        },
+        {
+            "file": "main.go",
+            "condition": "exportTier == 'tier2' && !tier2Enabled",
+            "system_behavior": "skip Tier 2 enrichment fields (processor_playbook_context, risk_trajectory)"
+        },
+        {
+            "file": "main.go",
+            "condition": "msg.Values['data'] missing",
+            "system_behavior": "sendToDlq(msg, \"missing_data_field\")"
+        },
+        {
+            "file": "main.go",
+            "condition": "data not string type",
+            "system_behavior": "sendToDlq(msg, \"invalid_data_type\")"
+        },
+        {
+            "file": "internal/evidence/evidence.go",
+            "condition": "time.Parse(time.RFC3339, a.Timestamp) fails",
+            "system_behavior": "meta.SourceStatus = \"DEGRADED\"; atomic.AddUint64(&DegradedCount, 1); atomic.AddUint64(&DropCount, 1); append diagnostic; slog.Error; continue (drop artifact)"
+        }
+    ],
+    "extraction_integrity_check": {
+        "branches_complete": true,
+        "throws_complete": true,
+        "validators_complete": true,
+        "scores_complete": true,
+        "health_states_complete": true
+    }
+}

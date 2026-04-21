@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Tier Configuration Schema",
+    "description": "Schema for PayFlux tier-based signal access control",
+    "type": "object",
+    "properties": {
+        "tiers": {
+            "type": "object",
+            "properties": {
+                "free": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^(\\*|[a-z_]+:[a-z_]+|[a-z_]+:\\*)$"
+                    },
+                    "minItems": 1
+                },
+                "proof": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^(\\*|[a-z_]+:[a-z_]+|[a-z_]+:\\*)$"
+                    },
+                    "minItems": 1
+                },
+                "shield": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^(\\*|[a-z_]+:[a-z_]+|[a-z_]+:\\*)$"
+                    },
+                    "minItems": 1
+                },
+                "fortress": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^(\\*|[a-z_]+:[a-z_]+|[a-z_]+:\\*)$"
+                    },
+                    "minItems": 1
+                }
+            },
+            "required": [
+                "free",
+                "proof",
+                "shield",
+                "fortress"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "tiers"
+    ]
+}
