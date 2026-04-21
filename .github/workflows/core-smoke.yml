@@ -1,0 +1,79 @@
+name: Core Smoke
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  core-smoke:
+    name: core-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Boot Core Stack
+        env:
+          PAYFLUX_API_KEY: smoke-test-key
+          STRIPE_API_KEY: sk_test_smoke
+        run: |
+          docker compose -p payflux-smoke -f deploy/docker-compose.yml up -d --build redis payflux
+
+      - name: Wait For Health
+        run: |
+          for i in $(seq 1 30); do
+            code="$(curl -s -o /tmp/payflux-health.json -w '%{http_code}' http://127.0.0.1:8080/health || true)"
+            if [ "$code" = "200" ]; then
+              cat /tmp/payflux-health.json
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "PayFlux health check did not become ready"
+          docker logs payflux-smoke-payflux-1 || true
+          exit 1
+
+      - name: Exercise Ingest Path
+        run: |
+          curl -fsS -X POST http://127.0.0.1:8080/v1/events/payment_exhaust \
+            -H "Authorization: Bearer smoke-test-key" \
+            -H "Content-Type: application/json" \
+            -d '{"event_type":"payment_failed","event_timestamp":"2026-04-08T00:00:00Z","event_id":"770e8400-e29b-41d4-a716-446655440000","processor":"stripe","merchant_id_hash":"abc123","payment_intent_id_hash":"pi_smoke","failure_category":"card_declined","retry_count":0,"geo_bucket":"US"}'
+
+          curl -fsS -X POST http://127.0.0.1:8080/v1/events/payment_exhaust \
+            -H "Authorization: Bearer smoke-test-key" \
+            -H "Content-Type: application/json" \
+            -d '{"event_type":"payment_failed","event_timestamp":"2026-04-08T00:00:00Z","event_id":"770e8400-e29b-41d4-a716-446655440000","processor":"stripe","merchant_id_hash":"abc123","payment_intent_id_hash":"pi_smoke","failure_category":"card_declined","retry_count":0,"geo_bucket":"US"}'
+
+          status="$(curl -s -o /tmp/payflux-unauthorized.out -w '%{http_code}' -X POST http://127.0.0.1:8080/v1/events/payment_exhaust \
+            -H 'Authorization: Bearer bad-key' \
+            -H 'Content-Type: application/json' \
+            -d '{"event_type":"payment_failed","event_timestamp":"2026-04-08T00:00:00Z","event_id":"770e8400-e29b-41d4-a716-446655440001","processor":"stripe","merchant_id_hash":"abc123","payment_intent_id_hash":"pi_smoke-2","failure_category":"card_declined","retry_count":0,"geo_bucket":"US"}')"
+
+          [ "$status" = "401" ]
+
+      - name: Verify Metrics And Logs
+        run: |
+          sleep 2
+          metrics="$(curl -fsS http://127.0.0.1:8080/metrics)"
+          echo "$metrics" | grep 'payflux_ingest_accepted_total 1'
+          echo "$metrics" | grep 'payflux_consumer_processed_total 1'
+          echo "$metrics" | grep 'payflux_ingest_duplicate_total 1'
+          echo "$metrics" | grep 'payflux_auth_denied_total{reason="invalid_key"} 1'
+
+          if docker logs payflux-smoke-payflux-1 2>&1 | grep -q 'consumer_panic'; then
+            echo "consumer panic detected in logs"
+            docker logs payflux-smoke-payflux-1
+            exit 1
+          fi
+
+      - name: Teardown
+        if: always()
+        run: |
+          docker compose -p payflux-smoke -f deploy/docker-compose.yml down -v

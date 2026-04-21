@@ -1,0 +1,72 @@
+name: Architecture Contract
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-contract:
+    name: architecture-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download Modules
+        run: go mod download
+
+      # Build scanner only (faster + isolated)
+      - name: Build Scanner
+        run: go build -o archscanner ./cmd/archscanner
+
+      # Run 1: Verification & Storage
+      - name: Run Architecture Scanner (Run 1)
+        id: scan
+        run: |
+          set -e
+          # Run and capture output to file (preserving stderr)
+          ./archscanner > output1.txt 2>&1
+          
+          # Print output for logs
+          cat output1.txt
+
+          # Safer enforcement: full-line match (-x)
+          if ! grep -x "ARCHITECTURE CONTRACT: VERIFIED" output1.txt; then
+            echo "❌ ARCHITECTURE CONTRACT FAILED"
+            exit 1
+          fi
+
+      # Run 2: Determinism Check (Compare Run 2 vs Run 1)
+      - name: Determinism Check (Run 2)
+        run: |
+          set -e
+          # Run again
+          ./archscanner > output2.txt 2>&1
+          
+          # Compare files
+          if ! diff -q output1.txt output2.txt; then
+            echo "❌ Scanner output is non-deterministic"
+            echo "Diff:"
+            diff output1.txt output2.txt
+            exit 1
+          fi
+
+      - name: Success
+        run: echo "✅ ARCHITECTURE CONTRACT PASSED"
+
+      - name: Validate Compliance Artifacts
+        run: |
+          chmod +x scripts/validate-compliance.sh
+          ./scripts/validate-compliance.sh
