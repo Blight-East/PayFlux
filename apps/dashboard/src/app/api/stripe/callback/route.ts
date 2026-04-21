@@ -210,10 +210,15 @@ export async function GET(req: NextRequest) {
 
     let processorConnection;
     try {
+        const expiresIn = (response as any).expires_in;
+        const tokenExpiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : undefined;
         processorConnection = await upsertStripeProcessorConnection({
             workspaceId: workspace.id,
             stripeAccountId,
             oauthScope,
+            accessToken: (response as any).access_token,
+            refreshToken: (response as any).refresh_token,
+            tokenExpiresAt,
             status: 'connected',
             connectionMetadata: {
                 livemode: Boolean((response as any).livemode ?? false),

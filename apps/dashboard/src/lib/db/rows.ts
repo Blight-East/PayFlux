@@ -9,6 +9,7 @@ import type {
     ReserveProjectionRow,
     WorkspaceApiKeyRow,
     WorkspaceRow,
+    StripeFinancialsRow,
 } from './types';
 
 function normalizeJsonObject(value: unknown): JsonObject {
@@ -107,6 +108,9 @@ export function mapProcessorConnectionRow(row: Record<string, unknown>): Process
         last_verified_at: normalizeTimestamp(row.last_verified_at),
         disconnected_at: normalizeTimestamp(row.disconnected_at),
         connection_metadata: normalizeJsonObject(row.connection_metadata),
+        access_token: row.access_token ? String(row.access_token) : null,
+        refresh_token: row.refresh_token ? String(row.refresh_token) : null,
+        token_expires_at: normalizeTimestamp(row.token_expires_at),
         created_at: normalizeTimestamp(row.created_at) ?? new Date().toISOString(),
         updated_at: normalizeTimestamp(row.updated_at) ?? new Date().toISOString(),
     };
@@ -207,6 +211,24 @@ export function mapWorkspaceApiKeyRow(row: Record<string, unknown>): WorkspaceAp
         created_by_clerk_user_id: row.created_by_clerk_user_id ? String(row.created_by_clerk_user_id) : null,
         last_used_at: normalizeTimestamp(row.last_used_at),
         revoked_at: normalizeTimestamp(row.revoked_at),
+        created_at: normalizeTimestamp(row.created_at) ?? new Date().toISOString(),
+        updated_at: normalizeTimestamp(row.updated_at) ?? new Date().toISOString(),
+    };
+}
+
+export function mapStripeFinancialsRow(row: Record<string, unknown>): StripeFinancialsRow {
+    return {
+        id: String(row.id),
+        workspace_id: String(row.workspace_id),
+        stripe_account_id: String(row.stripe_account_id),
+        available_balance: Number(row.available_balance ?? 0),
+        pending_balance: Number(row.pending_balance ?? 0),
+        total_volume_30d: Number(row.total_volume_30d ?? 0),
+        dispute_count_30d: Number(row.dispute_count_30d ?? 0),
+        avg_payout_delay_days: row.avg_payout_delay_days !== null && row.avg_payout_delay_days !== undefined ? Number(row.avg_payout_delay_days) : null,
+        last_payout_at: normalizeTimestamp(row.last_payout_at),
+        raw_payouts: row.raw_payouts ? normalizeJsonObject(row.raw_payouts) : null,
+        fetched_at: normalizeTimestamp(row.fetched_at) ?? new Date().toISOString(),
         created_at: normalizeTimestamp(row.created_at) ?? new Date().toISOString(),
         updated_at: normalizeTimestamp(row.updated_at) ?? new Date().toISOString(),
     };

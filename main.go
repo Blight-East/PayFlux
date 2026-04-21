@@ -39,6 +39,9 @@ import (
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/checkout/session"
 	"golang.org/x/time/rate"
+	"database/sql"
+	"payment-node/internal/api"
+	"payment-node/pg"
 )
 
 type Event struct {
@@ -146,6 +149,9 @@ var (
 
 	// Config fingerprint (computed at startup, immutable after)
 	configFingerprint startup.Fingerprint
+
+	// Postgres DB
+	pgDB *sql.DB
 )
 
 // Rate limiter maps (per API key)
@@ -519,6 +525,10 @@ func setupHTTPServer(httpAddr string) *http.Server {
 	// Risk forecast endpoint
 	mux.HandleFunc("/api/v1/risk/forecast", authMiddleware(handleRiskForecast))
 
+	if pgDB != nil {
+		mux.HandleFunc("/api/v1/signals/evaluate", api.EvaluateFailureVelocityHandler(pgDB))
+	}
+
 	// Health and metrics remain unauthenticated
 	mux.HandleFunc("/health", handleHealth)
 	mux.Handle("/metrics", promhttp.Handler())
@@ -656,6 +666,18 @@ func main() {
 
 	initializePrometheus()
 	setupRedis(redisAddr)
+
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn != "" {
+		db, err := pg.Connect(dsn)
+		if err == nil {
+			pgDB = db
+			go api.ScheduleEvaluations(appCtx, pgDB)
+		} else {
+			slog.Error("failed_to_connect_postgres", "error", err)
+		}
+	}
+
 	setupExportAndConsumer(appCtx)
 	defer cleanupExport()
 

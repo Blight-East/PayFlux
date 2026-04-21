@@ -101,6 +101,9 @@ export interface ProcessorConnectionRow {
     last_verified_at: string | null;
     disconnected_at: string | null;
     connection_metadata: JsonObject;
+    access_token: string | null;
+    refresh_token: string | null;
+    token_expires_at: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -189,6 +192,22 @@ export interface WorkspaceApiKeyRow {
     created_by_clerk_user_id: string | null;
     last_used_at: string | null;
     revoked_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StripeFinancialsRow {
+    id: string;
+    workspace_id: string;
+    stripe_account_id: string;
+    available_balance: number;
+    pending_balance: number;
+    total_volume_30d: number;
+    dispute_count_30d: number;
+    avg_payout_delay_days: number | null;
+    last_payout_at: string | null;
+    raw_payouts: JsonObject | null;
+    fetched_at: string;
     created_at: string;
     updated_at: string;
 }

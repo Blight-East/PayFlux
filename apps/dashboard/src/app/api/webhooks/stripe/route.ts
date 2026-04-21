@@ -14,10 +14,11 @@ import {
     upsertSubscriptionFromStripe,
 } from '@/lib/db/billing';
 import { upsertMonitoredEntityForStripeConnection, getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
-import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
+import { getStripeProcessorConnectionByWorkspaceId, getStripeProcessorConnectionByStripeAccountId } from '@/lib/db/processor-connections';
 import { findWorkspaceByClerkOrgId, findWorkspaceById, updateWorkspaceState } from '@/lib/db/workspaces';
 import { mirrorWorkspaceStateToClerk } from '@/lib/clerk-mirror';
 import { resolveMerchantContextFromEvent } from '@/lib/stripe/resolveMerchantContextFromEvent';
+import { dbQuery } from '@/lib/db/client';
 
 const STATUS_PATH = path.join(process.cwd(), 'data', 'status.json');
 
@@ -570,7 +571,20 @@ async function forwardToPayFlux(payfluxEvent: PayFluxEvent) {
 export async function POST(request: Request) {
     const payload = await request.text();
     const sig = request.headers.get('stripe-signature');
-    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    let secret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    try {
+        const parsedBody = JSON.parse(payload);
+        const accountId = parsedBody.account;
+        if (accountId && typeof accountId === 'string') {
+            const conn = await getStripeProcessorConnectionByStripeAccountId(accountId);
+            if (conn?.connection_metadata?.webhook_secret) {
+                secret = String(conn.connection_metadata.webhook_secret);
+            }
+        }
+    } catch (e) {
+        // Ignored, let constructEvent handle invalid JSON
+    }
 
     try {
         const event = constructEvent(payload, sig, secret);
@@ -596,6 +610,14 @@ export async function POST(request: Request) {
 
         const payfluxEvent = await normalizeStripeEvent(event);
         if (payfluxEvent) {
+            if (payfluxEvent.event_type === 'payment_failed') {
+                await dbQuery(`
+                    INSERT INTO signal_failure_velocity (workspace_id, hour_bucket, failure_count)
+                    VALUES ($1, date_trunc('hour', now()), 1)
+                    ON CONFLICT (workspace_id, hour_bucket) DO UPDATE
+                    SET failure_count = signal_failure_velocity.failure_count + 1;
+                `, [payfluxEvent.merchant_id_hash]);
+            }
             await forwardToPayFlux(payfluxEvent);
         }
 

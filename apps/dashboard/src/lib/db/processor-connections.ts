@@ -46,6 +46,9 @@ export async function upsertStripeProcessorConnection(args: {
     workspaceId: string;
     stripeAccountId: string;
     oauthScope: string;
+    accessToken?: string;
+    refreshToken?: string;
+    tokenExpiresAt?: Date;
     status?: ProcessorConnectionStatus;
     connectionMetadata?: JsonObject;
 }): Promise<ProcessorConnectionRow> {
@@ -58,9 +61,12 @@ export async function upsertStripeProcessorConnection(args: {
             status,
             oauth_scope,
             connected_at,
-            connection_metadata
+            connection_metadata,
+            access_token,
+            refresh_token,
+            token_expires_at
         )
-        VALUES ($1, 'stripe', $2, $3, $4, now(), $5::jsonb)
+        VALUES ($1, 'stripe', $2, $3, $4, now(), $5::jsonb, $6, $7, $8)
         ON CONFLICT (workspace_id, provider) DO UPDATE
         SET
             stripe_account_id = EXCLUDED.stripe_account_id,
@@ -69,6 +75,9 @@ export async function upsertStripeProcessorConnection(args: {
             connected_at = COALESCE(processor_connections.connected_at, EXCLUDED.connected_at),
             disconnected_at = NULL,
             connection_metadata = EXCLUDED.connection_metadata,
+            access_token = COALESCE(EXCLUDED.access_token, processor_connections.access_token),
+            refresh_token = COALESCE(EXCLUDED.refresh_token, processor_connections.refresh_token),
+            token_expires_at = COALESCE(EXCLUDED.token_expires_at, processor_connections.token_expires_at),
             updated_at = now()
         RETURNING *
         `,
@@ -78,9 +87,23 @@ export async function upsertStripeProcessorConnection(args: {
             args.status ?? 'connected',
             args.oauthScope,
             JSON.stringify(args.connectionMetadata ?? {}),
+            args.accessToken ?? null,
+            args.refreshToken ?? null,
+            args.tokenExpiresAt ? args.tokenExpiresAt.toISOString() : null,
         ]
     );
 
     return mapProcessorConnectionRow(result.rows[0]);
 }
 
+export async function setStripeWebhookSecret(
+    workspaceId: string,
+    webhookSecret: string
+): Promise<void> {
+    await dbQuery(
+        `UPDATE processor_connections
+         SET connection_metadata = jsonb_set(connection_metadata, '{webhook_secret}', $2::jsonb)
+         WHERE workspace_id = $1 AND provider = 'stripe'`,
+        [workspaceId, JSON.stringify(webhookSecret)]
+    );
+}
