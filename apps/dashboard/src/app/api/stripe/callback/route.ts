@@ -149,12 +149,12 @@ export async function GET(req: NextRequest) {
     const stripeAccountId = response.stripe_user_id;
     if (!stripeAccountId) {
         logCallbackStage(requestId, 'token_exchange_fail', {
-        userId,
-        authOrgId: orgId ?? null,
-        stateOrgId: oauthState.orgId,
-        ...getStripeErrorPayload(err),
-    });
-    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=token_exchange_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: oauthState.orgId,
+            message: 'No Stripe account ID returned from token exchange',
+        });
+        return NextResponse.redirect(`${baseUrl}/connect?err=stripe_connect_failed&diag=${requestId}&reason=missing_stripe_account_id`);
     }
 
     // 3) Use the orgId from the validated state
