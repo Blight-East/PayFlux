@@ -9,7 +9,9 @@
     "check:fixtures": "node scripts/check-dev-fixtures.mjs",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium --with-deps"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.37.2",
@@ -36,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.2.0",

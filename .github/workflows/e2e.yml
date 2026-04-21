@@ -1,0 +1,89 @@
+name: Dashboard E2E
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/dashboard/**'
+      - '.github/workflows/e2e.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/dashboard/**'
+      - '.github/workflows/e2e.yml'
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    name: Playwright (Stripe OAuth)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/dashboard
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: payflux
+          POSTGRES_PASSWORD: payflux
+          POSTGRES_DB: payflux
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U payflux"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://payflux:payflux@127.0.0.1:5433/payflux
+      PAYFLUX_E2E_BASE_URL: http://localhost:3000
+      PAYFLUX_E2E_STRIPE_MOCK_PORT: '14242'
+      OAUTH_STATE_SECRET: e2e-oauth-state-secret-32bytes-min
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_e2e_placeholder
+      CLERK_SECRET_KEY: sk_test_e2e_placeholder
+      STRIPE_SECRET_KEY: sk_test_e2e_placeholder
+      STRIPE_CONNECT_CLIENT_ID: ca_test_e2e_placeholder
+      CI: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Playwright E2E
+        run: npx playwright test --reporter=github,html
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/dashboard/playwright-report
+          retention-days: 7
+
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: apps/dashboard/test-results
+          retention-days: 7
