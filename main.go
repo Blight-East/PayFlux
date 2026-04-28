@@ -281,6 +281,21 @@ var (
 		Name: "payflux_rate_limit_error_total",
 		Help: "Total number of rate limit errors",
 	}, []string{"reason"})
+
+	// Export observability (P2-4)
+	exportDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "payflux_export_duration_seconds",
+		Help:    "Latency of a single successful export write, by destination",
+		Buckets: []float64{.0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1},
+	}, []string{"destination"})
+	streamEvictions = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "payflux_stream_evictions_total",
+		Help: "Stream entries evicted by XTRIM, labeled by trim reason (retention=time-based, maxlen=cap-based)",
+	}, []string{"reason"})
+	dlqDepth = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "payflux_dlq_depth",
+		Help: "Current number of messages in the DLQ stream",
+	})
 )
 
 // Helper: Setup logging
@@ -464,6 +479,9 @@ func initializePrometheus() {
 		rateLimitAllowed,
 		rateLimitExceeded,
 		rateLimitError,
+		exportDuration,
+		streamEvictions,
+		dlqDepth,
 	)
 }
 
@@ -818,6 +836,9 @@ func purgeOldStreamEntries(ctx context.Context) {
 	if err != nil {
 		slog.Error("stream_retention_trim_error", "error", err)
 		return
+	}
+	if trimmed > 0 {
+		streamEvictions.WithLabelValues("retention").Add(float64(trimmed))
 	}
 
 	// Get stream length after trim
@@ -1296,6 +1317,13 @@ func updateStreamMetrics(ctx context.Context) {
 				log.Printf("metrics_pending_count_error err=%v", err)
 			}
 
+			// DLQ depth
+			if dlqLen, err := rdb.XLen(ctx, dlqKey).Result(); err == nil {
+				dlqDepth.Set(float64(dlqLen))
+			} else {
+				log.Printf("metrics_dlq_depth_error err=%v", err)
+			}
+
 			// Backpressure warning log (if above threshold)
 			if length > backpressureThreshold {
 				slog.Warn("stream_backpressure",
@@ -1409,8 +1437,11 @@ func handleEvent(w http.ResponseWriter, r *http.Request) {
 	// Stream retention: trim if configured
 	if streamMaxLen > 0 {
 		// Use approximate trimming (~) for performance
-		if err := rdb.XTrimMaxLenApprox(reqCtx, streamKey, streamMaxLen, 0).Err(); err != nil {
+		trimmed, err := rdb.XTrimMaxLenApprox(reqCtx, streamKey, streamMaxLen, 0).Result()
+		if err != nil {
 			log.Printf("stream_trim_error err=%v", err)
+		} else if trimmed > 0 {
+			streamEvictions.WithLabelValues("maxlen").Add(float64(trimmed))
 		}
 	}
 

@@ -172,6 +172,10 @@ func (m *metricsAdapter) ObserveWarningLatency(seconds float64) {
 
 func (m *metricsAdapter) IncWarningsSuppressed() { warningsSuppressed.Inc() }
 
+func (m *metricsAdapter) ObserveExportDuration(dest string, seconds float64) {
+	exportDuration.WithLabelValues(dest).Observe(seconds)
+}
+
 // ── riskScorerAdapter ────────────────────────────────────────────────────────
 
 // riskScorerAdapter satisfies exporter.RiskScorer.
