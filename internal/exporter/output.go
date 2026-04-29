@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"log"
+	"time"
 )
 
 // output.go — Stage 4 of the export pipeline: write serialized records.
@@ -45,6 +46,7 @@ func (e *Exporter) writeStdout(data []byte, eventID string) error {
 	if e.cfg.ExportWriter == nil {
 		return fmt.Errorf("stdout writer not configured")
 	}
+	start := time.Now()
 	_, err := e.cfg.ExportWriter.WriteStdout(data)
 	if err != nil {
 		log.Printf("export_stdout_error event_id=%s err=%v", eventID, err)
@@ -52,6 +54,7 @@ func (e *Exporter) writeStdout(data []byte, eventID string) error {
 		e.markFailure("stdout", "write")
 		return fmt.Errorf("stdout: %w", err)
 	}
+	e.cfg.Metrics.ObserveExportDuration("stdout", time.Since(start).Seconds())
 	e.cfg.Metrics.IncExported("stdout")
 	e.markSuccess("stdout")
 	return nil
@@ -77,6 +80,7 @@ func (e *Exporter) writeFile(data []byte, eventID string) error {
 	if e.cfg.ExportWriter == nil {
 		return nil
 	}
+	start := time.Now()
 	_, err := e.cfg.ExportWriter.WriteFile(data)
 	if err != nil {
 		log.Printf("export_file_error event_id=%s err=%v", eventID, err)
@@ -84,6 +88,7 @@ func (e *Exporter) writeFile(data []byte, eventID string) error {
 		e.markFailure("file", "write")
 		return fmt.Errorf("file: %w", err)
 	}
+	e.cfg.Metrics.ObserveExportDuration("file", time.Since(start).Seconds())
 	e.cfg.Metrics.IncExported("file")
 	e.markSuccess("file")
 	return nil

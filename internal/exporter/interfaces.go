@@ -121,4 +121,7 @@ type ExportMetrics interface {
 	ObserveWarningLatency(seconds float64)
 	// IncWarningsSuppressed increments the suppression counter.
 	IncWarningsSuppressed()
+	// ObserveExportDuration observes the per-destination export write latency.
+	// Called only on success — failures are accounted via IncExportError.
+	ObserveExportDuration(dest string, seconds float64)
 }
