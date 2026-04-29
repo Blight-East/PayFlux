@@ -299,6 +299,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventTy
         metadata: { sessionId: session.id, clerkOrgId: session.metadata?.clerkOrgId ?? null },
     });
 
+    // Fine-grained "money landed" signal so operator alerts (PR #42) can
+    // fire on user_paid without depending on the broader subscription_status
+    // bus. Carries the Stripe customer + subscription ids so a follow-up
+    // alert can link directly to the Stripe dashboard.
+    logOnboardingEvent('user_paid', {
+        workspaceId: workspaceRecordId,
+        metadata: {
+            sessionId: session.id,
+            stripeCustomerId,
+            stripeSubscriptionId: subscription?.id ?? null,
+            subscriptionStatus: subscription?.status ?? 'active',
+            workspaceName: session.metadata?.workspaceName ?? null,
+        },
+    });
+
     logStageTransition('connected_free', 'upgraded', { workspaceId: workspaceRecordId });
 }
 

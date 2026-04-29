@@ -67,6 +67,8 @@ export async function POST(request: Request) {
             getStripeProcessorConnectionByWorkspaceId(workspace.workspaceRecordId),
         ]);
 
+        let preflightTelemetry: Record<string, unknown> | null = null;
+
         if (processorConnection?.status === 'connected') {
             const preflight = await resolveStripeActivationPreflight({
                 stripeAccountId: processorConnection.stripe_account_id,
@@ -84,6 +86,17 @@ export async function POST(request: Request) {
                     { status: 409 }
                 );
             }
+
+            // Soft warnings (e.g. activity_low) currently allow checkout.
+            // Capture the signal so operator alerts on user_paid can flag
+            // at-risk buyers before they trip the activity threshold post-purchase.
+            preflightTelemetry = {
+                preflightStatus: preflight.status,
+                preflightActivityReady: preflight.checks.activityReady,
+                preflightChargeCount30d: preflight.activity.recentChargeCount30d,
+                preflightPayoutCount30d: preflight.activity.recentPayoutCount30d,
+                preflightBlockerCodes: preflight.blockers.map((b) => b.code),
+            };
         }
 
         let billingCustomer = await getBillingCustomerByWorkspaceId(workspace.workspaceRecordId);
@@ -149,7 +162,11 @@ export async function POST(request: Request) {
         logOnboardingEvent('checkout_started', {
             userId,
             workspaceId: workspace.workspaceRecordId,
-            metadata: { sessionId: session.id, clerkOrgId: workspace.workspaceId },
+            metadata: {
+                sessionId: session.id,
+                clerkOrgId: workspace.workspaceId,
+                ...(preflightTelemetry ?? {}),
+            },
         });
 
         return NextResponse.json({ url: session.url });
