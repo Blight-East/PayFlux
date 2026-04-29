@@ -29,6 +29,7 @@ import {
     INTERNAL_ACTIVATION_MODEL_VERSION,
     buildInternalActivationDemo,
 } from '@/lib/internal-activation-demo';
+import { sendActivationAlert } from '@/lib/activation-alerts';
 
 export const runtime = 'nodejs';
 
@@ -154,6 +155,21 @@ export async function POST(request: Request) {
         activationState: 'activation_in_progress',
     });
     await mirrorWorkspaceStateToClerk(workspaceRecord.clerk_org_id, { activationState: 'activation_in_progress' });
+
+    logOnboardingEvent('activation_started', {
+        userId,
+        workspaceId: workspace.workspaceRecordId,
+        metadata: {
+            activationRunId: pendingRun.id,
+            stripeAccountId: processorConnection.stripe_account_id,
+            mode: requestedMode,
+        },
+    });
+    logOnboardingEvent('activation_state_changed', {
+        userId,
+        workspaceId: workspace.workspaceRecordId,
+        metadata: { state: 'connected_generating', activationRunId: pendingRun.id },
+    });
 
     const steps: ActivationStep[] = [];
 
@@ -285,6 +301,29 @@ export async function POST(request: Request) {
                 mode: requestedMode,
             },
         });
+        logOnboardingEvent('activation_completed', {
+            userId,
+            workspaceId: workspace.workspaceRecordId,
+            metadata: { activationRunId: pendingRun.id, riskTier: computed.riskTier, riskBand: computed.riskBand },
+        });
+        logOnboardingEvent('activation_state_changed', {
+            userId,
+            workspaceId: workspace.workspaceRecordId,
+            metadata: { state: 'live_monitored', activationRunId: pendingRun.id },
+        });
+        // Fire-and-forget; do not block response on alert delivery
+        void sendActivationAlert({
+            kind: 'activation_completed',
+            workspaceId: workspace.workspaceRecordId,
+            workspaceName: workspace.workspaceName,
+            userId,
+            state: 'live_monitored',
+            extra: {
+                riskTier: computed.riskTier,
+                riskBand: computed.riskBand,
+                stripeAccountId: processorConnection.stripe_account_id,
+            },
+        });
 
         return NextResponse.json({
             state: 'live_monitored',
@@ -314,6 +353,32 @@ export async function POST(request: Request) {
         await mirrorWorkspaceStateToClerk(workspaceRecord.clerk_org_id, { activationState: 'activation_failed' });
 
         steps.push({ step: 'baseline_generation', status: 'failed', detail: message });
+
+        const surfacedState = failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY' ? 'awaiting_activity' : 'activation_failed';
+        logOnboardingEvent('activation_failed', {
+            userId,
+            workspaceId: workspace.workspaceRecordId,
+            metadata: {
+                activationRunId: pendingRun.id,
+                failureCode,
+                failureDetail: message,
+                state: surfacedState,
+            },
+        });
+        logOnboardingEvent('activation_state_changed', {
+            userId,
+            workspaceId: workspace.workspaceRecordId,
+            metadata: { state: surfacedState, activationRunId: pendingRun.id, failureCode },
+        });
+        void sendActivationAlert({
+            kind: 'activation_failed',
+            workspaceId: workspace.workspaceRecordId,
+            workspaceName: workspace.workspaceName,
+            userId,
+            state: surfacedState,
+            failureCode,
+            failureDetail: message.slice(0, 200),
+        });
 
         const status = failureCode === 'INSUFFICIENT_STRIPE_ACTIVITY' || failureCode === 'PROCESSOR_ACCOUNT_NOT_READY' ? 409 : 500;
         const responseStatus = failureCode === 'MONITORED_ENTITY_HOST_REQUIRED' ? 409 : status;

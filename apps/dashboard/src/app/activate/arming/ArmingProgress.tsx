@@ -85,13 +85,13 @@ const TREND_LABELS: Record<string, { label: string; color: string }> = {
 function failureMessage(code?: string): string {
     switch (code) {
         case 'INSUFFICIENT_STRIPE_ACTIVITY':
-            return 'PayFlux needs at least 10 charges and 2 payouts in the last 30 days to generate a baseline. Please try again once your Stripe account has more recent activity.';
+            return 'PayFlux needs at least 10 charges and 2 payouts in the last 30 days to build a real baseline automatically. This is common for accounts that have been paused, frozen, or are still ramping. Manual activation by our team is available — reply to your purchase email or message support@payflux.dev and we will hand-activate your workspace within a few hours.';
         case 'PROCESSOR_ACCOUNT_NOT_READY':
-            return 'Your Stripe account is not fully set up yet. Please check that charges and payouts are enabled in your Stripe Dashboard, then try again.';
+            return 'Your Stripe account is not fully set up yet. Please check that charges and payouts are enabled in your Stripe Dashboard, then try again. If you believe this is wrong, message support@payflux.dev — we can verify and unblock manually.';
         case 'MONITORED_ENTITY_HOST_REQUIRED':
-            return 'Your Stripe account does not have a business URL set. Please add one in your Stripe Dashboard settings, then try again.';
+            return 'Your Stripe account does not have a business URL set. Please add one in your Stripe Dashboard settings, then try again. If your business is real but Stripe is missing the URL, message support@payflux.dev and we will add it on our side.';
         default:
-            return 'Something went wrong during setup. You can retry below, or contact support at support@payflux.dev.';
+            return 'Something went wrong during setup. You can retry below, or message support@payflux.dev — we will respond and manually activate within a few hours.';
     }
 }
 
