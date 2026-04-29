@@ -69,10 +69,21 @@ export async function GET(req: NextRequest) {
     const { auth, clerkClient } = await import("@clerk/nextjs/server");
     const { default: Stripe } = await import("stripe");
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-        // @ts-ignore
+    const stripeConfig: Record<string, unknown> = {
         apiVersion: '2024-12-18.acacia',
-    });
+    };
+    // Allow tests to point the Stripe SDK at a local mock server. No effect
+    // in production unless STRIPE_API_HOST is set.
+    if (process.env.STRIPE_API_HOST) {
+        stripeConfig.host = process.env.STRIPE_API_HOST;
+        if (process.env.STRIPE_API_PORT) {
+            stripeConfig.port = Number(process.env.STRIPE_API_PORT);
+        }
+        if (process.env.STRIPE_API_PROTOCOL) {
+            stripeConfig.protocol = process.env.STRIPE_API_PROTOCOL;
+        }
+    }
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', stripeConfig as never);
 
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
@@ -131,11 +142,40 @@ export async function GET(req: NextRequest) {
 
     let response;
     try {
-        response = await stripe.oauth.token({
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: redirectUri,
-        } as any);
+        if (process.env.STRIPE_API_HOST) {
+            // Test-only path: Stripe SDK hardcodes `connect.stripe.com` for
+            // OAuth token exchange and ignores the global host override, so
+            // E2E runs have to hit the mock server directly. No effect in
+            // production (env var unset).
+            const protocol = process.env.STRIPE_API_PROTOCOL || 'http';
+            const port = process.env.STRIPE_API_PORT
+                ? `:${process.env.STRIPE_API_PORT}`
+                : '';
+            const tokenUrl = `${protocol}://${process.env.STRIPE_API_HOST}${port}/v1/oauth/token`;
+            const body = new URLSearchParams({
+                grant_type: 'authorization_code',
+                code,
+                redirect_uri: redirectUri,
+            });
+            const tokenRes = await fetch(tokenUrl, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body,
+            });
+            if (!tokenRes.ok) {
+                throw new Error(`Mock OAuth token exchange failed: ${tokenRes.status}`);
+            }
+            response = await tokenRes.json();
+        } else {
+            response = await stripe.oauth.token({
+                grant_type: 'authorization_code',
+                code,
+                redirect_uri: redirectUri,
+            } as any);
+        }
     } catch (err) {
         logCallbackStage(requestId, 'token_exchange_fail', {
         userId,
