@@ -139,7 +139,7 @@
             ],
             "determinism": "deterministic",
             "bounded": true,
-            "hash": "3324be6c5e386532e97186357af41f6c5a80035cd33df264b23057aab6887af6",
+            "hash": "46745d35cfe047f4fd4d8ce624a1b603b3854be778a70f32f9e2bf79c7b22a9f",
             "file": "risk_score.go",
             "notes": "Same event sequence over same window produces identical score. Fixed-size bucket array per processor, score clamped to [0, 1]."
         },
