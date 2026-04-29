@@ -30,6 +30,15 @@ export type OnboardingEvent =
     | 'activate_viewed'
     | 'activate_arming_viewed'
     | 'arming_completed'
+    // Activation lifecycle (fine-grained, server-side, post-purchase)
+    | 'user_paid'
+    | 'stripe_connected'
+    | 'activation_state_changed'
+    | 'activation_started'
+    | 'activation_completed'
+    | 'activation_failed'
+    | 'activation_stalled'
+    | 'activation_overridden'
     // Dashboard / internal events
     | 'dashboard_preview_viewed'
     | 'onboarding_stage_changed'

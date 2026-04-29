@@ -356,12 +356,29 @@ export async function fetchStripeActivationInputs(stripeAccountId: string): Prom
     };
 }
 
-export function deriveBaselineAndProjection(inputs: StripeActivationInputs): BaselineComputation {
+export interface DeriveBaselineOptions {
+    /**
+     * Skip the MIN_RECENT_CHARGES / MIN_RECENT_PAYOUTS activity check.
+     * Only intended for operator-authenticated manual overrides where the
+     * activity threshold is intentionally being bypassed (e.g. distressed
+     * merchant whose processing is paused). All other invariants
+     * (charges_enabled, payouts_enabled, details_submitted) still apply.
+     */
+    bypassActivityThreshold?: boolean;
+}
+
+export function deriveBaselineAndProjection(
+    inputs: StripeActivationInputs,
+    options: DeriveBaselineOptions = {},
+): BaselineComputation {
     if (!inputs.account.chargesEnabled || !inputs.account.payoutsEnabled || !inputs.account.detailsSubmitted) {
         throw new Error('PROCESSOR_ACCOUNT_NOT_READY');
     }
 
-    if (inputs.recent.chargeCount30d < MIN_RECENT_CHARGES || inputs.recent.payoutCount30d < MIN_RECENT_PAYOUTS) {
+    if (
+        !options.bypassActivityThreshold &&
+        (inputs.recent.chargeCount30d < MIN_RECENT_CHARGES || inputs.recent.payoutCount30d < MIN_RECENT_PAYOUTS)
+    ) {
         throw new Error('INSUFFICIENT_STRIPE_ACTIVITY');
     }
 
