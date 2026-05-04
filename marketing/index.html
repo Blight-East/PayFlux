@@ -22,7 +22,7 @@
 
 <div class="grain" aria-hidden="true"></div>
 
-<a href="#cta" class="sticky-pill" aria-hidden="true">Book the audit &nbsp;→</a>
+<a href="https://app.payflux.dev/sign-up" class="sticky-pill" aria-hidden="true">Start free &nbsp;→</a>
 
 <header class="nav">
   <div class="brand">
@@ -31,8 +31,8 @@
   </div>
   <nav class="links">
     <a href="#evidence">Evidence</a>
-    <a href="app/posture.html">Product</a>
-    <a class="cta" href="#cta">Book the audit</a>
+    <a href="app/posture.html">Live demo</a>
+    <a class="cta" href="https://app.payflux.dev/sign-up">Start free</a>
   </nav>
 </header>
 
@@ -42,8 +42,8 @@
   <h1 class="fade-up" style="--d:140ms">Your processor can lock <em>$680k of your cash</em> three weeks before they tell you. We show you the three weeks.</h1>
   <div class="hero-sub fade-up" style="--d:280ms">The email arrives after the decision is already made.</div>
   <div class="ctas fade-up" style="--d:420ms">
-    <a class="btn" href="#cta">Book the 30-min audit</a>
-    <a class="btn-link" href="#mechanism">See the mechanism &nbsp;↓</a>
+    <a class="btn" href="https://app.payflux.dev/sign-up">Start free &nbsp;→</a>
+    <a class="btn-link" href="app/posture.html">View live demo &nbsp;→</a>
   </div>
   <div class="meta meta-ticker fade-up" style="--d:560ms">
     <div class="tick-label">LAST PROCESSOR ACTION OBSERVED</div>
@@ -230,7 +230,7 @@
       </button>
       <div class="fit-confirm" hidden>
         <span class="micro">SELF-IDENTIFIED &middot; <span class="ts"></span></span>
-        <span class="ack-match">Good. Bring this to the call &mdash; we will start there. <a href="#cta">Book the audit &nbsp;&rarr;</a></span>
+        <span class="ack-match">Good. The 30-day capital-at-risk view will start there. <a href="https://app.payflux.dev/sign-up">Start free &nbsp;&rarr;</a></span>
         <span class="ack-nomatch">Logged. We will not market to you. <a href="#evidence">See what we publish &nbsp;&rarr;</a></span>
       </div>
     </div>
@@ -375,66 +375,32 @@
 <section id="cta">
   <div class="inner cta-block">
     <div class="cta-latent">If you've never been reserved, it's because your signals haven't crossed the threshold <em>yet</em>.</div>
-    <h2>On the first call, we map one active risk in your account and show the action that reduces it.</h2>
+    <h2>See your payout risk in 2 minutes. Read-only. Free.</h2>
     <div class="cta-deliverables">
-      <span><span class="micro">YOU LEAVE WITH</span> &nbsp;One named threat · the causal chain · one specific mitigation you can take this week.</span>
+      <span><span class="micro">YOU SEE</span> &nbsp;Live capital-at-risk number &middot; T+30 projection &middot; the signals your acquirer is already reading.</span>
     </div>
-    <div class="cta-track" aria-label="What happens after you submit">
+    <div class="cta-track" aria-label="What happens after you sign up">
       <div class="cta-track-step">
         <span class="num">01</span>
-        <span class="t">Email submitted. We pull the public risk surface for your domain.</span>
-        <span class="when">NOW</span>
+        <span class="t">Sign up. Magic-link auth, no card.</span>
+        <span class="when">30 SEC</span>
       </div>
       <div class="cta-track-step">
         <span class="num">02</span>
-        <span class="t">We model one active threat against your processor's known threshold.</span>
-        <span class="when">&le; 24H</span>
+        <span class="t">Connect Stripe. Read-only OAuth, 90 seconds.</span>
+        <span class="when">&le; 2 MIN</span>
       </div>
       <div class="cta-track-step">
         <span class="num">03</span>
-        <span class="t">30-minute audit call. One named threat. One specific mitigation.</span>
-        <span class="when">&le; 48H</span>
+        <span class="t">Live capital-at-risk number on your dashboard.</span>
+        <span class="when">&le; 5 MIN</span>
       </div>
     </div>
-    <form class="cta-form seq" novalidate>
-      <div class="seq-field" data-step="1">
-        <label class="seq-lab"><span class="ix">01</span> &nbsp; Primary processor</label>
-        <select name="processor" required>
-          <option value="" disabled selected>Select your primary processor&hellip;</option>
-          <option>Stripe</option>
-          <option>Adyen</option>
-          <option>Braintree</option>
-          <option>PayPal</option>
-          <option>Worldpay</option>
-          <option>Multiple / acquirer-direct</option>
-          <option>Other</option>
-        </select>
-      </div>
-      <div class="seq-field" data-step="2" hidden>
-        <label class="seq-lab"><span class="ix">02</span> &nbsp; Monthly card volume</label>
-        <select name="volume" required>
-          <option value="" disabled selected>Pick the closest range&hellip;</option>
-          <option>&lt; $500K / month</option>
-          <option>$500K &ndash; $2M / month</option>
-          <option>$2M &ndash; $10M / month</option>
-          <option>$10M &ndash; $50M / month</option>
-          <option>$50M+ / month</option>
-        </select>
-      </div>
-      <div class="seq-field" data-step="3" hidden>
-        <label class="seq-lab"><span class="ix">03</span> &nbsp; Work email</label>
-        <input type="email" name="email" placeholder="you@company.com" required>
-      </div>
-      <div class="seq-action" data-step="3" hidden>
-        <button type="submit">BOOK THE 30-MIN AUDIT</button>
-        <span class="seq-meta">FIRST CALL WITHIN 48 HOURS &middot; READ-ONLY &middot; NO CARD</span>
-      </div>
-      <div class="seq-done" hidden>
-        <span class="micro">RECEIVED</span>
-        <span class="seq-done-t">We have your timeline request. Expect an email from a person, not a sequence, within 48 hours.</span>
-      </div>
-    </form>
-    <div class="cta-note">EACH FIELD ASKED ONCE &middot; YOUR ANSWERS BECOME THE FRAME OF THE FIRST CALL</div>
+    <div class="ctas">
+      <a class="btn" href="https://app.payflux.dev/sign-up">Start free &nbsp;→</a>
+      <a class="btn-link" href="app/posture.html">View live demo &nbsp;→</a>
+    </div>
+    <div class="cta-note">FREE TIER &middot; 30-DAY PROJECTION &middot; READ-ONLY STRIPE SCOPE &middot; NO CARD</div>
   </div>
 </section>
 
@@ -510,42 +476,7 @@
     });
   }
 
-  /* ── sequenced form ── */
-  const form = document.querySelector('.cta-form.seq');
-  if (form) {
-    const fields = form.querySelectorAll('[data-step]');
-    const reveal = step => {
-      fields.forEach(f => {
-        if (Number(f.dataset.step) <= step) f.hidden = false;
-      });
-    };
-    reveal(1);
-    form.addEventListener('change', (e) => {
-      const t = e.target;
-      if (t.name === 'processor' && t.value) reveal(2);
-      if (t.name === 'volume' && t.value) reveal(3);
-    });
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = form.querySelector('[name=email]');
-      if (!email.value || !email.checkValidity()) { email.focus(); return; }
-      form.querySelectorAll('.seq-field, .seq-action').forEach(el => el.hidden = true);
-      const done = form.querySelector('.seq-done');
-      if (done) done.hidden = false;
-    });
-  }
-
-  /* ── ?nextstep=audit deep-link ── */
-  try {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('nextstep') === 'audit') {
-      requestAnimationFrame(() => {
-        document.querySelector('#cta')?.scrollIntoView({ behavior: 'instant', block: 'start' });
-      });
-    }
-  } catch (_) {}
-
-  /* ── keyboard shortcut: g a → go audit ── */
+  /* ── keyboard shortcut: g s → go to start-free CTA ── */
   let gPressed = 0;
   window.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
@@ -554,7 +485,7 @@
       gPressed = Date.now();
       return;
     }
-    if (e.key === 'a' && Date.now() - gPressed < 800) {
+    if (e.key === 's' && Date.now() - gPressed < 800) {
       gPressed = 0;
       document.querySelector('#cta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
