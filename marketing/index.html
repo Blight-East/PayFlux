@@ -17,12 +17,13 @@
 <meta name="twitter:description" content="Connect Stripe read-only. Free. We project the 30 days before the freeze email arrives.">
 <meta name="twitter:image" content="https://payflux.dev/og.png">
 <link rel="stylesheet" href="styles.css">
+<script src="/posthog-init.js" defer></script>
 </head>
 <body>
 
 <div class="grain" aria-hidden="true"></div>
 
-<a href="https://app.payflux.dev/sign-up" class="sticky-pill" aria-hidden="true">See your payout risk &nbsp;→</a>
+<a href="https://app.payflux.dev/sign-up?utm_source=payflux&amp;utm_medium=homepage&amp;utm_content=sticky_pill" class="sticky-pill" data-cta-id="sticky_pill" aria-hidden="true">See your payout risk &nbsp;→</a>
 
 <header class="nav">
   <div class="brand">
@@ -31,8 +32,8 @@
   </div>
   <nav class="links">
     <a href="#evidence">Evidence</a>
-    <a href="app/posture.html">Live dashboard</a>
-    <a class="cta" href="https://app.payflux.dev/sign-up">See your payout risk</a>
+    <a href="app/posture.html" data-cta-id="header_demo">Live dashboard</a>
+    <a class="cta" href="https://app.payflux.dev/sign-up?utm_source=payflux&amp;utm_medium=homepage&amp;utm_content=header_nav" data-cta-id="header_nav">See your payout risk</a>
   </nav>
 </header>
 
@@ -42,8 +43,8 @@
   <h1 class="fade-up" style="--d:140ms">Your processor can lock <em>$680k of your cash</em> three weeks before they tell you. We show you the three weeks.</h1>
   <div class="hero-sub fade-up" style="--d:280ms">The email arrives after the decision is already made.</div>
   <div class="ctas fade-up" style="--d:420ms">
-    <a class="btn" href="https://app.payflux.dev/sign-up">See your payout risk &nbsp;→</a>
-    <a class="btn-link" href="app/posture.html">View live dashboard &nbsp;→</a>
+    <a class="btn" href="https://app.payflux.dev/sign-up?utm_source=payflux&amp;utm_medium=homepage&amp;utm_content=hero_primary" data-cta-id="hero_primary">See your payout risk &nbsp;→</a>
+    <a class="btn-link" href="app/posture.html" data-cta-id="hero_secondary">View live dashboard &nbsp;→</a>
   </div>
   <div class="cta-note fade-up" style="--d:480ms">FREE &middot; TAKES 2 MINUTES &middot; READ-ONLY STRIPE SCOPE &middot; NO CARD</div>
   <div class="meta meta-ticker fade-up" style="--d:560ms">
@@ -231,7 +232,7 @@
       </button>
       <div class="fit-confirm" hidden>
         <span class="micro">SELF-IDENTIFIED &middot; <span class="ts"></span></span>
-        <span class="ack-match">Good. The 30-day capital-at-risk view will start there. <a href="https://app.payflux.dev/sign-up">See your payout risk &nbsp;&rarr;</a></span>
+        <span class="ack-match">Good. The 30-day capital-at-risk view will start there. <a href="https://app.payflux.dev/sign-up?utm_source=payflux&amp;utm_medium=homepage&amp;utm_content=fit_match" data-cta-id="fit_match">See your payout risk &nbsp;&rarr;</a></span>
         <span class="ack-nomatch">Logged. We will not market to you. <a href="#evidence">See what we publish &nbsp;&rarr;</a></span>
       </div>
     </div>
@@ -398,8 +399,8 @@
       </div>
     </div>
     <div class="ctas">
-      <a class="btn" href="https://app.payflux.dev/sign-up">See your payout risk &nbsp;→</a>
-      <a class="btn-link" href="app/posture.html">View live dashboard &nbsp;→</a>
+      <a class="btn" href="https://app.payflux.dev/sign-up?utm_source=payflux&amp;utm_medium=homepage&amp;utm_content=section6_primary" data-cta-id="section6_primary">See your payout risk &nbsp;→</a>
+      <a class="btn-link" href="app/posture.html" data-cta-id="section6_secondary">View live dashboard &nbsp;→</a>
     </div>
     <div class="cta-note">FREE &middot; 30-DAY PROJECTION &middot; READ-ONLY &middot; NO CARD</div>
     <div class="cta-note">Deeper windows &mdash; T+60 and T+90 &mdash; unlock when you cross 30 days.</div>
@@ -408,7 +409,7 @@
 
 <footer>
   <div>PAYFLUX · PAYMENT RISK INTELLIGENCE</div>
-  <div class="colophon">SET IN INSTRUMENT SERIF, INTER &amp; JETBRAINS MONO · CYCLE 4118 · BUILT WITHOUT ANALYTICS</div>
+  <div class="colophon">SET IN INSTRUMENT SERIF, INTER &amp; JETBRAINS MONO · CYCLE 4118 · READ-ONLY STRIPE SCOPE · NO PII</div>
 </footer>
 
 <script>
