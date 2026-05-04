@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayFlux — see your payout risk in 2 minutes</title>
+<meta name="description" content="Connect Stripe read-only. Free. We project the next 30 days of capital exposure from the same signals your acquirer is reading — weeks before the freeze email arrives.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://payflux.dev/">
+<meta property="og:title" content="PayFlux — see your payout risk in 2 minutes">
+<meta property="og:description" content="Connect Stripe read-only. Free. Live capital-at-risk number from the same signals your acquirer is reading.">
+<meta property="og:image" content="https://payflux.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PayFlux — see your payout risk in 2 minutes">
+<meta name="twitter:description" content="Connect Stripe read-only. Free. We project the 30 days before the freeze email arrives.">
+<meta name="twitter:image" content="https://payflux.dev/og.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<a href="https://app.payflux.dev/sign-up" class="sticky-pill" aria-hidden="true">See your payout risk &nbsp;→</a>
+
+<header class="nav">
+  <div class="brand">
+    <span class="mark"></span>
+    <span class="name">PAYFLUX</span>
+  </div>
+  <nav class="links">
+    <a href="#evidence">Evidence</a>
+    <a href="app/posture.html">Live dashboard</a>
+    <a class="cta" href="https://app.payflux.dev/sign-up">See your payout risk</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero" style="border-top:none">
+  <div class="micro label fade-up" style="--d:0ms">PAYMENT RISK INTELLIGENCE · v0.1</div>
+  <h1 class="fade-up" style="--d:140ms">Your processor can lock <em>$680k of your cash</em> three weeks before they tell you. We show you the three weeks.</h1>
+  <div class="hero-sub fade-up" style="--d:280ms">The email arrives after the decision is already made.</div>
+  <div class="ctas fade-up" style="--d:420ms">
+    <a class="btn" href="https://app.payflux.dev/sign-up">See your payout risk &nbsp;→</a>
+    <a class="btn-link" href="app/posture.html">View live dashboard &nbsp;→</a>
+  </div>
+  <div class="cta-note fade-up" style="--d:480ms">FREE &middot; TAKES 2 MINUTES &middot; READ-ONLY STRIPE SCOPE &middot; NO CARD</div>
+  <div class="meta meta-ticker fade-up" style="--d:560ms">
+    <div class="tick-label">LAST PROCESSOR ACTION OBSERVED</div>
+    <div class="tick-rail">
+      <div class="tick">2026-04-23 · 14:08 UTC<br><strong>STRIPE · RESERVE 8% · 90D</strong></div>
+      <div class="tick">2026-04-19 · 22:41 UTC<br><strong>ADYEN · MCC REVIEW · MULTI</strong></div>
+      <div class="tick">2026-04-15 · 17:22 UTC<br><strong>BRAINTREE · RESERVE 5% · 60D</strong></div>
+      <div class="tick">2026-04-09 · 09:14 UTC<br><strong>ADYEN · RESERVE 3% · 30D</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- MICRO-PROOF (early credibility injection) -->
+<section class="proof-band v2 v3">
+  <div class="v2-proof-inner">
+    <div class="v2-proof-cell">
+      <span class="num">412</span>
+      <span class="lab">Documented reserve & freeze events the model is trained on</span>
+    </div>
+    <div class="v2-proof-cell">
+      <span class="num">1,840</span>
+      <span class="lab">Merchant accounts contributing anonymised behavioral patterns</span>
+    </div>
+    <div class="v2-proof-cell">
+      <span class="num">6</span>
+      <span class="lab">Processor risk models actively maintained &amp; calibrated weekly</span>
+    </div>
+  </div>
+</section>
+
+<!-- §2 THE GAP -->
+<section id="mechanism">
+  <div class="inner">
+    <div class="section-head">
+      <h2>Two timelines. Only one of them belongs to you.</h2>
+      <div class="aside">
+        Your processor's risk team is operating on a model you can't see. It runs on chargeback velocity, refund ratios, MCC drift, and a 14&ndash;43 day rolling window. By the time a notice arrives, the decision is four weeks old.
+      </div>
+    </div>
+
+    <div class="gap-grid">
+      <div class="timeline left reveal">
+        <div class="head">
+          <span class="name"><strong>What you see</strong> — your dashboard</span>
+          <span class="micro">VOLUME · USD</span>
+        </div>
+        <svg viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <pattern id="g1" width="60" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 60 0 L 0 0 0 40" fill="none" stroke="#1a1a18" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="600" height="200" fill="url(#g1)"/>
+          <path class="draw" d="M 0 130 L 50 128 L 100 132 L 150 125 L 200 130 L 250 122 L 300 128 L 350 124 L 400 130 L 450 126 L 500 132 L 550 128 L 600 130" stroke="#6a8d6a" stroke-width="1.5" fill="none"/>
+          <line x1="0" y1="195" x2="600" y2="195" stroke="#2a2a27"/>
+          <text x="8" y="190" fill="#6b6b66" font-family="JetBrains Mono" font-size="9">DAY 1</text>
+          <text x="555" y="190" fill="#6b6b66" font-family="JetBrains Mono" font-size="9">DAY 28</text>
+        </svg>
+        <div class="annot">
+          <div class="line"><span class="day">DAY 28</span><span>Volume on track. No alerts.</span></div>
+          <div class="line"><span class="day">DAY 29</span><span>Email: "A reserve has been placed on your account."</span></div>
+        </div>
+      </div>
+
+      <div class="timeline right reveal">
+        <div class="head">
+          <span class="name"><strong>What your processor sees</strong> — internal risk model</span>
+          <span class="micro">SIGNAL · WEIGHTED</span>
+        </div>
+        <svg viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
+          <rect width="600" height="200" fill="url(#g1)"/>
+          <line x1="0" y1="80" x2="600" y2="80" stroke="#c8533a" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"/>
+          <text x="8" y="74" fill="#c8533a" font-family="JetBrains Mono" font-size="9">RESERVE THRESHOLD · 1.8% / 14D</text>
+          <path class="draw" d="M 0 150 L 50 148 L 100 145 L 150 130 L 200 110 L 250 98 L 300 92 L 350 78 L 400 70 L 450 62 L 500 58 L 550 56 L 600 56" stroke="#c8533a" stroke-width="1.5" fill="none"/>
+          <circle cx="200" cy="110" r="3" fill="#c8533a"/>
+          <circle cx="300" cy="92" r="3" fill="#c8533a"/>
+          <circle cx="400" cy="70" r="3" fill="#c8533a"/>
+          <line x1="0" y1="195" x2="600" y2="195" stroke="#2a2a27"/>
+          <text x="8" y="190" fill="#6b6b66" font-family="JetBrains Mono" font-size="9">DAY 1</text>
+          <text x="555" y="190" fill="#6b6b66" font-family="JetBrains Mono" font-size="9">DAY 28</text>
+        </svg>
+        <div class="annot">
+          <div class="line flag"><span class="day">DAY 7</span><span>Chargeback velocity crosses internal watch threshold.</span></div>
+          <div class="line flag"><span class="day">DAY 14</span><span>MCC risk score drift flagged. Account moved to weekly review.</span></div>
+          <div class="line flag"><span class="day">DAY 21</span><span>Refund ratio sustained at 2.1%. Risk committee escalates.</span></div>
+          <div class="line flag"><span class="day">DAY 26</span><span>Reserve approved internally. Notice queued for Day 29.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gap-pull">
+      There is no API for this. There is only the <em>email after</em>. PayFlux is the four weeks before that email.
+    </div>
+  </div>
+</section>
+
+<!-- §3 SIGNAL → DETECTION → ACTION -->
+<section>
+  <div class="inner">
+    <div class="section-head">
+      <h2>One real example, end to end.</h2>
+      <div class="aside">
+        Not a feature list. A concrete sequence: a single signal observed in your data, mapped to a processor's known threshold, surfaced as one specific action you can take this week.
+      </div>
+    </div>
+
+    <div class="v2-flow">
+      <div class="step">
+        <div class="ix">001</div>
+        <div class="marker"><div class="glyph"></div></div>
+        <div class="vf-head">
+          <div class="lab">Signal</div>
+          <div class="name">Refund ratio crossed 2.1% on Tuesday.</div>
+        </div>
+        <div class="vf-body">
+          Pulled from your Stripe + Adyen volume. Computed on a 14-day rolling window. Source weight: <code>HIGH</code>. Confidence: <code>0.92</code>.
+        </div>
+      </div>
+      <div class="step">
+        <div class="ix">002</div>
+        <div class="marker"><div class="glyph"></div></div>
+        <div class="vf-head">
+          <div class="lab">Detection</div>
+          <div class="name">Stripe's reserve trigger is 1.8% over 14d. You have 6 days of cushion.</div>
+        </div>
+        <div class="vf-body">
+          Modelled from public underwriting policy + observed reserve patterns across <code>1,840</code> merchants in your MCC. Posture: <code>ELEVATED</code>.
+        </div>
+      </div>
+      <div class="step">
+        <div class="ix">003</div>
+        <div class="marker"><div class="glyph"></div></div>
+        <div class="vf-head">
+          <div class="lab">Action</div>
+          <div class="name">Move $42k/day to Adyen for 14 days. Open disputes on three winnable chargebacks.</div>
+        </div>
+        <div class="vf-body">
+          Recommended mitigation. Estimated reduction in reserve probability: <code>−0.41</code>. Capital protected: <code>$680k</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §4 FIT -->
+<section id="fit">
+  <div class="inner">
+    <div class="section-head">
+      <h2>This will not be a fit for everyone. We will tell you which.</h2>
+      <div class="aside">
+        Most tools won't risk losing your business by saying so. We will. The model only works at certain scale and with certain risk profiles. Outside of those, you should not buy this.
+      </div>
+    </div>
+
+    <div class="fit">
+      <div class="col yes">
+        <h3>For</h3>
+        <ul>
+          <li>Merchants running enough card volume to generate the signal density our model needs</li>
+          <li>High-risk MCCs: subscription, supplements, coaching, digital, gaming</li>
+          <li>Refund-heavy or dispute-heavy businesses</li>
+          <li>Ops or finance leads who have been reserved or terminated &mdash; or watched a peer be</li>
+        </ul>
+      </div>
+      <div class="col no">
+        <h3>Not for</h3>
+        <ul>
+          <li>Processors themselves &mdash; we are not a tool for your risk team</li>
+          <li>Payouts-only platforms with no card-not-present exposure</li>
+          <li>Anyone looking for fraud scoring at the transaction level</li>
+          <li>Merchants whose data isn't connected to a processor we can model yet</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fit-mark" aria-live="polite">
+      <button type="button" class="fit-toggle" aria-pressed="false" data-fit="match">
+        <span class="box" aria-hidden="true"></span>
+        <span class="t">I match the FOR profile.</span>
+      </button>
+      <button type="button" class="fit-toggle" aria-pressed="false" data-fit="nomatch">
+        <span class="box" aria-hidden="true"></span>
+        <span class="t">I do not. Tell me when this changes.</span>
+      </button>
+      <div class="fit-confirm" hidden>
+        <span class="micro">SELF-IDENTIFIED &middot; <span class="ts"></span></span>
+        <span class="ack-match">Good. The 30-day capital-at-risk view will start there. <a href="https://app.payflux.dev/sign-up">See your payout risk &nbsp;&rarr;</a></span>
+        <span class="ack-nomatch">Logged. We will not market to you. <a href="#evidence">See what we publish &nbsp;&rarr;</a></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §5 EVIDENCE -->
+<section id="evidence">
+  <div class="inner">
+    <div class="section-head">
+      <h2>What the model is built on.</h2>
+      <div class="aside">
+        These numbers will move. They are the working state of the system and we publish them because hiding them would be the first signal that we are not who we say we are.
+      </div>
+    </div>
+
+    <div class="evidence v3">
+      <div class="hero-stat">
+        <div class="num">412</div>
+        <div class="lab">Freeze, reserve, and termination events used to train the model</div>
+        <div class="prov">CLOSED-LOOP · UPDATED WEEKLY · LAST RETRAIN 2026-04-04</div>
+      </div>
+      <div class="support-row">
+        <div class="stat">
+          <div class="num mono">182</div>
+          <div class="lab">Processor risk signals tracked</div>
+          <div class="prov">CARD · ACH · ACQUIRER LAYERS</div>
+        </div>
+        <div class="stat">
+          <div class="num mono">23</div>
+          <div class="lab">Public policy + filings sources</div>
+          <div class="prov">UNDERWRITING CHANGES · DAILY</div>
+        </div>
+        <div class="stat">
+          <div class="num mono">1,840</div>
+          <div class="lab">Merchant accounts contributing</div>
+          <div class="prov">ANONYMISED · MCC-BANDED</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="evidence-callout">
+      <span class="lab">FALSE POSITIVES</span>
+      <span class="body">5 of our last 38 predictions did not materialise. We log all of them. <a href="app/ledger.html">View the live Ledger &nbsp;→</a></span>
+    </div>
+  </div>
+</section>
+
+<!-- CALIBRATION PREVIEW -->
+<section id="calibration" class="calibration">
+  <div class="inner">
+    <div class="section-head">
+      <h2>One screen. The thing the call delivers.</h2>
+      <div class="aside">
+        Below is the artifact you walk away with: a single open threat, the causal chain that produced it, and the action that closes it. We render it from your data on the call.
+      </div>
+    </div>
+
+    <div class="cal-frame" role="figure" aria-label="Sample threat detail readout">
+      <div class="cal-bar">
+        <span class="cal-crumb">POSTURE / THREATS / <strong>STRIPE-RESERVE-04-26</strong></span>
+        <span class="cal-status">OPEN &middot; ELEVATED</span>
+      </div>
+      <div class="cal-body">
+        <div class="cal-statement">
+          <span class="cal-eyebrow">THREAT &middot; STRIPE</span>
+          <p>
+            Stripe is likely to impose a rolling reserve of <strong>5&ndash;15%</strong> within <strong>6&ndash;11 days</strong>, based on chargeback velocity crossing their stated threshold and two correlated behavioral patterns.
+          </p>
+        </div>
+
+        <div class="cal-meta">
+          <div class="cal-cell">
+            <div class="lab">PROCESSOR</div>
+            <div class="val">Stripe</div>
+          </div>
+          <div class="cal-cell">
+            <div class="lab">EXPECTED ACTION</div>
+            <div class="val alert">Reserve 5&ndash;15%</div>
+          </div>
+          <div class="cal-cell">
+            <div class="lab">WINDOW</div>
+            <div class="val">6&ndash;11 days</div>
+          </div>
+          <div class="cal-cell">
+            <div class="lab">EXPOSURE</div>
+            <div class="val alert">$680,000 &middot; 90D hold</div>
+          </div>
+        </div>
+
+        <div class="cal-chain">
+          <div class="cal-node">
+            <div class="ix">01</div>
+            <div class="lab">SIGNAL</div>
+            <div class="t">Chargeback rate <span class="mono">2.10%</span></div>
+          </div>
+          <div class="cal-arrow" aria-hidden="true">&rarr;</div>
+          <div class="cal-node alert">
+            <div class="ix">02</div>
+            <div class="lab">CROSSES</div>
+            <div class="t">Stripe trigger <span class="mono">1.80% / 14d</span></div>
+          </div>
+          <div class="cal-arrow" aria-hidden="true">&rarr;</div>
+          <div class="cal-node">
+            <div class="ix">03</div>
+            <div class="lab">CORRELATED</div>
+            <div class="t">Refund drift <span class="mono">+0.4pp</span></div>
+          </div>
+          <div class="cal-arrow" aria-hidden="true">&rarr;</div>
+          <div class="cal-node alert">
+            <div class="ix">04</div>
+            <div class="lab">PROBABILITY</div>
+            <div class="t">73% within 6&ndash;11d</div>
+          </div>
+          <div class="cal-arrow" aria-hidden="true">&rarr;</div>
+          <div class="cal-node alert">
+            <div class="ix">05</div>
+            <div class="lab">IMPACT</div>
+            <div class="t"><span class="mono">$680k</span> held 90d</div>
+          </div>
+        </div>
+
+        <div class="cal-mit">
+          <div class="cal-eyebrow">RECOMMENDED MITIGATION</div>
+          <p>Shift <strong>$42,000/day</strong> of card-not-present volume from Stripe to Adyen for 14 days. Open disputes on three winnable chargebacks. Send a pre-approval packet to Stripe underwriting.</p>
+          <div class="cal-mit-actions" aria-hidden="true">
+            <span class="ghost-btn">SHIFT $42K/DAY &rarr; ADYEN &middot; 14D</span>
+            <span class="ghost-btn">FILE 3 DISPUTES</span>
+            <span class="ghost-btn">DRAFT UNDERWRITING PACKET</span>
+          </div>
+        </div>
+      </div>
+      <div class="cal-foot">
+        <span class="micro">RENDERED FROM YOUR DATA &middot; READ-ONLY PREVIEW</span>
+        <span class="micro">EVIDENCE COUNT &middot; <strong>14 SIGNALS</strong></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §6 CTA -->
+<section id="cta">
+  <div class="inner cta-block">
+    <div class="cta-latent">If you've never been reserved, it's because your signals haven't crossed the threshold <em>yet</em>.</div>
+    <h2>See your payout risk in 2 minutes. Read-only. Free.</h2>
+    <div class="cta-deliverables">
+      <span><span class="micro">YOU SEE</span> &nbsp;Live capital-at-risk number &middot; T+30 projection &middot; the signals your acquirer is already reading.</span>
+    </div>
+    <div class="cta-track" aria-label="What happens after you sign up">
+      <div class="cta-track-step">
+        <span class="num">01</span>
+        <span class="t">Sign up. Magic-link auth, no card.</span>
+        <span class="when">30 SEC</span>
+      </div>
+      <div class="cta-track-step">
+        <span class="num">02</span>
+        <span class="t">Connect Stripe. Read-only OAuth, 90 seconds.</span>
+        <span class="when">&le; 2 MIN</span>
+      </div>
+      <div class="cta-track-step">
+        <span class="num">03</span>
+        <span class="t">Live capital-at-risk number on your dashboard.</span>
+        <span class="when">&le; 5 MIN</span>
+      </div>
+    </div>
+    <div class="ctas">
+      <a class="btn" href="https://app.payflux.dev/sign-up">See your payout risk &nbsp;→</a>
+      <a class="btn-link" href="app/posture.html">View live dashboard &nbsp;→</a>
+    </div>
+    <div class="cta-note">FREE &middot; 30-DAY PROJECTION &middot; READ-ONLY &middot; NO CARD</div>
+    <div class="cta-note">Deeper windows &mdash; T+60 and T+90 &mdash; unlock when you cross 30 days.</div>
+  </div>
+</section>
+
+<footer>
+  <div>PAYFLUX · PAYMENT RISK INTELLIGENCE</div>
+  <div class="colophon">SET IN INSTRUMENT SERIF, INTER &amp; JETBRAINS MONO · CYCLE 4118 · BUILT WITHOUT ANALYTICS</div>
+</footer>
+
+<script>
+(() => {
+  /* ── sticky pill ── */
+  const pill = document.querySelector('.sticky-pill');
+  const sections = document.querySelectorAll('section');
+  const trigger = sections[3];
+  const ctaSection = document.querySelector('#cta');
+
+  if (pill && trigger) {
+    const updatePill = () => {
+      const triggerTop = trigger.getBoundingClientRect().top;
+      let inCta = false;
+      if (ctaSection) {
+        const r = ctaSection.getBoundingClientRect();
+        inCta = r.top < window.innerHeight * 0.6 && r.bottom > 0;
+      }
+      pill.classList.toggle('visible', triggerTop < 0 && !inCta);
+    };
+    window.addEventListener('scroll', updatePill, { passive: true });
+    window.addEventListener('resize', updatePill, { passive: true });
+    updatePill();
+  }
+
+  /* ── timeline reveal (stroke draw on scroll) ── */
+  const reveals = document.querySelectorAll('.timeline.reveal');
+  if (reveals.length) {
+    const checkReveal = () => {
+      const vh = window.innerHeight;
+      reveals.forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (r.top < vh * 0.85 && r.bottom > 0) el.classList.add('in-view');
+      });
+    };
+    window.addEventListener('scroll', checkReveal, { passive: true });
+    window.addEventListener('resize', checkReveal, { passive: true });
+    checkReveal();
+  }
+
+  /* ── §4 fit self-identification ── */
+  const fitToggles = document.querySelectorAll('.fit-toggle');
+  const fitConfirm = document.querySelector('.fit-confirm');
+  if (fitToggles.length && fitConfirm) {
+    const ackMatch = fitConfirm.querySelector('.ack-match');
+    const ackNo = fitConfirm.querySelector('.ack-nomatch');
+    const tsEl = fitConfirm.querySelector('.ts');
+    const stamp = () => {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} · ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+    };
+    fitToggles.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const value = btn.dataset.fit;
+        fitToggles.forEach(b => {
+          const active = b === btn;
+          b.setAttribute('aria-pressed', String(active));
+          b.classList.toggle('active', active);
+        });
+        fitConfirm.hidden = false;
+        tsEl.textContent = stamp();
+        ackMatch.style.display = value === 'match' ? '' : 'none';
+        ackNo.style.display = value === 'nomatch' ? '' : 'none';
+        try { localStorage.setItem('pf-fit', value); } catch (_) {}
+      });
+    });
+  }
+
+  /* ── keyboard shortcut: g s → go to start-free CTA ── */
+  let gPressed = 0;
+  window.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'select' || tag === 'textarea' || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'g') {
+      gPressed = Date.now();
+      return;
+    }
+    if (e.key === 's' && Date.now() - gPressed < 800) {
+      gPressed = 0;
+      document.querySelector('#cta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      gPressed = 0;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

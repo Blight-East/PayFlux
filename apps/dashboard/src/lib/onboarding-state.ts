@@ -4,17 +4,24 @@
  * DB-backed source of truth for where a user is in the onboarding funnel.
  *
  * Stages (ordered):
- *   "none"            — signed up, no workspace-attached scan context
- *   "scanned"         — scan context attached, Stripe not connected
- *   "connected_free"  — Stripe connected, still free tier
- *   "upgraded"        — paid tier (kept for routing compatibility)
+ *   "none"                 — signed up, no workspace-attached scan context
+ *   "scanned"              — scan context attached, Stripe not connected
+ *   "connected_free"       — Stripe connected, free tier, activation not yet complete
+ *   "live_monitored_free"  — Stripe connected, free tier, baseline + projection ready (capped to 30d)
+ *   "upgraded"             — paid tier (kept for routing compatibility)
  */
 
 import { getStripeProcessorConnectionByWorkspaceId } from './db/processor-connections';
 import { findWorkspaceById } from './db/workspaces';
+import { getMonitoredEntityByWorkspaceId } from './db/monitored-entities';
 import { resolveWorkspace, type WorkspaceContext } from './resolve-workspace';
 
-export type OnboardingStage = 'none' | 'scanned' | 'connected_free' | 'upgraded';
+export type OnboardingStage =
+    | 'none'
+    | 'scanned'
+    | 'connected_free'
+    | 'live_monitored_free'
+    | 'upgraded';
 
 export interface OnboardingState {
     stage: OnboardingStage;
@@ -28,9 +35,10 @@ export interface OnboardingState {
  *
  * Decision tree:
  *   1. tier is pro or enterprise → "upgraded"
- *   2. processor connection exists → "connected_free"
- *   3. workspace-attached scan context exists → "scanned"
- *   4. otherwise → "none"
+ *   2. processor connection exists AND monitored entity has baseline + projection → "live_monitored_free"
+ *   3. processor connection exists → "connected_free"
+ *   4. workspace-attached scan context exists → "scanned"
+ *   5. otherwise → "none"
  */
 export async function resolveOnboardingState(userId: string): Promise<OnboardingState> {
     const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
@@ -68,7 +76,13 @@ export async function resolveOnboardingState(userId: string): Promise<Onboarding
 
     let stage: OnboardingStage = 'none';
     if (hasStripeConnection) {
-        stage = 'connected_free';
+        const monitoredEntity = await getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId);
+        const isLive = Boolean(
+            monitoredEntity?.current_baseline_snapshot_id &&
+            monitoredEntity?.current_projection_id &&
+            monitoredEntity?.primary_host
+        );
+        stage = isLive ? 'live_monitored_free' : 'connected_free';
     } else if (hasScanCompleted) {
         stage = 'scanned';
     }

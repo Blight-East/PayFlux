@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayFlux · T-0042 · Reserve likely</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark"></span><span class="name">PAYFLUX</span></div>
+    <nav>
+      <a href="posture-alert.html" class="alert"><span>POSTURE</span><span class="num">ELEVATED</span></a>
+      <a href="threats.html" class="active alert"><span>THREATS</span><span class="num">3</span></a>
+      <a href="ledger.html"><span>LEDGER</span><span class="num">2,419</span></a>
+    </nav>
+    <div class="footer">
+      <span>NORTHWIND CO.</span>
+      <span>NW</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar alert">
+      <span>T-0042 · STRIPE · RESERVE LIKELY</span>
+      <div class="right">
+        <span>OPENED 6 MIN AGO</span>
+        <span class="live">MODEL CONFIDENCE 0.73</span>
+      </div>
+    </div>
+
+    <div class="detail">
+      <div class="crumb"><a href="threats.html">← THREATS</a> &nbsp;/&nbsp; T-0042</div>
+
+      <div class="statement">
+        Stripe is likely to impose a <em>rolling reserve of 5&ndash;15%</em> within 6&ndash;11 days, based on chargeback velocity crossing their stated threshold and two correlated behavioral patterns.
+      </div>
+
+      <div class="meta-bar">
+        <div class="cell"><div class="lab">PROCESSOR</div><div class="v">STRIPE</div></div>
+        <div class="cell alert"><div class="lab">EXPECTED ACTION</div><div class="v">RESERVE 5&ndash;15%</div></div>
+        <div class="cell"><div class="lab">WINDOW</div><div class="v">6 &ndash; 11 DAYS</div></div>
+        <div class="cell alert"><div class="lab">YOUR EXPOSURE</div><div class="v">$680,000 · 90D HOLD</div></div>
+      </div>
+
+      <h2 class="section-title">CAUSAL CHAIN</h2>
+
+      <div class="causal">
+        <div class="node">
+          <div class="step-num">01</div>
+          <div class="label">SIGNAL · OBSERVED</div>
+          <div class="value">Chargeback rate 2.10%</div>
+          <div class="source">14d window · your data · 09:08 UTC</div>
+        </div>
+        <div class="node alert">
+          <div class="step-num">02 →</div>
+          <div class="label">CROSSES THRESHOLD</div>
+          <div class="value">Stripe trigger 1.80%</div>
+          <div class="source">policy + observed peers · MCC 5967</div>
+        </div>
+        <div class="node">
+          <div class="step-num">03 →</div>
+          <div class="label">CORRELATED PATTERN</div>
+          <div class="value">Refund ratio drift +0.4pp</div>
+          <div class="source">28d window · weight 0.31</div>
+        </div>
+        <div class="node alert">
+          <div class="step-num">04 →</div>
+          <div class="label">MODEL PROBABILITY</div>
+          <div class="value">73% within 6–11d</div>
+          <div class="source">trained on 412 reserve events</div>
+        </div>
+        <div class="node alert">
+          <div class="step-num">05 →</div>
+          <div class="label">EXPECTED IMPACT</div>
+          <div class="value">$680k held 90d</div>
+          <div class="source">at midpoint reserve · 8%</div>
+        </div>
+      </div>
+
+      <h2 class="section-title">EVIDENCE · 14 SIGNALS</h2>
+
+      <div class="evidence-grid">
+        <div class="ev-row">
+          <span class="ix">01</span>
+          <span class="desc">Chargeback rate <strong>2.10%</strong> sustained over 14d</span>
+          <span class="src">STRIPE · LIVE</span>
+          <span class="w">WEIGHT <strong>0.42</strong></span>
+        </div>
+        <div class="ev-row">
+          <span class="ix">02</span>
+          <span class="desc">Refund ratio drift <strong>+0.4pp</strong> over 28d</span>
+          <span class="src">STRIPE + ADYEN</span>
+          <span class="w">WEIGHT <strong>0.31</strong></span>
+        </div>
+        <div class="ev-row">
+          <span class="ix">03</span>
+          <span class="desc">3 disputes filed under reason code <strong>10.4</strong> in 7d</span>
+          <span class="src">STRIPE</span>
+          <span class="w">WEIGHT <strong>0.19</strong></span>
+        </div>
+        <div class="ev-row">
+          <span class="ix">04</span>
+          <span class="desc">Volume spike <strong>+34%</strong> on a single MCC 5967</span>
+          <span class="src">STRIPE</span>
+          <span class="w">WEIGHT <strong>0.14</strong></span>
+        </div>
+        <div class="ev-row">
+          <span class="ix">05</span>
+          <span class="desc">Avg ticket size up <strong>$48</strong> · suggests product mix shift</span>
+          <span class="src">DERIVED</span>
+          <span class="w">WEIGHT <strong>0.11</strong></span>
+        </div>
+        <div class="ev-row">
+          <span class="ix">06</span>
+          <span class="desc">Underwriting policy memo updated <strong>9d ago</strong></span>
+          <span class="src">PUBLIC FILING</span>
+          <span class="w">WEIGHT <strong>0.09</strong></span>
+        </div>
+        <div class="ev-row">
+          <span class="ix">07</span>
+          <span class="desc">2 peers in same MCC reserved within last 30d</span>
+          <span class="src">NETWORK · ANON</span>
+          <span class="w">WEIGHT <strong>0.08</strong></span>
+        </div>
+        <div class="ev-row">
+          <span class="ix">…</span>
+          <span class="desc">+ 7 supporting signals · click to expand</span>
+          <span class="src">VARIOUS</span>
+          <span class="w">WEIGHT <strong>0.21</strong></span>
+        </div>
+      </div>
+
+      <h2 class="section-title">RECOMMENDED MITIGATION</h2>
+
+      <div class="action-panel">
+        <div>
+          <div class="lab">ACTION · APPROVAL REQUIRED</div>
+          <div class="recommended">
+            Shift <strong>$42k/day</strong> of card-not-present volume from Stripe to Adyen for 14 days. Open disputes on three winnable chargebacks. Send pre-approval packet to Stripe underwriting.
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-approve">SHIFT $42K/DAY → ADYEN · 14D</button>
+          <button class="btn-secondary">FILE 3 DISPUTES</button>
+          <button class="btn-secondary">DRAFT UNDERWRITING PACKET</button>
+          <div class="gate">APPROVAL DISABLED UNTIL CAUSAL CHAIN AND EVIDENCE ARE READ. SCROLL TO ENABLE.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

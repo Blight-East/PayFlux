@@ -148,8 +148,12 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
             body: 'PayFlux is still watching for changes in held-fund risk, slower payouts, and account pressure.',
         };
 
-    const longWindow = forecast?.reserveProjections?.find((projection) => projection.windowDays === 90)
-        ?? forecast?.reserveProjections?.[forecast.reserveProjections.length - 1];
+    // Free tier sees only the 30-day window. T+60/T+90 are gated to Pro — this is the upsell hook.
+    const visibleProjections = (forecast?.reserveProjections ?? []).filter(
+        (projection) => !isFree || projection.windowDays <= 30
+    );
+    const longWindow = visibleProjections.find((projection) => projection.windowDays === 90)
+        ?? visibleProjections[visibleProjections.length - 1];
     const fundsAtRisk = longWindow
         ? longWindow.worstCaseTrappedUSD !== undefined
             ? formatUSD(longWindow.worstCaseTrappedUSD)
