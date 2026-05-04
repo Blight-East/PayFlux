@@ -253,33 +253,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=monitored_entity_upsert_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
-    if (workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise') {
-        try {
-            await updateWorkspaceState({
-                workspaceId: workspace.id,
-                activationState: 'ready_for_activation',
-            });
+    try {
+        await updateWorkspaceState({
+            workspaceId: workspace.id,
+            activationState: 'ready_for_activation',
+        });
 
-            await ensurePendingActivationRun({
-                workspaceId: workspace.id,
-                processorConnectionId: processorConnection.id,
-                monitoredEntityId: monitoredEntity.id,
-                trigger: 'post_connect',
-                triggeredBy: 'user',
-            });
-            logCallbackStage(requestId, 'activation_enqueued', {
-                userId,
-                authOrgId: orgId ?? null,
-                stateOrgId: activeOrgId,
-                workspaceId: workspace.id,
-                workspaceTier: workspace.entitlement_tier,
-            });
-        } catch (err) {
-            logCallbackStage(requestId, 'activation_enqueue_fail', {
-        userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, workspaceId: workspace.id, workspaceTier: workspace.entitlement_tier, message: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=activation_enqueue_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
-        }
+        await ensurePendingActivationRun({
+            workspaceId: workspace.id,
+            processorConnectionId: processorConnection.id,
+            monitoredEntityId: monitoredEntity.id,
+            trigger: 'post_connect',
+            triggeredBy: 'user',
+        });
+        logCallbackStage(requestId, 'activation_enqueued', {
+            userId,
+            authOrgId: orgId ?? null,
+            stateOrgId: activeOrgId,
+            workspaceId: workspace.id,
+            workspaceTier: workspace.entitlement_tier,
+        });
+    } catch (err) {
+        logCallbackStage(requestId, 'activation_enqueue_fail', {
+            userId, authOrgId: orgId ?? null, stateOrgId: activeOrgId, workspaceId: workspace.id, workspaceTier: workspace.entitlement_tier, message: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.redirect(`${baseUrl}/dashboard?err=stripe_connect_failed&reason=activation_enqueue_fail&msg=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
     }
 
     try {
@@ -287,9 +285,7 @@ export async function GET(req: NextRequest) {
             stripeAccountId,
             stripeConnectedAt: new Date().toISOString(),
             stripeConnectionStatus: 'CONNECTED',
-            ...(workspace.entitlement_tier === 'pro' || workspace.entitlement_tier === 'enterprise'
-                ? { activationState: 'ready_for_activation' }
-                : {}),
+            activationState: 'ready_for_activation',
         });
 
         console.log(`Successfully persisted Stripe Account: ${stripeAccountId} to Workspace: ${workspace.id} (Clerk Org: ${activeOrgId})`);

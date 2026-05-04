@@ -5,6 +5,7 @@ import { CANONICAL_SITE_URL } from '@/lib/urls';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import { getBaseUrl } from '@/lib/seo';
+import DocCTA from '@/components/DocCTA';
 
 interface DocsPageProps {
     params: Promise<{
@@ -77,6 +78,8 @@ export default async function DocsPage({ params }: DocsPageProps) {
                     className="docs-content"
                 />
             </article>
+
+            <DocCTA topic={doc.title} slug={doc.slug} />
 
             {/* Basic styles for critical readablity if Tailwind prose plugin isn't fully configured or fails */}
             <style>{`

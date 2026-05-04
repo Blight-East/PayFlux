@@ -37,8 +37,31 @@ export default async function DashboardPage() {
     // Resolve onboarding state for rendering decisions
     const onboarding = await resolveOnboardingState(userId);
 
-    // Free tier → limited preview dashboard
+    // Free tier rendering rules:
+    //   - No Stripe connection           → preview-only DashboardFreePreview
+    //   - Stripe connected, not live yet → preview with "warming" copy (DashboardFreePreview already branches on hasStripeConnection)
+    //   - Stripe connected and live      → ProjectionRoot capped to 30-day window (the cap lives in ProjectionRoot when tier === 'free')
     if (workspace.tier === 'free') {
+        const freeMonitoredEntity = onboarding.hasStripeConnection
+            ? await getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId)
+            : null;
+
+        const freeIsLive = Boolean(
+            freeMonitoredEntity?.current_baseline_snapshot_id &&
+            freeMonitoredEntity?.current_projection_id &&
+            freeMonitoredEntity?.primary_host
+        );
+
+        if (freeIsLive) {
+            return (
+                <ProjectionRoot
+                    tier="free"
+                    host={freeMonitoredEntity!.primary_host}
+                    activationReady
+                />
+            );
+        }
+
         const primaryHost = deriveFreePreviewHost(
             (workspaceRecord?.latest_scan_summary as Record<string, unknown> | undefined) ?? {},
             workspaceRecord?.primary_host_candidate ?? null
