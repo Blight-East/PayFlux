@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayFlux · T-0042 · Reserve likely (v2)</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark"></span><span class="name">PAYFLUX</span></div>
+    <nav>
+      <a href="posture-alert.html" class="alert"><span>POSTURE</span><span class="num">ELEVATED</span></a>
+      <a href="threats.html" class="active alert"><span>THREATS</span><span class="num">3</span></a>
+      <a href="ledger.html"><span>LEDGER</span><span class="num">2,419</span></a>
+    </nav>
+    <div class="footer"><span>NORTHWIND CO.</span><span>NW</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar alert">
+      <span>T-0042 · STRIPE · RESERVE LIKELY</span>
+      <div class="right">
+        <span>OPENED 6 MIN AGO</span>
+        <span class="live">MODEL CONFIDENCE 0.73</span>
+      </div>
+    </div>
+
+    <div class="v2-detail">
+
+      <div class="v2-crumb">
+        <a href="threats.html">← Threats</a>
+        <span class="sep">/</span>
+        <span class="id">T-0042 · OPEN</span>
+        <span class="sep">/</span>
+        <span>Stripe · MCC 5967</span>
+      </div>
+
+      <div class="v2-statement-block">
+        <div class="id-stamp">FILE <strong>T-0042</strong> · 2026-04-24 · 09:14 UTC</div>
+        <h1 class="v2-statement">
+          Stripe is likely to impose a <em>rolling reserve of 5&ndash;15%</em> within the next 6&ndash;11 days, based on chargeback velocity crossing their stated threshold and two correlated behavioral patterns.
+        </h1>
+      </div>
+
+      <div class="v2-grid">
+        <div class="v2-main-col">
+
+          <div class="v2-meta-strip">
+            <div class="cell">
+              <div class="lab">Processor</div>
+              <div class="v">Stripe</div>
+              <div class="sub">Card · MCC 5967</div>
+            </div>
+            <div class="cell alert">
+              <div class="lab">Expected action</div>
+              <div class="v">Reserve · 5&ndash;15%</div>
+              <div class="sub">Rolling · 90d hold</div>
+            </div>
+            <div class="cell">
+              <div class="lab">Window</div>
+              <div class="v">6 &ndash; 11 days</div>
+              <div class="sub">P50 = 9d · σ ±2.4d</div>
+            </div>
+            <div class="cell alert">
+              <div class="lab">Your exposure</div>
+              <div class="v">$680,000</div>
+              <div class="sub">at midpoint reserve · 8%</div>
+            </div>
+          </div>
+
+          <section class="v2-section" data-gate="chain">
+            <div class="v2-section-eyebrow">
+              <span class="num">01</span>
+              <span class="title">Causal chain</span>
+              <span class="meta">5 nodes · derived from 14 signals</span>
+            </div>
+
+            <div class="v2-chain">
+              <div class="step">
+                <div class="ix">001</div>
+                <div class="marker"><div class="glyph"></div></div>
+                <div class="body">
+                  <div class="label">Signal · observed</div>
+                  <div class="value">Chargeback rate 2.10%</div>
+                  <div class="source">14d window · your data · last seen 09:08 UTC</div>
+                </div>
+                <div class="meta-right">
+                  <span class="v">w 0.42</span>
+                  <span>HIGH</span>
+                </div>
+              </div>
+              <div class="step alert">
+                <div class="ix">002</div>
+                <div class="marker"><div class="glyph"></div></div>
+                <div class="body">
+                  <div class="label">Crosses threshold</div>
+                  <div class="value">Stripe trigger 1.80% / 14d</div>
+                  <div class="source">policy doc + 14 observed peers · MCC 5967 · revised 9d ago</div>
+                </div>
+                <div class="meta-right">
+                  <span class="v">∆ +0.30</span>
+                  <span>BREACH</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="ix">003</div>
+                <div class="marker"><div class="glyph"></div></div>
+                <div class="body">
+                  <div class="label">Correlated pattern</div>
+                  <div class="value">Refund ratio drift +0.4pp</div>
+                  <div class="source">28d window · co-moves with reserve events · ρ 0.71</div>
+                </div>
+                <div class="meta-right">
+                  <span class="v">ρ 0.71</span>
+                  <span>PAIRED</span>
+                </div>
+              </div>
+              <div class="step alert">
+                <div class="ix">004</div>
+                <div class="marker"><div class="glyph"></div></div>
+                <div class="body">
+                  <div class="label">Model probability</div>
+                  <div class="value">73% within 6&ndash;11 days</div>
+                  <div class="source">trained on 412 reserve events · cohort precision 0.81</div>
+                </div>
+                <div class="meta-right">
+                  <span class="v">p 0.73</span>
+                  <span>STRONG</span>
+                </div>
+              </div>
+              <div class="step alert">
+                <div class="ix">005</div>
+                <div class="marker"><div class="glyph"></div></div>
+                <div class="body">
+                  <div class="label">Expected impact</div>
+                  <div class="value">$680k held for 90 days</div>
+                  <div class="source">at midpoint reserve · 8% · against 90d trailing volume</div>
+                </div>
+                <div class="meta-right">
+                  <span class="v">$680k</span>
+                  <span>EXPOSURE</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="v2-section" data-gate="evidence">
+            <div class="v2-section-eyebrow">
+              <span class="num">02</span>
+              <span class="title">Weighted evidence</span>
+              <span class="meta">14 signals · sorted by weight</span>
+            </div>
+
+            <div class="v2-evidence">
+              <div class="v2-ev-row head">
+                <span>#</span>
+                <span>Signal</span>
+                <span>Source</span>
+                <span>Contribution</span>
+                <span>Weight</span>
+              </div>
+              <div class="v2-ev-row alert">
+                <span class="ix">01</span>
+                <span class="desc">Chargeback rate <strong>2.10%</strong> sustained over 14d window</span>
+                <span class="src">Stripe · live</span>
+                <span class="bar" style="--w: 100%"></span>
+                <span class="w">0.42</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">02</span>
+                <span class="desc">Refund ratio drift <strong>+0.4pp</strong> over 28d</span>
+                <span class="src">Stripe + Adyen</span>
+                <span class="bar" style="--w: 74%"></span>
+                <span class="w">0.31</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">03</span>
+                <span class="desc">3 disputes filed under reason code <strong>10.4</strong> in 7d</span>
+                <span class="src">Stripe</span>
+                <span class="bar" style="--w: 45%"></span>
+                <span class="w">0.19</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">04</span>
+                <span class="desc">Volume spike <strong>+34%</strong> on a single MCC (5967)</span>
+                <span class="src">Stripe</span>
+                <span class="bar" style="--w: 33%"></span>
+                <span class="w">0.14</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">05</span>
+                <span class="desc">Avg ticket size up <strong>$48</strong> · suggests product mix shift</span>
+                <span class="src">Derived</span>
+                <span class="bar" style="--w: 26%"></span>
+                <span class="w">0.11</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">06</span>
+                <span class="desc">Underwriting policy memo updated <strong>9d ago</strong></span>
+                <span class="src">Public filing</span>
+                <span class="bar" style="--w: 21%"></span>
+                <span class="w">0.09</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">07</span>
+                <span class="desc">2 peers in same MCC reserved within last 30d</span>
+                <span class="src">Network · anon</span>
+                <span class="bar" style="--w: 19%"></span>
+                <span class="w">0.08</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">08</span>
+                <span class="desc">First-party fraud signal <strong>+0.6%</strong> velocity</span>
+                <span class="src">Derived</span>
+                <span class="bar" style="--w: 14%"></span>
+                <span class="w">0.06</span>
+              </div>
+              <div class="v2-ev-row">
+                <span class="ix">…</span>
+                <span class="desc">+ 6 supporting signals contributing 0.15 weighted</span>
+                <span class="src">Various</span>
+                <span class="bar" style="--w: 36%"></span>
+                <span class="w">0.15</span>
+              </div>
+            </div>
+            <div class="v2-evidence-foot">
+              <span>14 signals · top 8 shown</span>
+              <span>cumulative weight <strong>1.55</strong> · model p <strong>0.73</strong></span>
+            </div>
+          </section>
+
+        </div>
+
+        <aside class="v2-side-col">
+          <div class="v2-action-card">
+            <div class="v2-action-head">
+              <span class="lab">Recommended mitigation</span>
+              <span class="conf">−0.41 ∆p</span>
+            </div>
+            <div class="v2-action-body" id="actionBody">
+              <div class="recommended">
+                Shift <strong>$42k/day</strong> of card-not-present volume from Stripe to Adyen for 14 days. Open disputes on three winnable chargebacks. Send pre-approval packet to Stripe underwriting.
+              </div>
+              <div class="impact">
+                <span>Capital protected</span>
+                <span class="v">≈ $680,000</span>
+              </div>
+              <div class="impact">
+                <span>Time to first effect</span>
+                <span class="v">~36h</span>
+              </div>
+              <div class="actions">
+                <button class="btn-action primary" disabled>Shift $42k/day → Adyen · 14d</button>
+                <button class="btn-action" disabled>File 3 disputes</button>
+                <button class="btn-action" disabled>Draft underwriting packet</button>
+              </div>
+              <div class="v2-gate">
+                <div class="gate-head">
+                  <span>Comprehension gate</span>
+                  <span class="count" id="gateCount">0 / 2 read</span>
+                </div>
+                <div class="checks">
+                  <span class="ck" id="ck-chain">Causal chain</span>
+                  <span class="ck" id="ck-evidence">Weighted evidence</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var sections = document.querySelectorAll('[data-gate]');
+  var checks = {
+    chain: document.getElementById('ck-chain'),
+    evidence: document.getElementById('ck-evidence')
+  };
+  var count = document.getElementById('gateCount');
+  var body = document.getElementById('actionBody');
+  var buttons = body.querySelectorAll('.btn-action');
+  var read = {};
+
+  function update() {
+    var n = Object.keys(read).length;
+    count.textContent = n + ' / 2 read';
+    if (n >= 2) {
+      body.classList.add('unlocked');
+      buttons.forEach(function (b) { b.disabled = false; });
+    }
+  }
+
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        var key = e.target.dataset.gate;
+        read[key] = true;
+        if (checks[key]) checks[key].classList.add('done');
+        update();
+      }
+    });
+  }, { threshold: 1.0, rootMargin: '0px 0px -8% 0px' });
+
+  sections.forEach(function (s) {
+    var sentinel = document.createElement('div');
+    sentinel.dataset.gate = s.dataset.gate;
+    sentinel.style.cssText = 'height:1px;width:100%;';
+    s.appendChild(sentinel);
+    obs.observe(sentinel);
+  });
+})();
+</script>
+
+</body>
+</html>

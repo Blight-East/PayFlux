@@ -1,0 +1,19 @@
+# PayFlux marketing site (payflux.dev)
+#
+# Static HTML, no build step. The Netlify site (payflux-gateway,
+# id 33ea3f23-a69e-4795-b093-f2a9f8ebf87d) is configured with
+# base = "marketing", which makes this file the build root.
+#
+# Published from this directory directly. Edit the HTML files in place,
+# commit, push — Netlify builds from git on main.
+
+[build]
+publish = "."
+command = ""
+
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "strict-origin-when-cross-origin"

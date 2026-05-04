@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayFlux · Ledger</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark"></span><span class="name">PAYFLUX</span></div>
+    <nav>
+      <a href="posture-alert.html" class="alert"><span>POSTURE</span><span class="num">ELEVATED</span></a>
+      <a href="threats.html" class="alert"><span>THREATS</span><span class="num">3</span></a>
+      <a href="ledger.html" class="active"><span>LEDGER</span><span class="num">2,419</span></a>
+    </nav>
+    <div class="footer">
+      <span>NORTHWIND CO.</span>
+      <span>NW</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span>NORTHWIND CO. · LEDGER · APPEND-ONLY</span>
+      <div class="right">
+        <span>2,419 ENTRIES SINCE 2026-01-08</span>
+        <span class="live">LIVE</span>
+      </div>
+    </div>
+
+    <div class="ledger">
+      <div class="page-head" style="padding: 0 0 24px;">
+        <div>
+          <h1>Ledger</h1>
+          <div class="sub">EVERY SIGNAL, THREAT, ACTION, AND OUTCOME · INCLUDING THE MISSES</div>
+        </div>
+        <div class="filters">
+          <button class="active">ALL</button>
+          <button>SIGNALS</button>
+          <button>THREATS</button>
+          <button>ACTIONS</button>
+          <button>OUTCOMES</button>
+        </div>
+      </div>
+
+      <div class="ledger-stats v2">
+        <div class="stat">
+          <div class="lab">PREDICTIONS RESOLVED</div>
+          <div class="num mono">38</div>
+          <div class="delta">90 DAYS · 7 STILL OPEN</div>
+        </div>
+        <div class="stat">
+          <div class="lab">PREVENTED</div>
+          <div class="num mono" style="color: #6a8d6a">29</div>
+          <div class="delta">76% OF RESOLVED</div>
+        </div>
+        <div class="stat">
+          <div class="lab">MATERIALIZED</div>
+          <div class="num mono" style="color: var(--alert)">4</div>
+          <div class="delta">10% · 2 WERE PREDICTED, 2 WERE NOT</div>
+        </div>
+        <div class="stat">
+          <div class="lab">FALSE POSITIVES</div>
+          <div class="num mono">5</div>
+          <div class="delta">14% · WE LOG THESE TOO</div>
+        </div>
+      </div>
+
+      <div class="ledger-table">
+        <div class="ledger-row head">
+          <span>TIMESTAMP</span>
+          <span>KIND</span>
+          <span>ENTRY</span>
+          <span>ACTOR</span>
+          <span>OUTCOME</span>
+        </div>
+
+        <div class="ledger-row">
+          <span class="ts">04-24 · 09:08:14</span>
+          <span class="kind threat">THREAT</span>
+          <span class="desc"><strong>T-0042</strong> opened: Stripe reserve action likely · 6&ndash;11d · confidence 0.73</span>
+          <span class="actor">SYSTEM</span>
+          <span class="out pending">PENDING</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-24 · 09:08:01</span>
+          <span class="kind signal">SIGNAL</span>
+          <span class="desc">Chargeback rate crossed 2.10% on 14d window (was 1.84%)</span>
+          <span class="actor">STRIPE · LIVE</span>
+          <span class="out">—</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-23 · 22:14:00</span>
+          <span class="kind signal">SIGNAL</span>
+          <span class="desc">Stripe published underwriting policy memo · 9 days old · ingested</span>
+          <span class="actor">PUBLIC</span>
+          <span class="out">—</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-22 · 14:42:09</span>
+          <span class="kind action">ACTION</span>
+          <span class="desc">Approved: shift $18k/day to Adyen for 7d (T-0039 mitigation)</span>
+          <span class="actor">A. ZHANG</span>
+          <span class="out">—</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-22 · 11:18:33</span>
+          <span class="kind outcome">OUTCOME</span>
+          <span class="desc"><strong>T-0039</strong> closed: no reserve imposed · processor confirmed account in good standing</span>
+          <span class="actor">SYSTEM</span>
+          <span class="out prevented">PREVENTED</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-19 · 08:00:00</span>
+          <span class="kind outcome">OUTCOME</span>
+          <span class="desc"><strong>T-0036</strong> closed: predicted reserve did not materialize within window · model overweighted MCC drift</span>
+          <span class="actor">SYSTEM</span>
+          <span class="out fp">FALSE POS.</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-15 · 17:22:51</span>
+          <span class="kind outcome">OUTCOME</span>
+          <span class="desc"><strong>T-0034</strong> closed: Braintree imposed 5% reserve · we predicted 6&ndash;14d, actual was 9d</span>
+          <span class="actor">SYSTEM</span>
+          <span class="out materialized">MATERIALIZED</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-12 · 02:00:00</span>
+          <span class="kind action">ACTION</span>
+          <span class="desc">Silenced: T-0033 · reason "duplicate of T-0031, processor confirmed" · expires 04-19</span>
+          <span class="actor">M. PATEL</span>
+          <span class="out">—</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-09 · 09:14:02</span>
+          <span class="kind outcome">OUTCOME</span>
+          <span class="desc"><strong>UNFLAGGED</strong> reserve event: Adyen imposed 3% on subset of MCCs · model did not predict · post-mortem opened</span>
+          <span class="actor">SYSTEM</span>
+          <span class="out materialized">MISS</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-08 · 13:55:18</span>
+          <span class="kind threat">THREAT</span>
+          <span class="desc"><strong>T-0031</strong> opened: Adyen volume concentration · weak signal · 30+d window</span>
+          <span class="actor">SYSTEM</span>
+          <span class="out prevented">PREVENTED</span>
+        </div>
+        <div class="ledger-row">
+          <span class="ts">04-04 · 10:00:00</span>
+          <span class="kind signal">SIGNAL</span>
+          <span class="desc">Calibration: model retrained on 412 events (was 388) · weights re-balanced</span>
+          <span class="actor">SYSTEM</span>
+          <span class="out">—</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 32px; font-family: var(--mono); font-size: 11px; color: var(--mid); letter-spacing: 0.10em; line-height: 1.7; max-width: 64ch;">
+        EVERY ENTRY IS APPEND-ONLY. NOTHING CAN BE EDITED OR DELETED FROM THIS LOG, INCLUDING PREDICTIONS WE GOT WRONG. THIS IS THE PRODUCT'S CREDIBILITY.
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

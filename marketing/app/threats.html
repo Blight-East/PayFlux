@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayFlux · Threats</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark"></span><span class="name">PAYFLUX</span></div>
+    <nav>
+      <a href="posture-alert.html" class="alert"><span>POSTURE</span><span class="num">ELEVATED</span></a>
+      <a href="threats.html" class="active"><span>THREATS</span><span class="num">3</span></a>
+      <a href="ledger.html"><span>LEDGER</span><span class="num">2,419</span></a>
+    </nav>
+    <div class="footer">
+      <span>NORTHWIND CO.</span>
+      <span>NW</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar alert">
+      <span>NORTHWIND CO. · THREATS</span>
+      <div class="right">
+        <span>SORTED BY EXPECTED IMPACT</span>
+        <span class="live">SYSTEM LIVE</span>
+      </div>
+    </div>
+
+    <div class="page-head">
+      <div>
+        <h1>Threats</h1>
+        <div class="sub">3 OPEN · 14 SIGNALS CONTRIBUTING · UPDATED 4 MIN AGO</div>
+      </div>
+      <div class="filters">
+        <button class="active">ALL</button>
+        <button>OPEN</button>
+        <button>SILENCED</button>
+        <button>RESOLVED</button>
+      </div>
+    </div>
+
+    <div class="v2-threats">
+      <div class="v2-threats-head">
+        <span>3 OPEN · RANKED BY EXPECTED IMPACT</span>
+        <span><strong>1</strong> LIVE · 2 WATCHING</span>
+      </div>
+
+      <a href="threat.html" class="v2-threat alert">
+        <div class="vt-meta">
+          <span class="ix">T-0042</span>
+          <span class="dot"></span>
+          <span class="status">LIVE · OPENED 6 MIN AGO</span>
+        </div>
+        <div class="vt-head">
+          <div class="vt-name">Reserve action likely on Stripe.</div>
+          <div class="vt-conf">
+            <span class="word">STRONG</span>
+            <span class="num">p 0.73 · 14 signals</span>
+          </div>
+        </div>
+        <div class="vt-bar"><span style="--w: 73%"></span></div>
+        <div class="vt-foot">
+          <span class="proc">Stripe · 5–15% rolling · 90d hold · MCC 5967</span>
+          <div class="cells">
+            <span><span class="lab">WINDOW</span>6–11d</span>
+            <span><span class="lab">EXPOSURE</span><strong>$680k</strong></span>
+            <span><span class="lab">→</span></span>
+          </div>
+        </div>
+      </a>
+
+      <a href="#" class="v2-threat">
+        <div class="vt-meta">
+          <span class="ix">T-0041</span>
+          <span class="dot"></span>
+          <span class="status">WATCHING · 4d</span>
+        </div>
+        <div class="vt-head">
+          <div class="vt-name">Underwriting policy drift on Braintree.</div>
+          <div class="vt-conf">
+            <span class="word">MODERATE</span>
+            <span class="num">p 0.51 · 6 signals</span>
+          </div>
+        </div>
+        <div class="vt-bar"><span style="--w: 51%"></span></div>
+        <div class="vt-foot">
+          <span class="proc">Braintree · MCC 5967 reclassification flagged</span>
+          <div class="cells">
+            <span><span class="lab">WINDOW</span>14–28d</span>
+            <span><span class="lab">EXPOSURE</span>$210k</span>
+            <span><span class="lab">→</span></span>
+          </div>
+        </div>
+      </a>
+
+      <a href="#" class="v2-threat">
+        <div class="vt-meta">
+          <span class="ix">T-0040</span>
+          <span class="dot"></span>
+          <span class="status">MONITOR ONLY · 11d</span>
+        </div>
+        <div class="vt-head">
+          <div class="vt-name">Refund-to-volume divergence on Adyen.</div>
+          <div class="vt-conf">
+            <span class="word">WEAK</span>
+            <span class="num">p 0.28 · 3 signals</span>
+          </div>
+        </div>
+        <div class="vt-bar"><span style="--w: 28%"></span></div>
+        <div class="vt-foot">
+          <span class="proc">Adyen · drift trailing peer cohort by 0.6pp</span>
+          <div class="cells">
+            <span><span class="lab">WINDOW</span>30+ d</span>
+            <span><span class="lab">EXPOSURE</span>—</span>
+            <span><span class="lab">→</span></span>
+          </div>
+        </div>
+      </a>
+
+      <div class="v2-threats-foot">
+        Threats are grouped, not streamed. Raw signals live in the
+        <a href="ledger.html">Ledger</a>.
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
