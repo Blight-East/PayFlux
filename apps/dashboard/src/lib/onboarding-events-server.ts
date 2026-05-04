@@ -9,6 +9,7 @@
  */
 
 import { persistEvent } from './event-store';
+import { captureServer } from './posthog-server';
 import type { OnboardingEvent } from './onboarding-events';
 
 export type { OnboardingEvent };
@@ -79,6 +80,19 @@ export function logOnboardingEvent(
         workspaceId: opts?.workspaceId,
         metadata,
     }).catch(() => { /* silent */ });
+
+    // Mirror to PostHog (no-op if not configured). Distinct ID is the
+    // userId when known; otherwise the journey_id so anonymous server
+    // events still attribute to the right journey.
+    const distinctId = opts?.userId
+        || (typeof metadata.journey_id === 'string' ? metadata.journey_id : undefined);
+    if (distinctId) {
+        captureServer({
+            event,
+            distinctId,
+            properties: { ...metadata, workspace_id: opts?.workspaceId },
+        }).catch(() => { /* silent */ });
+    }
 }
 
 /**
