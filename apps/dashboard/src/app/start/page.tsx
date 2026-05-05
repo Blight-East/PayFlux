@@ -12,10 +12,11 @@ export const runtime = 'nodejs';
  *
  * Routes users based on onboarding state:
  *   - Not logged in        → landing page
- *   - stage "none"          → /scan
- *   - stage "scanned"       → /connect (encourage, not require)
- *   - stage "connected_free"→ /dashboard (free preview)
- *   - stage "upgraded"      → /activate (post-purchase activation flow)
+ *   - stage "none"               → /scan
+ *   - stage "scanned"            → /connect (encourage, not require)
+ *   - stage "connected_free"     → /dashboard (free preview, activation in flight)
+ *   - stage "live_monitored_free"→ /dashboard (free, activation complete)
+ *   - stage "upgraded"           → /activate (post-purchase activation flow)
  */
 export default async function StartPage() {
     const { userId } = await auth();
@@ -269,6 +270,7 @@ export default async function StartPage() {
             // Encourage connection but don't force — they can skip to dashboard
             redirect('/connect');
         case 'connected_free':
+        case 'live_monitored_free':
             redirect('/dashboard');
         case 'upgraded': {
             // Route through activation flow — it handles all sub-states

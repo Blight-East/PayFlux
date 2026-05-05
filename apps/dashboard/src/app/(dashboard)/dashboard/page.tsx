@@ -9,6 +9,7 @@ import { resolveActivationStatus } from '@/lib/activation-state';
 import ProjectionRoot from '@/components/ProjectionRoot';
 import DashboardFreePreview from '@/components/DashboardFreePreview';
 import ActivationBanner from '@/components/ActivationBanner';
+import FreeArmingProgress from '@/components/FreeArmingProgress';
 
 function deriveFreePreviewHost(scanSummary: Record<string, unknown>, primaryHostCandidate: string | null): string | null {
     if (primaryHostCandidate) {
@@ -39,8 +40,8 @@ export default async function DashboardPage() {
 
     // Free tier rendering rules:
     //   - No Stripe connection           → preview-only DashboardFreePreview
-    //   - Stripe connected, not live yet → preview with "warming" copy (DashboardFreePreview already branches on hasStripeConnection)
-    //   - Stripe connected and live      → ProjectionRoot capped to 30-day window (the cap lives in ProjectionRoot when tier === 'free')
+    //   - Stripe connected, not live yet → FreeArmingProgress (staged reveal)
+    //   - Stripe connected and live      → ProjectionRoot (locked T+60/T+90 panels)
     if (workspace.tier === 'free') {
         const freeMonitoredEntity = onboarding.hasStripeConnection
             ? await getMonitoredEntityByWorkspaceId(workspace.workspaceRecordId)
@@ -60,6 +61,10 @@ export default async function DashboardPage() {
                     activationReady
                 />
             );
+        }
+
+        if (onboarding.hasStripeConnection) {
+            return <FreeArmingProgress />;
         }
 
         const primaryHost = deriveFreePreviewHost(
