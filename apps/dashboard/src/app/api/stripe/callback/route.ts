@@ -56,6 +56,30 @@ function getStripeErrorPayload(err: unknown): Record<string, unknown> {
     };
 }
 
+function secondsSince(timestamp: unknown): number | null {
+    const ms = typeof timestamp === 'number'
+        ? timestamp
+        : typeof timestamp === 'string'
+            ? Date.parse(timestamp)
+            : timestamp instanceof Date
+                ? timestamp.getTime()
+                : NaN;
+    if (!Number.isFinite(ms)) return null;
+    return Math.max(0, Math.round((Date.now() - ms) / 1000));
+}
+
+async function getSignupAgeSeconds(
+    client: { users: { getUser: (userId: string) => Promise<{ createdAt?: unknown }> } },
+    userId: string
+): Promise<number | null> {
+    try {
+        const user = await client.users.getUser(userId);
+        return secondsSince((user as { createdAt?: unknown }).createdAt);
+    } catch {
+        return null;
+    }
+}
+
 export async function GET(req: NextRequest) {
     const requestId = randomUUID();
     const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -70,7 +94,7 @@ export async function GET(req: NextRequest) {
     const { default: Stripe } = await import("stripe");
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-        // @ts-ignore
+        // @ts-expect-error Stripe SDK types can lag newly pinned API versions.
         apiVersion: '2024-12-18.acacia',
     });
 
@@ -289,11 +313,18 @@ export async function GET(req: NextRequest) {
         });
 
         console.log(`Successfully persisted Stripe Account: ${stripeAccountId} to Workspace: ${workspace.id} (Clerk Org: ${activeOrgId})`);
+        const timeFromSignupSeconds = await getSignupAgeSeconds(client, userId);
 
         logOnboardingEvent('stripe_connect_completed', {
             userId,
             workspaceId: workspace.id,
-            metadata: { stripeAccountId, clerkOrgId: activeOrgId, oauthScope },
+            metadata: {
+                stripeAccountId,
+                clerkOrgId: activeOrgId,
+                oauthScope,
+                had_scan: Boolean(workspace.scan_attached_at || workspace.primary_host_candidate),
+                time_from_signup_seconds: timeFromSignupSeconds,
+            },
         });
 
         logStageTransition('scanned', 'connected_free', { userId, workspaceId: workspace.id });

@@ -11,6 +11,7 @@
  */
 
 import { PostHog } from 'posthog-node';
+import { POSTHOG_HOST, POSTHOG_KEY, warnOnPostHogEnvMismatch } from './posthog-config';
 
 let client: PostHog | null = null;
 let initialized = false;
@@ -19,13 +20,10 @@ function getClient(): PostHog | null {
     if (initialized) return client;
     initialized = true;
 
-    const key = process.env.POSTHOG_PROJECT_API_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const host = process.env.POSTHOG_HOST || process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
+    warnOnPostHogEnvMismatch('server');
 
-    if (!key) return null;
-
-    client = new PostHog(key, {
-        host,
+    client = new PostHog(POSTHOG_KEY, {
+        host: POSTHOG_HOST,
         flushAt: 1,
         flushInterval: 0,
     });
@@ -42,13 +40,23 @@ export async function captureServer(args: {
     if (!ph) return;
 
     try {
+        console.log('[POSTHOG_FUNNEL_DEBUG] capture_server', {
+            event: args.event,
+            distinct_id: args.distinctId,
+            host: POSTHOG_HOST,
+        });
         ph.capture({
             event: args.event,
             distinctId: args.distinctId,
             properties: args.properties,
         });
         await ph.flush();
-    } catch {
+    } catch (err) {
         // Never block business logic on analytics
+        console.warn('[POSTHOG_FUNNEL_DEBUG] capture_server_failed', {
+            event: args.event,
+            distinct_id: args.distinctId,
+            message: err instanceof Error ? err.message : String(err),
+        });
     }
 }

@@ -4,8 +4,18 @@ import { redirect } from 'next/navigation';
 import { resolveOnboardingState } from '@/lib/onboarding-state';
 import { resolveActivationStatus } from '@/lib/activation-state';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
+import { queryEvents } from '@/lib/event-store';
 
 export const runtime = 'nodejs';
+
+async function hasLoggedSignupCompleted(userId: string): Promise<boolean> {
+    try {
+        const existing = await queryEvents({ userId, eventName: 'signup_completed', limit: 1 });
+        return existing.length > 0;
+    } catch {
+        return false;
+    }
+}
 
 /**
  * /start — Canonical entry router.
@@ -23,231 +33,174 @@ export default async function StartPage() {
 
     if (!userId) {
         return (
-            <div className="min-h-screen bg-[#0F172A] text-white">
-                {/* ── Nav ── */}
-                <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-                    <span className="text-lg font-semibold tracking-tight">PayFlux</span>
-                    <div className="flex items-center gap-3">
+            <div className="min-h-screen bg-[#0a0a0a] text-[#f7f7f5]">
+                <nav className="sticky top-0 z-40 border-b border-[#1f1f1d] bg-[#0a0a0a]/85 px-6 py-5 backdrop-blur">
+                    <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+                        <Link href="https://payflux.dev" className="flex items-center gap-3 no-underline">
+                            <span className="relative h-[18px] w-[18px] border border-[#f7f7f5] after:absolute after:inset-[3px] after:bg-[#f7f7f5]" />
+                            <span className="font-mono text-[13px] font-medium uppercase tracking-[0.08em] text-[#f7f7f5]">
+                                PayFlux <span className="hidden text-[10px] tracking-[0.16em] text-[#6b6b66] sm:inline">Payment Risk Intelligence</span>
+                            </span>
+                        </Link>
+                        <div className="flex items-center gap-5">
+                            <a href="https://payflux.dev/#evidence" className="hidden font-mono text-xs text-[#9a9a93] no-underline transition-colors hover:text-[#f7f7f5] sm:inline">
+                                Evidence
+                            </a>
                         <Link
                             href="/sign-in"
-                            className="text-sm text-slate-400 no-underline transition-colors hover:text-white"
+                                className="font-mono text-xs text-[#9a9a93] no-underline transition-colors hover:text-[#f7f7f5]"
                         >
                             Sign in
                         </Link>
                         <Link
                             href="/scan"
-                            className="rounded-lg bg-[#0A64BC] px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
+                                className="border border-[#f7f7f5] bg-[#f7f7f5] px-4 py-2 font-mono text-xs text-[#0a0a0a] no-underline transition-opacity hover:opacity-85"
                         >
-                            Run a free scan
+                            See your payout risk
                         </Link>
+                    </div>
                     </div>
                 </nav>
 
-                {/* ── Hero ── */}
-                <section className="mx-auto max-w-3xl px-6 pb-20 pt-24 text-center">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#0A64BC]">
-                        Processor Early Warning
+                <main>
+                    <section className="mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-28">
+                        <div>
+                            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#6b6b66]">
+                                Payment Risk Intelligence · app entry
                     </p>
-                    <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-                        See processor risk before it turns into a cash-flow problem.
+                            <h1
+                                className="mt-10 max-w-[12ch] text-[44px] font-normal leading-[1.02] tracking-[-0.02em] text-[#f7f7f5] sm:text-[68px]"
+                                style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+                            >
+                                Your processor can lock <em className="font-normal italic text-[#c8533a]">$680k of your cash</em> before they tell you.
                     </h1>
-                    <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-300">
-                        PayFlux monitors your Stripe account for payout delays, held funds, and rising processor pressure. Get a free risk scan in 60 seconds.
+                            <p className="mt-8 max-w-2xl border-l border-[#2a2a27] pl-5 font-mono text-sm leading-7 text-[#9a9a93]">
+                                PayFlux analyzes payout patterns, disputes, balance velocity, and processor signals from your Stripe account. Start with a preliminary external signal scan, then connect Stripe read-only for live payout prediction.
                     </p>
-                    <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                            <div className="mt-8 flex flex-wrap gap-3">
                         <Link
                             href="/scan"
-                            className="inline-flex items-center justify-center rounded-full bg-[#0A64BC] px-8 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
+                                    className="border border-[#f7f7f5] bg-[#f7f7f5] px-6 py-3 font-mono text-sm text-[#0a0a0a] no-underline transition-opacity hover:opacity-85"
                         >
-                            Run a free scan
+                                    See your payout risk&nbsp;→
                         </Link>
                         <a
-                            href="#how-it-works"
-                            className="inline-flex items-center text-base text-slate-400 no-underline transition-colors hover:text-white"
+                                    href="https://payflux.dev/app/posture.html"
+                                    className="border-b border-[#2a2a27] px-3 py-3 font-mono text-sm text-[#9a9a93] no-underline transition-colors hover:border-[#f7f7f5] hover:text-[#f7f7f5]"
                         >
-                            See how it works&nbsp;&rarr;
+                                    View live dashboard&nbsp;→
                         </a>
                     </div>
-                    <p className="mt-4 text-sm text-slate-500">
-                        No credit card. Read-only access. Takes 60 seconds.
-                    </p>
-                    <p className="mt-2 text-sm text-slate-400">
-                        Pro starts at <span className="font-semibold text-white">$499/month</span> for live monitoring.
-                    </p>
-
-                    {/* Product mockup */}
-                    <div className="mx-auto mt-12 max-w-lg rounded-xl border border-slate-800 bg-slate-900/60 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-slate-500">Overall Risk</p>
-                                <p className="mt-1 text-2xl font-bold text-emerald-400">LOW</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs text-slate-500">Payout Timing</p>
-                                <p className="mt-1 text-2xl font-bold text-white">2.1 days</p>
-                            </div>
-                        </div>
-                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
-                            <div className="h-full w-[18%] rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
-                        </div>
-                        <div className="mt-2 flex justify-between text-[10px] text-slate-600">
-                            <span>Low risk</span>
-                            <span>High risk</span>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ── How it works ── */}
-                <section id="how-it-works" className="mx-auto max-w-5xl px-6 pb-20">
-                    <h2 className="mb-10 text-center text-2xl font-semibold text-white">How it works</h2>
-                    <div className="grid gap-4 md:grid-cols-3">
-                        {[
-                            { step: '1', title: 'Enter your domain', desc: 'We check your store for public risk signals. No login needed.' },
-                            { step: '2', title: 'See your results', desc: 'Get a plain-English summary of what we found and what it means.' },
-                            { step: '3', title: 'Keep watching', desc: 'Create a free account and connect Stripe for live monitoring.' },
-                        ].map(({ step, title, desc }) => (
-                            <div key={step} className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-                                <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full border border-[#0A64BC]/40 text-sm font-bold text-[#0A64BC]">
-                                    {step}
-                                </div>
-                                <p className="text-sm font-semibold text-white">{title}</p>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-400">{desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* ── Problem section ── */}
-                <section className="border-t border-slate-800/50 bg-slate-900/30 py-20">
-                    <div className="mx-auto grid max-w-5xl gap-10 px-6 md:grid-cols-[1.2fr_1fr]">
-                        <div>
-                            <h2 className="text-2xl font-semibold text-white">Most merchants don&apos;t see it coming</h2>
-                            <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-400">
-                                Payment processors adjust payout timing, apply reserves, and flag accounts without obvious warning. By the time you notice, your cash flow is already affected.
+                            <p className="mt-5 font-mono text-xs uppercase tracking-[0.14em] text-[#6b6b66]">
+                                Free · 2 minutes · read-only Stripe scope · no card
                             </p>
-                        </div>
-                        <div className="space-y-3">
-                            {[
-                                { color: 'amber', text: 'Payout cycle extended from 2 days to 7 days' },
-                                { color: 'amber', text: '5% reserve applied to monthly volume' },
-                                { color: 'red', text: 'Account flagged for review after dispute spike' },
-                            ].map(({ color, text }, i) => (
-                                <div key={i} className={`rounded-lg border-l-4 ${color === 'red' ? 'border-red-500' : 'border-amber-500'} bg-slate-900/60 px-4 py-3`}>
-                                    <div className="flex items-center gap-2">
-                                        <div className={`h-2 w-2 rounded-full ${color === 'red' ? 'bg-red-500' : 'bg-amber-500'}`} />
-                                        <p className="text-sm text-slate-300">{text}</p>
-                                    </div>
+                            </div>
+
+                        <div className="self-start border border-[#2a2a27] bg-[#0f0f0e]">
+                            <div className="flex items-center justify-between border-b border-[#2a2a27] px-4 py-3">
+                                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#6b6b66]">Sample output · Stripe</span>
+                                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#c8533a]">Elevated</span>
+                            </div>
+                            <div className="grid gap-px bg-[#2a2a27] sm:grid-cols-3 lg:grid-cols-1">
+                                <div className="bg-[#0f0f0e] p-5">
+                                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#6b6b66]">Projected reserve</p>
+                                    <p className="mt-2 text-[42px] leading-none tracking-[-0.02em] text-[#c8533a]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>$182,340</p>
+                                    <p className="mt-2 text-xs leading-5 text-[#9a9a93]">T+62 · 8% rolling reserve scenario</p>
                                 </div>
-                            ))}
+                                <div className="bg-[#0f0f0e] p-5">
+                                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#6b6b66]">Signals detected</p>
+                                    <p className="mt-2 text-[42px] leading-none tracking-[-0.02em]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>14</p>
+                                    <p className="mt-2 text-xs leading-5 text-[#9a9a93]">Dispute clustering · refund drift · balance velocity</p>
+                                    </div>
+                                <div className="bg-[#0f0f0e] p-5">
+                                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#6b6b66]">Derived confidence</p>
+                                    <p className="mt-2 text-[42px] leading-none tracking-[-0.02em]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>0.81</p>
+                                    <p className="mt-2 text-xs leading-5 text-[#9a9a93]">Based on matched processor actions</p>
+                                </div>
                         </div>
                     </div>
                 </section>
 
-                {/* ── What we catch ── */}
-                <section className="mx-auto max-w-5xl px-6 py-20">
-                    <h2 className="mb-10 text-center text-2xl font-semibold text-white">What PayFlux helps you catch early</h2>
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <section className="border-y border-[#1f1f1d] bg-[#0f0f0e] px-6 py-8">
+                        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[180px_minmax(0,1fr)_360px] lg:items-center">
+                            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#c8533a]">Merchant scenario · anonymized</p>
+                            <p className="text-sm leading-7 text-[#d6d6d0]">
+                                <strong className="font-medium text-[#f7f7f5]">Subscription merchant, $3.4M monthly card volume.</strong> Stripe introduced a 20% rolling reserve. PayFlux detected dispute clustering and refund drift <span className="text-[#c8533a]">18 days earlier</span>, with a projected liquidity impact of <span className="text-[#c8533a]">$240k</span>.
+                            </p>
+                            <div className="grid gap-px bg-[#2a2a27] sm:grid-cols-3">
+                                {[
+                                    ['18D', 'earlier signal'],
+                                    ['$240K', 'liquidity at risk'],
+                                    ['20%', 'reserve imposed'],
+                                ].map(([value, label]) => (
+                                    <div key={label} className="bg-[#0a0a0a] p-4">
+                                        <p className="text-[28px] leading-none tracking-[-0.02em]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>{value}</p>
+                                        <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-[#9a9a93]">{label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                    </div>
+                </section>
+
+                    <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-20">
+                        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+                            <h2 className="max-w-lg text-[34px] font-normal leading-tight tracking-[-0.015em] text-[#f7f7f5]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+                                Same path. Same promise. No blue SaaS detour.
+                            </h2>
+                            <p className="max-w-md text-sm leading-7 text-[#9a9a93]">
+                                The first scan is only a preliminary external signal check. The real prediction layer begins when Stripe is connected read-only.
+                            </p>
+                                    </div>
+                        <div className="grid gap-px bg-[#2a2a27] md:grid-cols-3">
+                            {[
+                                ['01', 'Preliminary signal scan', 'External signals only. No processor login and no card required.'],
+                                ['02', 'Read-only Stripe connection', 'Payout, dispute, balance, and account signals power the live model.'],
+                                ['03', 'Capital-at-risk view', 'See projection windows, detected signals, confidence, and recommended actions.'],
+                            ].map(([step, title, desc]) => (
+                                <div key={step} className="bg-[#0a0a0a] p-6">
+                                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#c8533a]">{step}</p>
+                                    <h3 className="mt-6 text-[22px] font-normal tracking-[-0.01em]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>{title}</h3>
+                                    <p className="mt-4 text-sm leading-7 text-[#9a9a93]">{desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                </section>
+
+                    <section className="mx-auto max-w-6xl px-6 pb-20">
+                        <div className="grid gap-px border border-[#1f1f1d] bg-[#1f1f1d] md:grid-cols-3">
                         {[
-                            { title: 'Payout slowdowns', desc: 'Your 2-day payouts just became 7-day. We flag the shift before you notice the gap.' },
-                            { title: 'Held funds', desc: 'Your processor is holding more of your revenue. We show how much and why it may be happening.' },
-                            { title: 'Rising processor pressure', desc: 'Dispute rates climbing, volume patterns shifting, account reviews starting. We connect the dots.' },
-                        ].map(({ title, desc }) => (
-                            <div key={title} className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-                                <p className="text-sm font-semibold text-white">{title}</p>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-400">{desc}</p>
+                                ['Read-only Stripe access', 'PayFlux cannot move money, change processor settings, or initiate payouts.'],
+                                ['No fund movement', 'The Stripe connection is for analysis only. No treasury or payment action is available.'],
+                                ['Payment Risk Intelligence', 'Use the full PayFlux name so this product is distinct from unrelated Payflux brands.'],
+                        ].map(([title, desc]) => (
+                                <div key={title} className="bg-[#0f0f0e] p-6">
+                                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#f7f7f5]">{title}</p>
+                                    <p className="mt-4 text-sm leading-7 text-[#9a9a93]">{desc}</p>
                             </div>
                         ))}
                     </div>
                 </section>
 
-                {/* ── After connecting Stripe ── */}
-                <section className="border-t border-slate-800/50 bg-slate-900/30 py-20">
-                    <div className="mx-auto grid max-w-5xl gap-10 px-6 md:grid-cols-2">
-                        <div>
-                            <h2 className="text-2xl font-semibold text-white">What happens after you connect Stripe</h2>
-                        </div>
-                        <div className="space-y-4">
-                            {[
-                                'Instant risk snapshot — see where you stand today',
-                                'Ongoing monitoring — we watch for changes daily',
-                                'Plain English alerts — no jargon, just what changed and why',
-                                'Action recommendations — specific next steps for each finding',
-                            ].map((item, i) => (
-                                <div key={i} className="flex items-start gap-3">
-                                    <div className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#0A64BC]/20">
-                                        <svg className="h-3 w-3 text-[#0A64BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-sm leading-relaxed text-slate-300">{item}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* ── Trust ── */}
-                <section className="mx-auto max-w-5xl px-6 py-16">
-                    <div className="grid gap-6 md:grid-cols-3">
-                        {[
-                            { title: 'Read-only access', desc: 'PayFlux never changes your data or settings.' },
-                            { title: 'Your data stays private', desc: 'Encrypted and stored securely.' },
-                            { title: 'Records when you need them', desc: 'Timestamped history for your own review.' },
-                        ].map(({ title, desc }) => (
-                            <div key={title} className="text-center">
-                                <p className="text-sm font-semibold text-slate-300">{title}</p>
-                                <p className="mt-1 text-sm text-slate-500">{desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* ── Pricing expectation ── */}
-                <section className="border-t border-slate-800/50 py-16">
-                    <div className="mx-auto grid max-w-2xl gap-4 px-6 md:grid-cols-2">
-                        <div className="rounded-lg border border-slate-800 p-6">
-                            <p className="text-lg font-semibold text-white">Free</p>
-                            <p className="mt-1 text-sm text-slate-500">$0</p>
-                            <ul className="mt-3 space-y-2 text-sm text-slate-400">
-                                <li>One-time scan</li>
-                                <li>Basic findings</li>
-                                <li>No card required</li>
-                            </ul>
-                        </div>
-                        <div className="rounded-lg border border-[#0A64BC]/30 bg-[#0A64BC]/5 p-6">
-                            <p className="text-lg font-semibold text-white">Pro</p>
-                            <p className="mt-1 text-sm text-slate-300">$499 / month</p>
-                            <ul className="mt-3 space-y-2 text-sm text-slate-400">
-                                <li>Live monitoring</li>
-                                <li>Ongoing alerts</li>
-                                <li>Deeper visibility into what may be at risk</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <p className="mt-6 text-center text-sm text-[#0A64BC]">
-                        <Link href="/scan" className="no-underline text-[#0A64BC] hover:text-[#0B5BA8] transition-colors">
-                            Start free&nbsp;&rarr;
-                        </Link>
-                    </p>
-                </section>
-
-                {/* ── Final CTA ── */}
-                <section className="py-20 text-center">
-                    <h2 className="text-2xl font-semibold text-white">Start with a free scan.</h2>
+                    <section className="border-t border-[#1f1f1d] px-6 py-20 text-center">
+                        <p className="mx-auto max-w-2xl text-[28px] font-normal leading-tight tracking-[-0.01em]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+                            See your payout risk in 2 minutes. Read-only. Free.
+                        </p>
                     <Link
                         href="/scan"
-                        className="mt-6 inline-flex items-center justify-center rounded-full bg-[#0A64BC] px-8 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-[#0B5BA8]"
+                            className="mt-8 inline-flex border border-[#f7f7f5] bg-[#f7f7f5] px-7 py-3 font-mono text-sm text-[#0a0a0a] no-underline transition-opacity hover:opacity-85"
                     >
-                        Run a free scan
+                            See your payout risk&nbsp;→
                     </Link>
-                    <p className="mt-3 text-sm text-slate-500">Free. No credit card. Read-only.</p>
+                        <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-[#6b6b66]">Free · no card · preliminary external scan first</p>
                 </section>
+                </main>
 
-                {/* ── Footer ── */}
-                <footer className="border-t border-slate-800/50 py-8 text-center text-xs text-slate-600">
-                    PayFlux &copy; {new Date().getFullYear()} &middot;{' '}
-                    <Link href="/privacy" className="text-slate-600 no-underline hover:text-slate-400">Privacy</Link> &middot;{' '}
-                    <Link href="/terms" className="text-slate-600 no-underline hover:text-slate-400">Terms</Link>
+                <footer className="flex flex-wrap justify-between gap-4 border-t border-[#1f1f1d] px-6 py-8 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b6b66]">
+                    <span>PayFlux · Payment Risk Intelligence</span>
+                    <span>
+                        <Link href="/privacy" className="no-underline hover:text-[#f7f7f5]">Privacy</Link> ·{' '}
+                        <Link href="/terms" className="no-underline hover:text-[#f7f7f5]">Terms</Link>
+                    </span>
                 </footer>
             </div>
         );
@@ -259,8 +212,11 @@ export default async function StartPage() {
 
     // Only emit signup_completed for genuinely new users (stage "none").
     // Returning users hit /start on every visit — don't pollute telemetry.
-    if (state.stage === 'none') {
-        logOnboardingEvent('signup_completed', { userId, metadata: { stage: state.stage } });
+    if (state.stage === 'none' && !(await hasLoggedSignupCompleted(userId))) {
+        logOnboardingEvent('signup_completed', {
+            userId,
+            metadata: { stage: state.stage, method: 'magic_link' },
+        });
     }
 
     switch (state.stage) {

@@ -31,6 +31,7 @@ function getServerJourneyId(): string | undefined {
     try {
         // Dynamic import-like access — cookies() is synchronous in Next.js 14+
         // but throws outside a request context (webhooks, cron), so we catch.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { cookies } = require('next/headers');
         const cookieStore = cookies();
         return cookieStore.get('pf_journey')?.value ?? undefined;
@@ -87,6 +88,11 @@ export function logOnboardingEvent(
     const distinctId = opts?.userId
         || (typeof metadata.journey_id === 'string' ? metadata.journey_id : undefined);
     if (distinctId) {
+        console.log('[POSTHOG_FUNNEL_DEBUG] capture_server_event', {
+            event,
+            distinct_id: distinctId,
+            journey_id: typeof metadata.journey_id === 'string' ? metadata.journey_id : null,
+        });
         captureServer({
             event,
             distinctId,
