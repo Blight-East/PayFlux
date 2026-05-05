@@ -18,6 +18,16 @@ export interface ScopedForecastResponse {
         worstCaseTrappedUSD?: number;
         riskBand: string;
     }>;
+    // Free tier sees a derived snapshot of locked windows (T+60/T+90) for the
+    // upsell hook — real model outputs from the DB, surfaced as locked stubs
+    // with delta + window + risk band only. Empty for paid tiers and for free
+    // workspaces whose model run did not produce extended windows.
+    lockedProjections?: Array<{
+        windowDays: number;
+        worstCaseTrappedBps: number;
+        worstCaseTrappedUSD?: number;
+        riskBand: string;
+    }>;
     recommendedInterventions: Array<{
         action: string;
         rationale: string;

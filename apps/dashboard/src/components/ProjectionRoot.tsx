@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
-import { ArrowRight, Clock3, TrendingUp } from 'lucide-react';
+import { ArrowRight, Clock3, Lock, TrendingUp } from 'lucide-react';
 import ReserveForecastPanel from '@/components/ReserveForecastPanel';
 import ProjectionTimeline from '@/components/ProjectionTimeline';
 import BoardReserveReport from '@/components/BoardReserveReport';
@@ -13,6 +13,13 @@ interface ProjectionRootProps {
     tier: string;
     host: string | null;
     activationReady: boolean;
+}
+
+interface LockedProjection {
+    windowDays: number;
+    worstCaseTrappedBps: number;
+    worstCaseTrappedUSD?: number;
+    riskBand: string;
 }
 
 interface ForecastSummary {
@@ -26,6 +33,7 @@ interface ForecastSummary {
         worstCaseTrappedUSD?: number;
         worstCaseTrappedBps: number;
     }>;
+    lockedProjections?: LockedProjection[];
     recommendedInterventions: Array<{
         action: string;
         rationale: string;
@@ -36,6 +44,106 @@ interface ForecastSummary {
             policySurface: { present: number; weak: number; missing: number };
         };
     } | null;
+}
+
+/**
+ * Derives an aggregate signal list from forecast state. Used to populate the
+ * "Signals detected" section on locked projection panels — these are real
+ * observations from the model run, presented as observation (not causal claim).
+ *
+ * Returns at most 3 signals so the UI stays scannable.
+ */
+function deriveSignals(forecast: ForecastSummary | null): string[] {
+    if (!forecast) return [];
+    const signals: string[] = [];
+    switch (forecast.instabilitySignal) {
+        case 'ACCELERATING': signals.push('rapid risk escalation'); break;
+        case 'ELEVATED': signals.push('elevated risk pattern'); break;
+        case 'LATENT': signals.push('early-warning indicator'); break;
+        case 'RECOVERING': signals.push('risk easing trend'); break;
+    }
+    if (forecast.trend === 'DEGRADING') signals.push('trend deterioration');
+    const policySurface = forecast.projectionBasis?.inputs.policySurface;
+    if (policySurface?.missing && policySurface.missing > 0) signals.push('policy-surface gaps');
+    if (policySurface?.weak && policySurface.weak > 0) signals.push('weak customer-facing policies');
+    return signals.slice(0, 3);
+}
+
+/**
+ * Derives a confidence label from the count of independently observed signals.
+ * High = 3+ signals align, Moderate = 2 signals, Low = 0–1 signals.
+ * Tooltip on the label explains the mapping in the UI.
+ */
+function deriveConfidence(signals: string[]): { label: string; tooltip: string } {
+    if (signals.length >= 3) {
+        return { label: 'High', tooltip: 'Multiple independent signals align.' };
+    }
+    if (signals.length === 2) {
+        return { label: 'Moderate', tooltip: 'Partial signal alignment.' };
+    }
+    return { label: 'Low', tooltip: 'Early or weak correlation only.' };
+}
+
+function LockedProjectionCard({
+    projection,
+    signals,
+    confidence,
+}: {
+    projection: LockedProjection;
+    signals: string[];
+    confidence: { label: string; tooltip: string };
+}) {
+    const delta = projection.worstCaseTrappedUSD !== undefined
+        ? formatUSD(projection.worstCaseTrappedUSD)
+        : formatBps(projection.worstCaseTrappedBps);
+
+    return (
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-6">
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+                        T+{projection.windowDays}
+                    </p>
+                    <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-slate-900">
+                        +{delta}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-600">Worst-case capital exposure</p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+                    <Lock className="h-3 w-3" />
+                    <span>Locked</span>
+                </div>
+            </div>
+
+            {signals.length > 0 && (
+                <div className="mt-5 border-t border-slate-200 pt-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        Signals detected
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                        {signals.map((signal) => (
+                            <li key={signal} className="flex items-start gap-2 text-xs text-slate-700">
+                                <span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-slate-400" />
+                                {signal}
+                            </li>
+                        ))}
+                    </ul>
+                    <p className="mt-3 text-[11px] text-slate-500" title={confidence.tooltip}>
+                        Confidence: <span className="font-medium text-slate-700">{confidence.label}</span>
+                    </p>
+                </div>
+            )}
+
+            <div className="mt-5">
+                <Link
+                    href="/upgrade"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-900 no-underline hover:underline"
+                >
+                    Unlock full window <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+            </div>
+        </div>
+    );
 }
 
 function formatUSD(value: number): string {
@@ -270,7 +378,52 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
         ],
     };
 
-    const lowerSection = (
+    const aggregateSignals = useMemo(() => deriveSignals(forecast), [forecast]);
+    const lockedConfidence = useMemo(() => deriveConfidence(aggregateSignals), [aggregateSignals]);
+    const lockedProjections = forecast?.lockedProjections ?? [];
+
+    const lowerSection = isFree ? (
+        // Free tier: locked windows visibly with delta + signals + confidence,
+        // plus a single locked-state card for the deep-dive surface. The
+        // deep-dive panels (ReserveForecastPanel, ProjectionTimeline) and the
+        // board export stay paid-only — they expose data beyond the 30-day cap.
+        <div id="deep-dive" className="space-y-6">
+            {lockedProjections.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                    {lockedProjections.map((projection) => (
+                        <LockedProjectionCard
+                            key={projection.windowDays}
+                            projection={projection}
+                            signals={aggregateSignals}
+                            confidence={lockedConfidence}
+                        />
+                    ))}
+                </div>
+            )}
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+                            Locked on free tier
+                        </p>
+                        <h3 className="mt-2 text-base font-semibold text-slate-900">
+                            Multi-window forecast, projection timeline, and signed board export
+                        </h3>
+                        <p className="mt-2 max-w-prose text-sm leading-relaxed text-slate-600">
+                            Pro unlocks the full reserve forecast across all windows, the projection timeline showing how risk evolves, and the signed export you can hand to your processor or board.
+                        </p>
+                    </div>
+                    <Lock className="h-5 w-5 flex-shrink-0 text-slate-400" />
+                </div>
+                <Link
+                    href="/upgrade"
+                    className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white no-underline transition-colors hover:bg-slate-800"
+                >
+                    Upgrade to Pro <ArrowRight className="h-4 w-4" />
+                </Link>
+            </div>
+        </div>
+    ) : (
         <div id="deep-dive" className="space-y-6">
             <ReserveForecastPanel host={host} />
 
@@ -307,7 +460,7 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
                         </div>
                     </div>
 
-                    {!isFree && host && (
+                    {host && (
                         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                             <h3 className="text-sm font-semibold text-slate-900">Board-grade export</h3>
                             <p className="mt-2 text-sm leading-relaxed text-slate-600">

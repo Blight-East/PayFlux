@@ -16,9 +16,13 @@ export async function GET(request: Request) {
     if (!authResult.ok) return authResult.response;
 
     const { workspace } = authResult;
-    const hasProjectionAccess = canAccess(workspace.tier, "reserve_projection");
+    const hasFullProjectionAccess = canAccess(workspace.tier, "reserve_projection");
+    const hasBasicAccess = canAccess(workspace.tier, "basic_risk_score");
 
-    if (!hasProjectionAccess) {
+    // Free tier hits this endpoint and gets a degraded response (single live
+    // window + locked stubs for T+60/T+90). Truly unauthorized tiers — none
+    // today — would 402 here.
+    if (!hasBasicAccess) {
         return NextResponse.json(
             { error: 'Payment Required', code: 'SUBSCRIPTION_REQUIRED' },
             { status: 402 }
@@ -100,6 +104,11 @@ export async function GET(request: Request) {
         monthlyTPV,
     });
 
+    // Capture the real multi-window DB projections before realForecast overrides
+    // reserveProjections with the single live window. Used for the free-tier
+    // locked-panel upsell — these are real model outputs, not fabricated.
+    const dbMultiWindowProjections = result.reserveProjections;
+
     const finResult = await dbQuery(`
         SELECT * FROM stripe_financials 
         WHERE workspace_id = $1 
@@ -128,6 +137,22 @@ export async function GET(request: Request) {
     const ageHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
     const confidenceScore = Number(Math.max(0.1, Math.min(1.0, 1.0 - (Math.max(0, ageHours - 1) * 0.1))).toFixed(2));
 
+    // Free tier sees locked stubs for windows beyond the 30-day mark — real
+    // model outputs from the DB, presented with delta + risk band only. Paid
+    // tiers don't need locked stubs (full data lives in reserveProjections /
+    // future deep-dive panels, when those are unlocked). Empty array if the
+    // model run produced no extended windows.
+    const lockedProjections = !hasFullProjectionAccess
+        ? dbMultiWindowProjections
+            .filter((projection) => projection.windowDays > 30)
+            .map((projection) => ({
+                windowDays: projection.windowDays,
+                worstCaseTrappedBps: projection.worstCaseTrappedBps,
+                worstCaseTrappedUSD: projection.worstCaseTrappedUSD,
+                riskBand: projection.riskBand,
+            }))
+        : [];
+
     const realForecast = {
         ...result,
         reserveProjections: [{
@@ -140,6 +165,7 @@ export async function GET(request: Request) {
             worstCaseTrappedUSD: Math.round((reservePressureCents * (payoutPressure === 'elevated' ? 1.5 : 1)) / 100),
             riskBand: payoutPressure === 'elevated' ? 'High' : 'Normal',
         }],
+        lockedProjections,
         projectionBasis: {
             ...(result.projectionBasis || {}),
             realFinancials: {

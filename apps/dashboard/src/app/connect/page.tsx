@@ -88,11 +88,17 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                             </svg>
                         </div>
                         <h1 className="text-xl font-semibold text-white">
-                            Connect Stripe so PayFlux can watch payout risk live.
+                            Analyze your Stripe account.
                         </h1>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            PayFlux uses live processor data to catch held funds, slower payouts, and rising account pressure before they turn into a cash-flow surprise.
+                            Read access to your payouts, disputes, and balances so PayFlux can project capital exposure for the next 30 days.
                         </p>
+                        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>No fund movement</span>
+                        </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
@@ -153,15 +159,28 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                         </ul>
                     </div>
 
-                    {/* Trust line */}
-                    <div className="bg-slate-800/50 rounded-lg px-4 py-3">
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                            Read-only connection via Stripe Connect. No access to modify payments, issue refunds, or change your configuration.
-                        </p>
+                    {/* What PayFlux reads vs never writes */}
+                    <div className="space-y-3 rounded-lg bg-slate-800/40 px-4 py-4">
+                        <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">PayFlux reads</p>
+                            <ul className="mt-2 space-y-1 text-xs text-slate-300">
+                                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-emerald-400" />Payout history (timing and amounts)</li>
+                                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-emerald-400" />Disputes (open and resolved)</li>
+                                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-emerald-400" />Balance transactions (charges, refunds, fees)</li>
+                            </ul>
+                        </div>
+                        <div className="border-t border-slate-700/50 pt-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">PayFlux never</p>
+                            <ul className="mt-2 space-y-1 text-xs text-slate-400">
+                                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-slate-500" />Creates or modifies payments</li>
+                                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-slate-500" />Issues refunds or moves funds</li>
+                                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-slate-500" />Changes your account configuration</li>
+                            </ul>
+                        </div>
                     </div>
 
                     {/* Primary CTA */}
-                    <ConnectStripeCTA />
+                    <ConnectStripeCTA label="Analyze my Stripe account" />
 
                     {/* Secondary: Skip */}
                     <Link
