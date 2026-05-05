@@ -48,6 +48,14 @@ function projectionWindowMap(projections: Array<{ windowDays: number; worstCaseT
     };
 }
 
+function secondsBetween(start: string | null | undefined, end: string | null | undefined): number | null {
+    if (!start || !end) return null;
+    const startMs = Date.parse(start);
+    const endMs = Date.parse(end);
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
+    return Math.max(0, Math.round((endMs - startMs) / 1000));
+}
+
 function failClosedResponse(code: string, error: string, state: string, steps: ActivationStep[], status: number = 409) {
     return NextResponse.json({ error, code, state, steps }, { status });
 }
@@ -144,7 +152,7 @@ export async function POST(request: Request) {
         }, { status: 200 });
     }
 
-    await markActivationRunRunning({
+    const runningRun = await markActivationRunRunning({
         activationRunId: pendingRun.id,
         processorConnectionId: processorConnection.id,
         monitoredEntityId: monitoredEntity.id,
@@ -274,7 +282,7 @@ export async function POST(request: Request) {
             lastSyncAt: computedAt,
         });
 
-        await markActivationRunCompleted({
+        const completedRun = await markActivationRunCompleted({
             activationRunId: pendingRun.id,
             baselineSnapshotId: baselineSnapshot.id,
             firstProjectionId: reserveProjection.id,
@@ -304,7 +312,15 @@ export async function POST(request: Request) {
         logOnboardingEvent('activation_completed', {
             userId,
             workspaceId: workspace.workspaceRecordId,
-            metadata: { activationRunId: pendingRun.id, riskTier: computed.riskTier, riskBand: computed.riskBand },
+            metadata: {
+                activationRunId: pendingRun.id,
+                riskTier: computed.riskTier,
+                riskBand: computed.riskBand,
+                activation_duration_seconds: secondsBetween(
+                    runningRun.started_at ?? pendingRun.created_at,
+                    completedRun.completed_at
+                ),
+            },
         });
         logOnboardingEvent('activation_state_changed', {
             userId,

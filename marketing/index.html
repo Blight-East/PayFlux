@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PayFlux — see your payout risk in 2 minutes</title>
-<meta name="description" content="Connect Stripe read-only. Free. We project the next 30 days of capital exposure from the same signals your acquirer is reading — weeks before the freeze email arrives.">
+<title>PayFlux — Payment Risk Intelligence</title>
+<meta name="description" content="PayFlux is payment risk intelligence for Stripe merchants. Connect Stripe read-only to see projected reserves, detected processor signals, and capital-at-risk before the notice arrives.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://payflux.dev/">
-<meta property="og:title" content="PayFlux — see your payout risk in 2 minutes">
-<meta property="og:description" content="Connect Stripe read-only. Free. Live capital-at-risk number from the same signals your acquirer is reading.">
+<meta property="og:title" content="PayFlux — Payment Risk Intelligence">
+<meta property="og:description" content="Read-only Stripe analysis for projected reserves, processor signals, and capital-at-risk before the notice arrives.">
 <meta property="og:image" content="https://payflux.dev/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PayFlux — see your payout risk in 2 minutes">
-<meta name="twitter:description" content="Connect Stripe read-only. Free. We project the 30 days before the freeze email arrives.">
+<meta name="twitter:title" content="PayFlux — Payment Risk Intelligence">
+<meta name="twitter:description" content="Read-only Stripe analysis for projected reserves, processor signals, and capital-at-risk before the notice arrives.">
 <meta name="twitter:image" content="https://payflux.dev/og.png">
 <link rel="stylesheet" href="styles.css">
 <script src="/posthog-init.js" defer></script>
@@ -28,7 +28,7 @@
 <header class="nav">
   <div class="brand">
     <span class="mark"></span>
-    <span class="name">PAYFLUX</span>
+    <span class="name">PAYFLUX <em>PAYMENT RISK INTELLIGENCE</em></span>
   </div>
   <nav class="links">
     <a href="#evidence">Evidence</a>
@@ -41,12 +41,42 @@
 <section class="hero" style="border-top:none">
   <div class="micro label fade-up" style="--d:0ms">PAYMENT RISK INTELLIGENCE · v0.1</div>
   <h1 class="fade-up" style="--d:140ms">Your processor can lock <em>$680k of your cash</em> three weeks before they tell you. We show you the three weeks.</h1>
-  <div class="hero-sub fade-up" style="--d:280ms">The email arrives after the decision is already made.</div>
-  <div class="ctas fade-up" style="--d:420ms">
+  <div class="hero-sub fade-up" style="--d:280ms">
+    The email arrives after the decision is already made. PayFlux analyzes payout patterns, disputes, balance velocity, and processor signals from your Stripe account.
+  </div>
+  <div class="hero-proof fade-up" style="--d:360ms" role="figure" aria-label="Sample PayFlux output">
+    <div class="proof-top">
+      <span class="micro">SAMPLE OUTPUT · STRIPE</span>
+      <span class="proof-state">ELEVATED</span>
+    </div>
+    <div class="proof-main">
+      <div>
+        <span class="proof-label">Projected reserve</span>
+        <strong>$182,340</strong>
+        <span class="proof-note">T+62 · 8% rolling reserve scenario</span>
+      </div>
+      <div>
+        <span class="proof-label">Signals detected</span>
+        <strong>14</strong>
+        <span class="proof-note">Dispute clustering · refund drift · balance velocity</span>
+      </div>
+      <div>
+        <span class="proof-label">Derived confidence</span>
+        <strong>0.81</strong>
+        <span class="proof-note">Based on matched processor actions</span>
+      </div>
+    </div>
+  </div>
+  <div class="trust-strip fade-up" style="--d:400ms" aria-label="Trust constraints">
+    <span>Read-only Stripe access</span>
+    <span>No fund movement</span>
+    <span>External scan is preliminary only</span>
+  </div>
+  <div class="ctas fade-up" style="--d:460ms">
     <a class="btn" href="https://app.payflux.dev/sign-up?utm_source=payflux&amp;utm_medium=homepage&amp;utm_content=hero_primary" data-cta-id="hero_primary">See your payout risk &nbsp;→</a>
     <a class="btn-link" href="app/posture.html" data-cta-id="hero_secondary">View live dashboard &nbsp;→</a>
   </div>
-  <div class="cta-note fade-up" style="--d:480ms">FREE &middot; TAKES 2 MINUTES &middot; READ-ONLY STRIPE SCOPE &middot; NO CARD</div>
+  <div class="cta-note fade-up" style="--d:520ms">FREE &middot; TAKES 2 MINUTES &middot; READ-ONLY STRIPE SCOPE &middot; NO CARD</div>
   <div class="meta meta-ticker fade-up" style="--d:560ms">
     <div class="tick-label">LAST PROCESSOR ACTION OBSERVED</div>
     <div class="tick-rail">
@@ -54,6 +84,22 @@
       <div class="tick">2026-04-19 · 22:41 UTC<br><strong>ADYEN · MCC REVIEW · MULTI</strong></div>
       <div class="tick">2026-04-15 · 17:22 UTC<br><strong>BRAINTREE · RESERVE 5% · 60D</strong></div>
       <div class="tick">2026-04-09 · 09:14 UTC<br><strong>ADYEN · RESERVE 3% · 30D</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONCRETE SCENARIO -->
+<section class="scenario-band" aria-label="Concrete merchant scenario">
+  <div class="scenario-inner">
+    <div class="scenario-label">MERCHANT SCENARIO · ANONYMIZED</div>
+    <div class="scenario-copy">
+      <strong>Subscription merchant, $3.4M monthly card volume.</strong>
+      Stripe introduced a 20% rolling reserve. PayFlux detected the dispute clustering and refund drift <em>18 days earlier</em>, with a projected liquidity impact of <em>$240k</em>.
+    </div>
+    <div class="scenario-metrics">
+      <span><b>18D</b> earlier signal</span>
+      <span><b>$240K</b> liquidity at risk</span>
+      <span><b>20%</b> reserve imposed</span>
     </div>
   </div>
 </section>
@@ -384,12 +430,12 @@
     <div class="cta-track" aria-label="What happens after you sign up">
       <div class="cta-track-step">
         <span class="num">01</span>
-        <span class="t">Sign up. Magic-link auth, no card.</span>
+        <span class="t">Preliminary signal scan. External signals only, no card.</span>
         <span class="when">30 SEC</span>
       </div>
       <div class="cta-track-step">
         <span class="num">02</span>
-        <span class="t">Connect Stripe. Read-only OAuth, 90 seconds.</span>
+        <span class="t">Connect Stripe. Read-only OAuth powers payout prediction.</span>
         <span class="when">&le; 2 MIN</span>
       </div>
       <div class="cta-track-step">

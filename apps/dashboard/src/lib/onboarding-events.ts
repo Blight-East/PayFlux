@@ -95,6 +95,10 @@ export function logOnboardingEventClient(
         import('posthog-js').then((mod) => {
             const ph = mod.default;
             if (ph && typeof ph.capture === 'function') {
+                console.log('[POSTHOG_FUNNEL_DEBUG] capture_client', {
+                    event,
+                    distinct_id: typeof ph.get_distinct_id === 'function' ? ph.get_distinct_id() : null,
+                });
                 ph.capture(event, enriched);
             }
         }).catch(() => { /* silent */ });
