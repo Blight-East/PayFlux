@@ -5,9 +5,9 @@ import { getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
 import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
 import { getReserveProjectionById } from '@/lib/db/reserve-projections';
 import { requireAuth } from '@/lib/require-auth';
-import { buildScopedForecastResponse } from '@/lib/scoped-forecast';
 import { canAccess } from '@/lib/tier/resolver';
 import { dbQuery } from '@/lib/db/client';
+import { computeUnifiedForecast } from '@/lib/forecast/unified-risk-score';
 
 export const runtime = "nodejs";
 
@@ -19,9 +19,7 @@ export async function GET(request: Request) {
     const hasFullProjectionAccess = canAccess(workspace.tier, "reserve_projection");
     const hasBasicAccess = canAccess(workspace.tier, "basic_risk_score");
 
-    // Free tier hits this endpoint and gets a degraded response (single live
-    // window + locked stubs for T+60/T+90). Truly unauthorized tiers — none
-    // today — would 402 here.
+    // Truly unauthorized tiers (none today) get 402.
     if (!hasBasicAccess) {
         return NextResponse.json(
             { error: 'Payment Required', code: 'SUBSCRIPTION_REQUIRED' },
@@ -83,31 +81,9 @@ export async function GET(request: Request) {
         );
     }
 
-    const { searchParams } = new URL(request.url);
-    const rawTPV = searchParams.get('monthlyTPV');
-    let monthlyTPV: number | undefined;
-    if (rawTPV !== null) {
-        const parsed = Number(rawTPV);
-        if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1e10) {
-            return NextResponse.json(
-                { error: 'Invalid monthlyTPV: must be a number between 0 and 10000000000', code: 'INVALID_REQUEST' },
-                { status: 400 }
-            );
-        }
-        monthlyTPV = parsed;
-    }
-
-    const result = buildScopedForecastResponse({
-        monitoredEntity,
-        baselineSnapshot,
-        reserveProjection,
-        monthlyTPV,
-    });
-
-    // Capture the real multi-window DB projections before realForecast overrides
-    // reserveProjections with the single live window. Used for the free-tier
-    // locked-panel upsell — these are real model outputs, not fabricated.
-    const dbMultiWindowProjections = result.reserveProjections;
+    // ─────────────────────────────────────────────────────────────────────
+    // Fetch Stripe financials — the authoritative input source
+    // ─────────────────────────────────────────────────────────────────────
 
     const finResult = await dbQuery(`
         SELECT * FROM stripe_financials 
@@ -125,63 +101,100 @@ export async function GET(request: Request) {
         );
     }
 
-    const pendingBalance = Number(financialData.pending_balance ?? 0);
-    const disputeCount = Number(financialData.dispute_count_30d ?? 0);
-    const reservePressureCents = Math.round((pendingBalance * 0.05) + (disputeCount * 5000));
+    // ─────────────────────────────────────────────────────────────────────
+    // Unified forecast — single deterministic computation
+    // No secondary model sources. No recomputation layers.
+    // ─────────────────────────────────────────────────────────────────────
 
-    const avgDelayDays = financialData.avg_payout_delay_days !== null ? Number(financialData.avg_payout_delay_days) : 0;
-    const payoutPressure = avgDelayDays > 3 ? 'elevated' : 'normal';
-    const leadTimeEstimate = avgDelayDays + 2;
+    const forecast = computeUnifiedForecast({
+        pending_balance: Number(financialData.pending_balance ?? 0),
+        total_volume_30d: Number(financialData.total_volume_30d ?? 0),
+        dispute_count_30d: Number(financialData.dispute_count_30d ?? 0),
+        avg_payout_delay_days: financialData.avg_payout_delay_days !== null
+            ? Number(financialData.avg_payout_delay_days)
+            : null,
+    });
+    // Go backend volatilityScore intentionally omitted for v1.
+    // When integrated: pass as second arg. Never required for correctness.
 
-    const fetchedAt = new Date(String(financialData.fetched_at));
-    const ageHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
-    const confidenceScore = Number(Math.max(0.1, Math.min(1.0, 1.0 - (Math.max(0, ageHours - 1) * 0.1))).toFixed(2));
+    // ─────────────────────────────────────────────────────────────────────
+    // Map unified forecast → API response contract
+    //
+    // reserveProjections: ALL three windows, always.
+    // lockedProjections: pure slice of windows[].filter(>30), NO recomputation.
+    // hasProjectionAccess: controls frontend gating only.
+    // ─────────────────────────────────────────────────────────────────────
 
-    // Free tier sees locked stubs for windows beyond the 30-day mark — real
-    // model outputs from the DB, presented with delta + risk band only. Paid
-    // tiers don't need locked stubs (full data lives in reserveProjections /
-    // future deep-dive panels, when those are unlocked). Empty array if the
-    // model run produced no extended windows.
+    const reserveProjections = forecast.windows.map((w) => ({
+        windowDays: w.windowDays,
+        baseReserveRate: w.reserveRateBps,
+        worstCaseReserveRate: w.reserveRateBps,
+        projectedTrappedBps: w.reserveRateBps,
+        worstCaseTrappedBps: w.reserveRateBps,
+        projectedTrappedUSD: Math.round(w.capitalAtRiskCents / 100),
+        worstCaseTrappedUSD: Math.round(w.capitalAtRiskCents / 100),
+        riskBand: w.riskBand,
+    }));
+
+    // lockedProjections is a PURE PROJECTION of windows[] — no recomputation
     const lockedProjections = !hasFullProjectionAccess
-        ? dbMultiWindowProjections
-            .filter((projection) => projection.windowDays > 30)
-            .map((projection) => ({
-                windowDays: projection.windowDays,
-                worstCaseTrappedBps: projection.worstCaseTrappedBps,
-                worstCaseTrappedUSD: projection.worstCaseTrappedUSD,
-                riskBand: projection.riskBand,
+        ? reserveProjections
+            .filter((p) => p.windowDays > 30)
+            .map((p) => ({
+                windowDays: p.windowDays,
+                worstCaseTrappedBps: p.worstCaseTrappedBps,
+                worstCaseTrappedUSD: p.worstCaseTrappedUSD,
+                riskBand: p.riskBand,
             }))
         : [];
 
-    const realForecast = {
-        ...result,
-        reserveProjections: [{
-            windowDays: leadTimeEstimate,
-            baseReserveRate: 500,
-            worstCaseReserveRate: payoutPressure === 'elevated' ? 1000 : 500,
-            projectedTrappedBps: 500,
-            worstCaseTrappedBps: payoutPressure === 'elevated' ? 1000 : 500,
-            projectedTrappedUSD: Math.round(reservePressureCents / 100),
-            worstCaseTrappedUSD: Math.round((reservePressureCents * (payoutPressure === 'elevated' ? 1.5 : 1)) / 100),
-            riskBand: payoutPressure === 'elevated' ? 'High' : 'Normal',
-        }],
+    const fetchedAt = new Date(String(financialData.fetched_at));
+    const dataAgeHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
+
+    // Derive interventions from the DB projection (if available)
+    const recommendedInterventions = Array.isArray(reserveProjection.recommended_interventions)
+        ? reserveProjection.recommended_interventions as Array<{
+            action: string;
+            rationale: string;
+            priority: 'critical' | 'high' | 'moderate' | 'low';
+        }>
+        : [];
+
+    const simulationDelta = (reserveProjection.simulation_delta ?? null) as {
+        velocityReduction: number;
+        exposureMultiplier: number;
+        rateMultiplier: number;
+        label: string;
+    } | null;
+
+    const response = {
+        merchantId: monitoredEntity.id,
+        normalizedHost: monitoredEntity.primary_host ?? 'unknown',
+        currentRiskTier: reserveProjection.current_risk_tier,
+        trend: reserveProjection.trend,
+        tierDelta: reserveProjection.tier_delta,
+        instabilitySignal: forecast.riskSignal,
+        hasProjectionAccess: hasFullProjectionAccess,
+        reserveProjections,
         lockedProjections,
+        riskScore: forecast.riskScore,
+        riskDrivers: forecast.drivers,
+        recommendedInterventions,
+        simulationDelta,
         projectionBasis: {
-            ...(result.projectionBasis || {}),
-            realFinancials: {
-                reservePressureCents,
-                payoutPressure,
-                leadTimeEstimateDays: leadTimeEstimate,
-                confidenceScore,
-                dataAgeHours: Number(ageHours.toFixed(2))
-            }
-        }
+            ...(reserveProjection.projection_basis as Record<string, unknown> ?? {}),
+            unifiedModel: forecast.basis,
+            dataAgeHours: Number(dataAgeHours.toFixed(2)),
+        },
+        volumeMode: 'bps_plus_usd' as const,
+        projectedAt: reserveProjection.projected_at,
+        modelVersion: forecast.modelVersion,
     };
 
-    return NextResponse.json(realForecast, {
+    return NextResponse.json(response, {
         headers: {
             'Cache-Control': 'no-store',
-            'X-Model-Version': reserveProjection.model_version,
+            'X-Model-Version': forecast.modelVersion,
         },
     });
 }
