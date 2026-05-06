@@ -25,6 +25,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { ClerkProvider } from '@clerk/nextjs';
+import { PostHogProvider } from '@/components/PostHogProvider';
 
 export default function RootLayout({
   children,
@@ -37,7 +38,7 @@ export default function RootLayout({
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
         >
-          {children}
+          <PostHogProvider>{children}</PostHogProvider>
         </body>
       </html>
     </ClerkProvider>

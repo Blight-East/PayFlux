@@ -63,6 +63,8 @@ export type OnboardingEvent =
 /**
  * Client-side event logger.
  * POSTs to /api/onboarding/event for server-side persistence.
+ * Mirrors to PostHog when configured so funnels can be built in the
+ * PostHog UI without rewiring call sites.
  * Auto-attaches journey_id for anonymous→auth stitching.
  * Fire-and-forget — never blocks UI.
  */
@@ -82,6 +84,23 @@ export function logOnboardingEventClient(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ event, metadata: enriched, timestamp: new Date().toISOString() }),
+        }).catch(() => { /* silent */ });
+    } catch {
+        // Never block UI for logging
+    }
+
+    // Mirror to PostHog (no-op if not initialized)
+    try {
+        // Lazy import keeps posthog-js out of any non-browser bundle paths
+        import('posthog-js').then((mod) => {
+            const ph = mod.default;
+            if (ph && typeof ph.capture === 'function') {
+                console.log('[POSTHOG_FUNNEL_DEBUG] capture_client', {
+                    event,
+                    distinct_id: typeof ph.get_distinct_id === 'function' ? ph.get_distinct_id() : null,
+                });
+                ph.capture(event, enriched);
+            }
         }).catch(() => { /* silent */ });
     } catch {
         // Never block UI for logging

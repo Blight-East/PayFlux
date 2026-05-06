@@ -9,6 +9,7 @@
  */
 
 import { persistEvent } from './event-store';
+import { captureServer } from './posthog-server';
 import type { OnboardingEvent } from './onboarding-events';
 
 export type { OnboardingEvent };
@@ -30,6 +31,7 @@ function getServerJourneyId(): string | undefined {
     try {
         // Dynamic import-like access — cookies() is synchronous in Next.js 14+
         // but throws outside a request context (webhooks, cron), so we catch.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { cookies } = require('next/headers');
         const cookieStore = cookies();
         return cookieStore.get('pf_journey')?.value ?? undefined;
@@ -79,6 +81,24 @@ export function logOnboardingEvent(
         workspaceId: opts?.workspaceId,
         metadata,
     }).catch(() => { /* silent */ });
+
+    // Mirror to PostHog (no-op if not configured). Distinct ID is the
+    // userId when known; otherwise the journey_id so anonymous server
+    // events still attribute to the right journey.
+    const distinctId = opts?.userId
+        || (typeof metadata.journey_id === 'string' ? metadata.journey_id : undefined);
+    if (distinctId) {
+        console.log('[POSTHOG_FUNNEL_DEBUG] capture_server_event', {
+            event,
+            distinct_id: distinctId,
+            journey_id: typeof metadata.journey_id === 'string' ? metadata.journey_id : null,
+        });
+        captureServer({
+            event,
+            distinctId,
+            properties: { ...metadata, workspace_id: opts?.workspaceId },
+        }).catch(() => { /* silent */ });
+    }
 }
 
 /**
