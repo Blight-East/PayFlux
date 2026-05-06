@@ -152,19 +152,22 @@ export async function GET(request: Request) {
     const featureSnapshotJson = JSON.stringify(featureSnapshot);
     const featureHash = crypto.createHash('sha256').update(featureSnapshotJson).digest('hex').substring(0, 16);
 
-    // Save reproducible snapshot to DB
+    // Save reproducible snapshot to DB (including uncertainty bounds for V4 coverage ratio)
     await dbQuery(`
         INSERT INTO forecast_snapshots (
             workspace_id, stripe_account_id, stripe_financials_id, model_version,
-            forecasted_t30_cents, confidence_band, data_completeness,
+            forecasted_t30_cents, forecasted_t30_cents_min, forecasted_t30_cents_max,
+            confidence_band, data_completeness,
             feature_hash, feature_snapshot_json
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     `, [
         workspace.workspaceRecordId,
         processorConnection.stripe_account_id,
         financialData.id,
         forecast.modeledProjections.modelVersion,
         forecast.modeledProjections.windows[0].capitalAtRiskCents,
+        forecast.modeledProjections.windows[0].capitalAtRiskCentsMin,
+        forecast.modeledProjections.windows[0].capitalAtRiskCentsMax,
         forecast.derivedSignals.confidenceBand,
         forecast.derivedSignals.dataCompletenessScore,
         featureHash,
