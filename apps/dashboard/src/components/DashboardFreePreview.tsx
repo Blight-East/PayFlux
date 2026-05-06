@@ -50,6 +50,24 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
         logOnboardingEventClient('dashboard_preview_viewed');
     }, []);
 
+    // Stripe connected but activation hasn't completed yet → show analyzing state
+    if (hasStripeConnection && (onboardingStage === 'connected_free')) {
+        return (
+            <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-6 px-6 py-24 md:px-8">
+                <div className="flex items-center justify-center w-14 h-14 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                    <div className="w-6 h-6 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                </div>
+                <div className="text-center space-y-2">
+                    <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Analyzing your Stripe data…</h1>
+                    <p className="text-sm text-slate-600 max-w-md">
+                        PayFlux is reading your payout history, dispute patterns, and balance velocity. Your first projection will appear shortly.
+                    </p>
+                </div>
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider">This usually takes about a minute</p>
+            </div>
+        );
+    }
+
     const score = scanData?.data?.stabilityScore ?? scanData?.data?.riskScore ?? null;
     const label = scanData?.data?.riskLabel ?? null;
     const findings = scanData?.data?.findings ?? [];
@@ -78,15 +96,15 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
                 : undefined,
         }))
         : [{
-            title: 'Run the first check',
-            description: 'Start with a simple scan to see whether your processor may become a cash-flow problem.',
+            title: 'Connect Stripe to see your risk',
+            description: 'Your forward-looking capital-at-risk projection starts when you connect Stripe read-only.',
             riskLevel: 'First step',
-            impact: 'Snapshot',
+            impact: 'Projection',
             tone: 'neutral' as const,
             primaryAction: {
-                label: 'Run a scan',
-                href: '/scan',
-                onClick: () => logOnboardingEventClient('scan_started', { source: 'dashboard_actions' }),
+                label: 'Connect Stripe',
+                href: '/connect',
+                onClick: () => logOnboardingEventClient('connect_cta_clicked', { source: 'dashboard_actions' }),
             },
         }];
 
@@ -104,15 +122,20 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
             }
         : {
             tone: 'info' as const,
-            title: 'Run the first check to see where payout risk may be building.',
-            body: 'The scan gives you a snapshot of processor warning signs, then points you toward live monitoring if the pattern looks real.',
+            title: 'Connect Stripe to see how much capital is at risk.',
+            body: 'Your forward-looking projection starts when Stripe data is connected. Read-only — PayFlux cannot move funds.',
         };
 
     const kpis = [
         {
+            label: 'Capital at risk',
+            value: hasCompletedScan && hasIssues ? 'Needs live data' : 'Not estimated yet',
+            detail: hasStripeConnection ? 'Shown in the forecast below' : 'Connect Stripe to unlock',
+        },
+        {
             label: 'Processor risk',
             value: hasCompletedScan ? riskBand.text : 'Unknown',
-            detail: hasCompletedScan ? `Based on ${findings.length} signal${findings.length === 1 ? '' : 's'}` : 'Run a scan first',
+            detail: hasCompletedScan ? `Based on ${findings.length} signal${findings.length === 1 ? '' : 's'}` : 'Connect Stripe to analyze',
             valueClassName: hasCompletedScan ? riskBand.color : 'text-slate-500',
             icon: hasIssues ? <TrendingUp className="h-4 w-4 text-amber-500" /> : undefined,
         },
@@ -121,11 +144,6 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
             value: hasStripeConnection ? 'Watching live' : 'Not live yet',
             detail: hasStripeConnection ? 'Processor data connected' : 'Needs live processor data',
             detailClassName: hasStripeConnection ? 'text-emerald-600' : 'text-slate-500',
-        },
-        {
-            label: 'Funds at risk',
-            value: hasCompletedScan && hasIssues ? 'Needs live data' : 'Not estimated yet',
-            detail: hasStripeConnection ? 'Shown in the forecast below' : 'Unlock with live monitoring',
         },
         {
             label: 'Monitoring',
@@ -154,9 +172,9 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
             tone: 'info' as const,
         }])
         : [{
-            title: 'No scan has been run yet.',
-            detail: 'Start with the snapshot so PayFlux can explain what the processor may already be reacting to.',
-            meta: 'Waiting for first check',
+            title: 'No data available yet.',
+            detail: 'Connect Stripe to see your forward-looking capital-at-risk projection.',
+            meta: 'Waiting for Stripe connection',
             tone: 'info' as const,
         }];
 
@@ -174,8 +192,8 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
         ] : [
             {
                 label: 'Current state',
-                value: 'No processor check has been run yet.',
-                detail: 'Run the scan to create the first payout-risk snapshot.',
+                value: 'No processor data connected yet.',
+                detail: 'Connect Stripe to create your first forward-looking projection.',
             },
         ],
         recentChecks: [
@@ -241,8 +259,8 @@ export default function DashboardFreePreview({ host, hasStripeConnection, onboar
 
     return (
         <DashboardComposition
-            title="Dashboard"
-            subtitle={host ? host : 'Your processor risk overview'}
+            title="Capital at Risk"
+            subtitle={host ? `Forward-looking projection · ${host}` : 'Connect Stripe to see your forward-looking projection'}
             headerSlot={<UserButton appearance={{ elements: { userButtonAvatarBox: 'h-8 w-8' } }} />}
             statusBanner={statusBanner}
             actions={actionCards}

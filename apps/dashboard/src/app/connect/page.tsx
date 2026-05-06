@@ -59,6 +59,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
         redirect('/dashboard');
     }
 
+    console.log('[PAYFLUX_FUNNEL] connect_page_render', { userId, isConnected, workspaceId: workspaceRecord.id });
     logOnboardingEvent('connect_viewed', { userId, workspaceId: workspaceRecord.id });
 
     const resolvedSearchParams = (await searchParams) ?? {};
@@ -88,10 +89,13 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                             </svg>
                         </div>
                         <h1 className="text-xl font-semibold text-white">
-                            Connect Stripe so PayFlux can watch payout risk live.
+                            Analyze your Stripe account
                         </h1>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            PayFlux uses live processor data to catch held funds, slower payouts, and rising account pressure before they turn into a cash-flow surprise.
+                            See how much capital your processor may hold back in the next 30, 60, and 90 days.
+                        </p>
+                        <p className="text-[10px] text-emerald-400/70 uppercase tracking-[0.15em] font-bold">
+                            Read-only · PayFlux cannot move funds or change settings
                         </p>
                     </div>
 

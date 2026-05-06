@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Lock, AlertTriangle, TrendingDown, TrendingUp, Minus, FileDown, X } from 'lucide-react';
+import { Shield, Lock, AlertTriangle, TrendingDown, TrendingUp, Minus, FileDown, X, EyeOff } from 'lucide-react';
 import { useScanData } from '@/lib/use-scan-data';
+import UpgradeModal, { type UpgradeTrigger } from '@/components/UpgradeModal';
+import { logOnboardingEventClient } from '@/lib/onboarding-events';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Telemetry — fire and forget, never blocks UI
@@ -95,6 +97,7 @@ type PanelState =
     | { status: 'idle' }
     | { status: 'loading' }
     | { status: 'error'; message: string }
+    | { status: 'forbidden' }
     | { status: 'no_data' }
     | { status: 'loaded'; data: ForecastData };
 
@@ -323,45 +326,146 @@ function InterventionBlock({ interventions, isSimulating }: { interventions: Int
     );
 }
 
-function ForbiddenState() {
+function ForbiddenState({ signalCount, riskSignal }: { signalCount?: number; riskSignal?: string }) {
+    const [modalOpen, setModalOpen] = useState(false);
+
+    const isHighRisk = riskSignal === 'ACCELERATING' || riskSignal === 'ELEVATED';
+    const isEarlyWarning = riskSignal === 'LATENT';
+
+    // Urgency-calibrated copy
+    const sixtyDayCopy = isHighRisk
+        ? 'Your exposure likely increases after day 30. Elevated risk is not visible on the free tier.'
+        : isEarlyWarning
+            ? 'Early warning signals suggest risk may build in this window. Not visible on free tier.'
+            : 'Risk continues beyond what you can currently see. The 60-day window is not visible on free tier.';
+
+    const ninetyDayCopy = isHighRisk
+        ? 'The 90-day trajectory captures the full escalation pattern. Most processor reserve decisions happen here.'
+        : 'The 90-day window captures the full exposure trajectory, including the primary hold period most processors use.';
+
+    function handlePanelClick() {
+        track('locked_panel_clicked', { risk_signal: riskSignal ?? 'unknown' });
+        logOnboardingEventClient('upgrade_viewed', {
+            trigger_type: 'locked_panel',
+            risk_signal: riskSignal,
+            signal_count: signalCount,
+        });
+        setModalOpen(true);
+    }
+
     return (
-        <div className="border border-gray-200 rounded-xl p-8 space-y-6">
-            <div className="flex items-start space-x-4">
-                <div className="p-3 bg-gray-100 rounded-full flex-shrink-0">
-                    <Lock className="w-5 h-5 text-gray-400" />
-                </div>
-                <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-900">Unlock the forward-looking view</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                        Pro shows how much money a processor may hold back over the next few weeks and what changes are most likely to reduce that risk.
-                    </p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-white rounded-lg">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Timeframes</span>
-                    <span className="text-xs text-gray-500">30 / 60 / 90-day outlook</span>
-                </div>
-                <div className="p-3 bg-white rounded-lg">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Money impact</span>
-                    <span className="text-xs text-gray-500">What could be held back if risk stays flat or gets worse</span>
-                </div>
-                <div className="p-3 bg-white rounded-lg">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Action plan</span>
-                    <span className="text-xs text-gray-500">Which fixes to tackle first and how much they may help</span>
-                </div>
-            </div>
-
-            <div className="text-center">
+        <>
+            <div className="space-y-4">
+                {/* 60-day locked panel — clickable */}
                 <button
-                    onClick={() => track('forecast_unlock_clicked')}
-                    className="inline-flex items-center px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors border border-gray-300"
+                    onClick={handlePanelClick}
+                    className={`w-full text-left border rounded-xl p-6 relative overflow-hidden cursor-pointer transition-all hover:shadow-md group ${
+                        isHighRisk ? 'border-red-200 hover:border-red-300' : 'border-gray-200 hover:border-gray-300'
+                    }`}
                 >
-                    Upgrade to Pro
+                    <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-white pointer-events-none z-10 ${
+                        isHighRisk ? 'via-red-50/20' : ''
+                    }`} />
+                    <div className="relative z-0">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-semibold text-gray-900">60-day outlook</span>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                isHighRisk
+                                    ? 'bg-red-50 text-red-500 border-red-200'
+                                    : 'bg-gray-100 text-gray-400 border-gray-200'
+                            }`}>
+                                <EyeOff className="w-3 h-3 mr-1" />
+                                Not visible
+                            </span>
+                        </div>
+                        <p className={`text-sm leading-relaxed ${
+                            isHighRisk ? 'text-red-600/80' : 'text-gray-500'
+                        }`}>
+                            {sixtyDayCopy}
+                        </p>
+                        {signalCount !== undefined && signalCount > 0 && (
+                            <p className="mt-2 text-[10px] text-gray-400 uppercase tracking-wider">
+                                {signalCount} signal{signalCount === 1 ? '' : 's'} detected in scan
+                            </p>
+                        )}
+                        <p className="mt-3 text-xs font-medium text-gray-900 group-hover:underline">
+                            See full projection &rarr;
+                        </p>
+                    </div>
                 </button>
+
+                {/* 90-day locked panel — clickable */}
+                <button
+                    onClick={handlePanelClick}
+                    className={`w-full text-left border rounded-xl p-6 relative overflow-hidden cursor-pointer transition-all hover:shadow-md group ${
+                        isHighRisk ? 'border-red-200 hover:border-red-300' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                >
+                    <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-white pointer-events-none z-10 ${
+                        isHighRisk ? 'via-red-50/20' : ''
+                    }`} />
+                    <div className="relative z-0">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-semibold text-gray-900">90-day outlook</span>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                isHighRisk
+                                    ? 'bg-red-50 text-red-500 border-red-200'
+                                    : 'bg-gray-100 text-gray-400 border-gray-200'
+                            }`}>
+                                <EyeOff className="w-3 h-3 mr-1" />
+                                Not visible
+                            </span>
+                        </div>
+                        <p className={`text-sm leading-relaxed ${
+                            isHighRisk ? 'text-red-600/80' : 'text-gray-500'
+                        }`}>
+                            {ninetyDayCopy}
+                        </p>
+                        <p className="mt-3 text-xs font-medium text-gray-900 group-hover:underline">
+                            See full projection &rarr;
+                        </p>
+                    </div>
+                </button>
+
+                {/* Bottom urgency block */}
+                <div className={`rounded-xl border p-6 text-center space-y-4 ${
+                    isHighRisk ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
+                }`}>
+                    <EyeOff className={`w-8 h-8 mx-auto ${
+                        isHighRisk ? 'text-red-400' : 'text-gray-300'
+                    }`} />
+                    <div className="space-y-1">
+                        <p className="text-sm font-semibold text-gray-900">
+                            {isHighRisk
+                                ? 'You may be exposed beyond what you can see'
+                                : 'Your visibility ends at 30 days'
+                            }
+                        </p>
+                        <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                            Processor decisions happen before you see them. The 60 and 90-day windows show where your capital is actually at risk.
+                        </p>
+                    </div>
+                    <button
+                        onClick={handlePanelClick}
+                        className={`inline-flex items-center px-6 py-3 text-sm font-semibold rounded-lg transition-colors ${
+                            isHighRisk
+                                ? 'bg-red-600 hover:bg-red-700 text-white'
+                                : 'bg-gray-900 hover:bg-gray-800 text-white'
+                        }`}
+                    >
+                        See full projection &rarr;
+                    </button>
+                </div>
             </div>
-        </div>
+
+            <UpgradeModal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                trigger="locked_panel"
+                riskSignal={riskSignal as any}
+                hasStripeConnection={true}
+            />
+        </>
     );
 }
 
@@ -651,6 +755,12 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                 return;
             }
 
+            if (res.status === 402) {
+                setState({ status: 'forbidden' });
+                track('locked_panel_viewed', { host: targetHost });
+                return;
+            }
+
             if (!res.ok) {
                 const body = await res.json().catch(() => ({}));
                 setState({ status: 'error', message: body.error || `HTTP ${res.status}` });
@@ -709,6 +819,23 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                     <span className="text-sm text-red-600">Payout forecast unavailable</span>
                     <p className="text-xs text-red-600/60 mt-0.5 font-mono">{state.message}</p>
                 </div>
+            </div>
+        );
+    }
+
+    // Forbidden (free tier)
+    if (state.status === 'forbidden') {
+        const findings = scanData?.data?.findings ?? [];
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-900">Reserve Projection</h3>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider">Free tier · 30-day view</span>
+                </div>
+                <ForbiddenState
+                    signalCount={findings.length > 0 ? findings.length : undefined}
+                    riskSignal={undefined}
+                />
             </div>
         );
     }
@@ -982,7 +1109,7 @@ export default function ReserveForecastPanel({ host }: { host: string | null }) 
                     </>
                 ) : (
                     <div className="mt-6">
-                        <ForbiddenState />
+                        <ForbiddenState riskSignal={data.instabilitySignal} />
                     </div>
                 )}
             </div>

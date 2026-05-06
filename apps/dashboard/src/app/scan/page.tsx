@@ -161,11 +161,14 @@ export default function ScanPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
+                    <p className="text-[10px] text-amber-400/70 uppercase tracking-[0.15em] font-bold">
+                        Preliminary external signal scan
+                    </p>
                     <h1 className="text-2xl font-semibold text-white tracking-tight">
-                        Check whether your processor may start holding back money or slowing payouts.
+                        Check whether your processor may start holding back money.
                     </h1>
                     <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto">
-                        PayFlux gives you a fast first check of payout risk. Enter your domain and we&apos;ll show what warning signs a processor may see, why they matter, and whether it is worth moving into live monitoring next.
+                        This is not the full prediction. Connect Stripe for the forward-looking reserve projection that shows exactly how much capital is at risk.
                     </p>
                 </div>
 
