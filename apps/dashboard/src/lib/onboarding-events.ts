@@ -68,7 +68,8 @@ export type OnboardingEvent =
     | 'scan_example_viewed'
     // Model telemetry
     | 'forecast_model_disagreement'
-    | 'forecast_snapshot_generated';
+    | 'forecast_snapshot_generated'
+    | 'policy_invariant_violation';
 
 /**
  * Client-side event logger.

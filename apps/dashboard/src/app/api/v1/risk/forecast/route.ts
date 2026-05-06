@@ -241,6 +241,34 @@ export async function GET(request: Request) {
         label: string;
     } | null;
 
+    const presentationPolicy = computePresentationPolicy({
+        riskScore: forecast.derivedSignals.riskScore,
+        confidenceBand: forecast.derivedSignals.confidenceBand,
+        dataCompletenessScore: forecast.derivedSignals.dataCompletenessScore,
+        modeledProjections: {
+            t30: forecast.modeledProjections.windows[0].capitalAtRiskCents,
+            t60: forecast.modeledProjections.windows[1].capitalAtRiskCents,
+            t90: forecast.modeledProjections.windows[2].capitalAtRiskCents,
+        },
+        observedSignals: {
+            pending_balance: forecast.observedSignals.pendingBalanceCents,
+            dispute_count_30d: forecast.observedSignals.disputeCount30d,
+            total_volume_30d: forecast.observedSignals.totalVolume30dCents,
+        }
+    });
+
+    if (!presentationPolicy.isValid) {
+        logOnboardingEvent('policy_invariant_violation', {
+            workspaceId: workspace.workspaceRecordId,
+            metadata: {
+                merchantId: monitoredEntity.id,
+                input_hash: featureHash,
+                ruleTrace: JSON.stringify(presentationPolicy.ruleTrace.filter(r => r.ruleId === 'INVARIANT_VIOLATION_NORMALIZED')),
+                timestamp: new Date().toISOString()
+            }
+        });
+    }
+
     const response = {
         merchantId: monitoredEntity.id,
         normalizedHost: monitoredEntity.primary_host ?? 'unknown',
@@ -257,21 +285,7 @@ export async function GET(request: Request) {
         simulationDelta,
         observedSignals: forecast.observedSignals,
         derivedSignals: forecast.derivedSignals,
-        presentationPolicy: computePresentationPolicy({
-            riskScore: forecast.derivedSignals.riskScore,
-            confidenceBand: forecast.derivedSignals.confidenceBand,
-            dataCompletenessScore: forecast.derivedSignals.dataCompletenessScore,
-            modeledProjections: {
-                t30: forecast.modeledProjections.windows[0].capitalAtRiskCents,
-                t60: forecast.modeledProjections.windows[1].capitalAtRiskCents,
-                t90: forecast.modeledProjections.windows[2].capitalAtRiskCents,
-            },
-            observedSignals: {
-                pending_balance: forecast.observedSignals.pendingBalanceCents,
-                dispute_count_30d: forecast.observedSignals.disputeCount30d,
-                total_volume_30d: forecast.observedSignals.totalVolume30dCents,
-            }
-        }),
+        presentationPolicy,
         projectionBasis: {
             ...(reserveProjection.projection_basis as Record<string, unknown> ?? {}),
             dataAgeHours: Number(dataAgeHours.toFixed(2)),

@@ -30,34 +30,93 @@ export interface RuleTrace {
     outcome: string;
 }
 
-export interface PresentationPolicy {
+export interface BasePolicyProps {
     policyVersion: string;
-    mode: 'observe' | 'warn' | 'escalate' | 'critical';
     allowedPrecision: 'point' | 'range' | 'blur';
-    urgencyLevel: 0 | 1 | 2 | 3;
-
-    showProjectionWindows: {
-        t30: boolean;
-        t60: boolean;
-        t90: boolean;
-    };
-
-    displayFormat: {
-        t30: 'point' | 'range' | 'hidden';
-        t60: 'locked' | 'blurred' | 'hidden';
-        t90: 'locked' | 'blurred' | 'hidden';
-    };
-
     showDrivers: boolean;
     showConfidenceBand: boolean;
-
-    uiFraming: {
-        headlineStyle: 'neutral' | 'warning' | 'loss-framed' | 'critical';
-        ctaIntensity: 'soft' | 'standard' | 'high-pressure';
-    };
-
     reasoning: string[];
     ruleTrace: RuleTrace[];
+    isValid: boolean;
+}
+
+export type ObservePolicy = BasePolicyProps & {
+    mode: 'observe';
+    urgencyLevel: 0;
+    showProjectionWindows: { t30: boolean; t60: boolean; t90: boolean };
+    displayFormat: { t30: 'point' | 'range' | 'hidden'; t60: 'hidden'; t90: 'hidden' };
+    uiFraming: { headlineStyle: 'neutral'; ctaIntensity: 'soft' };
+};
+
+export type WarnPolicy = BasePolicyProps & {
+    mode: 'warn';
+    urgencyLevel: 1;
+    showProjectionWindows: { t30: boolean; t60: boolean; t90: boolean };
+    displayFormat: { t30: 'point' | 'range' | 'hidden'; t60: 'locked'; t90: 'hidden' };
+    uiFraming: { headlineStyle: 'warning'; ctaIntensity: 'standard' };
+};
+
+export type EscalatePolicy = BasePolicyProps & {
+    mode: 'escalate';
+    urgencyLevel: 2;
+    showProjectionWindows: { t30: boolean; t60: boolean; t90: boolean };
+    displayFormat: { t30: 'point' | 'range' | 'hidden'; t60: 'blurred'; t90: 'locked' };
+    uiFraming: { headlineStyle: 'loss-framed'; ctaIntensity: 'high-pressure' };
+};
+
+export type CriticalPolicy = BasePolicyProps & {
+    mode: 'critical';
+    urgencyLevel: 3;
+    showProjectionWindows: { t30: boolean; t60: boolean; t90: boolean };
+    displayFormat: { t30: 'point' | 'range' | 'hidden'; t60: 'blurred'; t90: 'blurred' };
+    uiFraming: { headlineStyle: 'critical'; ctaIntensity: 'high-pressure' };
+};
+
+export type PresentationPolicy = ObservePolicy | WarnPolicy | EscalatePolicy | CriticalPolicy;
+
+function validateAndNormalizePolicy(policy: PresentationPolicy, input: GovernanceInput): PresentationPolicy {
+    let violatesInvariant = false;
+    let violationReason = '';
+
+    // Hard Constraint 1: Precision Gate
+    if (input.dataCompletenessScore < 0.5 && policy.allowedPrecision !== 'blur') {
+        violatesInvariant = true;
+        violationReason = 'completeness_gate_violated';
+    }
+
+    // Hard Constraint 2: Confidence Gate
+    if (input.confidenceBand === 'LOW' && policy.allowedPrecision === 'point') {
+        violatesInvariant = true;
+        violationReason = 'confidence_gate_violated';
+    }
+
+    if (violatesInvariant) {
+        policy.ruleTrace.push({
+            ruleId: 'INVARIANT_VIOLATION_NORMALIZED',
+            inputSignals: { completeness: input.dataCompletenessScore, confidence: input.confidenceBand },
+            outcome: violationReason
+        });
+        policy.reasoning.push(`Runtime safety normalization triggered: ${violationReason}.`);
+
+        // Fail Safe: Normalize to the most restricted state without crashing
+        const normalizedPolicy: CriticalPolicy = {
+            policyVersion: 'v3.2.0',
+            mode: 'critical',
+            urgencyLevel: 3,
+            allowedPrecision: 'blur',
+            showDrivers: true,
+            showConfidenceBand: true,
+            showProjectionWindows: { t30: true, t60: true, t90: true },
+            displayFormat: { t30: 'range', t60: 'blurred', t90: 'blurred' },
+            uiFraming: { headlineStyle: 'critical', ctaIntensity: 'high-pressure' },
+            reasoning: policy.reasoning,
+            ruleTrace: policy.ruleTrace,
+            isValid: false, // Explicitly marks this payload as having breached invariants
+        };
+        return normalizedPolicy;
+    }
+
+    return { ...policy, isValid: true };
 }
 
 export function computePresentationPolicy(input: GovernanceInput): PresentationPolicy {
@@ -84,17 +143,8 @@ export function computePresentationPolicy(input: GovernanceInput): PresentationP
         trace('MODE_CRITICAL', mode, { r: input.riskScore }, 'Critical risk detected.');
     }
 
-    // Urgency level mapping
-    const urgencyMap: Record<PresentationPolicy['mode'], 0 | 1 | 2 | 3> = {
-        'observe': 0,
-        'warn': 1,
-        'escalate': 2,
-        'critical': 3
-    };
-    const urgencyLevel = urgencyMap[mode];
-
     // 2. Precision Rules (Anti-manipulation guard)
-    let allowedPrecision: PresentationPolicy['allowedPrecision'] = 'point';
+    let allowedPrecision: BasePolicyProps['allowedPrecision'] = 'point';
     if (input.dataCompletenessScore < 0.5) {
         allowedPrecision = 'blur';
         trace('PRECISION_BLUR', allowedPrecision, { completeness: input.dataCompletenessScore }, 'Severely incomplete data. Precision strictly bounded.');
@@ -105,73 +155,72 @@ export function computePresentationPolicy(input: GovernanceInput): PresentationP
         trace('PRECISION_POINT', allowedPrecision, { completeness: input.dataCompletenessScore, confidence: input.confidenceBand }, 'Adequate confidence for point-estimate or bounded range rendering.');
     }
 
-    // 3. Projection Disclosure Rules
-    const displayFormat: PresentationPolicy['displayFormat'] = {
-        t30: allowedPrecision === 'blur' ? 'range' : allowedPrecision, // t30 must never be strictly hidden, blur renders as range
-        t60: 'hidden',
-        t90: 'hidden'
-    };
-    
-    // T+30 is always visible
-    const showProjectionWindows = {
-        t30: true,
-        t60: false,
-        t90: false
-    };
+    const t30DisplayFormat = allowedPrecision === 'blur' ? 'range' : allowedPrecision;
+
+    // Build the strict mode-specific policy
+    let rawPolicy: PresentationPolicy;
 
     if (mode === 'observe') {
-        displayFormat.t60 = 'hidden';
-        displayFormat.t90 = 'hidden';
+        rawPolicy = {
+            policyVersion: 'v3.2.0',
+            mode: 'observe',
+            urgencyLevel: 0,
+            allowedPrecision,
+            showProjectionWindows: { t30: true, t60: false, t90: false },
+            displayFormat: { t30: t30DisplayFormat, t60: 'hidden', t90: 'hidden' },
+            showDrivers: true,
+            showConfidenceBand: true,
+            uiFraming: { headlineStyle: 'neutral', ctaIntensity: 'soft' },
+            reasoning,
+            ruleTrace,
+            isValid: true,
+        };
     } else if (mode === 'warn') {
-        displayFormat.t60 = 'locked';
-        displayFormat.t90 = 'hidden';
+        rawPolicy = {
+            policyVersion: 'v3.2.0',
+            mode: 'warn',
+            urgencyLevel: 1,
+            allowedPrecision,
+            showProjectionWindows: { t30: true, t60: true, t90: false },
+            displayFormat: { t30: t30DisplayFormat, t60: 'locked', t90: 'hidden' },
+            showDrivers: true,
+            showConfidenceBand: true,
+            uiFraming: { headlineStyle: 'warning', ctaIntensity: 'standard' },
+            reasoning,
+            ruleTrace,
+            isValid: true,
+        };
     } else if (mode === 'escalate') {
-        displayFormat.t60 = 'blurred';
-        displayFormat.t90 = 'locked';
-    } else if (mode === 'critical') {
-        displayFormat.t60 = 'blurred';
-        displayFormat.t90 = 'blurred';
+        rawPolicy = {
+            policyVersion: 'v3.2.0',
+            mode: 'escalate',
+            urgencyLevel: 2,
+            allowedPrecision,
+            showProjectionWindows: { t30: true, t60: true, t90: true },
+            displayFormat: { t30: t30DisplayFormat, t60: 'blurred', t90: 'locked' },
+            showDrivers: true,
+            showConfidenceBand: true,
+            uiFraming: { headlineStyle: 'loss-framed', ctaIntensity: 'high-pressure' },
+            reasoning,
+            ruleTrace,
+            isValid: true,
+        };
+    } else {
+        rawPolicy = {
+            policyVersion: 'v3.2.0',
+            mode: 'critical',
+            urgencyLevel: 3,
+            allowedPrecision,
+            showProjectionWindows: { t30: true, t60: true, t90: true },
+            displayFormat: { t30: t30DisplayFormat, t60: 'blurred', t90: 'blurred' },
+            showDrivers: true,
+            showConfidenceBand: true,
+            uiFraming: { headlineStyle: 'critical', ctaIntensity: 'high-pressure' },
+            reasoning,
+            ruleTrace,
+            isValid: true,
+        };
     }
-    
-    showProjectionWindows.t60 = displayFormat.t60 !== 'hidden';
-    showProjectionWindows.t90 = displayFormat.t90 !== 'hidden';
 
-    trace('DISCLOSURE_WINDOWS', 'applied', { mode }, `T60 format: ${displayFormat.t60}, T90 format: ${displayFormat.t90}`);
-
-    // 4. UI Framing Logic
-    let headlineStyle: PresentationPolicy['uiFraming']['headlineStyle'] = 'neutral';
-    let ctaIntensity: PresentationPolicy['uiFraming']['ctaIntensity'] = 'soft';
-
-    if (mode === 'observe') {
-        headlineStyle = 'neutral';
-        ctaIntensity = 'soft';
-    } else if (mode === 'warn') {
-        headlineStyle = 'warning';
-        ctaIntensity = 'standard';
-    } else if (mode === 'escalate') {
-        headlineStyle = 'loss-framed';
-        ctaIntensity = 'high-pressure';
-    } else if (mode === 'critical') {
-        headlineStyle = 'critical';
-        ctaIntensity = 'high-pressure';
-    }
-
-    trace('FRAMING_APPLIED', `${headlineStyle}/${ctaIntensity}`, { mode }, 'UI presentation boundaries assigned.');
-
-    return {
-        policyVersion: 'v3.1.0',
-        mode,
-        allowedPrecision,
-        urgencyLevel,
-        showProjectionWindows,
-        displayFormat,
-        showDrivers: true, // Always show drivers
-        showConfidenceBand: true, // Always expose confidence
-        uiFraming: {
-            headlineStyle,
-            ctaIntensity
-        },
-        reasoning,
-        ruleTrace
-    };
+    return validateAndNormalizePolicy(rawPolicy, input);
 }
