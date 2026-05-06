@@ -9,6 +9,7 @@ import { requireAuth } from '@/lib/require-auth';
 import { canAccess } from '@/lib/tier/resolver';
 import { dbQuery } from '@/lib/db/client';
 import { computeUnifiedForecast } from '@/lib/forecast/unified-risk-score';
+import { computePresentationPolicy, GovernanceInput } from '@/lib/forecast/presentation-policy';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 export const runtime = "nodejs";
@@ -256,6 +257,21 @@ export async function GET(request: Request) {
         simulationDelta,
         observedSignals: forecast.observedSignals,
         derivedSignals: forecast.derivedSignals,
+        presentationPolicy: computePresentationPolicy({
+            riskScore: forecast.derivedSignals.riskScore,
+            confidenceBand: forecast.derivedSignals.confidenceBand,
+            dataCompletenessScore: forecast.derivedSignals.dataCompletenessScore,
+            modeledProjections: {
+                t30: forecast.modeledProjections.windows[0].capitalAtRiskCents,
+                t60: forecast.modeledProjections.windows[1].capitalAtRiskCents,
+                t90: forecast.modeledProjections.windows[2].capitalAtRiskCents,
+            },
+            observedSignals: {
+                pending_balance: forecast.observedSignals.pendingBalanceCents,
+                dispute_count_30d: forecast.observedSignals.disputeCount30d,
+                total_volume_30d: forecast.observedSignals.totalVolume30dCents,
+            }
+        }),
         projectionBasis: {
             ...(reserveProjection.projection_basis as Record<string, unknown> ?? {}),
             dataAgeHours: Number(dataAgeHours.toFixed(2)),
