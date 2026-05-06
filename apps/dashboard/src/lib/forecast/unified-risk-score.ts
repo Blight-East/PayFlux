@@ -39,18 +39,26 @@ export interface RiskDriver {
 export interface ProjectionWindow {
     windowDays: number;
     capitalAtRiskCents: number;
+    capitalAtRiskCentsMin: number;
+    capitalAtRiskCentsMax: number;
+    displayMode: 'range' | 'point';
     reserveRateBps: number;
     riskBand: string;
 }
 
 export interface UnifiedForecast {
-    riskScore: number;
-    riskSignal: RiskSignal;
-    confidenceBand: 'LOW' | 'MEDIUM' | 'HIGH';
-    modelVersion: string;
-    drivers: RiskDriver[];
-    windows: [ProjectionWindow, ProjectionWindow, ProjectionWindow];
-    basis: {
+    schemaVersion: 'v3';
+    observedSignals: {
+        pendingBalanceCents: number;
+        totalVolume30dCents: number;
+        disputeCount30d: number;
+        avgPayoutDelayDays: number | null;
+    };
+    derivedSignals: {
+        riskScore: number;
+        riskSignal: RiskSignal;
+        confidenceBand: 'LOW' | 'MEDIUM' | 'HIGH';
+        dataCompletenessScore: number;
         rBase: number;
         disputeRatio: number;
         refundRatio: number;
@@ -59,9 +67,12 @@ export interface UnifiedForecast {
         volatilityScore: number;
         multiplier: number;
         growthFactor: number;
-        pendingBalanceCents: number;
-        totalVolume30dCents: number;
         transactionCount30d: number;
+        drivers: RiskDriver[];
+    };
+    modeledProjections: {
+        modelVersion: string;
+        windows: [ProjectionWindow, ProjectionWindow, ProjectionWindow];
     };
 }
 
@@ -70,6 +81,7 @@ export interface StripeFinancialsInput {
     total_volume_30d: number;      // cents
     dispute_count_30d: number;
     avg_payout_delay_days: number | null;
+    fetched_at?: string;           // Used for freshness completeness
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,47 +247,65 @@ export function computeUnifiedForecast(
     const riskBand = mapRiskBand(r);
     const reserveRateBps = Math.round(multiplier * 10000);
 
-    // Epistemic honesty layer (Confidence Band)
-    let confidenceScore = 0;
-    if (totalVolume > 10000) confidenceScore++;
-    if (safeVolatility > 0) confidenceScore++;
-    // Transaction count is currently always a fallback derived from volume
-    const isTxCountReal = false;
-    if (isTxCountReal) confidenceScore++;
-    // Dispute count is provided by Stripe metrics
-    if (financials.dispute_count_30d !== undefined) confidenceScore++;
+    // Data Completeness Layer
+    let dataCompletenessScore = 0.0;
+    
+    // 1. Dispute data present (High signal)
+    const hasDisputesData = financials.dispute_count_30d !== null && financials.dispute_count_30d !== undefined;
+    if (hasDisputesData) dataCompletenessScore += 0.35;
+    
+    // 2. Real transaction count
+    const isTxCountReal = false; // Always fallback currently
+    if (isTxCountReal) dataCompletenessScore += 0.25;
+
+    // 3. Freshness < 24h
+    let ageHours = 24;
+    if (financials.fetched_at) {
+        ageHours = (Date.now() - new Date(financials.fetched_at).getTime()) / (1000 * 60 * 60);
+    }
+    if (ageHours < 24) dataCompletenessScore += 0.25;
+
+    // 4. Volume > $10k (1,000,000 cents)
+    if (totalVolume > 1000000) dataCompletenessScore += 0.15;
+
+    // Hard gate: Cap completeness if high-signal dispute data is entirely missing
+    if (!hasDisputesData) {
+        dataCompletenessScore = Math.min(dataCompletenessScore, 0.60);
+    }
 
     let confidenceBand: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
-    if (confidenceScore >= 3) confidenceBand = 'HIGH';
-    else if (confidenceScore === 2) confidenceBand = 'MEDIUM';
+    if (dataCompletenessScore >= 0.8) confidenceBand = 'HIGH';
+    else if (dataCompletenessScore >= 0.5) confidenceBand = 'MEDIUM';
+
+    // Uncertainty Shaping
+    const baseUncertainty = 0.5;
+    const rawUncertainty = baseUncertainty * (1 - dataCompletenessScore);
+    const uncertainty = clamp(rawUncertainty, 0.05, 0.40); // Hard clamp between 5% and 40%
+    const displayMode = confidenceBand === 'HIGH' ? 'point' : 'range';
+
+    const buildWindow = (days: number, baseAmt: number): ProjectionWindow => ({
+        windowDays: days,
+        capitalAtRiskCents: baseAmt,
+        capitalAtRiskCentsMin: Math.round(baseAmt * (1 - uncertainty)),
+        capitalAtRiskCentsMax: Math.round(baseAmt * (1 + uncertainty)),
+        displayMode,
+        reserveRateBps: Math.round((baseAmt / (pendingBalance || 1)) * 10000),
+        riskBand,
+    });
 
     return {
-        riskScore: Math.round(r * 1000) / 1000,
-        riskSignal: mapRiskSignal(r),
-        confidenceBand,
-        modelVersion: MODEL_VERSION,
-        drivers: extractDrivers(disputeRatio, payoutDelayFactor, balancePressure),
-        windows: [
-            {
-                windowDays: 30,
-                capitalAtRiskCents: t30,
-                reserveRateBps,
-                riskBand,
-            },
-            {
-                windowDays: 60,
-                capitalAtRiskCents: t60,
-                reserveRateBps: Math.round((t60 / (pendingBalance || 1)) * 10000),
-                riskBand,
-            },
-            {
-                windowDays: 90,
-                capitalAtRiskCents: t90,
-                reserveRateBps: Math.round((t90 / (pendingBalance || 1)) * 10000),
-                riskBand,
-            },
-        ],
-        basis: {
+        schemaVersion: 'v3',
+        observedSignals: {
+            pendingBalanceCents: pendingBalance,
+            totalVolume30dCents: totalVolume,
+            disputeCount30d: disputeCount,
+            avgPayoutDelayDays: avgDelay,
+        },
+        derivedSignals: {
+            riskScore: Math.round(r * 1000) / 1000,
+            riskSignal: mapRiskSignal(r),
+            confidenceBand,
+            dataCompletenessScore: Math.round(dataCompletenessScore * 100) / 100,
             rBase: Math.round(rBase * 1000) / 1000,
             disputeRatio: Math.round(disputeRatio * 10000) / 10000,
             refundRatio: 0,
@@ -284,9 +314,24 @@ export function computeUnifiedForecast(
             volatilityScore: safeVolatility,
             multiplier: Math.round(multiplier * 10000) / 10000,
             growthFactor: Math.round(growthFactor * 1000) / 1000,
-            pendingBalanceCents: pendingBalance,
-            totalVolume30dCents: totalVolume,
             transactionCount30d: txCount,
+            drivers: extractDrivers(disputeRatio, payoutDelayFactor, balancePressure),
+        },
+        modeledProjections: {
+            modelVersion: MODEL_VERSION,
+            windows: [
+                {
+                    windowDays: 30,
+                    capitalAtRiskCents: t30,
+                    capitalAtRiskCentsMin: Math.round(t30 * (1 - uncertainty)),
+                    capitalAtRiskCentsMax: Math.round(t30 * (1 + uncertainty)),
+                    displayMode,
+                    reserveRateBps,
+                    riskBand,
+                },
+                buildWindow(60, t60),
+                buildWindow(90, t90),
+            ],
         },
     };
 }

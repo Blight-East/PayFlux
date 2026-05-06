@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { getLatestCompletedActivationRunByWorkspaceId } from '@/lib/db/activation-runs';
 import { getBaselineSnapshotById } from '@/lib/db/baseline-snapshots';
 import { getMonitoredEntityByWorkspaceId } from '@/lib/db/monitored-entities';
@@ -117,14 +118,15 @@ export async function GET(request: Request) {
         avg_payout_delay_days: financialData.avg_payout_delay_days !== null
             ? Number(financialData.avg_payout_delay_days)
             : null,
+        fetched_at: financialData.fetched_at ? String(financialData.fetched_at) : undefined,
     }, goVolatility);
 
     // ─────────────────────────────────────────────────────────────────────
-    // Behavioral Calibration Layer
+    // Behavioral Calibration Layer & True Snapshot Persistence
     // ─────────────────────────────────────────────────────────────────────
 
-    const rBase = forecast.basis.rBase;
-    const rFinal = forecast.riskScore;
+    const rBase = forecast.derivedSignals.rBase;
+    const rFinal = forecast.derivedSignals.riskScore;
     const disagreementThreshold = Math.max(0.1, rFinal * 0.15);
     
     if (Math.abs(rFinal - rBase) > disagreementThreshold) {
@@ -134,20 +136,50 @@ export async function GET(request: Request) {
                 rBase,
                 rFinal,
                 volatilityScore: goVolatility,
-                disputeRatio: forecast.basis.disputeRatio,
-                balancePressure: forecast.basis.balancePressure
+                disputeRatio: forecast.derivedSignals.disputeRatio,
+                balancePressure: forecast.derivedSignals.balancePressure
             }
         });
     }
+
+    const featureSnapshot = {
+        schemaVersion: forecast.schemaVersion,
+        observedSignals: forecast.observedSignals,
+        derivedSignals: forecast.derivedSignals,
+        financialDataId: financialData.id,
+    };
+    const featureSnapshotJson = JSON.stringify(featureSnapshot);
+    const featureHash = crypto.createHash('sha256').update(featureSnapshotJson).digest('hex').substring(0, 16);
+
+    // Save reproducible snapshot to DB
+    await dbQuery(`
+        INSERT INTO forecast_snapshots (
+            workspace_id, stripe_account_id, stripe_financials_id, model_version,
+            forecasted_t30_cents, confidence_band, data_completeness,
+            feature_hash, feature_snapshot_json
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, [
+        workspace.workspaceRecordId,
+        processorConnection.stripe_account_id,
+        financialData.id,
+        forecast.modeledProjections.modelVersion,
+        forecast.modeledProjections.windows[0].capitalAtRiskCents,
+        forecast.derivedSignals.confidenceBand,
+        forecast.derivedSignals.dataCompletenessScore,
+        featureHash,
+        featureSnapshotJson
+    ]).catch(err => {
+        console.error('[FORECAST] Failed to save DB snapshot:', err);
+    });
 
     logOnboardingEvent('forecast_snapshot_generated', {
         workspaceId: workspace.workspaceRecordId,
         metadata: {
             merchantId: monitoredEntity.id,
-            forecasted_t30_cents: forecast.windows[0].capitalAtRiskCents,
-            riskScore: forecast.riskScore,
-            confidenceBand: forecast.confidenceBand,
-            input_hash: financialData.id,
+            forecasted_t30_cents: forecast.modeledProjections.windows[0].capitalAtRiskCents,
+            riskScore: forecast.derivedSignals.riskScore,
+            confidenceBand: forecast.derivedSignals.confidenceBand,
+            input_hash: featureHash,
             timestamp: new Date().toISOString()
         }
     });
@@ -160,7 +192,7 @@ export async function GET(request: Request) {
     // hasProjectionAccess: controls frontend gating only.
     // ─────────────────────────────────────────────────────────────────────
 
-    const reserveProjections = forecast.windows.map((w) => ({
+    const reserveProjections = forecast.modeledProjections.windows.map((w) => ({
         windowDays: w.windowDays,
         baseReserveRate: w.reserveRateBps,
         worstCaseReserveRate: w.reserveRateBps,
@@ -168,6 +200,9 @@ export async function GET(request: Request) {
         worstCaseTrappedBps: w.reserveRateBps,
         projectedTrappedUSD: Math.round(w.capitalAtRiskCents / 100),
         worstCaseTrappedUSD: Math.round(w.capitalAtRiskCents / 100),
+        capitalAtRiskCentsMin: w.capitalAtRiskCentsMin,
+        capitalAtRiskCentsMax: w.capitalAtRiskCentsMax,
+        displayMode: w.displayMode,
         riskBand: w.riskBand,
     }));
 
@@ -179,6 +214,9 @@ export async function GET(request: Request) {
                 windowDays: p.windowDays,
                 worstCaseTrappedBps: p.worstCaseTrappedBps,
                 worstCaseTrappedUSD: p.worstCaseTrappedUSD,
+                capitalAtRiskCentsMin: p.capitalAtRiskCentsMin,
+                capitalAtRiskCentsMax: p.capitalAtRiskCentsMax,
+                displayMode: p.displayMode,
                 riskBand: p.riskBand,
             }))
         : [];
@@ -208,28 +246,29 @@ export async function GET(request: Request) {
         currentRiskTier: reserveProjection.current_risk_tier,
         trend: reserveProjection.trend,
         tierDelta: reserveProjection.tier_delta,
-        instabilitySignal: forecast.riskSignal,
+        instabilitySignal: forecast.derivedSignals.riskSignal,
         hasProjectionAccess: hasFullProjectionAccess,
         reserveProjections,
         lockedProjections,
-        riskScore: forecast.riskScore,
-        riskDrivers: forecast.drivers,
+        riskScore: forecast.derivedSignals.riskScore,
+        riskDrivers: forecast.derivedSignals.drivers,
         recommendedInterventions,
         simulationDelta,
+        observedSignals: forecast.observedSignals,
+        derivedSignals: forecast.derivedSignals,
         projectionBasis: {
             ...(reserveProjection.projection_basis as Record<string, unknown> ?? {}),
-            unifiedModel: forecast.basis,
             dataAgeHours: Number(dataAgeHours.toFixed(2)),
         },
         volumeMode: 'bps_plus_usd' as const,
         projectedAt: reserveProjection.projected_at,
-        modelVersion: forecast.modelVersion,
+        modelVersion: forecast.modeledProjections.modelVersion,
     };
 
     return NextResponse.json(response, {
         headers: {
             'Cache-Control': 'no-store',
-            'X-Model-Version': forecast.modelVersion,
+            'X-Model-Version': forecast.modeledProjections.modelVersion,
         },
     });
 }
