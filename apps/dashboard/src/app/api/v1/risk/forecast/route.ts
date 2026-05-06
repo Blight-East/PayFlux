@@ -8,6 +8,7 @@ import { requireAuth } from '@/lib/require-auth';
 import { canAccess } from '@/lib/tier/resolver';
 import { dbQuery } from '@/lib/db/client';
 import { computeUnifiedForecast } from '@/lib/forecast/unified-risk-score';
+import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 export const runtime = "nodejs";
 
@@ -106,6 +107,9 @@ export async function GET(request: Request) {
     // No secondary model sources. No recomputation layers.
     // ─────────────────────────────────────────────────────────────────────
 
+    const projectionBasisRecord = reserveProjection.projection_basis as Record<string, any> || {};
+    const goVolatility = Number(projectionBasisRecord?.inputs?.instability_index ?? 0);
+
     const forecast = computeUnifiedForecast({
         pending_balance: Number(financialData.pending_balance ?? 0),
         total_volume_30d: Number(financialData.total_volume_30d ?? 0),
@@ -113,9 +117,40 @@ export async function GET(request: Request) {
         avg_payout_delay_days: financialData.avg_payout_delay_days !== null
             ? Number(financialData.avg_payout_delay_days)
             : null,
+    }, goVolatility);
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Behavioral Calibration Layer
+    // ─────────────────────────────────────────────────────────────────────
+
+    const rBase = forecast.basis.rBase;
+    const rFinal = forecast.riskScore;
+    const disagreementThreshold = Math.max(0.1, rFinal * 0.15);
+    
+    if (Math.abs(rFinal - rBase) > disagreementThreshold) {
+        logOnboardingEvent('forecast_model_disagreement', {
+            workspaceId: workspace.workspaceRecordId,
+            metadata: {
+                rBase,
+                rFinal,
+                volatilityScore: goVolatility,
+                disputeRatio: forecast.basis.disputeRatio,
+                balancePressure: forecast.basis.balancePressure
+            }
+        });
+    }
+
+    logOnboardingEvent('forecast_snapshot_generated', {
+        workspaceId: workspace.workspaceRecordId,
+        metadata: {
+            merchantId: monitoredEntity.id,
+            forecasted_t30_cents: forecast.windows[0].capitalAtRiskCents,
+            riskScore: forecast.riskScore,
+            confidenceBand: forecast.confidenceBand,
+            input_hash: financialData.id,
+            timestamp: new Date().toISOString()
+        }
     });
-    // Go backend volatilityScore intentionally omitted for v1.
-    // When integrated: pass as second arg. Never required for correctness.
 
     // ─────────────────────────────────────────────────────────────────────
     // Map unified forecast → API response contract

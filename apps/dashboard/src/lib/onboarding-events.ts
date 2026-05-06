@@ -65,7 +65,10 @@ export type OnboardingEvent =
     | 'connect_skipped'
     | 'upgrade_cta_clicked'
     | 'upgrade_completed'
-    | 'scan_example_viewed';
+    | 'scan_example_viewed'
+    // Model telemetry
+    | 'forecast_model_disagreement'
+    | 'forecast_snapshot_generated';
 
 /**
  * Client-side event logger.

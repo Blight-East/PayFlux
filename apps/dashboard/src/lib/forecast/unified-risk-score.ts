@@ -46,10 +46,12 @@ export interface ProjectionWindow {
 export interface UnifiedForecast {
     riskScore: number;
     riskSignal: RiskSignal;
+    confidenceBand: 'LOW' | 'MEDIUM' | 'HIGH';
     modelVersion: string;
     drivers: RiskDriver[];
     windows: [ProjectionWindow, ProjectionWindow, ProjectionWindow];
     basis: {
+        rBase: number;
         disputeRatio: number;
         refundRatio: number;
         payoutDelayFactor: number;
@@ -233,9 +235,24 @@ export function computeUnifiedForecast(
     const riskBand = mapRiskBand(r);
     const reserveRateBps = Math.round(multiplier * 10000);
 
+    // Epistemic honesty layer (Confidence Band)
+    let confidenceScore = 0;
+    if (totalVolume > 10000) confidenceScore++;
+    if (safeVolatility > 0) confidenceScore++;
+    // Transaction count is currently always a fallback derived from volume
+    const isTxCountReal = false;
+    if (isTxCountReal) confidenceScore++;
+    // Dispute count is provided by Stripe metrics
+    if (financials.dispute_count_30d !== undefined) confidenceScore++;
+
+    let confidenceBand: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+    if (confidenceScore >= 3) confidenceBand = 'HIGH';
+    else if (confidenceScore === 2) confidenceBand = 'MEDIUM';
+
     return {
         riskScore: Math.round(r * 1000) / 1000,
         riskSignal: mapRiskSignal(r),
+        confidenceBand,
         modelVersion: MODEL_VERSION,
         drivers: extractDrivers(disputeRatio, payoutDelayFactor, balancePressure),
         windows: [
@@ -259,6 +276,7 @@ export function computeUnifiedForecast(
             },
         ],
         basis: {
+            rBase: Math.round(rBase * 1000) / 1000,
             disputeRatio: Math.round(disputeRatio * 10000) / 10000,
             refundRatio: 0,
             payoutDelayFactor,
