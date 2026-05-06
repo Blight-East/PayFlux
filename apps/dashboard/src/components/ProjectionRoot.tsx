@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
-import { ArrowRight, Clock3, Lock, TrendingUp } from 'lucide-react';
+import { ArrowRight, Clock3, Lock, TrendingUp, FileText } from 'lucide-react';
 import ReserveForecastPanel from '@/components/ReserveForecastPanel';
 import ProjectionTimeline from '@/components/ProjectionTimeline';
 import BoardReserveReport from '@/components/BoardReserveReport';
 import { DashboardComposition } from '@/components/dashboard/DashboardComposition';
+import { logOnboardingEventClient } from '@/lib/onboarding-events';
+import UpgradeModal from '@/components/UpgradeModal';
+import ReturningUserBanner from '@/components/ReturningUserBanner';
 
 interface ProjectionRootProps {
     tier: string;
@@ -196,25 +199,55 @@ function normalizeActionDescription(title: string, description: string): string 
 export default function ProjectionRoot({ tier, host, activationReady }: ProjectionRootProps) {
     const isFree = tier === 'free';
     const [forecast, setForecast] = useState<ForecastSummary | null>(null);
+    const [fetchFailed, setFetchFailed] = useState(false);
+    const [fetchTimedOut, setFetchTimedOut] = useState(false);
+    const [exportModalOpen, setExportModalOpen] = useState(false);
+    const [returningModalOpen, setReturningModalOpen] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
+        let timeout: NodeJS.Timeout;
 
         async function loadForecast() {
             if (!activationReady || !host) return;
+
+            // Start a timeout — if forecast hasn't loaded in 8 seconds, show fallback
+            timeout = setTimeout(() => {
+                if (!cancelled && !forecast) {
+                    setFetchTimedOut(true);
+                    console.error('[PAYFLUX_FUNNEL] projection_fetch_timeout', { host });
+                }
+            }, 8000);
+
             try {
                 const params = new URLSearchParams({ host });
                 const response = await fetch(`/api/v1/risk/forecast?${params.toString()}`);
-                if (!response.ok) return;
+                if (!response.ok) {
+                    console.error('[PAYFLUX_FUNNEL] projection_fetch_failed', { host, status: response.status });
+                    if (!cancelled) setFetchFailed(true);
+                    return;
+                }
                 const data = await response.json();
-                if (!cancelled) setForecast(data);
-            } catch {
-                // non-fatal, the deep-dive panel still owns the full data experience
+                if (!cancelled) {
+                    setForecast(data);
+                    setFetchFailed(false);
+                    setFetchTimedOut(false);
+                    console.log('[PAYFLUX_FUNNEL] projection_loaded', { host, riskTier: data.currentRiskTier, signal: data.instabilitySignal });
+                    logOnboardingEventClient('projection_rendered', {
+                        host,
+                        risk_tier: data.currentRiskTier,
+                        instability_signal: data.instabilitySignal,
+                        trend: data.trend,
+                    });
+                }
+            } catch (err) {
+                console.error('[PAYFLUX_FUNNEL] projection_fetch_failed', { host, error: (err as Error).message });
+                if (!cancelled) setFetchFailed(true);
             }
         }
 
         loadForecast();
-        return () => { cancelled = true; };
+        return () => { cancelled = true; clearTimeout(timeout); };
     }, [activationReady, host]);
 
     const actions = useMemo(() => {
@@ -270,8 +303,24 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
 
     const kpis = [
         {
+            label: 'Capital at risk',
+            value: forecast
+                ? fundsAtRisk
+                : fetchFailed
+                    ? 'Analysis in progress'
+                    : fetchTimedOut
+                        ? 'Still analyzing…'
+                        : 'Loading…',
+            detail: longWindow
+                ? `Worst case in ${longWindow.windowDays} days`
+                : fetchFailed
+                    ? 'Your projection will appear when analysis completes'
+                    : 'Live forecast is updating',
+            valueClassName: forecast && (highRisk || elevatedRisk) ? 'text-red-600' : undefined,
+        },
+        {
             label: 'Processor risk',
-            value: forecast ? signalLabel(forecast.instabilitySignal) : 'Loading...',
+            value: forecast ? signalLabel(forecast.instabilitySignal) : (fetchFailed ? 'Pending' : 'Loading…'),
             detail: forecast?.trend === 'DEGRADING'
                 ? 'Concern is rising'
                 : forecast?.trend === 'IMPROVING'
@@ -286,11 +335,6 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
             value: forecast?.trend === 'DEGRADING' ? 'Under watch' : 'Stable',
             detail: forecast?.trend === 'DEGRADING' ? 'PayFlux is watching for slower payouts' : 'No slower payout signal leading now',
             detailClassName: forecast?.trend === 'DEGRADING' ? 'text-amber-600' : 'text-emerald-600',
-        },
-        {
-            label: 'Funds at risk',
-            value: fundsAtRisk,
-            detail: longWindow ? `Possible impact in ${longWindow.windowDays} days` : 'Live forecast is updating below',
         },
         {
             label: 'Monitoring',
@@ -425,6 +469,14 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
         </div>
     ) : (
         <div id="deep-dive" className="space-y-6">
+            {/* Returning user banner — free tier only, once per session */}
+            {isFree && (
+                <ReturningUserBanner
+                    onUpgradeClick={() => setReturningModalOpen(true)}
+                    riskSignal={forecast?.instabilitySignal}
+                />
+            )}
+
             <ReserveForecastPanel host={host} />
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_20rem]">
@@ -467,7 +519,23 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
                                 Export a signed report when you need a portable artifact for internal review or processor conversations.
                             </p>
                             <div className="mt-4">
-                                <BoardReserveReport host={host} />
+                                {isFree ? (
+                                    <button
+                                        onClick={() => {
+                                            logOnboardingEventClient('upgrade_viewed', {
+                                                trigger_type: 'export',
+                                                risk_signal: forecast?.instabilitySignal,
+                                            });
+                                            setExportModalOpen(true);
+                                        }}
+                                        className="flex items-center space-x-1.5 text-[10px] text-gray-500 hover:text-gray-700 transition-colors"
+                                    >
+                                        <FileText className="w-3.5 h-3.5" />
+                                        <span>Reserve Report</span>
+                                    </button>
+                                ) : (
+                                    <BoardReserveReport host={host} />
+                                )}
                             </div>
                         </div>
                     )}
@@ -477,9 +545,10 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
     );
 
     return (
+    <>
         <DashboardComposition
-            title="Dashboard"
-            subtitle="PayFlux shows when your payment processor may start holding back money, slowing payouts, or escalating account risk, and what to do before it happens."
+            title="Capital at Risk"
+            subtitle="Forward-looking projection of funds your processor may hold back."
             headerSlot={(
                 <UserButton
                     appearance={{
@@ -498,5 +567,26 @@ export default function ProjectionRoot({ tier, host, activationReady }: Projecti
             context={context}
             lowerSection={lowerSection}
         />
+
+        {/* Export paywall modal — free tier */}
+        <UpgradeModal
+            open={exportModalOpen}
+            onClose={() => setExportModalOpen(false)}
+            trigger="export"
+            visibleRisk={forecast ? fundsAtRisk : undefined}
+            riskSignal={forecast?.instabilitySignal as any}
+            hasStripeConnection={true}
+        />
+
+        {/* Returning user modal */}
+        <UpgradeModal
+            open={returningModalOpen}
+            onClose={() => setReturningModalOpen(false)}
+            trigger="returning_user"
+            visibleRisk={forecast ? fundsAtRisk : undefined}
+            riskSignal={forecast?.instabilitySignal as any}
+            hasStripeConnection={true}
+        />
+    </>
     );
 }

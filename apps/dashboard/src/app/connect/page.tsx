@@ -59,6 +59,7 @@ export default async function ConnectPage({ searchParams }: PageProps) {
         redirect('/dashboard');
     }
 
+    console.log('[PAYFLUX_FUNNEL] connect_page_render', { userId, isConnected, workspaceId: workspaceRecord.id });
     logOnboardingEvent('connect_viewed', { userId, workspaceId: workspaceRecord.id });
 
     const resolvedSearchParams = (await searchParams) ?? {};
@@ -88,10 +89,13 @@ export default async function ConnectPage({ searchParams }: PageProps) {
                             </svg>
                         </div>
                         <h1 className="text-xl font-semibold text-white">
-                            Analyze your Stripe account.
+                            Analyze your Stripe account
                         </h1>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            Read access to your payouts, disputes, and balances so PayFlux can project capital exposure for the next 30 days.
+                            See how much capital your processor may hold back in the next 30, 60, and 90 days.
+                        </p>
+                        <p className="text-[10px] text-emerald-400/70 uppercase tracking-[0.15em] font-bold">
+                            Read-only · PayFlux cannot move funds or change settings
                         </p>
                         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

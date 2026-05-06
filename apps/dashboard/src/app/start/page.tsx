@@ -53,10 +53,10 @@ export default async function StartPage() {
                             Sign in
                         </Link>
                         <Link
-                            href="/scan"
+                            href="/sign-up?redirect_url=%2Fconnect"
                                 className="border border-[#f7f7f5] bg-[#f7f7f5] px-4 py-2 font-mono text-xs text-[#0a0a0a] no-underline transition-opacity hover:opacity-85"
                         >
-                            See your payout risk
+                            Analyze your Stripe account
                         </Link>
                     </div>
                     </div>
@@ -73,26 +73,26 @@ export default async function StartPage() {
                                 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
                             >
                                 Your processor can lock <em className="font-normal italic text-[#c8533a]">$680k of your cash</em> before they tell you.
-                    </h1>
+                            </h1>
                             <p className="mt-8 max-w-2xl border-l border-[#2a2a27] pl-5 font-mono text-sm leading-7 text-[#9a9a93]">
-                                PayFlux analyzes payout patterns, disputes, balance velocity, and processor signals from your Stripe account. Start with a preliminary external signal scan, then connect Stripe read-only for live payout prediction.
-                    </p>
+                                PayFlux analyzes payout patterns, disputes, balance velocity, and processor signals from your Stripe account. Connect Stripe read-only and see how much capital is at risk in minutes.
+                            </p>
                             <div className="mt-8 flex flex-wrap gap-3">
                         <Link
-                            href="/scan"
+                            href="/sign-up?redirect_url=%2Fconnect"
                                     className="border border-[#f7f7f5] bg-[#f7f7f5] px-6 py-3 font-mono text-sm text-[#0a0a0a] no-underline transition-opacity hover:opacity-85"
                         >
-                                    See your payout risk&nbsp;→
+                                    Analyze your Stripe account&nbsp;→
                         </Link>
-                        <a
-                                    href="https://payflux.dev/app/posture.html"
+                        <Link
+                                    href="/scan"
                                     className="border-b border-[#2a2a27] px-3 py-3 font-mono text-sm text-[#9a9a93] no-underline transition-colors hover:border-[#f7f7f5] hover:text-[#f7f7f5]"
                         >
-                                    View live dashboard&nbsp;→
-                        </a>
+                                    Run a preliminary scan first&nbsp;→
+                        </Link>
                     </div>
                             <p className="mt-5 font-mono text-xs uppercase tracking-[0.14em] text-[#6b6b66]">
-                                Free · 2 minutes · read-only Stripe scope · no card
+                                Free · 2 minutes · read-only · no fund movement
                             </p>
                             </div>
 
@@ -148,14 +148,14 @@ export default async function StartPage() {
                                 Same path. Same promise. No blue SaaS detour.
                             </h2>
                             <p className="max-w-md text-sm leading-7 text-[#9a9a93]">
-                                The first scan is only a preliminary external signal check. The real prediction layer begins when Stripe is connected read-only.
+                                The full forward-looking projection begins when Stripe is connected read-only. A preliminary scan is available but optional.
                             </p>
                                     </div>
                         <div className="grid gap-px bg-[#2a2a27] md:grid-cols-3">
                             {[
-                                ['01', 'Preliminary signal scan', 'External signals only. No processor login and no card required.'],
-                                ['02', 'Read-only Stripe connection', 'Payout, dispute, balance, and account signals power the live model.'],
-                                ['03', 'Capital-at-risk view', 'See projection windows, detected signals, confidence, and recommended actions.'],
+                                ['01', 'Connect Stripe read-only', 'Payout, dispute, balance, and account signals power the live projection model.'],
+                                ['02', 'See capital at risk', 'A forward-looking number showing how much money Stripe may hold back before they tell you.'],
+                                ['03', 'Act before they move', 'Detected signals, confidence scoring, and recommended actions to reduce payout risk.'],
                             ].map(([step, title, desc]) => (
                                 <div key={step} className="bg-[#0a0a0a] p-6">
                                     <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#c8533a]">{step}</p>
@@ -183,15 +183,15 @@ export default async function StartPage() {
 
                     <section className="border-t border-[#1f1f1d] px-6 py-20 text-center">
                         <p className="mx-auto max-w-2xl text-[28px] font-normal leading-tight tracking-[-0.01em]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-                            See your payout risk in 2 minutes. Read-only. Free.
+                            See how much capital is at risk. Read-only. Free.
                         </p>
                     <Link
-                        href="/scan"
+                        href="/sign-up?redirect_url=%2Fconnect"
                             className="mt-8 inline-flex border border-[#f7f7f5] bg-[#f7f7f5] px-7 py-3 font-mono text-sm text-[#0a0a0a] no-underline transition-opacity hover:opacity-85"
                     >
-                            See your payout risk&nbsp;→
+                            Analyze your Stripe account&nbsp;→
                     </Link>
-                        <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-[#6b6b66]">Free · no card · preliminary external scan first</p>
+                        <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-[#6b6b66]">Free · 2 minutes · read-only Stripe scope · no fund movement</p>
                 </section>
                 </main>
 
@@ -219,24 +219,31 @@ export default async function StartPage() {
         });
     }
 
-    switch (state.stage) {
-        case 'none':
-            redirect('/scan');
-        case 'scanned':
-            // Encourage connection but don't force — they can skip to dashboard
-            redirect('/connect');
-        case 'connected_free':
-        case 'live_monitored_free':
-            redirect('/dashboard');
-        case 'upgraded': {
-            // Route through activation flow — it handles all sub-states
-            const activation = await resolveActivationStatus(userId);
-            if (activation?.state === 'live_monitored') {
-                redirect('/dashboard');
-            }
-            redirect('/activate');
+    const destination = (() => {
+        switch (state.stage) {
+            case 'none':
+                return '/connect';
+            case 'scanned':
+                return '/connect';
+            case 'connected_free':
+                return '/dashboard';
+            case 'live_monitored_free':
+                return '/dashboard';
+            case 'upgraded':
+                return null; // handled below
+            default:
+                return '/connect';
         }
-        default:
-            redirect('/scan');
+    })();
+
+    if (destination) {
+        console.log('[PAYFLUX_FUNNEL] start_route', { userId, stage: state.stage, destination });
+        redirect(destination);
     }
+
+    // 'upgraded' — route through activation flow
+    const activation = await resolveActivationStatus(userId);
+    const upgradedDestination = activation?.state === 'live_monitored' ? '/dashboard' : '/activate';
+    console.log('[PAYFLUX_FUNNEL] start_route', { userId, stage: state.stage, destination: upgradedDestination, activationState: activation?.state });
+    redirect(upgradedDestination);
 }

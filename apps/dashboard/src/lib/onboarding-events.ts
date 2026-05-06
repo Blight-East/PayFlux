@@ -39,6 +39,13 @@ export type OnboardingEvent =
     | 'activation_failed'
     | 'activation_stalled'
     | 'activation_overridden'
+    | 'projection_rendered'
+    | 'activation_success'
+    // Monetization trigger events
+    | 'locked_panel_viewed'
+    | 'locked_panel_clicked'
+    | 'export_blocked'
+    | 'upgrade_dismissed'
     // Dashboard / internal events
     | 'dashboard_preview_viewed'
     | 'onboarding_stage_changed'

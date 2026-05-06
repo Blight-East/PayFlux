@@ -10,6 +10,7 @@ import ProjectionRoot from '@/components/ProjectionRoot';
 import DashboardFreePreview from '@/components/DashboardFreePreview';
 import ActivationBanner from '@/components/ActivationBanner';
 import FreeArmingProgress from '@/components/FreeArmingProgress';
+import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 function deriveFreePreviewHost(scanSummary: Record<string, unknown>, primaryHostCandidate: string | null): string | null {
     if (primaryHostCandidate) {
@@ -30,7 +31,7 @@ export default async function DashboardPage() {
     const workspace = await resolveWorkspace(userId, { allowAdminBypass: false });
 
     if (!workspace) {
-        redirect('/scan');
+        redirect('/connect');
     }
 
     const workspaceRecord = await findWorkspaceById(workspace.workspaceRecordId);
@@ -54,6 +55,15 @@ export default async function DashboardPage() {
         );
 
         if (freeIsLive) {
+            console.log('[PAYFLUX_FUNNEL] dashboard_render', { tier: 'free', freeIsLive: true, hasStripeConnection: true, host: freeMonitoredEntity!.primary_host });
+
+            // Fire activation_completed for free tier (guard duplicate with log check)
+            logOnboardingEvent('activation_completed', {
+                userId,
+                workspaceId: workspace.workspaceRecordId,
+                metadata: { tier: 'free', host: freeMonitoredEntity!.primary_host },
+            });
+
             return (
                 <ProjectionRoot
                     tier="free"
@@ -71,6 +81,8 @@ export default async function DashboardPage() {
             (workspaceRecord?.latest_scan_summary as Record<string, unknown> | undefined) ?? {},
             workspaceRecord?.primary_host_candidate ?? null
         );
+
+        console.log('[PAYFLUX_FUNNEL] dashboard_render', { tier: 'free', freeIsLive: false, hasStripeConnection: onboarding.hasStripeConnection, host: primaryHost });
 
         return (
             <DashboardFreePreview
@@ -98,6 +110,8 @@ export default async function DashboardPage() {
     if (!monitoredEntity?.primary_host) {
         redirect('/activate/arming');
     }
+
+    console.log('[PAYFLUX_FUNNEL] dashboard_render', { tier: workspace.tier, freeIsLive: false, hasStripeConnection: true, host: monitoredEntity.primary_host });
 
     return (
         <div>
