@@ -104,26 +104,9 @@ class SQLiteEventDB implements EventDB {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class PostgresEventDB implements EventDB {
-    private pool: any = null;
-
-    private async getPool(): Promise<any> {
-        if (!this.pool) {
-            // pg is bundled by Next.js into server chunks
-            const pg = await import('pg');
-            const Pool = pg.Pool || (pg as any).default?.Pool;
-            this.pool = new Pool({
-                connectionString: process.env.DATABASE_URL,
-                max: 3,
-                idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: 5000,
-            });
-        }
-        return this.pool;
-    }
-
     async init(): Promise<void> {
-        const pool = await this.getPool();
-        await pool.query(`
+        const { dbQuery } = await import('./db/client');
+        await dbQuery(`
             CREATE TABLE IF NOT EXISTS onboarding_events (
                 id TEXT PRIMARY KEY,
                 event_name TEXT NOT NULL,
@@ -133,25 +116,25 @@ class PostgresEventDB implements EventDB {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         `);
-        await pool.query(`
+        await dbQuery(`
             CREATE INDEX IF NOT EXISTS idx_events_user ON onboarding_events(user_id)
         `);
-        await pool.query(`
+        await dbQuery(`
             CREATE INDEX IF NOT EXISTS idx_events_name ON onboarding_events(event_name)
         `);
     }
 
     async insert(row: Omit<OnboardingEventRow, 'id'>): Promise<void> {
-        const pool = await this.getPool();
+        const { dbQuery } = await import('./db/client');
         const id = crypto.randomUUID();
-        await pool.query(
+        await dbQuery(
             'INSERT INTO onboarding_events (id, event_name, user_id, workspace_id, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6)',
             [id, row.event_name, row.user_id, row.workspace_id, row.metadata, row.created_at]
         );
     }
 
     async query(opts: { limit?: number; userId?: string; eventName?: string }): Promise<OnboardingEventRow[]> {
-        const pool = await this.getPool();
+        const { dbQuery } = await import('./db/client');
         const conditions: string[] = [];
         const params: any[] = [];
         let paramIdx = 1;
@@ -168,7 +151,7 @@ class PostgresEventDB implements EventDB {
         const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
         params.push(opts.limit ?? 100);
 
-        const { rows } = await pool.query(
+        const { rows } = await dbQuery(
             `SELECT id, event_name, user_id, workspace_id, metadata, created_at FROM onboarding_events ${where} ORDER BY created_at DESC LIMIT $${paramIdx}`,
             params
         );

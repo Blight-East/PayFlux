@@ -153,13 +153,23 @@ export async function GET(request: Request) {
     const featureHash = crypto.createHash('sha256').update(featureSnapshotJson).digest('hex').substring(0, 16);
 
     // Save reproducible snapshot to DB (including uncertainty bounds for V4 coverage ratio)
-    await dbQuery(`
+    // DEDUPLICATION: Only insert if feature_hash or model_version changed, OR 24h elapsed
+    const snapshotResult = await dbQuery(`
         INSERT INTO forecast_snapshots (
             workspace_id, stripe_account_id, stripe_financials_id, model_version,
             forecasted_t30_cents, forecasted_t30_cents_min, forecasted_t30_cents_max,
             confidence_band, data_completeness,
             feature_hash, feature_snapshot_json
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        )
+        SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+        WHERE NOT EXISTS (
+            SELECT 1 FROM forecast_snapshots
+            WHERE workspace_id = $1
+              AND feature_hash = $10
+              AND model_version = $4
+              AND created_at > NOW() - INTERVAL '24 hours'
+        )
+        RETURNING id
     `, [
         workspace.workspaceRecordId,
         processorConnection.stripe_account_id,
@@ -174,19 +184,22 @@ export async function GET(request: Request) {
         featureSnapshotJson
     ]).catch(err => {
         console.error('[FORECAST] Failed to save DB snapshot:', err);
+        return { rowCount: 0 };
     });
 
-    logOnboardingEvent('forecast_snapshot_generated', {
-        workspaceId: workspace.workspaceRecordId,
-        metadata: {
-            merchantId: monitoredEntity.id,
-            forecasted_t30_cents: forecast.modeledProjections.windows[0].capitalAtRiskCents,
-            riskScore: forecast.derivedSignals.riskScore,
-            confidenceBand: forecast.derivedSignals.confidenceBand,
-            input_hash: featureHash,
-            timestamp: new Date().toISOString()
-        }
-    });
+    if (snapshotResult && snapshotResult.rowCount && snapshotResult.rowCount > 0) {
+        logOnboardingEvent('forecast_snapshot_generated', {
+            workspaceId: workspace.workspaceRecordId,
+            metadata: {
+                merchantId: monitoredEntity.id,
+                forecasted_t30_cents: forecast.modeledProjections.windows[0].capitalAtRiskCents,
+                riskScore: forecast.derivedSignals.riskScore,
+                confidenceBand: forecast.derivedSignals.confidenceBand,
+                input_hash: featureHash,
+                timestamp: new Date().toISOString()
+            }
+        });
+    }
 
     // ─────────────────────────────────────────────────────────────────────
     // Map unified forecast → API response contract
