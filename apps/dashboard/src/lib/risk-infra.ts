@@ -44,11 +44,41 @@ export class RiskMetrics {
 export class RiskLogger {
     static log(event: string, context: Record<string, any>) {
         if (process.env.NODE_ENV === 'test') return;
-        console.log(JSON.stringify({
+        
+        const payload: Record<string, any> = {
             timestamp: new Date().toISOString(),
             event,
-            ...context
-        }));
+            ...context,
+            traceId: context.traceId || crypto.randomUUID(),
+        };
+
+        // If error is present, map it for Sentry parsing
+        if (context.error instanceof Error) {
+            payload.errorMessage = context.error.message;
+            payload.errorStack = context.error.stack;
+        }
+
+        console.log(JSON.stringify(payload));
+    }
+
+    static async withLatency<T>(
+        operationName: string, 
+        context: Record<string, any>, 
+        fn: () => Promise<T>
+    ): Promise<T> {
+        const start = performance.now();
+        try {
+            const result = await fn();
+            const durationMs = performance.now() - start;
+            if (durationMs > 500) {
+                this.log(`SLOW_OPERATION:${operationName}`, { ...context, durationMs });
+            }
+            return result;
+        } catch (error) {
+            const durationMs = performance.now() - start;
+            this.log(`ERROR:${operationName}`, { ...context, error, durationMs });
+            throw error;
+        }
     }
 }
 
@@ -374,7 +404,7 @@ interface BucketState {
 }
 
 export class RateLimiter {
-    private static async consume(key: string, config: QuotaConfig): Promise<{ allowed: boolean; headers: Record<string, string> }> {
+    private static async consume(key: string, config: QuotaConfig, cost: number = 1): Promise<{ allowed: boolean; headers: Record<string, string> }> {
         const now = Date.now();
         const stateStr = await store.get(key);
         let state: BucketState = stateStr ? JSON.parse(stateStr) : { tokens: config.capacity, lastRefill: now };
@@ -385,16 +415,16 @@ export class RateLimiter {
         state.tokens = Math.min(config.capacity, state.tokens + refillTokens);
         state.lastRefill = now;
 
-        const allowed = state.tokens >= 1;
+        const allowed = state.tokens >= cost;
         let reset = 0;
 
         if (allowed) {
-            state.tokens -= 1;
-            if (state.tokens < 1) {
-                reset = Math.ceil((1 - state.tokens) / config.refillRate);
+            state.tokens -= cost;
+            if (state.tokens < cost) {
+                reset = Math.ceil((cost - state.tokens) / config.refillRate);
             }
         } else {
-            reset = Math.ceil((1 - state.tokens) / config.refillRate);
+            reset = Math.ceil((cost - state.tokens) / config.refillRate);
         }
 
         const remaining = Math.floor(state.tokens);
@@ -425,12 +455,13 @@ export class RateLimiter {
      */
     static async check(
         accountId: string,
-        config: QuotaConfig
+        config: QuotaConfig,
+        cost: number = 1
     ): Promise<{ allowed: boolean; headers: Record<string, string> }> {
         // Key by accountId ONLY (not tier, not API key)
         const key = `rl:account:${accountId}`;
 
-        return await this.consume(key, config);
+        return await this.consume(key, config, cost);
     }
 }
 

@@ -68,7 +68,7 @@ function constructEvent(payload: string, sig: string | null, secret: string | un
     }
 
     if (isValidStripeSecret(secret)) {
-        const stripe = new Stripe('sk_test_dummy');
+        const stripe = getStripeClient()!;
         return stripe.webhooks.constructEvent(payload, sig, secret);
     }
 
@@ -604,6 +604,22 @@ export async function POST(request: Request) {
     try {
         const event = constructEvent(payload, sig, secret);
         const eventTimestamp = new Date(event.created * 1000).toISOString();
+
+        // 1. DEDUPLICATION (Replay Storm Protection)
+        const dedupResult = await dbQuery(`
+            INSERT INTO processed_webhooks (stripe_event_id)
+            VALUES ($1)
+            ON CONFLICT (stripe_event_id) DO NOTHING
+            RETURNING id
+        `, [event.id]).catch(err => {
+            console.error('[WEBHOOK] Failed to deduplicate event:', err);
+            return { rowCount: 1 }; // Fail open if DB is struggling
+        });
+
+        if (dedupResult && dedupResult.rowCount === 0) {
+            console.log(`[WEBHOOK] Deflected replay for event ${event.id}`);
+            return NextResponse.json({ received: true, deduplicated: true });
+        }
 
         switch (event.type) {
             case 'checkout.session.completed':

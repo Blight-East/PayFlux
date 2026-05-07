@@ -10,6 +10,7 @@ export interface GovernanceInput {
     riskScore: number;
     confidenceBand: 'LOW' | 'MEDIUM' | 'HIGH';
     dataCompletenessScore: number;
+    dataAgeHours: number;
 
     modeledProjections: {
         t30: number;
@@ -38,6 +39,7 @@ export interface BasePolicyProps {
     reasoning: string[];
     ruleTrace: RuleTrace[];
     isValid: boolean;
+    dataFreshnessStatus: 'fresh' | 'degraded' | 'locked' | 'unavailable';
 }
 
 export type ObservePolicy = BasePolicyProps & {
@@ -72,7 +74,31 @@ export type CriticalPolicy = BasePolicyProps & {
     uiFraming: { headlineStyle: 'critical'; ctaIntensity: 'high-pressure' };
 };
 
-export type PresentationPolicy = ObservePolicy | WarnPolicy | EscalatePolicy | CriticalPolicy;
+export type DegradedPolicy = BasePolicyProps & {
+    mode: 'degraded';
+    urgencyLevel: 0;
+    showProjectionWindows: { t30: boolean; t60: boolean; t90: boolean };
+    displayFormat: { t30: 'blurred'; t60: 'blurred'; t90: 'blurred' };
+    uiFraming: { headlineStyle: 'warning'; ctaIntensity: 'soft' };
+};
+
+export type LockedPolicy = BasePolicyProps & {
+    mode: 'locked';
+    urgencyLevel: 0;
+    showProjectionWindows: { t30: boolean; t60: boolean; t90: boolean };
+    displayFormat: { t30: 'locked'; t60: 'locked'; t90: 'locked' };
+    uiFraming: { headlineStyle: 'warning'; ctaIntensity: 'soft' };
+};
+
+export type UnavailablePolicy = BasePolicyProps & {
+    mode: 'unavailable';
+    urgencyLevel: 0;
+    showProjectionWindows: { t30: false; t60: false; t90: false };
+    displayFormat: { t30: 'hidden'; t60: 'hidden'; t90: 'hidden' };
+    uiFraming: { headlineStyle: 'neutral'; ctaIntensity: 'soft' };
+};
+
+export type PresentationPolicy = ObservePolicy | WarnPolicy | EscalatePolicy | CriticalPolicy | DegradedPolicy | LockedPolicy | UnavailablePolicy;
 
 function validateAndNormalizePolicy(policy: PresentationPolicy, input: GovernanceInput): PresentationPolicy {
     let violatesInvariant = false;
@@ -112,6 +138,7 @@ function validateAndNormalizePolicy(policy: PresentationPolicy, input: Governanc
             reasoning: policy.reasoning,
             ruleTrace: policy.ruleTrace,
             isValid: false, // Explicitly marks this payload as having breached invariants
+            dataFreshnessStatus: policy.dataFreshnessStatus,
         };
         return normalizedPolicy;
     }
@@ -128,8 +155,62 @@ export function computePresentationPolicy(input: GovernanceInput): PresentationP
         reasoning.push(reason);
     };
 
+    // 0. Hard Staleness Governance
+    if (input.dataAgeHours > 24 * 7) {
+        trace('STALENESS_UNAVAILABLE', 'unavailable', { age: input.dataAgeHours }, 'Data is older than 7 days. Forecast is unavailable.');
+        return {
+            policyVersion: 'v3.2.0',
+            mode: 'unavailable',
+            urgencyLevel: 0,
+            allowedPrecision: 'blur',
+            showDrivers: false,
+            showConfidenceBand: false,
+            showProjectionWindows: { t30: false, t60: false, t90: false },
+            displayFormat: { t30: 'hidden', t60: 'hidden', t90: 'hidden' },
+            uiFraming: { headlineStyle: 'neutral', ctaIntensity: 'soft' },
+            reasoning,
+            ruleTrace,
+            isValid: true,
+            dataFreshnessStatus: 'unavailable'
+        };
+    } else if (input.dataAgeHours > 72) {
+        trace('STALENESS_LOCKED', 'locked', { age: input.dataAgeHours }, 'Data is older than 72 hours. Projections locked.');
+        return {
+            policyVersion: 'v3.2.0',
+            mode: 'locked',
+            urgencyLevel: 0,
+            allowedPrecision: 'blur',
+            showDrivers: true,
+            showConfidenceBand: true,
+            showProjectionWindows: { t30: true, t60: true, t90: true },
+            displayFormat: { t30: 'locked', t60: 'locked', t90: 'locked' },
+            uiFraming: { headlineStyle: 'warning', ctaIntensity: 'soft' },
+            reasoning,
+            ruleTrace,
+            isValid: true,
+            dataFreshnessStatus: 'locked'
+        };
+    } else if (input.dataAgeHours >= 24) {
+        trace('STALENESS_DEGRADED', 'degraded', { age: input.dataAgeHours }, 'Data is between 24-72 hours old. Projections degraded.');
+        return {
+            policyVersion: 'v3.2.0',
+            mode: 'degraded',
+            urgencyLevel: 0,
+            allowedPrecision: 'blur',
+            showDrivers: true,
+            showConfidenceBand: true,
+            showProjectionWindows: { t30: true, t60: true, t90: true },
+            displayFormat: { t30: 'blurred', t60: 'blurred', t90: 'blurred' },
+            uiFraming: { headlineStyle: 'warning', ctaIntensity: 'soft' },
+            reasoning,
+            ruleTrace,
+            isValid: true,
+            dataFreshnessStatus: 'degraded'
+        };
+    }
+
     // 1. Mode Classification
-    let mode: PresentationPolicy['mode'] = 'critical';
+    let mode: 'observe' | 'warn' | 'escalate' | 'critical' = 'critical';
     if (input.riskScore < 0.15 && input.dataCompletenessScore > 0.7) {
         mode = 'observe';
         trace('MODE_OBSERVE', mode, { r: input.riskScore, completeness: input.dataCompletenessScore }, 'Low risk and high data completeness.');
@@ -158,69 +239,73 @@ export function computePresentationPolicy(input: GovernanceInput): PresentationP
     const t30DisplayFormat = allowedPrecision === 'blur' ? 'range' : allowedPrecision;
 
     // Build the strict mode-specific policy
-    let rawPolicy: PresentationPolicy;
+    let finalPolicy: PresentationPolicy;
 
     if (mode === 'observe') {
-        rawPolicy = {
+        finalPolicy = {
             policyVersion: 'v3.2.0',
             mode: 'observe',
             urgencyLevel: 0,
             allowedPrecision,
-            showProjectionWindows: { t30: true, t60: false, t90: false },
-            displayFormat: { t30: t30DisplayFormat, t60: 'hidden', t90: 'hidden' },
             showDrivers: true,
             showConfidenceBand: true,
+            showProjectionWindows: { t30: true, t60: true, t90: false },
+            displayFormat: { t30: t30DisplayFormat, t60: 'hidden', t90: 'hidden' },
             uiFraming: { headlineStyle: 'neutral', ctaIntensity: 'soft' },
             reasoning,
             ruleTrace,
             isValid: true,
+            dataFreshnessStatus: 'fresh'
         };
     } else if (mode === 'warn') {
-        rawPolicy = {
+        finalPolicy = {
             policyVersion: 'v3.2.0',
             mode: 'warn',
             urgencyLevel: 1,
             allowedPrecision,
-            showProjectionWindows: { t30: true, t60: true, t90: false },
-            displayFormat: { t30: t30DisplayFormat, t60: 'locked', t90: 'hidden' },
             showDrivers: true,
             showConfidenceBand: true,
+            showProjectionWindows: { t30: true, t60: true, t90: false },
+            displayFormat: { t30: t30DisplayFormat, t60: 'locked', t90: 'hidden' },
             uiFraming: { headlineStyle: 'warning', ctaIntensity: 'standard' },
             reasoning,
             ruleTrace,
             isValid: true,
+            dataFreshnessStatus: 'fresh'
         };
     } else if (mode === 'escalate') {
-        rawPolicy = {
+        finalPolicy = {
             policyVersion: 'v3.2.0',
             mode: 'escalate',
             urgencyLevel: 2,
             allowedPrecision,
-            showProjectionWindows: { t30: true, t60: true, t90: true },
-            displayFormat: { t30: t30DisplayFormat, t60: 'blurred', t90: 'locked' },
             showDrivers: true,
             showConfidenceBand: true,
+            showProjectionWindows: { t30: true, t60: true, t90: true },
+            displayFormat: { t30: t30DisplayFormat, t60: 'blurred', t90: 'locked' },
             uiFraming: { headlineStyle: 'loss-framed', ctaIntensity: 'high-pressure' },
             reasoning,
             ruleTrace,
             isValid: true,
+            dataFreshnessStatus: 'fresh'
         };
     } else {
-        rawPolicy = {
+        finalPolicy = {
             policyVersion: 'v3.2.0',
             mode: 'critical',
             urgencyLevel: 3,
             allowedPrecision,
-            showProjectionWindows: { t30: true, t60: true, t90: true },
-            displayFormat: { t30: t30DisplayFormat, t60: 'blurred', t90: 'blurred' },
             showDrivers: true,
             showConfidenceBand: true,
+            showProjectionWindows: { t30: true, t60: true, t90: true },
+            displayFormat: { t30: t30DisplayFormat, t60: 'blurred', t90: 'blurred' },
             uiFraming: { headlineStyle: 'critical', ctaIntensity: 'high-pressure' },
             reasoning,
             ruleTrace,
             isValid: true,
+            dataFreshnessStatus: 'fresh'
         };
     }
 
-    return validateAndNormalizePolicy(rawPolicy, input);
+    return validateAndNormalizePolicy(finalPolicy, input);
 }

@@ -11,6 +11,7 @@ import { dbQuery } from '@/lib/db/client';
 import { computeUnifiedForecast } from '@/lib/forecast/unified-risk-score';
 import { computePresentationPolicy, GovernanceInput } from '@/lib/forecast/presentation-policy';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
+import { RateLimiter } from '@/lib/risk-infra';
 
 export const runtime = "nodejs";
 
@@ -19,6 +20,12 @@ export async function GET(request: Request) {
     if (!authResult.ok) return authResult.response;
 
     const { workspace } = authResult;
+    
+    const rlResult = await RateLimiter.check(workspace.workspaceRecordId, { capacity: 50, refillRate: 5, window: 60 }, 5);
+    if (!rlResult.allowed) {
+        return new NextResponse('Too Many Requests', { status: 429, headers: rlResult.headers });
+    }
+
     const hasFullProjectionAccess = canAccess(workspace.tier, "reserve_projection");
     const hasBasicAccess = canAccess(workspace.tier, "basic_risk_score");
 
@@ -89,7 +96,8 @@ export async function GET(request: Request) {
     // ─────────────────────────────────────────────────────────────────────
 
     const finResult = await dbQuery(`
-        SELECT * FROM stripe_financials 
+        SELECT id, pending_balance, total_volume_30d, dispute_count_30d, avg_payout_delay_days, fetched_at 
+        FROM stripe_financials 
         WHERE workspace_id = $1 
         ORDER BY fetched_at DESC 
         LIMIT 1
@@ -261,6 +269,7 @@ export async function GET(request: Request) {
         riskScore: forecast.derivedSignals.riskScore,
         confidenceBand: forecast.derivedSignals.confidenceBand,
         dataCompletenessScore: forecast.derivedSignals.dataCompletenessScore,
+        dataAgeHours,
         modeledProjections: {
             t30: forecast.modeledProjections.windows[0].capitalAtRiskCents,
             t60: forecast.modeledProjections.windows[1].capitalAtRiskCents,
