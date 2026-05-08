@@ -4,7 +4,7 @@ import Link from 'next/link';
 import SignOutLink from '@/components/SignOutLink';
 import ConnectStripeCTA from '@/components/ConnectStripeCTA';
 import { getStripeProcessorConnectionByWorkspaceId } from '@/lib/db/processor-connections';
-import { resolveOrCreateWorkspaceRecord } from '@/lib/db/workspaces';
+import { resolveOrCreateWorkspaceRecord, findWorkspaceByClerkOrgId } from '@/lib/db/workspaces';
 import { logOnboardingEvent } from '@/lib/onboarding-events-server';
 
 export const runtime = 'nodejs';
@@ -33,21 +33,47 @@ async function resolveActiveOrgId(client: any, userId: string, orgId: string | n
 }
 
 export default async function ConnectPage({ searchParams }: PageProps) {
+    const totalStart = performance.now();
+    const requestId = crypto.randomUUID();
+    let clerkMs = 0;
+    let dbMs = 0;
+    let redirectMs = 0;
+
     const { userId, orgId } = await auth();
     if (!userId) redirect('/sign-in?redirect_url=%2Fconnect');
 
-    const client = await clerkClient();
-    const activeOrgId = await resolveActiveOrgId(client, userId, orgId ?? null);
-    const organization = await client.organizations.getOrganization({ organizationId: activeOrgId });
+    let workspaceRecord = null;
+    let activeOrgId = orgId ?? null;
 
-    const workspaceRecord = await resolveOrCreateWorkspaceRecord({
-        clerkOrgId: activeOrgId,
-        name: organization.name,
-        ownerClerkUserId: userId,
-    });
+    const dbStart = performance.now();
+    if (activeOrgId) {
+        workspaceRecord = await findWorkspaceByClerkOrgId(activeOrgId);
+    }
+    dbMs += performance.now() - dbStart;
+
+    if (!workspaceRecord) {
+        const clerkStart = performance.now();
+        const client = await clerkClient();
+        const resolvedOrgId = await resolveActiveOrgId(client, userId, activeOrgId);
+        activeOrgId = resolvedOrgId;
+        const organization = await client.organizations.getOrganization({ organizationId: resolvedOrgId });
+        clerkMs += performance.now() - clerkStart;
+
+        const dbStart2 = performance.now();
+        workspaceRecord = await resolveOrCreateWorkspaceRecord({
+            clerkOrgId: resolvedOrgId,
+            name: organization.name,
+            ownerClerkUserId: userId,
+        });
+        dbMs += performance.now() - dbStart2;
+    }
+
+    const dbStart3 = performance.now();
     const processorConnection = await getStripeProcessorConnectionByWorkspaceId(workspaceRecord.id);
     const isConnected = processorConnection?.status === 'connected';
+    dbMs += performance.now() - dbStart3;
 
+    const redirectStart = performance.now();
     if (isConnected) {
         if (workspaceRecord.entitlement_tier === 'pro' || workspaceRecord.entitlement_tier === 'enterprise') {
             if (workspaceRecord.activation_state === 'active') {
@@ -58,8 +84,20 @@ export default async function ConnectPage({ searchParams }: PageProps) {
 
         redirect('/dashboard');
     }
+    redirectMs += performance.now() - redirectStart;
 
-    console.log('[PAYFLUX_FUNNEL] connect_page_render', { userId, isConnected, workspaceId: workspaceRecord.id });
+    const totalMs = performance.now() - totalStart;
+
+    console.info('[CONNECT_PROFILE]', {
+        requestId,
+        orgId: activeOrgId,
+        workspaceId: workspaceRecord.id,
+        totalMs,
+        clerkMs,
+        dbMs,
+        redirectMs
+    });
+
     logOnboardingEvent('connect_viewed', { userId, workspaceId: workspaceRecord.id });
 
     const resolvedSearchParams = (await searchParams) ?? {};

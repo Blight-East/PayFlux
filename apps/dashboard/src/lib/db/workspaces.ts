@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg';
 import { dbQuery, withDbTransaction } from './client';
+import { cache } from 'react';
 import { mapWorkspaceRow, normalizeHostCandidate } from './rows';
 import type {
     JsonObject,
@@ -30,15 +31,15 @@ export interface AttachScanSummaryArgs {
     latestScanSummary: JsonObject;
 }
 
-export async function findWorkspaceByClerkOrgId(clerkOrgId: string): Promise<WorkspaceRow | null> {
+export const findWorkspaceByClerkOrgId = cache(async (clerkOrgId: string): Promise<WorkspaceRow | null> => {
     const result = await dbQuery('SELECT * FROM workspaces WHERE clerk_org_id = $1 LIMIT 1', [clerkOrgId]);
     return result.rows[0] ? mapWorkspaceRow(result.rows[0]) : null;
-}
+});
 
-export async function findWorkspaceById(workspaceId: string): Promise<WorkspaceRow | null> {
+export const findWorkspaceById = cache(async (workspaceId: string): Promise<WorkspaceRow | null> => {
     const result = await dbQuery('SELECT * FROM workspaces WHERE id = $1 LIMIT 1', [workspaceId]);
     return result.rows[0] ? mapWorkspaceRow(result.rows[0]) : null;
-}
+});
 
 export async function resolveOrCreateWorkspaceRecord(
     args: ResolveWorkspaceRecordArgs

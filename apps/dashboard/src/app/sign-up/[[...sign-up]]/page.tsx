@@ -11,12 +11,31 @@ function firstValue(value: string | string[] | undefined) {
     return Array.isArray(value) ? value[0] : value;
 }
 
+function sanitizeRedirect(input?: string | null): string {
+    if (!input) return '/connect';
+
+    // reject absolute URLs and protocol-relative URLs
+    if (
+        input.includes('://') ||
+        input.startsWith('//')
+    ) {
+        return '/connect';
+    }
+
+    // only allow internal paths
+    if (!input.startsWith('/')) {
+        return '/connect';
+    }
+
+    return input;
+}
+
 export default async function Page({ searchParams }: PageProps) {
     const resolvedSearchParams = searchParams ? await searchParams : undefined;
-    const legacyRedirectTarget = firstValue(resolvedSearchParams?.redirect_url);
-    const nextRedirectTarget = firstValue(resolvedSearchParams?.next);
+    const legacyRedirectTarget = sanitizeRedirect(firstValue(resolvedSearchParams?.redirect_url));
+    const nextRedirectTarget = sanitizeRedirect(firstValue(resolvedSearchParams?.next));
 
-    if (legacyRedirectTarget && nextRedirectTarget !== legacyRedirectTarget) {
+    if (legacyRedirectTarget && nextRedirectTarget !== legacyRedirectTarget && firstValue(resolvedSearchParams?.redirect_url)) {
         redirect(`/sign-up?next=${encodeURIComponent(legacyRedirectTarget)}`);
     }
 

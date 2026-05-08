@@ -1,16 +1,17 @@
 import { dbQuery } from './client';
 import { mapProcessorConnectionRow } from './rows';
 import type { JsonObject, ProcessorConnectionRow, ProcessorConnectionStatus } from './types';
+import { cache } from 'react';
 
-export async function getStripeProcessorConnectionByWorkspaceId(
+export const getStripeProcessorConnectionByWorkspaceId = cache(async (
     workspaceId: string
-): Promise<ProcessorConnectionRow | null> {
+): Promise<ProcessorConnectionRow | null> => {
     const result = await dbQuery(
         'SELECT * FROM processor_connections WHERE workspace_id = $1 AND provider = $2 LIMIT 1',
         [workspaceId, 'stripe']
     );
     return result.rows[0] ? mapProcessorConnectionRow(result.rows[0]) : null;
-}
+});
 
 // Reverse lookup: given a Stripe connected-account id (acct_…) from an inbound
 // Connect webhook event, find the workspace that owns it. The stripe_account_id
