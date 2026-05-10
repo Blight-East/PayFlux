@@ -1,0 +1,41 @@
+# Projection reducer service. Consumes stripe_event_ledger, writes
+# subscription_projection. Runs in its own process group so its memory and
+# CPU pressure is observable separately from payflux-core (the ingest
+# path).
+#
+# In v1 (projection-only mode) this service has zero impact on dashboard
+# runtime — it only reads the ledger and writes to its own tables. The
+# canonical billing_subscriptions table is unaffected.
+
+FROM golang:1.25.5-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY *.go ./
+COPY internal/ ./internal/
+COPY cmd/ ./cmd/
+COPY pg/ ./pg/
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o payflux-reducer ./cmd/reducer
+
+FROM alpine:3.19
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates
+
+RUN addgroup -g 1000 payflux && \
+    adduser -D -u 1000 -G payflux payflux
+
+COPY --from=builder /app/payflux-reducer .
+
+USER payflux:payflux
+
+ENV REDUCER_MODE=tail
+
+CMD ["./payflux-reducer"]
