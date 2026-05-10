@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
@@ -19,4 +21,15 @@ const nextConfig = {
     serverExternalPackages: ['better-sqlite3'],
 };
 
-export default nextConfig;
+// Sentry's Next.js plugin handles source map upload and runtime injection.
+// All flags are no-ops when SENTRY_DSN / SENTRY_AUTH_TOKEN are unset, so this
+// stays inert in dev and CI without explicit guarding.
+export default withSentryConfig(nextConfig, {
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    disableLogger: true,
+    automaticVercelMonitors: false,
+});

@@ -1,0 +1,28 @@
+# Stripe sync worker. Runs runStripeSync on a tick, separate from the Next.js
+# dashboard process. Uses tsx at runtime so we don't need a separate build
+# step — the worker is small and the import graph is bounded by sync.ts +
+# its DB helpers; cold start is negligible compared to the 60s tick.
+
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --include=dev
+
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+# Non-root for parity with the Go service (which runs as uid 1000).
+RUN addgroup -g 1000 worker && \
+    adduser -D -u 1000 -G worker worker
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --chown=worker:worker package.json package-lock.json tsconfig.json ./
+COPY --chown=worker:worker sentry.server.config.ts ./
+COPY --chown=worker:worker src ./src
+
+USER worker:worker
+
+ENV NODE_ENV=production
+ENV WORKER_TICK_INTERVAL_MS=60000
+
+CMD ["npx", "tsx", "src/worker/main.ts"]

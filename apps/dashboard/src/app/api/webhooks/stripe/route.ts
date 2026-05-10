@@ -544,6 +544,13 @@ async function normalizeStripeEvent(event: Stripe.Event): Promise<PayFluxEvent |
     };
 }
 
+class PayFluxForwardError extends Error {
+    constructor(message: string, readonly status?: number) {
+        super(message);
+        this.name = 'PayFluxForwardError';
+    }
+}
+
 async function forwardToPayFlux(payfluxEvent: PayFluxEvent) {
     const ingestUrl = process.env.PAYFLUX_INGEST_URL;
     const apiKey = process.env.PAYFLUX_API_KEY;
@@ -554,8 +561,9 @@ async function forwardToPayFlux(payfluxEvent: PayFluxEvent) {
         return;
     }
 
+    let res: Response;
     try {
-        const res = await fetch(ingestUrl, {
+        res = await fetch(ingestUrl, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
@@ -563,23 +571,126 @@ async function forwardToPayFlux(payfluxEvent: PayFluxEvent) {
             },
             body: JSON.stringify(payfluxEvent),
         });
-
-        if (!res.ok) {
-            console.error('payflux_forward_non_2xx', {
-                status: res.status,
-                event_type: payfluxEvent.event_type,
-                event_id: payfluxEvent.event_id,
-            });
-            return;
-        }
-
-        await updateStatus();
     } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
         console.error('payflux_forward_failed', {
             event_type: payfluxEvent.event_type,
             event_id: payfluxEvent.event_id,
-            message: err instanceof Error ? err.message : String(err),
+            message,
         });
+        throw new PayFluxForwardError(`payflux_forward_failed: ${message}`);
+    }
+
+    if (!res.ok) {
+        console.error('payflux_forward_non_2xx', {
+            status: res.status,
+            event_type: payfluxEvent.event_type,
+            event_id: payfluxEvent.event_id,
+        });
+        throw new PayFluxForwardError(`payflux_forward_non_2xx: ${res.status}`, res.status);
+    }
+
+    await updateStatus();
+}
+
+// Window during which a 'received' row is treated as another instance still
+// processing — return 200 in_flight without re-running side effects. Past this
+// threshold the row is assumed to be from a crashed handler and we re-attempt.
+// Stripe's retry intervals (5min, 1h, ...) make 5 minutes a safe choice: the
+// soonest retry is exactly at the boundary, so a stuck handler is detected on
+// the first retry rather than waiting an hour.
+const STALE_RECEIVED_MS = 5 * 60 * 1000;
+
+type DedupRow = {
+    status: 'received' | 'completed';
+    created_at: string;
+    attempts: number;
+};
+
+type DedupOutcome =
+    | { kind: 'process' }              // claim acquired or stale row reclaimed; run side effects
+    | { kind: 'completed' }            // already finished; return 200 deduplicated
+    | { kind: 'in_flight' };           // another instance is processing right now
+
+async function claimWebhookEvent(stripeEventId: string): Promise<DedupOutcome> {
+    let claim;
+    try {
+        claim = await dbQuery<{ id: string }>(`
+            INSERT INTO processed_webhooks (stripe_event_id, status)
+            VALUES ($1, 'received')
+            ON CONFLICT (stripe_event_id) DO NOTHING
+            RETURNING id
+        `, [stripeEventId]);
+    } catch (err) {
+        // Fail open: if Postgres is struggling, run the work and rely on
+        // downstream idempotency (Go-side Redis SETNX dedup) to absorb the
+        // duplicate. Better than silently dropping a real event.
+        console.error('[WEBHOOK] dedup insert failed; failing open:', err);
+        return { kind: 'process' };
+    }
+
+    if ((claim.rowCount ?? 0) > 0) {
+        return { kind: 'process' };
+    }
+
+    const existing = await dbQuery<DedupRow>(`
+        SELECT status, created_at, attempts
+        FROM processed_webhooks
+        WHERE stripe_event_id = $1
+    `, [stripeEventId]);
+
+    const row = existing.rows[0];
+    if (!row) {
+        // Race: row was deleted between INSERT conflict and SELECT. Treat as new.
+        return { kind: 'process' };
+    }
+
+    if (row.status === 'completed') {
+        return { kind: 'completed' };
+    }
+
+    const ageMs = Date.now() - new Date(row.created_at).getTime();
+    if (ageMs < STALE_RECEIVED_MS) {
+        return { kind: 'in_flight' };
+    }
+
+    // Stale 'received' row — original handler crashed. Reclaim and re-process.
+    // The downstream signal_failure_velocity counter may double-count in this
+    // path; that's preferred over silent loss. Tighten only when the counter
+    // gains a read site that cares about exact-once accuracy.
+    await dbQuery(`
+        UPDATE processed_webhooks
+        SET attempts = attempts + 1,
+            updated_at = now(),
+            last_error = NULL
+        WHERE stripe_event_id = $1
+    `, [stripeEventId]);
+    console.warn(`[WEBHOOK] Reclaiming stale 'received' event ${stripeEventId} (age ${ageMs}ms, prior attempts ${row.attempts})`);
+    return { kind: 'process' };
+}
+
+async function markWebhookCompleted(stripeEventId: string) {
+    await dbQuery(`
+        UPDATE processed_webhooks
+        SET status = 'completed',
+            completed_at = now(),
+            updated_at = now(),
+            last_error = NULL
+        WHERE stripe_event_id = $1
+    `, [stripeEventId]);
+}
+
+async function recordWebhookError(stripeEventId: string, err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    try {
+        await dbQuery(`
+            UPDATE processed_webhooks
+            SET last_error = $2, updated_at = now()
+            WHERE stripe_event_id = $1
+        `, [stripeEventId, message.slice(0, 1000)]);
+    } catch (writeErr) {
+        // Best-effort; the original error is what matters.
+        console.error('[WEBHOOK] Failed to persist last_error:', writeErr);
     }
 }
 
@@ -601,26 +712,36 @@ export async function POST(request: Request) {
         // Ignored, let constructEvent handle invalid JSON
     }
 
+    let event: Stripe.Event;
     try {
-        const event = constructEvent(payload, sig, secret);
-        const eventTimestamp = new Date(event.created * 1000).toISOString();
-
-        // 1. DEDUPLICATION (Replay Storm Protection)
-        const dedupResult = await dbQuery(`
-            INSERT INTO processed_webhooks (stripe_event_id)
-            VALUES ($1)
-            ON CONFLICT (stripe_event_id) DO NOTHING
-            RETURNING id
-        `, [event.id]).catch(err => {
-            console.error('[WEBHOOK] Failed to deduplicate event:', err);
-            return { rowCount: 1 }; // Fail open if DB is struggling
-        });
-
-        if (dedupResult && dedupResult.rowCount === 0) {
-            console.log(`[WEBHOOK] Deflected replay for event ${event.id}`);
-            return NextResponse.json({ received: true, deduplicated: true });
+        event = constructEvent(payload, sig, secret);
+    } catch (err: any) {
+        if (err.message === 'Missing Stripe-Signature header' || err.message.includes('No signatures found')) {
+            return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
         }
+        if (err.message === 'Webhook not configured') {
+            return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+        }
+        if (err.message === 'Not available in this environment') {
+            return NextResponse.json({ error: 'Not available in this environment' }, { status: 403 });
+        }
+        console.error('webhook_signature_verification_failed:', err.message);
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    }
 
+    const eventTimestamp = new Date(event.created * 1000).toISOString();
+
+    const outcome = await claimWebhookEvent(event.id);
+    if (outcome.kind === 'completed') {
+        console.log(`[WEBHOOK] Deflected replay for event ${event.id}`);
+        return NextResponse.json({ received: true, deduplicated: true });
+    }
+    if (outcome.kind === 'in_flight') {
+        console.log(`[WEBHOOK] Event ${event.id} is in flight on another instance`);
+        return NextResponse.json({ received: true, in_flight: true });
+    }
+
+    try {
         switch (event.type) {
             case 'checkout.session.completed':
                 await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, event.type, eventTimestamp);
@@ -652,19 +773,19 @@ export async function POST(request: Request) {
             await forwardToPayFlux(payfluxEvent);
         }
 
+        await markWebhookCompleted(event.id);
         return NextResponse.json({ received: true });
     } catch (err: any) {
-        if (err.message === 'Missing Stripe-Signature header' || err.message.includes('No signatures found')) {
-            return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-        }
-        if (err.message === 'Webhook not configured') {
-            return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
-        }
-        if (err.message === 'Not available in this environment') {
-            return NextResponse.json({ error: 'Not available in this environment' }, { status: 403 });
-        }
-
-        console.error('webhook_signature_verification_failed:', err.message);
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+        // Persist for diagnostics; leave status='received' so a Stripe retry
+        // re-attempts (after STALE_RECEIVED_MS) and the Go-side dedup absorbs
+        // any duplicate forward. Return 5xx so Stripe retries on its own
+        // schedule rather than us swallowing the failure with a 200.
+        await recordWebhookError(event.id, err);
+        console.error('webhook_processing_failed:', {
+            event_id: event.id,
+            event_type: event.type,
+            message: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.json({ error: 'Processing failed; will retry' }, { status: 500 });
     }
 }
