@@ -83,11 +83,23 @@ function setNetlifyEnv(name, value) {
         console.log(`  [dry-run] would set Netlify ${name} (production)`);
         return;
     }
-    // Pass the value via stdin so it never appears on argv / process listings.
-    execFileSync('netlify', ['env:set', name, value, '--context', 'production'], {
-        cwd: new URL('..', import.meta.url).pathname,
-        stdio: ['ignore', 'inherit', 'inherit'],
-    });
+    // Capture stdout/stderr to a buffer instead of inheriting the parent's
+    // streams. The Netlify CLI's confirmation message echoes the value
+    // verbatim ("Set environment variable NAME=secret_value in the production
+    // branch"); piping prevents it from appearing in operator terminals or
+    // chat transcripts. The buffer is discarded.
+    try {
+        execFileSync('netlify', ['env:set', name, value, '--context', 'production'], {
+            cwd: new URL('..', import.meta.url).pathname,
+            stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        console.log(`  ${name} set (value redacted)`);
+    } catch (err) {
+        // execFileSync attaches stdout/stderr to the thrown error object —
+        // sanitize before bubbling so a non-zero exit doesn't leak the
+        // secret through the failure path either.
+        throw new Error(`netlify env:set ${name} failed (status ${err.status ?? '?'})`);
+    }
 }
 
 (async () => {
