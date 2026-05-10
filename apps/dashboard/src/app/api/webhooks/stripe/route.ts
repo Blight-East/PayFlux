@@ -53,20 +53,22 @@ async function updateStatus() {
     await fs.writeFile(STATUS_PATH, JSON.stringify({ lastEventAt: new Date().toISOString() }));
 }
 
-type VerifyOutcome = 'primary' | 'fallback' | 'per_account' | 'fail' | 'no_signature' | 'malformed';
+type VerifyOutcome = 'primary' | 'fallback' | 'connect' | 'per_account' | 'fail' | 'no_signature' | 'malformed';
 
 type ConstructEventResult =
-    | { event: Stripe.Event; outcome: 'primary' | 'fallback' | 'per_account' }
+    | { event: Stripe.Event; outcome: 'primary' | 'fallback' | 'connect' | 'per_account' }
     | { event: null; outcome: 'no_signature' | 'malformed' | 'fail'; reason: string };
 
 // Try a sequence of (label, secret) pairs. Returns on first success. The
 // label is used for telemetry so we can observe rotation completing — a
 // gradual rise in 'fallback' followed by a return to 'primary' means a
-// rotation is being absorbed correctly.
+// rotation is being absorbed correctly. The 'connect' label specifically
+// tags deliveries from the Connect endpoint, which has its own signing
+// secret distinct from the platform endpoint.
 function constructEventDual(
     payload: string,
     sig: string | null,
-    candidates: Array<{ label: 'primary' | 'fallback' | 'per_account'; secret: string }>,
+    candidates: Array<{ label: 'primary' | 'fallback' | 'connect' | 'per_account'; secret: string }>,
 ): ConstructEventResult {
     if (!sig) {
         return { event: null, outcome: 'no_signature', reason: 'Missing Stripe-Signature header' };
@@ -836,10 +838,22 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Malformed body' }, { status: 400 });
     }
 
-    const candidates: Array<{ label: 'primary' | 'fallback' | 'per_account'; secret: string }> = [];
+    // Candidate order:
+    //   per_account  — Connect merchant secret stored in processor_connections at OAuth time, when present
+    //   primary      — STRIPE_WEBHOOK_SECRET, the active platform endpoint signing secret
+    //   connect      — STRIPE_CONNECT_WEBHOOK_SECRET, the Connect endpoint signing secret (separate Stripe endpoint with connect:true)
+    //   fallback     — STRIPE_WEBHOOK_SECRET_FALLBACK, transitional slot for rotation of any of the above
+    //
+    // 'connect' sits between 'primary' and 'fallback' so that during a rotation
+    // of the platform secret, fallback is the last resort and Connect deliveries
+    // are still tagged correctly in telemetry.
+    const candidates: Array<{ label: 'primary' | 'fallback' | 'connect' | 'per_account'; secret: string }> = [];
     if (perAccountSecret) candidates.push({ label: 'per_account', secret: perAccountSecret });
     if (process.env.STRIPE_WEBHOOK_SECRET) {
         candidates.push({ label: 'primary', secret: process.env.STRIPE_WEBHOOK_SECRET });
+    }
+    if (process.env.STRIPE_CONNECT_WEBHOOK_SECRET) {
+        candidates.push({ label: 'connect', secret: process.env.STRIPE_CONNECT_WEBHOOK_SECRET });
     }
     if (process.env.STRIPE_WEBHOOK_SECRET_FALLBACK) {
         candidates.push({ label: 'fallback', secret: process.env.STRIPE_WEBHOOK_SECRET_FALLBACK });
