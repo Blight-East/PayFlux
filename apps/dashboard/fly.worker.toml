@@ -1,0 +1,30 @@
+# Separate Fly app for the Stripe sync worker. No HTTP service — this is a
+# background process group. Health is observed via tick logs and Sentry.
+#
+# Required secrets (set via `fly secrets set --app payflux-worker`):
+#   DATABASE_URL              pooler URL for runtime queries
+#   DIRECT_URL                direct URL for `withDbTransaction` and migrations
+#   STRIPE_SECRET_KEY         platform key (per-merchant access tokens come from DB)
+#   SENTRY_DSN                error/trace ingest
+#   PAYFLUX_GIT_SHA           release tag for Sentry; CI deploy should inject
+
+app = 'payflux-worker'
+primary_region = 'iad'
+
+[build]
+  dockerfile = 'Dockerfile.worker'
+
+[processes]
+  worker = 'npx tsx src/worker/main.ts'
+
+# No http_service block on purpose — this app receives no external traffic.
+# Fly will keep one machine running for the worker process.
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  processes = ['worker']
+
+[deploy]
+  strategy = 'immediate'

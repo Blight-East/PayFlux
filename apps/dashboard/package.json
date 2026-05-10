@@ -9,6 +9,7 @@
     "check:fixtures": "node scripts/check-dev-fixtures.mjs",
     "build": "next build --webpack",
     "start": "next start",
+    "worker": "tsx src/worker/main.ts",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -54,6 +55,7 @@
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "tailwindcss": "4.1.18",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
