@@ -178,3 +178,21 @@ Reducers MUST:
 | `0011_raw_stripe_events.sql` | 2026-05-10 | Initial ledger schema. |
 | `0012_ledger_append_only.sql` | 2026-05-10 | Append-only triggers + 5m operational view. |
 | `0013_ledger_versioning.sql` | 2026-05-10 | `payload_schema_version`, `ingestion_version`, `reducer_version`. |
+| `0014_ledger_verify_outcome_connect.sql` | 2026-05-10 | Added `'connect'` to the `verify_outcome` CHECK constraint so deliveries from the Connect endpoint are tagged distinctly from rotation-`fallback` deliveries. |
+
+---
+
+## verify_outcome slot semantics
+
+The handler tries signing secrets in this order, stopping at the first success:
+
+| Order | Outcome | Source env var | Purpose |
+|---|---|---|---|
+| 1 | `per_account` | `processor_connections.connection_metadata.webhook_secret` | Per-merchant secret set at OAuth time. Used only for events whose `event.account` matches a known connection with a stored secret. |
+| 2 | `primary` | `STRIPE_WEBHOOK_SECRET` | Platform endpoint signing secret. Verifies all `connect: false` deliveries (PayFlux's own billing events). |
+| 3 | `connect` | `STRIPE_CONNECT_WEBHOOK_SECRET` | Connect endpoint signing secret. Verifies all `connect: true` deliveries (events from connected merchants). |
+| 4 | `fallback` | `STRIPE_WEBHOOK_SECRET_FALLBACK` | Transitional slot for rotation of any of the above. Set when rotating, drop when no `fallback` outcomes have been seen for ~3 days (Stripe's retry window). |
+
+The slot ordering matters for two reasons:
+- **Connect deliveries are tagged correctly** even when the platform secret is being rotated (which puts the old platform secret in `fallback`).
+- **`per_account` wins over `primary`** because per-merchant secrets are the most specific match for events that have an `event.account` and a stored connection.
