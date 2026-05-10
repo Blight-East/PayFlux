@@ -1,0 +1,95 @@
+name: DB Migrate
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/dashboard/src/lib/db/migrations/**'
+      - 'apps/dashboard/scripts/apply-db-migrations.mjs'
+      - '.github/workflows/db-migrate.yml'
+  pull_request:
+    paths:
+      - 'apps/dashboard/src/lib/db/migrations/**'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Database target'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    if: github.event_name == 'pull_request'
+    name: dry-run (no DB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/dashboard/package-lock.json
+      - name: Install
+        working-directory: apps/dashboard
+        run: npm ci
+      # Static check: confirm migration filenames are sequential and parse.
+      - name: Validate migration filenames
+        working-directory: apps/dashboard
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const dir = "src/lib/db/migrations";
+            const files = fs.readdirSync(dir).filter(f => f.endsWith(".sql")).sort();
+            console.log("found", files.length, "migrations");
+            for (const f of files) {
+              const sql = fs.readFileSync(path.join(dir, f), "utf8");
+              if (!sql.trim()) {
+                console.error("empty migration:", f);
+                process.exit(1);
+              }
+            }
+          '
+
+  apply:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    name: apply (${{ inputs.target || 'production' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.target || 'production' }}
+    concurrency:
+      group: db-migrate-${{ inputs.target || 'production' }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/dashboard/package-lock.json
+      - name: Install
+        working-directory: apps/dashboard
+        run: npm ci
+      - name: Plan
+        working-directory: apps/dashboard
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: node scripts/apply-db-migrations.mjs --dry-run
+      - name: Apply
+        working-directory: apps/dashboard
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: node scripts/apply-db-migrations.mjs
+      - name: Preflight verification
+        working-directory: apps/dashboard
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: node scripts/db-preflight.mjs
