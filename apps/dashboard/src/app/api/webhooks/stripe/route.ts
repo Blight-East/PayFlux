@@ -44,7 +44,7 @@ function isTestBypassAllowed(): boolean {
     return isDev && bypassEnabled;
 }
 
-function isValidStripeSecret(secret: string | undefined): secret is string {
+function isValidStripeSecret(secret: string | undefined | null): secret is string {
     return !!secret && secret.startsWith('whsec_') && secret.length > 10;
 }
 
@@ -53,27 +53,50 @@ async function updateStatus() {
     await fs.writeFile(STATUS_PATH, JSON.stringify({ lastEventAt: new Date().toISOString() }));
 }
 
-function constructEvent(payload: string, sig: string | null, secret: string | undefined): Stripe.Event {
-    if (!sig) {
-        throw new Error('Missing Stripe-Signature header');
-    }
+type VerifyOutcome = 'primary' | 'fallback' | 'per_account' | 'fail' | 'no_signature' | 'malformed';
 
-    if (!isTestBypassAllowed() && !isValidStripeSecret(secret)) {
-        console.warn('webhook_config_error: STRIPE_WEBHOOK_SECRET must start with whsec_');
-        throw new Error('Webhook not configured');
+type ConstructEventResult =
+    | { event: Stripe.Event; outcome: 'primary' | 'fallback' | 'per_account' }
+    | { event: null; outcome: 'no_signature' | 'malformed' | 'fail'; reason: string };
+
+// Try a sequence of (label, secret) pairs. Returns on first success. The
+// label is used for telemetry so we can observe rotation completing — a
+// gradual rise in 'fallback' followed by a return to 'primary' means a
+// rotation is being absorbed correctly.
+function constructEventDual(
+    payload: string,
+    sig: string | null,
+    candidates: Array<{ label: 'primary' | 'fallback' | 'per_account'; secret: string }>,
+): ConstructEventResult {
+    if (!sig) {
+        return { event: null, outcome: 'no_signature', reason: 'Missing Stripe-Signature header' };
     }
 
     if (isTestBypassAllowed() && sig === 'test_bypass') {
-        return JSON.parse(payload) as Stripe.Event;
+        try {
+            return { event: JSON.parse(payload) as Stripe.Event, outcome: 'primary' };
+        } catch (e) {
+            return { event: null, outcome: 'malformed', reason: 'test bypass payload not JSON' };
+        }
     }
 
-    if (isValidStripeSecret(secret)) {
-        const stripe = getStripeClient()!;
-        return stripe.webhooks.constructEvent(payload, sig, secret);
+    const stripe = getStripeClient();
+    if (!stripe) {
+        return { event: null, outcome: 'fail', reason: 'Stripe client not configured' };
     }
 
-    console.warn('webhook_bypass_blocked: test bypass attempted outside development');
-    throw new Error('Not available in this environment');
+    let lastError = 'no candidate secrets';
+    for (const { label, secret } of candidates) {
+        if (!isValidStripeSecret(secret)) continue;
+        try {
+            const event = stripe.webhooks.constructEvent(payload, sig, secret);
+            return { event, outcome: label };
+        } catch (err) {
+            lastError = err instanceof Error ? err.message : String(err);
+            // Try next candidate.
+        }
+    }
+    return { event: null, outcome: 'fail', reason: lastError };
 }
 
 function normalizeStripeId(value: unknown): string | null {
@@ -694,50 +717,172 @@ async function recordWebhookError(stripeEventId: string, err: unknown) {
     }
 }
 
+// Append-only audit record. Captured BEFORE signature verification so that
+// signature failures, malformed bodies, and unsigned probes are all visible
+// to forensics. Failure to write the ledger row never blocks request
+// processing — losing audit history is bad, but losing a real Stripe event
+// because the audit table is unavailable is worse.
+async function recordIncomingDelivery(args: {
+    stripeEventId: string | null;
+    payload: string;
+    signatureHeader: string | null;
+    verifyOutcome: VerifyOutcome;
+}) {
+    try {
+        await dbQuery(`
+            INSERT INTO stripe_event_ledger (
+                stripe_event_id, payload, payload_size_bytes, signature_header, verify_outcome
+            ) VALUES ($1, $2, $3, $4, $5)
+        `, [
+            args.stripeEventId,
+            args.payload,
+            Buffer.byteLength(args.payload, 'utf8'),
+            args.signatureHeader,
+            args.verifyOutcome,
+        ]);
+    } catch (err) {
+        console.error('[WEBHOOK] Ledger insert failed:', err);
+    }
+}
+
+function emitWebhookTelemetry(payload: {
+    event_id: string | null;
+    event_type: string | null;
+    verify_outcome: VerifyOutcome;
+    state_machine_outcome: 'process' | 'completed' | 'in_flight' | 'success' | 'error' | 'rejected';
+    processing_ms: number;
+    http_status: number;
+    error_message?: string;
+}) {
+    // Single-line JSON so log shippers can parse cheaply. Sentry picks up
+    // emissions automatically once SENTRY_DSN is set on Netlify.
+    console.log(JSON.stringify({
+        event: 'webhook_received',
+        timestamp: new Date().toISOString(),
+        ...payload,
+    }));
+}
+
 export async function POST(request: Request) {
+    const t0 = Date.now();
     const payload = await request.text();
     const sig = request.headers.get('stripe-signature');
-    let secret = process.env.STRIPE_WEBHOOK_SECRET;
 
+    // Build the candidate secrets list in priority order:
+    //   per-account (Connect merchant secret stored at OAuth time, when present)
+    //   primary    (STRIPE_WEBHOOK_SECRET — the active platform secret)
+    //   fallback   (STRIPE_WEBHOOK_SECRET_FALLBACK — previous secret, optional)
+    // The fallback slot makes secret rotation atomic: set fallback to the old
+    // secret, set primary to the new secret, deploy. In-flight events signed
+    // with either verify successfully. Once Stripe has caught up to the new
+    // secret (no more 'fallback' outcomes in telemetry), drop the fallback.
+    let perAccountSecret: string | null = null;
+    let parsedEventId: string | null = null;
     try {
         const parsedBody = JSON.parse(payload);
-        const accountId = parsedBody.account;
-        if (accountId && typeof accountId === 'string') {
+        if (parsedBody && typeof parsedBody.id === 'string') {
+            parsedEventId = parsedBody.id;
+        }
+        if (parsedBody && typeof parsedBody.account === 'string') {
+            const accountId: string = parsedBody.account;
             const conn = await getStripeProcessorConnectionByStripeAccountId(accountId);
-            if (conn?.connection_metadata?.webhook_secret) {
-                secret = String(conn.connection_metadata.webhook_secret);
+            const candidate = conn?.connection_metadata?.webhook_secret;
+            if (typeof candidate === 'string' && candidate) {
+                perAccountSecret = candidate;
             }
         }
-    } catch (e) {
-        // Ignored, let constructEvent handle invalid JSON
+    } catch (err) {
+        // Body is not JSON. Record the malformed delivery and reject.
+        await recordIncomingDelivery({
+            stripeEventId: null,
+            payload,
+            signatureHeader: sig,
+            verifyOutcome: 'malformed',
+        });
+        emitWebhookTelemetry({
+            event_id: null,
+            event_type: null,
+            verify_outcome: 'malformed',
+            state_machine_outcome: 'rejected',
+            processing_ms: Date.now() - t0,
+            http_status: 400,
+            error_message: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.json({ error: 'Malformed body' }, { status: 400 });
     }
 
-    let event: Stripe.Event;
-    try {
-        event = constructEvent(payload, sig, secret);
-    } catch (err: any) {
-        if (err.message === 'Missing Stripe-Signature header' || err.message.includes('No signatures found')) {
+    const candidates: Array<{ label: 'primary' | 'fallback' | 'per_account'; secret: string }> = [];
+    if (perAccountSecret) candidates.push({ label: 'per_account', secret: perAccountSecret });
+    if (process.env.STRIPE_WEBHOOK_SECRET) {
+        candidates.push({ label: 'primary', secret: process.env.STRIPE_WEBHOOK_SECRET });
+    }
+    if (process.env.STRIPE_WEBHOOK_SECRET_FALLBACK) {
+        candidates.push({ label: 'fallback', secret: process.env.STRIPE_WEBHOOK_SECRET_FALLBACK });
+    }
+
+    const verifyResult = constructEventDual(payload, sig, candidates);
+
+    if (verifyResult.event === null) {
+        // Capture the rejected delivery for forensics (signature failures and
+        // unsigned probes are themselves a security signal).
+        await recordIncomingDelivery({
+            stripeEventId: parsedEventId,
+            payload,
+            signatureHeader: sig,
+            verifyOutcome: verifyResult.outcome,
+        });
+        emitWebhookTelemetry({
+            event_id: parsedEventId,
+            event_type: null,
+            verify_outcome: verifyResult.outcome,
+            state_machine_outcome: 'rejected',
+            processing_ms: Date.now() - t0,
+            http_status: verifyResult.outcome === 'no_signature' ? 400 : 400,
+            error_message: verifyResult.reason,
+        });
+        if (verifyResult.outcome === 'no_signature') {
             return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
         }
-        if (err.message === 'Webhook not configured') {
+        if (verifyResult.reason === 'Stripe client not configured') {
             return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
         }
-        if (err.message === 'Not available in this environment') {
-            return NextResponse.json({ error: 'Not available in this environment' }, { status: 403 });
-        }
-        console.error('webhook_signature_verification_failed:', err.message);
+        console.error('webhook_signature_verification_failed:', verifyResult.reason);
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
+    const event = verifyResult.event;
+    const verifyOutcome = verifyResult.outcome;
     const eventTimestamp = new Date(event.created * 1000).toISOString();
+
+    // Capture verified delivery to the ledger before any side-effecting work.
+    await recordIncomingDelivery({
+        stripeEventId: event.id,
+        payload,
+        signatureHeader: sig,
+        verifyOutcome,
+    });
 
     const outcome = await claimWebhookEvent(event.id);
     if (outcome.kind === 'completed') {
-        console.log(`[WEBHOOK] Deflected replay for event ${event.id}`);
+        emitWebhookTelemetry({
+            event_id: event.id,
+            event_type: event.type,
+            verify_outcome: verifyOutcome,
+            state_machine_outcome: 'completed',
+            processing_ms: Date.now() - t0,
+            http_status: 200,
+        });
         return NextResponse.json({ received: true, deduplicated: true });
     }
     if (outcome.kind === 'in_flight') {
-        console.log(`[WEBHOOK] Event ${event.id} is in flight on another instance`);
+        emitWebhookTelemetry({
+            event_id: event.id,
+            event_type: event.type,
+            verify_outcome: verifyOutcome,
+            state_machine_outcome: 'in_flight',
+            processing_ms: Date.now() - t0,
+            http_status: 200,
+        });
         return NextResponse.json({ received: true, in_flight: true });
     }
 
@@ -774,6 +919,14 @@ export async function POST(request: Request) {
         }
 
         await markWebhookCompleted(event.id);
+        emitWebhookTelemetry({
+            event_id: event.id,
+            event_type: event.type,
+            verify_outcome: verifyOutcome,
+            state_machine_outcome: 'success',
+            processing_ms: Date.now() - t0,
+            http_status: 200,
+        });
         return NextResponse.json({ received: true });
     } catch (err: any) {
         // Persist for diagnostics; leave status='received' so a Stripe retry
@@ -781,10 +934,20 @@ export async function POST(request: Request) {
         // any duplicate forward. Return 5xx so Stripe retries on its own
         // schedule rather than us swallowing the failure with a 200.
         await recordWebhookError(event.id, err);
+        const message = err instanceof Error ? err.message : String(err);
+        emitWebhookTelemetry({
+            event_id: event.id,
+            event_type: event.type,
+            verify_outcome: verifyOutcome,
+            state_machine_outcome: 'error',
+            processing_ms: Date.now() - t0,
+            http_status: 500,
+            error_message: message,
+        });
         console.error('webhook_processing_failed:', {
             event_id: event.id,
             event_type: event.type,
-            message: err instanceof Error ? err.message : String(err),
+            message,
         });
         return NextResponse.json({ error: 'Processing failed; will retry' }, { status: 500 });
     }
