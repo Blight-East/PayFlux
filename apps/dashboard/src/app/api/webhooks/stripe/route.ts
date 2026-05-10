@@ -717,6 +717,17 @@ async function recordWebhookError(stripeEventId: string, err: unknown) {
     }
 }
 
+// Identifies the deployed code that wrote this ledger row. Captured per-row
+// so that historical replay can reason about ingestion-side behavior changes
+// (signature verify logic, fail-open semantics, normalization rules). Falls
+// back to "unknown" so the column's NOT NULL constraint never blocks an
+// insert just because the env var is missing on a misconfigured deploy.
+const INGESTION_VERSION =
+    process.env.PAYFLUX_GIT_SHA ||
+    process.env.COMMIT_REF ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    'unknown';
+
 // Append-only audit record. Captured BEFORE signature verification so that
 // signature failures, malformed bodies, and unsigned probes are all visible
 // to forensics. Failure to write the ledger row never blocks request
@@ -727,18 +738,22 @@ async function recordIncomingDelivery(args: {
     payload: string;
     signatureHeader: string | null;
     verifyOutcome: VerifyOutcome;
+    payloadSchemaVersion: string | null;
 }) {
     try {
         await dbQuery(`
             INSERT INTO stripe_event_ledger (
-                stripe_event_id, payload, payload_size_bytes, signature_header, verify_outcome
-            ) VALUES ($1, $2, $3, $4, $5)
+                stripe_event_id, payload, payload_size_bytes, signature_header,
+                verify_outcome, payload_schema_version, ingestion_version
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         `, [
             args.stripeEventId,
             args.payload,
             Buffer.byteLength(args.payload, 'utf8'),
             args.signatureHeader,
             args.verifyOutcome,
+            args.payloadSchemaVersion,
+            INGESTION_VERSION,
         ]);
     } catch (err) {
         console.error('[WEBHOOK] Ledger insert failed:', err);
@@ -778,10 +793,17 @@ export async function POST(request: Request) {
     // secret (no more 'fallback' outcomes in telemetry), drop the fallback.
     let perAccountSecret: string | null = null;
     let parsedEventId: string | null = null;
+    let parsedSchemaVersion: string | null = null;
     try {
         const parsedBody = JSON.parse(payload);
         if (parsedBody && typeof parsedBody.id === 'string') {
             parsedEventId = parsedBody.id;
+        }
+        // Captured pre-verification so it's available for ledger rows recording
+        // signature failures (those still get a schema version; the bytes were
+        // valid JSON, just signed with the wrong key).
+        if (parsedBody && typeof parsedBody.api_version === 'string') {
+            parsedSchemaVersion = parsedBody.api_version;
         }
         if (parsedBody && typeof parsedBody.account === 'string') {
             const accountId: string = parsedBody.account;
@@ -793,11 +815,14 @@ export async function POST(request: Request) {
         }
     } catch (err) {
         // Body is not JSON. Record the malformed delivery and reject.
+        // Schema version is null here — we cannot read api_version from a body
+        // we couldn't parse.
         await recordIncomingDelivery({
             stripeEventId: null,
             payload,
             signatureHeader: sig,
             verifyOutcome: 'malformed',
+            payloadSchemaVersion: null,
         });
         emitWebhookTelemetry({
             event_id: null,
@@ -824,12 +849,15 @@ export async function POST(request: Request) {
 
     if (verifyResult.event === null) {
         // Capture the rejected delivery for forensics (signature failures and
-        // unsigned probes are themselves a security signal).
+        // unsigned probes are themselves a security signal). Use the schema
+        // version we extracted pre-verification — even rejected events have
+        // a meaningful api_version when the body parsed.
         await recordIncomingDelivery({
             stripeEventId: parsedEventId,
             payload,
             signatureHeader: sig,
             verifyOutcome: verifyResult.outcome,
+            payloadSchemaVersion: parsedSchemaVersion,
         });
         emitWebhookTelemetry({
             event_id: parsedEventId,
@@ -855,11 +883,14 @@ export async function POST(request: Request) {
     const eventTimestamp = new Date(event.created * 1000).toISOString();
 
     // Capture verified delivery to the ledger before any side-effecting work.
+    // event.api_version is Stripe's authoritative schema declaration for the
+    // verified event — prefer it over the pre-parsed value from the raw body.
     await recordIncomingDelivery({
         stripeEventId: event.id,
         payload,
         signatureHeader: sig,
         verifyOutcome,
+        payloadSchemaVersion: event.api_version || parsedSchemaVersion,
     });
 
     const outcome = await claimWebhookEvent(event.id);
