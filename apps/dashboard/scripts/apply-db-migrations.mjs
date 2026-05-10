@@ -11,9 +11,14 @@ const repoRoot = path.resolve(__dirname, '..');
 const migrationsDir = path.join(repoRoot, 'src', 'lib', 'db', 'migrations');
 
 function getDatabaseUrl() {
-    const url = process.env.DATABASE_URL;
+    // Prefer DIRECT_URL when set so migrations bypass the runtime pooler.
+    // Transaction-mode pooling (Supavisor :6543, PgBouncer pool_mode=transaction)
+    // doesn't preserve session state across statements; the migration uses an
+    // advisory lock and multi-statement BEGIN/COMMIT blocks that need a
+    // session-scoped connection.
+    const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
     if (!url) {
-        throw new Error('DATABASE_URL is required');
+        throw new Error('DIRECT_URL or DATABASE_URL is required');
     }
     return url;
 }

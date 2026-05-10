@@ -3,9 +3,9 @@ import pg from 'pg';
 const { Client } = pg;
 
 function getDatabaseUrl() {
-    const url = process.env.DATABASE_URL;
+    const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
     if (!url) {
-        throw new Error('DATABASE_URL is required');
+        throw new Error('DIRECT_URL or DATABASE_URL is required');
     }
     return url;
 }
@@ -60,6 +60,20 @@ async function main() {
             ['schema_migrations', `
                 select coalesce(string_agg(version, ', ' order by version), '(none)') as value
                 from schema_migrations
+            `],
+            ['processed_webhooks status columns', `
+                select coalesce(string_agg(column_name, ', ' order by column_name), '(none)') as value
+                from information_schema.columns
+                where table_schema = 'public'
+                  and table_name = 'processed_webhooks'
+                  and column_name in ('status', 'attempts', 'completed_at', 'last_error', 'updated_at')
+            `],
+            ['processed_webhooks stuck received rows (last 24h)', `
+                select count(*)::text as value
+                from processed_webhooks
+                where status = 'received'
+                  and created_at > now() - interval '24 hours'
+                  and (now() - created_at) > interval '5 minutes'
             `],
         ];
 
