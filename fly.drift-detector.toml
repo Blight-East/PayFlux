@@ -1,0 +1,32 @@
+# Separate Fly app for the subscription drift detector. No HTTP service —
+# this is a background process group that runs on a tick.
+#
+# Required secrets (set via `fly secrets set --app payflux-drift-detector`):
+#   DIRECT_URL                       direct Postgres URL (the detector does
+#                                    read-heavy comparisons and benefits from
+#                                    a predictable read snapshot)
+#   PAYFLUX_GIT_SHA                  release tag; CI deploy should inject this
+#
+# Optional:
+#   DRIFT_DETECTOR_TICK_SECONDS      sweep cadence (default 60)
+#   SENTRY_DSN                       error/trace ingest (when the project exists)
+
+app = 'payflux-drift-detector'
+primary_region = 'iad'
+
+[build]
+  dockerfile = 'Dockerfile.drift-detector'
+
+[processes]
+  drift-detector = './payflux-drift-detector'
+
+# No http_service block — pure background consumer.
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  processes = ['drift-detector']
+
+[deploy]
+  strategy = 'immediate'

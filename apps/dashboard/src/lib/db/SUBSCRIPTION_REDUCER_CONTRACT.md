@@ -228,8 +228,92 @@ Removable code makes the commitment irreversible-by-design.
 
 ---
 
+## Drift detector (Phase 1: billing provider)
+
+The drift detector runs as a separate Fly service (`payflux-drift-detector`)
+on a periodic tick. Each sweep:
+
+1. Fetches all subscriptions known to the **authority provider**. Phase 1
+   provider: `billing_subscriptions` table. Phase 2 (post-polling-worker):
+   Stripe's API directly.
+2. For each subscription, loads the current projection from
+   `subscription_current_state`.
+3. Compares per-field using `TimestampTolerance` for clock-skew leniency.
+4. Decides outcome:
+   - **Agreement and no open drift**: silent steady state.
+   - **Agreement after prior drift**: emits a `drift_resolved` row referencing
+     the open detection via `resolves_id`, with
+     `resolution_mechanism = auto_provider_agreed`.
+   - **Disagreement and no open drift**: emits a new detection row tagged with
+     event_type (drift_minor / drift_major / projection_impossible) and
+     severity (informational / warning / critical / regulatory).
+   - **Disagreement with open drift already**: no row — drift remains open.
+
+The detector NEVER corrects either side. The row IS the signal.
+
+### Authority Provider Interface
+
+```go
+type Provider interface {
+    Name() string
+    Version() string
+    FetchState(ctx, stripeSubscriptionID) (*State, error)
+    FetchAll(ctx) ([]*State, error)
+}
+```
+
+Phase 2 (Stripe polling provider) implements this same interface. Detector
+code is unchanged across the transition.
+
+### Severity policy
+
+Severity is orthogonal to event_type. The detector picks the worst severity
+across all disagreeing fields:
+
+| Field | Severity on disagreement |
+|---|---|
+| `status` | critical |
+| `cancel_at_period_end` | critical |
+| `current_period_start` / `current_period_end` / `canceled_at` | warning |
+| `trial_start` / `trial_end` | warning |
+| Projection holds invalid Stripe status | regulatory |
+
+### Resolution chain
+
+Drift events are themselves reducible evidence. The chain is:
+
+```
+detection row  (event_type=drift_major, resolves_id=NULL)
+    ↑
+    └── resolution row (event_type=drift_resolved, resolves_id=detection.id,
+                        resolution_mechanism=auto_provider_agreed)
+```
+
+Currentness of drift is derived from graph topology: a drift is "open" if no
+row with `resolves_id` pointing at it exists. Same pattern as the projection
+chain — no mutable markers.
+
+### Drift resolution latency view
+
+`subscription_drift_resolution_latency` reports, by hour / event_type /
+severity:
+
+- `detection_count` — how many new drifts were detected
+- `resolution_count` — how many of those have been resolved
+- `unresolved_count` — open drifts that have not yet been resolved
+- `median_resolution_seconds` / `p95_resolution_seconds` / `max_resolution_seconds`
+
+This is the metric surface for "drift half-life" as the operational concept.
+The view is a stable semantic contract; promote to MATERIALIZED VIEW with
+scheduled REFRESH if volume warrants.
+
+`subscription_drift_open` is a companion view that returns currently-
+unresolved drifts grouped by severity and event_type — for alerting on
+drift that survives longer than expected.
+
 ## Versioning
 
 | Date | reducer_version | projection_version | Change |
 |---|---|---|---|
 | 2026-05-10 | `v1` | `v1` | Initial reducer (projection-only mode). Field authority policy v1: all fields = webhook. |
+| 2026-05-11 | `v1` | `v1` | Drift detector (Phase 1: billing provider) + reconciliation event severity + resolution chain (migrations 0020-0021). Reducer unchanged. |
