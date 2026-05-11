@@ -1,0 +1,75 @@
+name: Substrate Validation
+
+# Runs the integration harness — the executable certification that
+# substrate invariants (append-only enforcement, immutable supersession,
+# resolution-chain semantics, drift detection, replay epoch lineage,
+# idempotent replay, etc.) hold against a real Postgres.
+#
+# Triggers on any change to the reducer, the drift detector, or the
+# migration set. Also on push to main as a regression guard.
+
+on:
+  pull_request:
+    paths:
+      - 'internal/reducer/**'
+      - 'cmd/reducer/**'
+      - 'cmd/drift-detector/**'
+      - 'apps/dashboard/src/lib/db/migrations/**'
+      - '.github/workflows/substrate-validation.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'internal/reducer/**'
+      - 'cmd/reducer/**'
+      - 'cmd/drift-detector/**'
+      - 'apps/dashboard/src/lib/db/migrations/**'
+      - '.github/workflows/substrate-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  substrate-validation:
+    name: substrate-validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: payflux_substrate_test
+          POSTGRES_USER: payflux
+          POSTGRES_PASSWORD: payflux
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      INTEGRATION_DATABASE_URL: "postgres://payflux:payflux@localhost:5432/payflux_substrate_test?sslmode=disable"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build all packages
+        run: go build ./...
+
+      - name: Run substrate integration scenarios
+        run: go test -v -run TestSubstrate -count=1 ./internal/reducer/subscription/integration/...
+
+      - name: Run RAC test suite
+        run: go test -v -run TestRAC -count=1 ./internal/reducer/subscription/...
+
+      - name: Run drift detector unit tests
+        run: go test -v -count=1 ./internal/reducer/subscription/drift/...
