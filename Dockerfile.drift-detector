@@ -1,0 +1,39 @@
+# Subscription drift detector. Compares subscription_projection against an
+# authority provider (Phase 1: billing_subscriptions) and emits
+# reconciliation events. Never corrects either side — the row IS the signal.
+#
+# Runs in its own process group so its sweep cadence and DB pressure are
+# observable separately from the reducer and the ingest path.
+
+FROM golang:1.25.5-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY *.go ./
+COPY internal/ ./internal/
+COPY cmd/ ./cmd/
+COPY pg/ ./pg/
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o payflux-drift-detector ./cmd/drift-detector
+
+FROM alpine:3.19
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates
+
+RUN addgroup -g 1000 payflux && \
+    adduser -D -u 1000 -G payflux payflux
+
+COPY --from=builder /app/payflux-drift-detector .
+
+USER payflux:payflux
+
+ENV DRIFT_DETECTOR_TICK_SECONDS=60
+
+CMD ["./payflux-drift-detector"]
