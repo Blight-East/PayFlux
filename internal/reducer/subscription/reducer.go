@@ -139,6 +139,54 @@ const (
 	ModeTail     Mode = "tail"
 )
 
+// ProcessPending drains all currently-pending ledger events through the
+// reducer and returns when no more events are available. Used by the
+// substrate validation harness and by operational tooling that needs a
+// bounded one-shot run rather than the long-lived Run loop.
+//
+// Unlike Run, ProcessPending does NOT manage an epoch lifecycle — the
+// caller is responsible for that. The function processes events under
+// whichever epoch row the cursor currently references (or starts a new
+// epoch if none, via the same startEpoch helper).
+//
+// Returns the total number of events processed and the total conflicts
+// emitted.
+func ProcessPending(ctx context.Context, db *sql.DB) (processedTotal, conflictsTotal int, err error) {
+	epochID, err := startEpoch(ctx, db, ModeBackfill)
+	if err != nil {
+		return 0, 0, fmt.Errorf("start epoch: %w", err)
+	}
+	cursor, err := loadOrInitCursor(ctx, db)
+	if err != nil {
+		_ = abortEpoch(ctx, db, epochID, fmt.Sprintf("load cursor: %v", err))
+		return 0, 0, fmt.Errorf("load cursor: %w", err)
+	}
+
+	const batchSize = 200
+	for {
+		if ctx.Err() != nil {
+			_ = abortEpoch(ctx, db, epochID, "context canceled")
+			return processedTotal, conflictsTotal, ctx.Err()
+		}
+		processed, lastReceivedAt, lastID, conflicts, perr := processBatch(ctx, db, cursor, epochID, batchSize)
+		if perr != nil {
+			_ = abortEpoch(ctx, db, epochID, fmt.Sprintf("batch error: %v", perr))
+			return processedTotal, conflictsTotal, perr
+		}
+		processedTotal += processed
+		conflictsTotal += conflicts
+		if processed > 0 {
+			_ = updateEpochCounters(ctx, db, epochID, processed, conflicts)
+			cursor.ReceivedAt = lastReceivedAt
+			cursor.EventID = lastID
+			continue
+		}
+		// No more pending events.
+		_ = completeEpoch(ctx, db, epochID)
+		return processedTotal, conflictsTotal, nil
+	}
+}
+
 // Cursor is the in-memory representation of reducer_cursors. The DB row
 // is the authoritative source; this struct mirrors it for the duration of
 // a batch.
