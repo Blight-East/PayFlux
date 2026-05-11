@@ -1,0 +1,43 @@
+name: Mutual Blindness Lint
+
+# Enforces the mutual-blindness invariant from
+# SUBSCRIPTION_REDUCER_CONTRACT.md at the import-graph level:
+#   - reducer code does not import canonical-CRUD write paths
+#   - dashboard runtime does not import projection internals
+#   - drift detector is the documented cross-domain comparer (explicit
+#     exception)
+#
+# Human discipline degrades. This lint encodes the invariant as a
+# build-time check so accidental coupling is caught before merge.
+
+on:
+  pull_request:
+    paths:
+      - 'internal/reducer/**'
+      - 'cmd/reducer/**'
+      - 'cmd/drift-detector/**'
+      - 'apps/dashboard/src/lib/db/billing.ts'
+      - 'scripts/check-mutual-blindness.sh'
+      - '.github/workflows/mutual-blindness.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'internal/reducer/**'
+      - 'cmd/reducer/**'
+      - 'cmd/drift-detector/**'
+      - 'apps/dashboard/src/lib/db/billing.ts'
+      - 'scripts/check-mutual-blindness.sh'
+      - '.github/workflows/mutual-blindness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mutual-blindness:
+    name: mutual-blindness
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check mutual blindness
+        run: bash scripts/check-mutual-blindness.sh
