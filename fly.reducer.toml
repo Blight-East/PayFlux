@@ -1,0 +1,35 @@
+# Separate Fly app for the projection reducer. No HTTP service — this is
+# a background process group that consumes the ledger and writes to
+# subscription_projection. Health is observed via reducer_cursors heartbeat
+# and replay_epochs progression.
+#
+# Required secrets (set via `fly secrets set --app payflux-reducer`):
+#   DIRECT_URL                 direct Postgres URL (the reducer holds long-lived
+#                              connections and runs multi-statement transactions —
+#                              transaction-mode pooler is not appropriate)
+#   PAYFLUX_GIT_SHA            release tag; CI deploy should inject this
+#
+# Optional:
+#   REDUCER_MODE               'tail' (default) or 'backfill' for one-shot
+#                              historical replay
+#   SENTRY_DSN                 error/trace ingest (when the project exists)
+
+app = 'payflux-reducer'
+primary_region = 'iad'
+
+[build]
+  dockerfile = 'Dockerfile.reducer'
+
+[processes]
+  reducer = './payflux-reducer'
+
+# No http_service block on purpose — this app receives no external traffic.
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  processes = ['reducer']
+
+[deploy]
+  strategy = 'immediate'
