@@ -126,7 +126,7 @@ func applyMigrations(ctx context.Context, db *sql.DB) error {
 	}
 
 	for _, name := range files {
-		body, err := os.ReadFile(filepath.Join(dir, name))
+		migrationSQL, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
 			return fmt.Errorf("read %s: %w", name, err)
 		}
@@ -134,7 +134,7 @@ func applyMigrations(ctx context.Context, db *sql.DB) error {
 		if err != nil {
 			return fmt.Errorf("begin tx for %s: %w", name, err)
 		}
-		if _, err := tx.ExecContext(ctx, string(body)); err != nil {
+		if _, err := tx.ExecContext(ctx, string(migrationSQL)); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("apply %s: %w", name, err)
 		}
@@ -272,17 +272,17 @@ func InsertLedgerEvent(t *testing.T, db *sql.DB, e LedgerEvent) string {
 // InsertBillingSubscription writes a synthetic canonical subscription row.
 // Used by the drift detector tests to set up the "authority" side.
 type BillingSubscription struct {
-	WorkspaceID           string
-	StripeSubscriptionID  string
-	StripeCustomerID      string
-	Status                string
-	CurrentPeriodStart    *time.Time
-	CurrentPeriodEnd      *time.Time
-	CancelAtPeriodEnd     bool
-	CanceledAt            *time.Time
-	TrialStart            *time.Time
-	TrialEnd              *time.Time
-	BillingCustomerID     string
+	WorkspaceID          string
+	StripeSubscriptionID string
+	StripeCustomerID     string
+	Status               string
+	CurrentPeriodStart   *time.Time
+	CurrentPeriodEnd     *time.Time
+	CancelAtPeriodEnd    bool
+	CanceledAt           *time.Time
+	TrialStart           *time.Time
+	TrialEnd             *time.Time
+	BillingCustomerID    string
 }
 
 func InsertBillingSubscription(t *testing.T, db *sql.DB, s BillingSubscription) {

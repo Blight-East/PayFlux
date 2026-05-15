@@ -18,12 +18,12 @@ const ReducerName = "subscription"
 // stripe_event_ledger. The payload is the raw bytes Stripe sent; the
 // reducer parses it into a StripeEvent for processing.
 type ledgerEventOnDisk struct {
-	LedgerID               string
-	StripeEventID          string
-	Payload                string
-	IngestionVersion       string
-	VerifyOutcome          string
-	ReceivedAt             time.Time
+	LedgerID         string
+	StripeEventID    string
+	Payload          string
+	IngestionVersion string
+	VerifyOutcome    string
+	ReceivedAt       time.Time
 }
 
 // stripeEvent is the minimal shape the reducer needs from the parsed
@@ -92,7 +92,12 @@ func Run(ctx context.Context, db *sql.DB, logger *slog.Logger, mode Mode) error 
 		default:
 		}
 
-		processed, lastReceivedAt, lastID, conflicts, err := processBatch(ctx, db, cursor, epochID, batchSize)
+		var upperBound *time.Time
+		if mode == ModeBackfill {
+			upperBound = &terminateAt
+		}
+
+		scanned, projections, lastReceivedAt, lastID, conflicts, err := processBatch(ctx, db, cursor, epochID, batchSize, upperBound)
 		if err != nil {
 			logger.Error("batch failed", "error", err)
 			// On a batch error, abort the epoch so we can investigate.
@@ -102,18 +107,21 @@ func Run(ctx context.Context, db *sql.DB, logger *slog.Logger, mode Mode) error 
 		}
 
 		// Update epoch counters in-flight.
-		if processed > 0 {
-			if err := updateEpochCounters(ctx, db, epochID, processed, conflicts); err != nil {
+		if scanned > 0 {
+			if err := updateEpochCounters(ctx, db, epochID, scanned, projections, conflicts); err != nil {
 				logger.Warn("epoch counter update failed", "error", err)
 			}
 		}
 
 		// If nothing processed and we're in backfill mode, check whether
 		// we've caught up.
-		if processed == 0 {
-			if mode == ModeBackfill && cursor.ReceivedAt.After(terminateAt) {
+		if scanned == 0 {
+			if mode == ModeBackfill {
 				logger.Info("backfill complete")
 				return completeEpoch(ctx, db, epochID)
+			}
+			if err := touchCursorHeartbeat(ctx, db, epochID); err != nil {
+				logger.Warn("cursor heartbeat failed", "error", err)
 			}
 			// Idle: sleep briefly to avoid hammering the DB.
 			select {
@@ -127,7 +135,7 @@ func Run(ctx context.Context, db *sql.DB, logger *slog.Logger, mode Mode) error 
 		// Cursor advanced. Continue without sleeping.
 		cursor.ReceivedAt = lastReceivedAt
 		cursor.EventID = lastID
-		logger.Debug("batch processed", "processed", processed, "cursor_at", lastReceivedAt)
+		logger.Info("batch processed", "events_scanned", scanned, "projections_written", projections, "conflicts_emitted", conflicts, "cursor_at", lastReceivedAt)
 	}
 }
 
@@ -168,15 +176,15 @@ func ProcessPending(ctx context.Context, db *sql.DB) (processedTotal, conflictsT
 			_ = abortEpoch(ctx, db, epochID, "context canceled")
 			return processedTotal, conflictsTotal, ctx.Err()
 		}
-		processed, lastReceivedAt, lastID, conflicts, perr := processBatch(ctx, db, cursor, epochID, batchSize)
+		scanned, projections, lastReceivedAt, lastID, conflicts, perr := processBatch(ctx, db, cursor, epochID, batchSize, nil)
 		if perr != nil {
 			_ = abortEpoch(ctx, db, epochID, fmt.Sprintf("batch error: %v", perr))
 			return processedTotal, conflictsTotal, perr
 		}
-		processedTotal += processed
+		processedTotal += projections
 		conflictsTotal += conflicts
-		if processed > 0 {
-			_ = updateEpochCounters(ctx, db, epochID, processed, conflicts)
+		if scanned > 0 {
+			_ = updateEpochCounters(ctx, db, epochID, scanned, projections, conflicts)
 			cursor.ReceivedAt = lastReceivedAt
 			cursor.EventID = lastID
 			continue
@@ -201,21 +209,32 @@ type Cursor struct {
 //
 // Returns the number of events processed, the cursor position after the
 // batch, the cumulative conflict count, and any unrecoverable error.
-func processBatch(ctx context.Context, db *sql.DB, cursor Cursor, epochID string, batchSize int) (processed int, lastAt time.Time, lastID sql.NullString, conflicts int, err error) {
+func processBatch(ctx context.Context, db *sql.DB, cursor Cursor, epochID string, batchSize int, upperBound *time.Time) (scanned int, projections int, lastAt time.Time, lastID sql.NullString, conflicts int, err error) {
 	// Read the next batch from the ledger. We filter to event types this
 	// reducer cares about. Only successfully-verified deliveries are
 	// processed (signature failures and malformed bodies are forensic
 	// only, not interpretable).
+	var upperBoundValue any
+	if upperBound != nil {
+		upperBoundValue = *upperBound
+	}
 	rows, err := db.QueryContext(ctx, `
 		SELECT id::text, stripe_event_id, payload, ingestion_version, verify_outcome, received_at
 		FROM stripe_event_ledger
 		WHERE verify_outcome IN ('primary', 'fallback', 'connect', 'per_account')
-		  AND received_at > $1
+		  AND (
+			received_at > $1
+			OR (
+				received_at = $1
+				AND ($2::uuid IS NULL OR id > $2::uuid)
+			)
+		  )
+		  AND ($3::timestamptz IS NULL OR received_at <= $3::timestamptz)
 		ORDER BY received_at, id
-		LIMIT $2
-	`, cursor.ReceivedAt, batchSize)
+		LIMIT $4
+	`, cursor.ReceivedAt, cursor.EventID, upperBoundValue, batchSize)
 	if err != nil {
-		return 0, lastAt, lastID, 0, fmt.Errorf("scan ledger: %w", err)
+		return 0, 0, lastAt, lastID, 0, fmt.Errorf("scan ledger: %w", err)
 	}
 	defer rows.Close()
 
@@ -223,28 +242,29 @@ func processBatch(ctx context.Context, db *sql.DB, cursor Cursor, epochID string
 	for rows.Next() {
 		var row ledgerEventOnDisk
 		if err := rows.Scan(&row.LedgerID, &row.StripeEventID, &row.Payload, &row.IngestionVersion, &row.VerifyOutcome, &row.ReceivedAt); err != nil {
-			return 0, lastAt, lastID, 0, fmt.Errorf("scan row: %w", err)
+			return 0, 0, lastAt, lastID, 0, fmt.Errorf("scan row: %w", err)
 		}
 		batch = append(batch, row)
 	}
 	if err := rows.Err(); err != nil {
-		return 0, lastAt, lastID, 0, fmt.Errorf("iterate ledger rows: %w", err)
+		return 0, 0, lastAt, lastID, 0, fmt.Errorf("iterate ledger rows: %w", err)
 	}
 
 	for _, row := range batch {
-		ok, ec, err := processSingleEvent(ctx, db, row, epochID)
+		projected, ec, err := processSingleEvent(ctx, db, row, epochID)
 		if err != nil {
-			return processed, lastAt, lastID, conflicts, fmt.Errorf("process event %s: %w", row.LedgerID, err)
+			return scanned, projections, lastAt, lastID, conflicts, fmt.Errorf("process event %s: %w", row.LedgerID, err)
 		}
-		if ok {
-			processed++
+		scanned++
+		if projected {
+			projections++
 		}
 		conflicts += ec
 		lastAt = row.ReceivedAt
 		lastID = sql.NullString{String: row.LedgerID, Valid: true}
 	}
 
-	return processed, lastAt, lastID, conflicts, nil
+	return scanned, projections, lastAt, lastID, conflicts, nil
 }
 
 // processSingleEvent handles one ledger row inside its own transaction:
@@ -254,7 +274,7 @@ func processBatch(ctx context.Context, db *sql.DB, cursor Cursor, epochID string
 // Returns ok=true if a projection or conflict was emitted; ok=false if
 // the event was an unhandled type or had no resolvable workspace (in
 // which case the cursor still advances).
-func processSingleEvent(ctx context.Context, db *sql.DB, row ledgerEventOnDisk, epochID string) (ok bool, conflictCount int, err error) {
+func processSingleEvent(ctx context.Context, db *sql.DB, row ledgerEventOnDisk, epochID string) (projected bool, conflictCount int, err error) {
 	var parsed stripeEvent
 	if jerr := json.Unmarshal([]byte(row.Payload), &parsed); jerr != nil {
 		// Malformed payload shouldn't reach the reducer (ledger
@@ -337,7 +357,7 @@ func processSingleEvent(ctx context.Context, db *sql.DB, row ledgerEventOnDisk, 
 
 	if result.Next != nil {
 		authorityJSON, _ := result.Next.MarshalFieldAuthority()
-		_, err := tx.ExecContext(ctx, `
+		res, err := tx.ExecContext(ctx, `
 			INSERT INTO subscription_projection (
 				stripe_subscription_id, workspace_id,
 				status, current_period_start, current_period_end,
@@ -369,6 +389,9 @@ func processSingleEvent(ctx context.Context, db *sql.DB, row ledgerEventOnDisk, 
 		if err != nil {
 			return false, 0, fmt.Errorf("insert projection: %w", err)
 		}
+		if rows, err := res.RowsAffected(); err == nil && rows > 0 {
+			projected = true
+		}
 	}
 
 	for _, c := range result.Conflicts {
@@ -396,8 +419,7 @@ func processSingleEvent(ctx context.Context, db *sql.DB, row ledgerEventOnDisk, 
 		return false, conflictCount, fmt.Errorf("commit: %w", err)
 	}
 
-	emitted := result.Next != nil || len(result.Conflicts) > 0
-	return emitted, conflictCount, nil
+	return projected, conflictCount, nil
 }
 
 func isSubscriptionEvent(eventType string) bool {
@@ -505,21 +527,49 @@ func startEpoch(ctx context.Context, db *sql.DB, mode Mode) (string, error) {
 	return id, err
 }
 
-func updateEpochCounters(ctx context.Context, db *sql.DB, epochID string, processed, conflicts int) error {
+func updateEpochCounters(ctx context.Context, db *sql.DB, epochID string, scanned, projections, conflicts int) error {
 	_, err := db.ExecContext(ctx, `
 		UPDATE replay_epochs
-		SET events_processed = events_processed + $2,
-			projections_written = projections_written + $2,
-			conflicts_emitted = conflicts_emitted + $3
+			SET events_processed = events_processed + $2,
+			projections_written = projections_written + $3,
+			conflicts_emitted = conflicts_emitted + $4
 		WHERE id = $1::uuid
 		  AND completed_at IS NULL AND aborted_at IS NULL
-	`, epochID, processed, conflicts)
+	`, epochID, scanned, projections, conflicts)
 	return err
 }
 
 func completeEpoch(ctx context.Context, db *sql.DB, epochID string) error {
 	_, err := db.ExecContext(ctx, `
-		UPDATE replay_epochs SET completed_at = now() WHERE id = $1::uuid
+		WITH checksum AS (
+			SELECT md5(COALESCE(string_agg(
+				concat_ws('|',
+					stripe_subscription_id,
+					workspace_id::text,
+					status,
+					COALESCE(current_period_start::text, ''),
+					COALESCE(current_period_end::text, ''),
+					cancel_at_period_end::text,
+					COALESCE(canceled_at::text, ''),
+					COALESCE(trial_start::text, ''),
+					COALESCE(trial_end::text, ''),
+					field_authority::text,
+					projection_version,
+					reducer_version,
+					source_event_id,
+					source_ingestion_version,
+					event_occurred_at::text
+				),
+				E'\n' ORDER BY stripe_subscription_id, event_occurred_at, source_event_id
+			), '')) AS value
+			FROM subscription_projection
+			WHERE replay_epoch_id = $1::uuid
+		)
+		UPDATE replay_epochs
+		SET completed_at = now(),
+			projection_checksum = checksum.value
+		FROM checksum
+		WHERE id = $1::uuid
 	`, epochID)
 	return err
 }
@@ -565,6 +615,16 @@ func advanceCursor(ctx context.Context, tx *sql.Tx, row ledgerEventOnDisk, epoch
 			current_epoch_id = $5::uuid
 		WHERE reducer_name = $1 AND reducer_version = $2
 	`, ReducerName, ReducerVersion, row.ReceivedAt, row.LedgerID, epochID)
+	return err
+}
+
+func touchCursorHeartbeat(ctx context.Context, db *sql.DB, epochID string) error {
+	_, err := db.ExecContext(ctx, `
+		UPDATE reducer_cursors
+		SET last_heartbeat_at = now(),
+			current_epoch_id = $3::uuid
+		WHERE reducer_name = $1 AND reducer_version = $2
+	`, ReducerName, ReducerVersion, epochID)
 	return err
 }
 
