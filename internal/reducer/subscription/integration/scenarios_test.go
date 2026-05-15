@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -326,6 +327,70 @@ func TestSubstrate_IdempotentReplay(t *testing.T) {
 	}
 	// Despite the replay, only one projection row exists for this event.
 	assertRowCount(t, db, `SELECT count(*)::int FROM subscription_projection`, 1)
+}
+
+// TestSubstrate_SkippedEventsAdvanceCursorAcrossSameTimestamp verifies
+// that verified but irrelevant Stripe events still advance the durable
+// cursor, including across batch boundaries where many ledger rows share
+// the same received_at timestamp. This protects backfill completion from
+// idling forever on non-subscription traffic.
+func TestSubstrate_SkippedEventsAdvanceCursorAcrossSameTimestamp(t *testing.T) {
+	db := SetupSubstrate(t)
+	ctx := context.Background()
+
+	receivedAt := time.Now().UTC().Truncate(time.Second)
+	for i := 0; i < 201; i++ {
+		eventID := fmt.Sprintf("evt_skip_%03d", i)
+		InsertLedgerEvent(t, db, LedgerEvent{
+			StripeEventID: eventID,
+			Payload: map[string]any{
+				"id":          eventID,
+				"object":      "event",
+				"type":        "invoice.created",
+				"created":     receivedAt.Unix(),
+				"api_version": "2025-02-24.acacia",
+				"data":        map[string]any{"object": map[string]any{"id": fmt.Sprintf("in_%03d", i)}},
+			},
+			ReceivedAt: receivedAt,
+		})
+	}
+
+	processed, conflicts, err := subscription.ProcessPending(ctx, db)
+	if err != nil {
+		t.Fatalf("ProcessPending: %v", err)
+	}
+	if processed != 0 {
+		t.Fatalf("expected 0 projections from skipped events; got %d", processed)
+	}
+	if conflicts != 0 {
+		t.Fatalf("expected 0 conflicts from skipped events; got %d", conflicts)
+	}
+
+	var eventsProcessed, projectionsWritten int
+	var completedAt sql.NullString
+	var checksum sql.NullString
+	err = db.QueryRow(`
+		SELECT events_processed::int, projections_written::int, completed_at::text, projection_checksum
+		FROM replay_epochs
+		WHERE reducer_name = 'subscription'
+		ORDER BY started_at DESC
+		LIMIT 1
+	`).Scan(&eventsProcessed, &projectionsWritten, &completedAt, &checksum)
+	if err != nil {
+		t.Fatalf("query epoch counters: %v", err)
+	}
+	if eventsProcessed != 201 {
+		t.Fatalf("expected all 201 ledger rows scanned; got %d", eventsProcessed)
+	}
+	if projectionsWritten != 0 {
+		t.Fatalf("expected 0 projections written; got %d", projectionsWritten)
+	}
+	if !completedAt.Valid {
+		t.Fatal("expected skipped-event epoch to complete")
+	}
+	if !checksum.Valid || checksum.String == "" {
+		t.Fatal("expected completed epoch checksum to be recorded")
+	}
 }
 
 // TestSubstrate_OutOfOrderEmitsConflict verifies that a late event (one
