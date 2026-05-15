@@ -148,6 +148,54 @@ fly scale count 0 --app payflux-drift-detector
 The detector is read-only. Stopping it has no data effect — no rows are
 removed. Safe to scale down at any time.
 
+**Important semantics observed in the 2026-05-15 on-call exercise:**
+
+- `fly scale count 0` **destroys both the primary and the standby
+  machine**, not just stops them. It is the "tear down the deployment"
+  command, not the "pause" command. To pause a single machine without
+  destroying the deployment, use `fly machine stop <id>` instead.
+- After scale-to-zero, `fly scale count 1` creates a fresh machine
+  with a new id (not the original). The standby is NOT restored by
+  `fly scale count N` for N ≥ 1 — `scale count` creates `N` *active*
+  machines, all of which would sweep in parallel (see "Duplicate sweep
+  race" below). To restore the original 1-primary-plus-1-standby
+  topology, run `fly deploy --config fly.drift-detector.toml` again,
+  which re-executes the launch logic that originally created the
+  standby.
+- **Recovery time from `scale count 0` → `scale count 1` → first new
+  sweep observed: ~60–70 seconds**. The detector's read-only nature
+  means events that would have been observed during the gap can be
+  caught on the next sweep without data loss.
+- **Duplicate-sweep race:** two or more active detector machines
+  (i.e., `scale count ≥ 2` after scale-to-zero recreation) will both
+  read the same `billing_subscriptions` and `subscription_projection`
+  data on overlapping sweeps. Each calls `findOpenDrift` independently;
+  in the window between that lookup and `emitDetection`, two machines
+  can race to insert duplicate detection rows for the same drift.
+  Mitigation today is single-machine operation; the same class of
+  defense — `pg_advisory_lock` keyed on the detector name — is the
+  proper fix and is listed as a follow-up to the audit's reducer item
+  #6 (advisory lock).
+
+### On-call escalation exercise — 2026-05-15 (executed)
+
+Pre-exercise: 32 clean sweeps over 31 minutes, machine
+`6e82025eb46178` (primary) + `148ee332f49448` (standby).
+
+Procedure:
+
+1. `fly scale count 0 --app payflux-drift-detector --process-group drift-detector --yes`
+   → both machines destroyed.
+2. 30-second observation window — no further sweeps appear in logs.
+3. `fly scale count 1 --app payflux-drift-detector --process-group drift-detector --yes`
+   → new machine `3d8d04d7c5e348` created.
+4. First post-restart sweep at +66s from step 1.
+5. Outcome shape across the transition: unchanged
+   (`authority_count=2 detections_emitted=0 resolutions_emitted=0`).
+
+Findings encoded in this runbook above. On-call escalation exit
+criterion satisfied.
+
 ---
 
 ## Phase 2 — Reducer deployment (projection-only mode)
@@ -463,3 +511,4 @@ Direct SQL UPDATE on either side is forbidden in normal operation.
 | Date | Version | Change |
 |---|---|---|
 | 2026-05-11 | v1 | Initial runbook. Covers Phase 1-3 with cutover gates. |
+| 2026-05-15 | v1.1 | Phase 1 rollback semantics clarified — `fly scale count 0` destroys (not pauses), standby is not restored by `fly scale count N`, and `scale count ≥ 2` introduces a duplicate-sweep race. On-call escalation exercise executed and recorded; exit criterion satisfied. |
