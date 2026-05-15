@@ -13,6 +13,8 @@
       "dependencies": [
         "npm:@clerk/nextjs@^6.37.2",
         "npm:@eslint/js@^9.39.1",
+        "npm:@sentry/nextjs@^10.52.0",
+        "npm:@sentry/node@^10.52.0",
         "npm:@tailwindcss/postcss@^4.1.18",
         "npm:@types/better-sqlite3@^7.6.13",
         "npm:@types/node@^25.2.0",
@@ -48,6 +50,7 @@
         "npm:swr@^2.4.0",
         "npm:tailwind-merge@^3.4.0",
         "npm:tailwindcss@4.1.18",
+        "npm:tsx@^4.20.6",
         "npm:typescript@^5.9.3",
         "npm:unified@^11.0.5"
       ]
