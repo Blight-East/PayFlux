@@ -479,6 +479,61 @@ When the cross-version replay shows divergence:
 
 ---
 
+## Operational nuances surfaced by the synthetic exercise (2026-05-15)
+
+Three findings from the synthetic operational exercise documented in
+`docs/SYNTHETIC_OPERATIONAL_EXERCISE_2026-05-15.md`. Each affects how an
+on-call operator should interpret normal substrate behavior.
+
+### Replay produces conflict-row noise (by design)
+
+When the reducer cursor is reset and replay runs over already-projected
+events, each event will emit a `late_event_detected` conflict because
+the existing chain head's `event_occurred_at` is later than every
+re-presented event. This is the substrate **correctly refusing** to
+supersede a chain with stale interpretations.
+
+A replay that emits *zero* conflicts is suspicious — it means either
+the cursor wasn't actually reset or no events were re-presented.
+
+Expected conflict count for a deliberate cursor-reset replay ≈ number
+of subscription events for subscriptions that already have projections.
+
+### Future-dated `received_at` time-bombs
+
+A `stripe_event_ledger` row with `received_at > now()` is invisible to
+`REDUCER_MODE=backfill` (filtered by the `upperBound` clause) but will
+**silently activate** when wall-clock crosses the value. The append-only
+trigger prevents corrective `UPDATE` or `DELETE`.
+
+The webhook handler sets `received_at = NOW()` implicitly so this is
+not a current production risk. But operators directly inserting into
+`stripe_event_ledger` (for testing, replay, or backfill from external
+sources) must guarantee `received_at <= now()`. A future-dated event
+in the ledger is operationally a buried mine.
+
+### Append-only enforcement is uncomfortable during operator mistakes
+
+When an operator injects a malformed event by mistake, there is no
+mutation path to undo it. The institutional property "the database
+refuses to lie about its history" is uncomfortable in this exact
+moment — and exactly correct.
+
+The cure is **always** a corrective insert, never a mutation. If a
+"bad" projection or ledger row exists, the response is:
+
+- For ledger: insert a corrected event under a new `stripe_event_id`.
+  The bad one stays as evidence of what was once received.
+- For projection: the next reducer run will supersede via the
+  `supersedes_id` chain. The bad projection stays as evidence of
+  what was once interpreted. Never `UPDATE` or `DELETE`.
+
+Operators should expect to feel the append-only invariant most acutely
+during their own mistakes. That discomfort is the substrate working
+correctly.
+
+---
+
 ## Reconciliation interpretation guidance
 
 When you see drift, ask in order:
@@ -512,3 +567,4 @@ Direct SQL UPDATE on either side is forbidden in normal operation.
 |---|---|---|
 | 2026-05-11 | v1 | Initial runbook. Covers Phase 1-3 with cutover gates. |
 | 2026-05-15 | v1.1 | Phase 1 rollback semantics clarified — `fly scale count 0` destroys (not pauses), standby is not restored by `fly scale count N`, and `scale count ≥ 2` introduces a duplicate-sweep race. On-call escalation exercise executed and recorded; exit criterion satisfied. |
+| 2026-05-15 | v1.2 | Three findings from the synthetic operational exercise folded in: replay produces expected conflict-row noise, future-dated `received_at` time-bombs, append-only enforcement is uncomfortable during operator mistakes (by design). Full exercise documented separately in `SYNTHETIC_OPERATIONAL_EXERCISE_2026-05-15.md`. |
