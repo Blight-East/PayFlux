@@ -2,7 +2,10 @@
 
 **Status:** active
 **Audience:** PayFlux operators, on-call engineers, future reviewers
-**Companion docs:** `apps/dashboard/src/lib/db/LEDGER_CONTRACT.md`, `apps/dashboard/src/lib/db/SUBSCRIPTION_REDUCER_CONTRACT.md`
+**Companion docs:**
+- `apps/dashboard/src/lib/db/LEDGER_CONTRACT.md` — append-only substrate contract
+- `apps/dashboard/src/lib/db/SUBSCRIPTION_REDUCER_CONTRACT.md` — reducer operational contract
+- `docs/OPERATIONAL_PROCEDURES.md` — exact commands for procedures we have executed (replay, restore, secret rotation, deployment, on-call drill). This runbook describes phase progression; the procedures doc describes mechanics.
 
 ---
 
@@ -568,3 +571,4 @@ Direct SQL UPDATE on either side is forbidden in normal operation.
 | 2026-05-11 | v1 | Initial runbook. Covers Phase 1-3 with cutover gates. |
 | 2026-05-15 | v1.1 | Phase 1 rollback semantics clarified — `fly scale count 0` destroys (not pauses), standby is not restored by `fly scale count N`, and `scale count ≥ 2` introduces a duplicate-sweep race. On-call escalation exercise executed and recorded; exit criterion satisfied. |
 | 2026-05-15 | v1.2 | Three findings from the synthetic operational exercise folded in: replay produces expected conflict-row noise, future-dated `received_at` time-bombs, append-only enforcement is uncomfortable during operator mistakes (by design). Full exercise documented separately in `SYNTHETIC_OPERATIONAL_EXERCISE_2026-05-15.md`. |
+| 2026-05-16 | v1.3 | Companion doc `OPERATIONAL_PROCEDURES.md` added — exact commands for the five earned procedures (secret rotation, replay, restore, reducer deploy, detector deploy + on-call drill). Each captured from actual execution. |
